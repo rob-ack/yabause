@@ -21,7 +21,92 @@
 
 #include <QImageWriter>
 #include <QGraphicsPixmapItem>
+#include <sstream>
 
+namespace {
+
+
+struct Vdp1CommandsCount
+{
+  size_t distortedSprites;
+  size_t polygons;
+  size_t polylines;
+  size_t normalSprites;
+  size_t scaledSprites;
+  size_t lines;
+};
+
+void Vdp1CountCommands(u32 index, Vdp1CommandsCount& cmdCount)
+{
+  Vdp1CommandType commandType = Vdp1DebugGetCommandType(index);
+  switch (commandType) {
+  case VDPCT_DISTORTED_SPRITE:
+  case VDPCT_DISTORTED_SPRITEN:
+    cmdCount.distortedSprites++;
+    break;
+  case VDPCT_NORMAL_SPRITE:
+    cmdCount.normalSprites++;
+    break;
+  case VDPCT_SCALED_SPRITE:
+    cmdCount.scaledSprites++;
+    break;
+  case VDPCT_POLYGON:
+    cmdCount.polygons++;
+    break;
+  case VDPCT_POLYLINE:
+  case VDPCT_POLYLINEN:
+    cmdCount.polylines++;
+    break;
+  case VDPCT_LINE:
+    cmdCount.lines++;
+    break;
+  }
+}
+
+std::string buildInfoLabel(Vdp1CommandsCount& cmdCount)
+{
+  bool previous = false;
+  std::stringstream infoLabel;
+
+  if (cmdCount.distortedSprites > 0) {
+    infoLabel << "Distorted Sprites: " << cmdCount.distortedSprites;
+    previous = true;
+  }
+
+  if (cmdCount.polygons > 0) {
+    infoLabel << (previous ? ", " : "") << "Polygons: " << cmdCount.polygons;
+    previous = true;
+  }
+
+  if (cmdCount.polylines > 0) {
+    infoLabel << (previous ? ", " : "") << "PolyLines: " <<
+      cmdCount.polylines;
+    previous = true;
+  }
+
+  if (cmdCount.normalSprites > 0) {
+    infoLabel << (previous ? ", " : "") << "Normal Sprites: " <<
+      cmdCount.normalSprites;
+    previous = true;
+  }
+
+  if (cmdCount.scaledSprites > 0) {
+    infoLabel << (previous ? ", " : "") << "Scaled Sprites: " <<
+      cmdCount.scaledSprites;
+    previous = true;
+  }
+
+  if (cmdCount.lines > 0) {
+    infoLabel << (previous ? ", " : "") << "Lines: " <<
+      cmdCount.lines;
+    previous = true;
+  }
+
+  return infoLabel.str();
+}
+
+
+} // namespace ''
 UIDebugVDP1::UIDebugVDP1( QWidget* p )
 	: QDialog( p )
 {
@@ -33,6 +118,9 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
 
    lwCommandList->clear();
 
+  Vdp1CommandsCount cmdCount;
+  memset(&cmdCount, 0, sizeof(Vdp1CommandsCount));
+
    if (Vdp1Ram)
    {
       for (int i=0;;i++)
@@ -42,6 +130,7 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
          if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
             break;
 
+         Vdp1CountCommands(i, cmdCount);
          lwCommandList->addItem(QtYabause::translate(string));
       }
    }
@@ -49,6 +138,10 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
    vdp1texture = NULL;
    vdp1texturew = vdp1textureh = 1;
    pbSaveBitmap->setEnabled(vdp1texture ? true : false);
+
+  QString infoLabelText(QString::fromStdString(buildInfoLabel(cmdCount)));
+  lVDP1Info->setText(infoLabelText);
+  lVDP1Info->setToolTip(infoLabelText);
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
@@ -95,14 +188,14 @@ void UIDebugVDP1::on_pbSaveBitmap_clicked ()
 			filters << QString( ba ).toLower();
 	for ( int i = 0; i < filters.count(); i++ )
 		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
-	
+
 	// take screenshot of gl view
    QImage img((uchar *)vdp1texture, vdp1texturew, vdp1textureh, QImage::Format_ARGB32);
    img = img.rgbSwapped();
-	
+
 	// request a file to save to to user
 	const QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your bitmap" ), filters.join( ";;" ) );
-	
+
 	// write image if ok
 	if ( !s.isEmpty() )
 		if ( !img.save( s ) )

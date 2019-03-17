@@ -89,11 +89,11 @@ else ifeq ($(platform), odroid-n2)
 	fpic := -fPIC
 	SHARED := -shared -Wl,--no-undefined -Wl,--version-script=link.T
 	LDFLAGS += -lpthread
-	FLAGS += -DARCH_IS_LINUX=1
+	FLAGS += -DARCH_IS_LINUX=1 -DAARCH64
 	HAVE_SSE = 0
 	HAVE_GLES = 1
 	# ODROID-N2
-	FLAGS += -marm -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
+	FLAGS += -march=armv8-a+crc -mtune=cortex-a73.cortex-a53
 	ifeq ($(HAVE_GLES), 1)
 		LDFLAGS += -lGL -lGLESv2
 	else

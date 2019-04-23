@@ -46,6 +46,8 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
+int isSkipped = 0;
+
 u8 Vdp2ColorRamUpdated = 0;
 u8 A0_Updated = 0;
 u8 A1_Updated = 0;
@@ -58,7 +60,7 @@ Vdp2 Vdp2Lines[270];
 int vdp2_is_odd_frame = 0;
 
 static void startField(void);// VBLANK-OUT handler
-extern void waitVdp2DrawScreensEnd(int sync);
+extern void waitVdp2DrawScreensEnd(int sync, int abort);
 
 int g_frame_count = 0;
 
@@ -67,28 +69,40 @@ int g_frame_count = 0;
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadByte(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadWord(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp2RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
    return T1ReadLong(mem, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
@@ -109,7 +123,10 @@ void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
@@ -130,7 +147,10 @@ void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-   addr &= 0xFFFFF;
+  if (Vdp2Regs->VRSIZE & 0x8000)
+    addr &= 0xEFFFF;
+  else
+    addr &= 0x7FFFF;
 
    if (A0_Updated == 0 && addr >= 0 && addr < (0x20000<<(Vdp2Regs->VRSIZE>>15))){
      A0_Updated = 1;
@@ -174,7 +194,31 @@ u32 FASTCALL Vdp2ColorRamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 void FASTCALL Vdp2ColorRamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0xFFF;
    //LOG("[VDP2] Update Coloram Byte %08X:%02X", addr, val);
-   T2WriteByte(mem, addr, val);
+   if (Vdp2Internal.ColorMode == 0 ) {
+     int up = ((addr & 0x800) != 0);
+     if (val != T2ReadByte(mem, addr)) {
+       T2WriteByte(mem, addr, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+       YglOnUpdateColorRamWord(addr);
+  #endif
+     }
+     if (up) {
+       if (val != T2ReadByte(mem, (addr & 0x7FF) + 0x800)) {
+         T2WriteByte(mem, (addr & 0x7FF) + 0x800, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+         YglOnUpdateColorRamWord((addr & 0x7FF) + 0x800);
+  #endif
+       }
+     }
+   }
+   else {
+     if (val != T2ReadByte(mem, addr)) {
+       T2WriteByte(mem, addr, val);
+  #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
+       YglOnUpdateColorRamWord(addr);
+  #endif
+     }
+   }
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -291,6 +335,8 @@ void Vdp2DeInit(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+static unsigned long nextFrameTime = 0;
+
 void Vdp2Reset(void) {
    Vdp2Regs->TVMD = 0x0000;
    Vdp2Regs->EXTEN = 0x0000;
@@ -378,9 +424,24 @@ void Vdp2Reset(void) {
    Vdp2External.perline_alpha = Vdp2External.perline_alpha_a;
    Vdp2External.perline_alpha_draw = Vdp2External.perline_alpha_b;
 
+   nextFrameTime = 0;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
+
+static int checkFrameSkip(void) {
+  int ret = 0;
+  if (yabsys.skipframe == 0) return 0;
+  unsigned long now = YabauseGetTicks();
+  if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
+  if(nextFrameTime < now) ret = 1;
+  return ret;
+}
+
+void resetFrameSkip(void) {
+  nextFrameTime = 0;
+}
 
 void Vdp2VBlankIN(void) {
   FRAMELOG("***** VIN *****");
@@ -393,7 +454,15 @@ void Vdp2VBlankIN(void) {
    now we're lying a little here as we're not swapping the framebuffers. */
    //if (Vdp1External.manualchange) Vdp1Regs->EDSR >>= 1;
 
-   VIDCore->Vdp2Draw();
+   if (checkFrameSkip() != 0) {
+     dropFrameDisplay();
+     isSkipped = 1;
+   } else {
+     VIDCore->Vdp2Draw();
+     isSkipped = 0;
+   }
+   nextFrameTime  += yabsys.OneFrameTime;
+
    VIDCore->Sync();
    Vdp2Regs->TVSTAT |= 0x0008;
 
@@ -419,7 +488,7 @@ void Vdp2HBlankIN(void) {
   } else {
 // Fix : Function doesn't exist without those defines
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-     waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount);
+  waitVdp2DrawScreensEnd(yabsys.LineCount == yabsys.VBlankLineCount, isSkipped );
 #endif
   }
 }
@@ -584,7 +653,7 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
          else
             return (tvstat | 0x8);
       }
-      case 0x006:         
+      case 0x006:
          return Vdp2Regs->VRSIZE;
       case 0x008:
 		  return Vdp2Regs->HCNT;
@@ -968,7 +1037,7 @@ void Vdp2ReadReg(int addr) {
          break;
       case 0x0E6:
          val = Vdp2Regs->CRAOFB;
-         break;     
+         break;
       case 0x0E8:
          val = Vdp2Regs->LNCLEN;
          break;
@@ -977,7 +1046,7 @@ void Vdp2ReadReg(int addr) {
          break;
       case 0x0EC:
          val = Vdp2Regs->CCCTL;
-         break;     
+         break;
       case 0x0EE:
          val = Vdp2Regs->SFCCMD;
          break;
@@ -1421,7 +1490,7 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
          return;
       case 0x0E6:
          Vdp2Regs->CRAOFB = val;
-         return;     
+         return;
       case 0x0E8:
          Vdp2Regs->LNCLEN = val;
          return;
@@ -1430,7 +1499,7 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
          return;
       case 0x0EC:
          Vdp2Regs->CCCTL = val;
-         return;     
+         return;
       case 0x0EE:
          Vdp2Regs->SFCCMD = val;
          return;
@@ -1517,7 +1586,7 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2WriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-   
+
    Vdp2WriteWord(context, mem, addr,val>>16);
    Vdp2WriteWord(context, mem, addr+2,val&0xFFFF);
    return;
@@ -1631,5 +1700,3 @@ void ToggleFullScreen(void)
       VIDCore->Resize(0,0,320, 224, 1);
    }
 }
-
-

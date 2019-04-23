@@ -136,7 +136,7 @@ void print_usage(const char *program_name) {
 //////////////////////////////////////////////////////////////////////////////
 
 
-unsigned long nextFrameTime = 0;
+static unsigned long nextFrameTime = 0;
 static int autoframeskipenab=0;
 
 static void syncVideoMode(void) {
@@ -151,6 +151,7 @@ static void syncVideoMode(void) {
 
 void resetSyncVideo(void) {
   nextFrameTime = 0;
+  resetFrameSkip();
 }
 
 void YabauseChangeTiming(int freqtype) {
@@ -201,7 +202,7 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
          }
          req = 0;
     }
-} 
+}
 
 #ifdef SSH2_ASYNC
 static void sh2Execute( void * p ){
@@ -225,6 +226,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+   yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -379,6 +381,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
+  yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -789,6 +792,11 @@ static void FPSDisplay(void)
   } else {
     OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
   }
+}
+
+void dropFrameDisplay() {
+  fpsframecount--;
+  if (fpsframecount < -1) fpsframecount = -1;
 }
 
 u32 YabauseGetFrameCount() {

@@ -318,11 +318,9 @@ enum
    PG_VDP2_NORMAL=17,
    PG_VDP2_BLUR=18,
    PG_VDP2_MOSAIC=19,
-   PG_VDP2_PER_LINE_ALPHA=20,
    PG_VDP2_NORMAL_CRAM=21,
    PG_VDP2_BLUR_CRAM=22,
    PG_VDP2_MOSAIC_CRAM=23,
-   PG_VDP2_PER_LINE_ALPHA_CRAM=24,
    PG_VDP2_RBG_CRAM_LINE=25,
 
    PG_VDP2_DRAWFRAMEBUFF_NONE=27,
@@ -689,8 +687,6 @@ typedef struct {
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
 
-   int prioVal[enBGMAX];
-
    int use_win[enBGMAX];
    int use_cc_win;
    int vdp1_stencil_mode;
@@ -781,7 +777,7 @@ void YglEraseWriteVDP1();
 void YglFrameChangeVDP1();
 
 
-#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_)
+#if !defined(__APPLE__) && !defined(__ANDROID__) && !defined(_USEGLEW_) && !defined(_OGLES3_) && !defined(__LIBRETRO__)
 
 extern GLuint (STDCALL *glCreateProgram)(void);
 extern GLuint (STDCALL *glCreateShader)(GLenum);
@@ -846,14 +842,12 @@ s Shadow Flag
 */
 INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
   u32 col = color;
-  _Ygl->prioVal[SPRITE] |= (1<<(P-1));
   if (C == 1) col &= 0x7FFF;
   else col &= 0xFFFFFF;
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | col;
 }
 
 INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cramindex) {
-  _Ygl->prioVal[id] |= (1<<(priority-1));
   return (((alpha & 0xF8) | priority) << 24 | cramindex);
 }
 

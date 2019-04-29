@@ -65,7 +65,7 @@ extern int waitVdp1Textures( int sync);
 
 #define ATLAS_BIAS (0.025f)
 
-#if defined(__ANDROID__) || defined(IOS)
+#if (defined(__ANDROID__) || defined(IOS)) && !defined(__LIBRETRO__)
 PFNGLPATCHPARAMETERIPROC glPatchParameteri = NULL;
 PFNGLMEMORYBARRIERPROC glMemoryBarrier = NULL;
 #endif
@@ -754,7 +754,7 @@ u32* getVdp1DrawingFBMemWrite(int id) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], 512.0, 256.0, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2],maxWidth, maxHeight, 0);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
@@ -773,7 +773,7 @@ u32* getVdp1DrawingFBMemRead(int id) {
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
-  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], _Ygl->rwidth, _Ygl->rheight, 0);
+  YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], maxWidth, maxHeight, 0);
   //glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
   //glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
@@ -1353,7 +1353,7 @@ int YglInit(int width, int height, unsigned int depth) {
   glDebugMessageCallback( (GLDEBUGPROC) MessageCallback, 0 );
 #endif
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) && !defined(__LIBRETRO__)
   glPatchParameteri = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glPatchParameteri");
   glMemoryBarrier = (PFNGLPATCHPARAMETERIPROC)eglGetProcAddress("glMemoryBarrier");
 #endif
@@ -3157,10 +3157,10 @@ void YglUpdateVDP1FB(void) {
     YglGenFrameBuffer();
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
     glDrawBuffers(2, &DrawBuffers[_Ygl->readframe*2]);
-
     releaseVDP1FB(_Ygl->readframe);
     releaseVDP1DrawingFBMemRead(_Ygl->readframe);
-    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], (float)_Ygl->rwidth, (float)_Ygl->rheight, 0);
+    glViewport(0,0,maxWidth,maxHeight);
+    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], _Ygl->rwidth, _Ygl->rheight, 0);
     // clean up
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   }

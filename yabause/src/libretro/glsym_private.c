@@ -1,8 +1,10 @@
 #include "glsym/glsym.h"
 
-#if defined(HAVE_GLES)
+#if defined(_OGLES3_)
 RGLSYMGLMEMORYBARRIERPROC __rglgen_glMemoryBarrier;
 RGLSYMGLBINDFRAGDATALOCATIONPROC __rglgen_glBindFragDataLocation;
-#elif !defined(_OGLES3_)
+RGLSYMGLPATCHPARAMETERIPROC __rglgen_glPatchParameteri;
+#else
 RGLSYMGLTEXTUREBARRIERNVPROC __rglgen_glTextureBarrierNV;
+RGLSYMGLTEXTUREBARRIERPROC __rglgen_glTextureBarrier;
 #endif

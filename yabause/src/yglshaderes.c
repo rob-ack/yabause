@@ -263,7 +263,7 @@ SHADER_VERSION
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
-"  float msb = txcol.a;         \n"
+"  int msb = int(txcol.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
 "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "    if (perline == vec4(0.0)) discard;\n"
@@ -272,8 +272,7 @@ SHADER_VERSION
 "  } \n"
 "  fragColor.rgb = clamp(txcol.rgb+color_offset.rgb,vec3(0.0),vec3(1.0));\n"
 "  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
-"  if (msb != 0.0) fragColor.b = float(blue|0x1)/255.0;\n" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
-"  else fragColor.b = float(blue)/255.0;\n"
+"  fragColor.b = float(blue|msb)/255.0;\n" //Blue LSB bit is used for special color calculation
 "  fragColor.a = txcol.a;\n"
 "}  \n";
 
@@ -325,28 +324,23 @@ SHADER_VERSION
 "void main()\n"
 "{\n"
 "  ivec2 linepos; \n "
-"  float alpha = 0.0; \n"
 "  vec4 color_offset = u_color_offset; \n"
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  vec4 txindex = texelFetch( s_texture, ivec2(int(v_texcoord.x),int(v_texcoord.y)) ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
-"  float msb = txcol.a; \n"
+"  int msb = int(txindex.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
 "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
 "    if (perline == vec4(0.0)) discard;\n"
 "    color_offset.rgb = (perline.rgb - vec3(0.5))*2.0;\n"
-"    if (perline.a > 0.0) alpha = perline.a;\n"
-"  } else {\n"
-"    alpha = txindex.a; \n"
+"    if (perline.a > 0.0) txindex.a = float(int(perline.a * 255.0) | (int(txindex.a * 255.0) & 0x7))/255.0;\n"
 "  } \n"
-"  txcol.a = alpha;\n"
 "  fragColor = clamp(txcol+color_offset,vec4(0.0),vec4(1.0));\n"
 "  int blue = int(fragColor.b * 255.0) & 0xFE;\n"
-"  if (msb != 0.0) fragColor.b = float(blue|0x1)/255.0;\n" //If MSB was 1, then colorRam alpha is 0xF8. In case of color ra mode 2, it implies blue color to not be accurate....
-"  else fragColor.b = float(blue)/255.0;\n"
-"  fragColor.a = txindex.a;\n"
+"  fragColor.b = float(blue|msb)/255.0;\n" //Blue LSB bit is used for special color calculation
+"  fragColor.a = txindex.a; \n"
 "}\n";
 
 
@@ -1092,7 +1086,7 @@ SHADER_VERSION
 "  }\n"
 "  if (shadow != 0) {\n"
 "    fragColorAttr.rgb = vec3(0.0);\n"
-"    fragColorAttr.a = float(shadow)/255.0;\n"
+"    fragColorAttr.a = 128.0;\n"
 "    fragColor.rgb = vec3(0.0);\n"
 "  } else { \n"
 "    fragColorAttr = vec4(0.0);\n"
@@ -1720,6 +1714,7 @@ SHADER_VERSION
 "  int lncl; \n"
 "  int mode; \n"
 "  int isRGB; \n"
+"  int isSprite; \n"
 "}; \n"
 
 "void getFB(){ \n";
@@ -1735,6 +1730,7 @@ static const char vdp2blit_end_f[] =
 "  empty.Color = vec4(0.0);\n"
 "  empty.mode = 0;\n"
 "  empty.lncl = 0;\n"
+"  empty.isSprite = 0;\n"
 "  ret = empty;\n"
 "  int priority; \n"
 "  int alpha; \n"
@@ -1746,9 +1742,11 @@ static const char vdp2blit_end_f[] =
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
 "    ret.isRGB = 0;\n" //Shall not be the case always... Need to get RGB format per pixel
+"    ret.isSprite = 1;\n"
 "    if (remPrio == 0) return ret;\n"
 "  }\n"
 "  if (screen_nb == 0) return empty;\n"
+"  ret.isSprite = 0;\n"
 "  tmpColor = vdp2col0; \n"
 "  priority = int(tmpColor.a*255.0)&0x7; \n"
 "  if (priority == prio) {\n"
@@ -1874,10 +1872,10 @@ static const char vdp2blit_end_f[] =
 "        hasColor = hasColor+1;\n"
 "        if (prio.mode != 0) { \n"
 "          if (foundColor1 == 0) { \n"
-"            if ((prio.mode & 0x8)!=0) {\n"
-//Special color calulation mode 3
-"              prio.mode = (prio.mode & 0x7); \n"
+"            prio.mode = (prio.mode & 0x7); \n"
+"            if (prio.isSprite == 0) {\n"
 "              if ((int(prio.Color.b*255.0)&0x1) == 0) {\n"
+                 //Special color calulation mode => CC is off on this pixel
 "                prio.mode = 1;\n"
 "                prio.Color.a = 1.0;\n"
 "              }\n"
@@ -2020,11 +2018,11 @@ static const char vdp2blit_end_f[] =
 "  } \n"
 
 "  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topImage = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 3) topImage = vec4(colortop.rgb, alphatop); \n"
-"  if (modetop == 4) topImage = vec4(colortop.rgb, alphasecond); \n"
+"  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
+"  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
+"  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
 
-"  finalColor = vec4( topImage.a * topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
+"  finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
 "  } else {\n"
 "  finalColor = vec4(colortop.rgb, 1.0);\n"
 "  }\n"
@@ -2387,8 +2385,6 @@ int YglProgramInit()
   id_mosaic = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mosaic");
   id_mosaic_color_offset = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_color_offset");
 #endif
-
-   _prgid[PG_VDP2_ADDBLEND] = _prgid[PG_VDP2_NORMAL];
 
    _prgid[PG_VDP2_BLUR] = _prgid[PG_VDP2_NORMAL];
    _prgid[PG_VDP2_MOSAIC] = _prgid[PG_VDP2_NORMAL];
@@ -2878,15 +2874,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->mtxTexture = -1;
 
    }
-   else if( prgid == PG_VDP2_ADDBLEND )
-   {
-      level->prg[level->prgcurrent].setupUniform = Ygl_uniformAddBlend;
-      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupAddBlend;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP2_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP2_NORMAL],(const GLchar *)"u_texMatrix");
-   }
    else if (prgid == PG_VDP2_BLUR)
    {
      current->setupUniform = Ygl_uniformNormal_blur;
@@ -3022,7 +3009,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* lncl, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -3046,12 +3033,12 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(&_Ygl->renderfb,  offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
 
     glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2]);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
 
     glActiveTexture(GL_TEXTURE10);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->readframe*2+1]);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb[1]);
 
-  int gltext[9] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8};
+  int gltext[14] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13};
 
 
 #ifdef DEBUG_BLIT
@@ -3122,7 +3109,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<9; i++) {
+  for (int i = 0; i<14; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }

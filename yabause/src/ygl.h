@@ -309,12 +309,7 @@ enum
    PG_VDP1_GOURAUDSHADING_HALFTRANS=8,
    PG_VDP1_HALF_LUMINANCE=9,
    PG_VDP1_MESH=10,
-   PG_VDP2_ADDBLEND=11,
    PG_WINDOW=12,
-   PG_LINECOLOR_INSERT=13,
-   PG_LINECOLOR_INSERT_CRAM=14,
-   PG_LINECOLOR_INSERT_DESTALPHA=15,
-   PG_LINECOLOR_INSERT_DESTALPHA_CRAM=16,
    PG_VDP2_NORMAL=17,
    PG_VDP2_BLUR=18,
    PG_VDP2_MOSAIC=19,
@@ -572,8 +567,10 @@ typedef struct {
    int readframe;
    int vdp1On[2];
    GLuint rboid_depth;
+   GLuint rboid_depth_win;
    GLuint vdp1fbo;
-   GLuint vdp1FrameBuff[4];
+   GLuint vdp1fbowin;
+   GLuint vdp1FrameBuff[6];
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
@@ -597,7 +594,7 @@ typedef struct {
    GLuint screen_depth;
 
    GLuint window_fbo;
-   GLuint window_fbotex[SPRITE];
+   GLuint window_fbotex[enBGMAX];
 
    GLuint window_cc_fbo;
    GLuint window_cc_fbotex;
@@ -847,8 +844,10 @@ INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
   return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | col;
 }
 
-INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cramindex) {
-  return (((alpha & 0xF8) | priority) << 24 | cramindex);
+INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {
+  return (((alpha & 0xF8) | priority) << 24 | ((cc_on & 0x1)<<16) | (cramindex& 0xFEFFFF));
+  //In 32 bit rgb mode, the Blue LSB is always considered as 0.
+  //This small artifact allows to implement Special color calculation without the need of an extra texture.
 }
 
 #define RGB555_TO_RGB24(temp)  ((temp & 0x1F) << 3 | (temp & 0x3E0) << 6 | (temp & 0x7C00) << 9)

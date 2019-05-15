@@ -1368,13 +1368,14 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 // 0 .. outside,1 .. inside
 static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area, u32* win)
 {
-  int upLx = win[y] & 0xFFFF;
-  int upRx = (win[y] >> 16) & 0xFFFF;
   if (y < 0) return 0;
   if (y >= vdp2height) return 0;
+  int upLx = win[y] & 0xFFFF;
+  int upRx = (win[y] >> 16) & 0xFFFF;
   // inside
   if (area == 1)
   {
+    if (win[y] == 0) return 0;
     if (x >= upLx && x <= upRx)
     {
       return 1;
@@ -1385,6 +1386,7 @@ static INLINE int Vdp2CheckWindow(vdp2draw_struct *info, int x, int y, int area,
     // outside
   }
   else {
+    if (win[y] == 0) return 1;
     if (x < upLx) return 1;
     if (x > upRx) return 1;
     return 0;
@@ -3478,8 +3480,6 @@ void VIDOGLVdp1Draw()
   u8 *sprprilist = (u8 *)&(Vdp2Lines[0].PRISA);
 
   FrameProfileAdd("Vdp1Command start");
-
-  _Ygl->needVdp1Render = 1;
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
 
@@ -7303,8 +7303,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     _Ygl->upmode = value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
-    _Ygl->resolution_mode = value;
-    SetSaturnResolution(vdp2width, vdp2height);
+    if (_Ygl->resolution_mode != value) {
+       _Ygl->resolution_mode = value;
+       SetSaturnResolution(vdp2width, vdp2height);
+    }
     break;
   case VDP_SETTING_POLYGON_MODE:
     if (value == GPU_TESSERATION && _Ygl->polygonmode != GPU_TESSERATION) {

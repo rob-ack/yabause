@@ -580,14 +580,12 @@ typedef struct {
    u32* vdp1fb_buf_read[2];
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
-   GLuint original_depth;
 
    GLuint back_fbo;
    GLuint back_fbotex[2];
 
    GLuint screen_fbo;
    GLuint screen_fbotex[SPRITE];
-   GLuint screen_depth;
 
    GLuint window_fbo;
    GLuint window_fbotex[enBGMAX];
@@ -759,7 +757,6 @@ int Ygl_uniformWindow(void * p );
 int YglProgramInit();
 int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
-void Ygl_setNormalshader(YglProgram * prg);
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 
 int YglGenerateOriginalBuffer();

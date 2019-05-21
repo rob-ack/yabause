@@ -30,7 +30,7 @@ QStringList getCdDriveList();
 class UISettings : public QDialog, public Ui::UISettings
 {
 	Q_OBJECT
-	
+
 public:
 	UISettings(QList <translation_struct> *translations, QWidget* parent = 0 );
 
@@ -63,6 +63,8 @@ protected slots:
         void changeUpscaleMode(int id);
         void changeAspectRatio(int id);
         void changeScanLine(int id);
+				void changeMeshMode(int id);
+				void changePolygonMode(int id);
 };
 
 #endif // UISETTINGS_H

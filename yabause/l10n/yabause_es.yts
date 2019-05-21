@@ -16,12 +16,10 @@
 &Delete|&Borrar
 &Emulation|&Emulación
 &File|&Archivo
-&Frame Skip/Limiter|&Limitar/Saltar frames
 &Fullscreen|&Pantalla completa
 &Help|&Ayuda
 &Layer|&Capa
 &Load From File|&Cargar desde archivo
-&Log|&Registro
 &Master SH2|SH2 &Maestro
 &Memory Transfer|Transferir &memoria
 &OK|&Aceptar
@@ -179,6 +177,7 @@ Enable Bios Emulation|Habilitar Emulación de Bios
 Enable Code : %1 %2|Habilitar Código : %1 %2
 Enable Frame Skip/Limiter|Habilitar Limitador/Salto de frames
 Enable Multithreading|Habilitar multihilo
+Enable vertical synchronization|Activar sincronización vertical
 Enabled|Activado
 Enter new assembly code|Inserte el nuevo código ensamblador
 Enter New Value|Inserte el nuevo valor
@@ -204,6 +203,7 @@ Hex value(s)|Valor(es) Hexadecimal(es)
 Hide Menubar|Esconder barra de menú
 Hide Toolbar|Esconder barra de herramientas
 Information...|Información...
+Improved|Mejorado
 Inline Assembly|Ensamblado en línea
 Input|Entrada
 Internal Backup RAM|Backup de RAM interna
@@ -231,7 +231,6 @@ Left Stick Axis Throttle|Acelerar Eje Stick izq
 Left Stick Throttle Down|Decelerar Eje Stick izq						 
 Left trigger|Gatillo izquierdo
 Less than|Menor a
-Log|Registro
 Long|Long
 Long Write|Escribir LONG
 Long Write : %1 %2|Escribir LONG : %1 %2
@@ -244,6 +243,7 @@ Memory Editor|Editor de memoria
 Memory &Editor|&Editor de memoria
 Memory Search|Búsqueda en memoria
 Memory Transfer|Transferir memoria
+Mesh Mode :|Modo Mesh
 Middle|Medio
 Mission Stick|Stick Mando de avión
 Mission Stick Configuration|Configuración mando de avión														
@@ -280,6 +280,7 @@ Open&Tray|Abrir&Bandeja
 OpenGL size :|Tamaño OpenGL
 OpenGL Video Interface|Interfaz de video OpenGL
 Options|Opciones
+Original|Original
 Original (original resolution of the Saturn)|Original (resolución original de Saturn)
 Original aspect ratio|Ratio de aspecto original
 OSD Core|Núcleo OSD
@@ -413,6 +414,7 @@ VDP1 Command Info|Información de comandos del VDP1
 VDP1 Command List|Listado de comandos del VDP1
 VDP2|Vdp2
 VDP2Viewer Viewer|Visor VDP2
+Vertical synchronization|Sincronización vertical
 Video|Vídeo
 Video Core|Núcleo de Vídeo
 Video Driver|Driver de Vídeo

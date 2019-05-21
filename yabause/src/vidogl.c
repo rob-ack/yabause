@@ -167,9 +167,6 @@ static int vdp1_interlace = 0;
 int GlWidth = 320;
 int GlHeight = 224;
 
-int maxWidth = 320;
-int maxHeight = 224;
-
 int vdp1cor = 0;
 int vdp1cog = 0;
 int vdp1cob = 0;
@@ -3639,7 +3636,7 @@ void VIDOGLVdp1Draw()
 #define IS_LESS(A,V) ((A) < (V))
 #define IS_MORE(A,V) ((A) > (V))
 
-#define BORDER 0.5f
+#define BORDER 1.0f
 
 #define CW (1)
 #define CCW (-1)
@@ -3828,7 +3825,7 @@ printf("[(%f %f)] [(%f %f)] [(%f %f)] [(%f %f)]\n", nx[0], ny[0], nx[1], ny[1], 
   if ((isQuad || isTriangle) && distorted) {
     int disp = 0;
     int isSquare = 1;
-
+//Quad tomb decone ici
     float dx[4];
     float dy[4];
     float entrant[4] = {1.0f, 1.0f, 1.0f, 1.0f};
@@ -3993,8 +3990,12 @@ void VIDOGLVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
 
-  if ((cmd.CMDXA & 0x400)) cmd.CMDXA |= 0xFC00; else cmd.CMDXA &= ~(0xFC00);
-  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (badgeometry == 1) return;
 
   x = cmd.CMDXA;
   y = cmd.CMDYA;
@@ -4133,10 +4134,19 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   sprite.dst = 0;
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
 
-  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
-  if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
-  if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
-  if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (((cmd.CMDCTRL & 0xF00) >> 8) == 0) {
+    if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+    if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  } else {
+    if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+    if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  }
+  if (badgeometry == 1) return;
 
   x = cmd.CMDXA + Vdp1Regs->localX;
   y = cmd.CMDYA + Vdp1Regs->localY;
@@ -4331,8 +4341,19 @@ void VIDOGLVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
 //////////////////////////////////////////////////////////////////////////////
 int isSquare(float *vert) {
-  if ((vert[0] == vert[2]) && (vert[4] == vert[6]) && (vert[1] == vert[7]) && (vert[3] == vert[5])) return 1;
-  if ((vert[0] == vert[6]) && (vert[2] == vert[4]) && (vert[1] == vert[3]) && (vert[5] == vert[7])) return 1;
+  float vec1x = fabs(vert[6] - vert[0]);
+  float vec1y = fabs(vert[3] - vert[1]);
+  float vec2x = fabs(vert[4] - vert[2]);
+  float vec2y = fabs(vert[5] - vert[7]);
+  if ((vec1x == 0) && (vec2x == 0) && (vec1y == 0) && (vec2y == 0)) return 1;
+  return 0;
+}
+
+int isTriangle(float *vert) {
+  if ((vert[0] == vert[2]) && (vert[1] == vert[3])) return 1;
+  if ((vert[2] == vert[4]) && (vert[3] == vert[5])) return 1;
+  if ((vert[4] == vert[6]) && (vert[5] == vert[7])) return 1;
+  if ((vert[6] == vert[0]) && (vert[7] == vert[1])) return 1;
   return 0;
 }
 
@@ -4416,6 +4437,8 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int i;
   float col[4 * 4];
   float vert[8];
+  int square = 0;
+  int triangle = 0;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -4438,16 +4461,19 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   sprite.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
-  if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
-  if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
-  if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
+  int badgeometry = 1;
 
-  if ((cmd.CMDXA & 0x400)) cmd.CMDXA |= 0xFC00; else cmd.CMDXA &= ~(0xFC00);
-  if ((cmd.CMDXC & 0x400)) cmd.CMDXC |= 0xFC00; else cmd.CMDXC &= ~(0xFC00);
-  if ((cmd.CMDXB & 0x400)) cmd.CMDXB |= 0xFC00; else cmd.CMDXB &= ~(0xFC00);
-  if ((cmd.CMDXD & 0x400)) cmd.CMDXD |= 0xFC00; else cmd.CMDXD &= ~(0xFC00);
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXD+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXD + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYD+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYD + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
 
+  if (badgeometry == 1) return;
+  
   vert[0] = (float)(s16)cmd.CMDXA;
   vert[1] = (float)(s16)cmd.CMDYA;
   vert[2] = (float)(s16)cmd.CMDXB;
@@ -4457,9 +4483,11 @@ void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  sprite.dst = !isSquare(vert);
+  square = isSquare(vert);
+  triangle = isTriangle(vert);
+  sprite.dst = !square && !triangle;
 
-  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
+  expandVertices(vert, sprite.vertices, !square);
 
   fixVerticesSize(sprite.vertices);
 
@@ -4667,10 +4695,19 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
-  if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);
-  if ((cmd.CMDYB & 0x400)) cmd.CMDYB |= 0xFC00; else cmd.CMDYB &= ~(0xFC00);
-  if ((cmd.CMDYD & 0x400)) cmd.CMDYD |= 0xFC00; else cmd.CMDYD &= ~(0xFC00);
+  int badgeometry = 1;
+
+  if ((((cmd.CMDXA+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXA + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYA+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYA + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXB+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXB + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYB+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYB + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXC+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXC + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYC+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYC + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDXD+Vdp1Regs->localX) & 0xFC00) == 0x0) || (((cmd.CMDXD + Vdp1Regs->localX) & 0xFC00) == 0xFC00)) badgeometry = 0;
+  if ((((cmd.CMDYD+Vdp1Regs->localY) & 0xFC00) == 0x0) || (((cmd.CMDYD + Vdp1Regs->localY) & 0xFC00) == 0xFC00)) badgeometry = 0;
+
+  if (badgeometry == 1) return;
+
 
   sprite.blendmode = VDP1_COLOR_CL_REPLACE;
   sprite.dst = 0;
@@ -5208,9 +5245,6 @@ void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->localX = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xC);
   Vdp1Regs->localY = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xE);
-
-  if ((Vdp1Regs->localX & 0x400)) Vdp1Regs->localX |= 0xFC00; else Vdp1Regs->localX &= ~(0xFC00);
-  if ((Vdp1Regs->localY & 0x400)) Vdp1Regs->localY |= 0xFC00; else Vdp1Regs->localY &= ~(0xFC00);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -6398,6 +6432,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->cob = 0;
   info->specialcolorfunction = 0;
   info->enable = 0;
+  info->RotWin = NULL;
+  info->RotWinMode = 0;
 
   info->enable = ((varVdp2Regs->BGON & 0x10)!=0);
   if (!info->enable) {
@@ -6537,10 +6573,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       // RPW1A( inside = 0, outside = 1 )
       info->RotWinMode = ((varVdp2Regs->WCTLD >> 2) & 0x01);
       // Bad Setting Both Window is disabled
-    }
-    else {
-      info->RotWin = _Ygl->win[0];
-      info->RotWinMode = (varVdp2Regs->WCTLD & 0x01);
     }
 
     if (rgb->paraA.coefenab == 0 && rgb->paraB.coefenab == 0)
@@ -7340,6 +7372,9 @@ void VIDOGLSetSettingValueMode(int type, int value) {
   break;
   case VDP_SETTING_SCANLINE:
     _Ygl->scanline = value;
+  break;
+  case VDP_SETTING_MESH_MODE:
+    _Ygl->meshmode = value;
   break;
   default:
   return;

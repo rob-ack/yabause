@@ -1275,7 +1275,7 @@ bool retro_load_game_common()
 #endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
-   yinit.vsyncon                 = 1;
+   yinit.vsyncon                 = 0;
    yinit.clocksync               = 0;
    yinit.basetime                = 0;
    yinit.usethreads              = 1;

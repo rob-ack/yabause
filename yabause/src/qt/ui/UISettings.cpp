@@ -43,7 +43,7 @@ struct Item
 {
 	Item( const QString& i, const QString& n, bool e=true, bool s=true, bool z=false, bool p=false)
 	{ id = i; Name = n; enableFlag = e; saveFlag = s; ipFlag = z; pathFlag = p;}
-	
+
 	QString id;
 	QString Name;
 	bool enableFlag;
@@ -110,12 +110,16 @@ const Items mScanLine = Items()
 	<< Item("0", "Scanline off")
 	<< Item("1", "Scanline on");
 
+const Items mMeshMode = Items()
+	<< Item("0", "Original")
+	<< Item("1", "Improved");
+
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
 {
 	// setup dialog
 	setupUi( this );
-	
+
 	QString ipNum("(?:[0-1]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])");
 	leCartridgeModemIP->setValidator(new QRegExpValidator(QRegExp("^" + ipNum + "\\." + ipNum + "\\." + ipNum + "\\." + ipNum + "$"), leCartridgeModemIP));
 	leCartridgeModemPort->setValidator(new QIntValidator(1, 65535, leCartridgeModemPort));
@@ -124,7 +128,7 @@ UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	pmPort1->loadSettings();
 	pmPort2->setPort( 2 );
 	pmPort2->loadSettings();
-	
+
 	if ( p && !p->isFullScreen() )
 	{
 		setWindowFlags( Qt::Sheet );
@@ -147,13 +151,13 @@ UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 
 	// load settings
 	loadSettings();
-	
+
 	// connections
 	foreach ( QToolButton* tb, findChildren<QToolButton*>() )
 	{
 		connect( tb, SIGNAL( clicked() ), this, SLOT( tbBrowse_clicked() ) );
 	}
-	
+
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
 }
@@ -238,7 +242,7 @@ void UISettings::tbBrowse_clicked()
 {
 	// get toolbutton sender
 	QToolButton* tb = qobject_cast<QToolButton*>( sender() );
-	
+
 	if ( tb == tbBios )
 		requestFile( QtYabause::translate( "Choose a bios file" ), leBios );
 	else if ( tb == tbCdRom )
@@ -264,7 +268,7 @@ void UISettings::tbBrowse_clicked()
 			requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
 		  else
 			requestFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );
-                }		    
+                }
 	}
 	else if ( tb == tbMemory )
 		requestNewFile( QtYabause::translate( "Choose a memory file" ), leMemory );
@@ -276,9 +280,9 @@ void UISettings::on_cbInput_currentIndexChanged( int id )
 {
 	PerInterface_struct* core = QtYabause::getPERCore( cbInput->itemData( id ).toInt() );
         core->Init();
-	
+
 	Q_ASSERT( core );
-	
+
 	pmPort1->setCore( core );
 	pmPort2->setCore( core );
 }
@@ -325,6 +329,11 @@ void UISettings::changeScanLine(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, (mScanLine.at(id).id).toInt());
 }
 
+void UISettings::changeMeshMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, (mMeshMode.at(id).id).toInt());
+}
+
 void UISettings::changeResolution(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, (mResolutionMode.at(id).id).toInt());
@@ -340,6 +349,10 @@ void UISettings::changeUpscaleMode(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, (mUpscaleFilterMode.at(id).id).toInt());
 }
 
+void UISettings::changePolygonMode(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, (mPolygonGenerationMode.at(id).id).toInt());
+}
 
 void UISettings::on_cbCartridge_currentIndexChanged( int id )
 {
@@ -366,7 +379,7 @@ void UISettings::loadCores()
 	// CD Drivers
 	for ( int i = 0; CDCoreList[i] != NULL; i++ )
 		cbCdRom->addItem( QtYabause::translate( CDCoreList[i]->Name ), CDCoreList[i]->id );
-	
+
 	// VDI Drivers
 	for ( int i = 0; VIDCoreList[i] != NULL; i++ )
 		cbVideoCore->addItem( QtYabause::translate( VIDCoreList[i]->Name ), VIDCoreList[i]->id );
@@ -396,6 +409,8 @@ void UISettings::loadCores()
 	foreach(const Item& it, mPolygonGenerationMode)
 		cbPolygonGeneration->addItem(QtYabause::translate(it.Name), it.id);
 
+		connect(cbPolygonGeneration, SIGNAL(currentIndexChanged(int)), this, SLOT(changePolygonMode(int)));
+
   // Resolution
   foreach(const Item& it, mResolutionMode)
     cbResolution->addItem(QtYabause::translate(it.Name), it.id);
@@ -412,23 +427,27 @@ void UISettings::loadCores()
 
   connect(cbScanlineFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeScanLine(int)));
 
+	foreach(const Item& it, mMeshMode)
+		cbMeshModeFilter->addItem(QtYabause::translate(it.Name), it.id);
+
+	connect(cbMeshModeFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeMeshMode(int)));
 
 	// SND Drivers
 	for ( int i = 0; SNDCoreList[i] != NULL; i++ )
 		cbSoundCore->addItem( QtYabause::translate( SNDCoreList[i]->Name ), SNDCoreList[i]->id );
-	
+
 	// Cartridge Types
 	foreach ( const Item& it, mCartridgeTypes )
 		cbCartridge->addItem( QtYabause::translate( it.Name ), it.id );
-	
+
 	// Input Drivers
 	for ( int i = 0; PERCoreList[i] != NULL; i++ )
 		cbInput->addItem( QtYabause::translate( PERCoreList[i]->Name ), PERCoreList[i]->id );
-	
+
 	// Regions
 	foreach ( const Item& it, mRegions )
 		cbRegion->addItem( QtYabause::translate( it.Name ), it.id );
-	
+
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );
@@ -449,7 +468,7 @@ void UISettings::loadTranslations()
 }
 
 void UISettings::loadShortcuts()
-{	
+{
 	QList<QAction *> actions = parent()->findChildren<QAction *>();
 	foreach ( QAction* action, actions )
 	{
@@ -482,7 +501,7 @@ void UISettings::loadShortcuts()
 
 void UISettings::applyShortcuts()
 {
-	for (int row = 0; row < (int)actionsList.size(); ++row) 
+	for (int row = 0; row < (int)actionsList.size(); ++row)
 	{
 		QAction *action = actionsList[row];
 		action->setShortcut(QKeySequence(twShortcuts->item(row, 1)->text()));
@@ -510,21 +529,21 @@ void UISettings::loadSettings()
 	else
 		cbTranslation->setCurrentIndex(0);
 #endif
-	cbEnableFrameSkipLimiter->setChecked( s->value( "General/EnableFrameSkipLimiter" ).toBool() );
+	cbEnableVSync->setChecked( s->value( "General/EnableVSync", 1 ).toBool() );
 	cbShowFPS->setChecked( s->value( "General/ShowFPS" ).toBool() );
 	cbAutostart->setChecked( s->value( "autostart" ).toBool() );
 
 	bool clocksync = s->value( "General/ClockSync" ).toBool();
-	cbClockSync->setChecked( clocksync );	 
+	cbClockSync->setChecked( clocksync );
 	dteBaseTime->setVisible( clocksync );
 
 	QString dt = s->value( "General/FixedBaseTime" ).toString();
-	if (!dt.isEmpty())		
+	if (!dt.isEmpty())
 		dteBaseTime->setDateTime( QDateTime::fromString( dt,Qt::ISODate) );
 	else
 		dteBaseTime->setDateTime( QDateTime(QDate(1998, 1, 1), QTime(12, 0, 0)) );
 
-	int numThreads = QThread::idealThreadCount();	
+	int numThreads = QThread::idealThreadCount();
 	cbEnableMultiThreading->setChecked(s->value( "General/EnableMultiThreading", numThreads <= 1 ? false : true ).toBool());
 	sbNumberOfThreads->setValue(s->value( "General/NumThreads", numThreads < 0 ? 1 : numThreads ).toInt());
 
@@ -542,6 +561,7 @@ void UISettings::loadSettings()
   cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
+	cbMeshModeFilter->setCurrentIndex(cbMeshModeFilter->findData(s->value("Video/MeshMode", mMeshMode.at(0).id).toInt()));
 
 	// sound
 	cbSoundCore->setCurrentIndex( cbSoundCore->findData( s->value( "Sound/SoundCore", QtYabause::defaultSNDCore().id ).toInt() ) );
@@ -555,12 +575,12 @@ void UISettings::loadSettings()
 	leMemory->setText( s->value( "Memory/Path", getDataDirPath().append( "/bkram.bin" ) ).toString() );
 	leMpegROM->setText( s->value( "MpegROM/Path" ).toString() );
   checkBox_extended_internal_backup->setChecked(s->value("Memory/ExtendMemory").toBool());
-  
-	
+
+
 	// input
 	cbInput->setCurrentIndex( cbInput->findData( s->value( "Input/PerCore", QtYabause::defaultPERCore().id ).toInt() ) );
 	sGunMouseSensitivity->setValue(s->value( "Input/GunMouseSensitivity", 100).toInt() );
-	
+
 	// advanced
 	cbRegion->setCurrentIndex( cbRegion->findData( s->value( "Advanced/Region", mRegions.at( 0 ).id ).toString() ) );
 	cbSH2Interpreter->setCurrentIndex( cbSH2Interpreter->findData( s->value( "Advanced/SH2Interpreter", QtYabause::defaultSH2Core().id ).toInt() ) );
@@ -577,10 +597,6 @@ void UISettings::loadSettings()
 	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
 	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
 	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
-
-	bgShowLogWindow->setId( rbLogWindowNever, 0 );
-	bgShowLogWindow->setId( rbLogWindowMessage, 1 );
-	bgShowLogWindow->button( s->value( "View/LogWindow", 0 ).toInt() )->setChecked( true );
 }
 
 void UISettings::saveSettings()
@@ -602,7 +618,7 @@ void UISettings::saveSettings()
 #ifdef HAVE_LIBMINI18N
 	s->setValue( "General/Translation", cbTranslation->itemData(cbTranslation->currentIndex()).toString() );
 #endif
-	s->setValue( "General/EnableFrameSkipLimiter", cbEnableFrameSkipLimiter->isChecked() );
+	s->setValue( "General/EnableVSync", cbEnableVSync->isChecked() );
 	s->setValue( "General/ShowFPS", cbShowFPS->isChecked() );
 	s->setValue( "autostart", cbAutostart->isChecked() );
 
@@ -618,6 +634,7 @@ void UISettings::saveSettings()
 	// Save new version of keys
         s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
         s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
+				s->setValue("Video/MeshMode", cbMeshModeFilter->itemData(cbMeshModeFilter->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
@@ -645,9 +662,9 @@ void UISettings::saveSettings()
   s->setValue("Memory/ExtendMemory", checkBox_extended_internal_backup->isChecked());
 
 	// input
-	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );	
+	s->setValue( "Input/PerCore", cbInput->itemData( cbInput->currentIndex() ).toInt() );
 	s->setValue( "Input/GunMouseSensitivity", sGunMouseSensitivity->value() );
-	
+
 	// advanced
 	s->setValue( "Advanced/Region", cbRegion->itemData( cbRegion->currentIndex() ).toString() );
 	s->setValue( "Advanced/SH2Interpreter", cbSH2Interpreter->itemData( cbSH2Interpreter->currentIndex() ).toInt() );
@@ -657,7 +674,6 @@ void UISettings::saveSettings()
 	// view
 	s->setValue( "View/Menubar", bgShowMenubar->checkedId() );
 	s->setValue( "View/Toolbar", bgShowToolbar->checkedId() );
-	s->setValue( "View/LogWindow", bgShowLogWindow->checkedId() );
 
 	// shortcuts
 	applyShortcuts();

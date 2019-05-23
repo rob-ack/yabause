@@ -1136,6 +1136,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 
 size_t retro_serialize_size(void)
 {
+   // Disabling savestates until they are safe
+   return 0;
    void *buffer;
    size_t size;
 
@@ -1150,6 +1152,8 @@ size_t retro_serialize_size(void)
 
 bool retro_serialize(void *data, size_t size)
 {
+   // Disabling savestates until they are safe
+   return true;
    void *buffer;
    size_t out_size;
 
@@ -1163,6 +1167,8 @@ bool retro_serialize(void *data, size_t size)
 
 bool retro_unserialize(const void *data, size_t size)
 {
+   // Disabling savestates until they are safe
+   return true;
    int error = YabLoadStateBuffer(data, size);
    retro_set_resolution();
 

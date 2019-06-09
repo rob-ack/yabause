@@ -52,6 +52,14 @@ static void waitVdp1End(int id);
 static void executeTMVDP1(int in, int out);
 static void releaseVDP1FB(int i);
 
+static int YglGenerateBackBuffer();
+static int YglGenerateWindowBuffer();
+static int YglGenerateWindowCCBuffer();
+static int YglGenerateScreenBuffer();
+
+
+static void releaseVDP1DrawingFBMemRead(int id);
+
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
 u32 * YglGetColorRamPointer();
@@ -63,6 +71,8 @@ int YglGenFrameBuffer();
 #ifdef VDP1_TEXTURE_ASYNC
 extern int waitVdp1Textures( int sync);
 #endif
+
+u32* getVdp1DrawingFBMemRead(int id);
 
 #define ATLAS_BIAS (0.025f)
 
@@ -746,8 +756,15 @@ u32* getVdp1DrawingFBMemWrite(int id) {
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;
-  executeTMVDP1(id, id);
+  u32 tmp[512*256];
   YglGenFrameBuffer();
+  releaseVDP1DrawingFBMemRead(id);
+  executeTMVDP1(id, id);
+  if (_Ygl->vdp1fb_buf_read[id] == NULL) {
+    _Ygl->vdp1fb_buf_read[id] =  getVdp1DrawingFBMemRead(id);
+  }
+  memcpy((u8*)tmp, _Ygl->vdp1fb_buf_read[id], 512*256*4);
+  releaseVDP1DrawingFBMemRead(id);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
@@ -757,6 +774,7 @@ u32* getVdp1DrawingFBMemWrite(int id) {
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id]);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[id]);
   fbptr = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 0x40000*2, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT );
+  memcpy(fbptr, tmp, 512*256*4);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   return fbptr;
 }
@@ -765,11 +783,13 @@ u32* getVdp1DrawingFBMemRead(int id) {
   //Ici le read doit etre different du write. Il faut faire un pack dans le cas du read... et un glReadPixel
   u32* fbptr = NULL;
   GLuint error;
+  float col[4] = {0.0f, 0.0f, 0.0f, 0.0f};
   executeTMVDP1(id, id);
   YglGenFrameBuffer();
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1AccessFB);
   glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _Ygl->vdp1AccessTex[id], 0);
   glViewport(0,0,_Ygl->rwidth,_Ygl->rheight);
+  glClearBufferfv(GL_COLOR, 0, col);
   YglBlitVDP1(_Ygl->vdp1FrameBuff[id*2], _Ygl->width, _Ygl->height, 0);
   //glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
@@ -781,7 +801,7 @@ u32* getVdp1DrawingFBMemRead(int id) {
   return fbptr;
 }
 
-void releaseVDP1DrawingFBMemRead(int id) {
+static void releaseVDP1DrawingFBMemRead(int id) {
   if (_Ygl->vdp1fb_buf_read[id] == NULL) return;
   glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1_pbo[id]);
   glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
@@ -790,13 +810,14 @@ void releaseVDP1DrawingFBMemRead(int id) {
 }
 
 u32 COLOR16TO24(u16 temp) {
-  if ((temp>>15)&0x1 == 1)
-    return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9);
+  if ((temp & 0x8000) != 0)
+    return ((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9| 0x10000; //Blue LSB is used for MSB bit.  else
   else
-    return (temp & 0x7FFF);
+    return ((u32)temp & 0x7FFF);
 }
 
 u16 COLOR24TO16(u32 temp) {
+  if (((temp >> 31)&0x1) == 0) return 0x0000;
   if (((temp >> 30)&0x1) == 0)
     return 0x8000 | ((u32)(temp >> 3)& 0x1F) | ((u32)(temp >> 6)& 0x3E0) | ((u32)(temp >> 9)& 0x7C00);
   else
@@ -808,9 +829,9 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
   int rgb = !((val>>15)&0x1);
   u16 full = 0;
   if (_Ygl->vdp1fb_buf[_Ygl->drawframe] == NULL) {
-    releaseVDP1DrawingFBMemRead(_Ygl->drawframe);
     _Ygl->vdp1fb_buf[_Ygl->drawframe] =  getVdp1DrawingFBMemWrite(_Ygl->drawframe);
   }
+
   switch (type)
   {
   case 0:
@@ -838,6 +859,7 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
 }
 
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
+  //releaseVDP1DrawingFBMemRead(_Ygl->drawframe);
     if (_Ygl->vdp1fb_buf_read[_Ygl->drawframe] == NULL) {
       if(_Ygl->vdp1fb_buf[_Ygl->drawframe] != NULL) {
         releaseVDP1FB(_Ygl->drawframe);
@@ -845,20 +867,61 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       _Ygl->vdp1IsNotEmpty[_Ygl->drawframe] = 0;
       _Ygl->vdp1fb_buf_read[_Ygl->drawframe] =  getVdp1DrawingFBMemRead(_Ygl->drawframe);
     }
-    switch (type)
-    {
-    case 0:
-      *(u8*)out = 0x0;
-      break;
-    case 1:
-      *(u16*)out = COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2));
-      break;
-    case 2:
-      *(u32*)out = (COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2+4)));
-      break;
-    default:
-      break;
+    u32 x = 0;
+    u32 y = 0;
+    int tvmode = (Vdp1Regs->TVMR & 0x7);
+    switch( tvmode ) {
+      case 0: // 16bit 512x256
+      case 2: // 16bit 512x256
+      case 4: // 16bit 512x256
+        y = (addr >> 10)&0xFF;
+        x = (addr & 0x3FF) >> 1;
+        break;
+      case 1: // 8bit 1024x256
+        y = (addr >> 10) & 0xFF;
+        x = addr & 0x3FF;
+        break;
+      case 3: // 8bit 512x512
+        y = (addr >> 9) & 0x1FF;
+        x = addr & 0x1FF;
+        break;
+      defalut:
+        y = 0;
+        x = 0;
+        break;
     }
+    if ((x<=_Ygl->rwidth) && (y<=_Ygl->rheight)) {
+      switch (type)
+      {
+      case 0:
+        *(u8*)out = 0x0;
+        break;
+      case 1:
+        *(u16*)out = COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2));
+        break;
+      case 2:
+        *(u32*)out = (COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2))<<16)|(COLOR24TO16(T1ReadLong((u8*)_Ygl->vdp1fb_buf_read[_Ygl->drawframe], addr*2+4)));
+        break;
+      default:
+        break;
+      }
+    } else {
+      switch (type)
+      {
+      case 0:
+        *(u8*)out = T1ReadByte((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr);
+        break;
+      case 1:
+        *(u16*)out = T1ReadWord((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr);
+        break;
+      case 2:
+        *(u32*)out = T1ReadLong((u8*)_Ygl->vdp1fb_exactbuf[_Ygl->drawframe], addr);
+        break;
+      default:
+        break;
+      }
+    }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1161,7 +1224,7 @@ int YglGenerateScreenBuffer(){
 }
 
 //////////////////////////////////////////////////////////////////////////////
-int YglGenerateBackBuffer(){
+static int YglGenerateBackBuffer(){
 
   int status;
   GLuint error;
@@ -1580,6 +1643,7 @@ static int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * out
 
 void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm){
     _Ygl->needVdp1Render = 1;
+    if ((Vdp1Regs->TVMR & 0x1) == 1) colors = NULL;
     if (_Ygl->polygonmode == GPU_TESSERATION) {
       YglQuadGrowShading_tesselation_in(input, NULL, colors, cache, 0, tm);
     }
@@ -1598,6 +1662,7 @@ void YglCacheQuadGrowShading(YglSprite * input, float * colors, YglCache * cache
 
 int YglQuadGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm){
   _Ygl->needVdp1Render = 1;
+  if ((Vdp1Regs->TVMR & 0x1) == 1) colors = NULL;
   if (_Ygl->polygonmode == GPU_TESSERATION) {
     return YglQuadGrowShading_tesselation_in(input, output, colors, c, 1, tm);
   }
@@ -2059,6 +2124,9 @@ int YglQuadGrowShading_tesselation_in(YglSprite * input, YglTexture * output, fl
     case VDP1_COLOR_CL_GROW_HALF_TRANSPARENT:
       prg = PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS;
     break;
+    case VDP1_COLOR_CL_HALF_LUMINANCE:
+      prg = PG_VDP1_HALF_LUMINANCE_TESS;
+      break;
     case VDP1_COLOR_CL_MESH:
       if (_Ygl->meshmode == ORIGINAL_MESH)
         prg = PG_VDP1_MESH_TESS;
@@ -2567,7 +2635,6 @@ void YglEraseWriteVDP1(void) {
   if (_Ygl->vdp1FrameBuff[0] == 0) return;
 
   memset(_Ygl->vdp1fb_exactbuf[_Ygl->readframe], 0x0, 512*704*2);
-
   releaseVDP1DrawingFBMemRead(_Ygl->readframe);
 
   if(_Ygl->vdp1fb_buf[_Ygl->readframe] != NULL) {
@@ -2686,6 +2753,10 @@ static int renderVDP1Level( YglLevel * level, int j, int* cprg, YglMatrix *mat, 
     if( level->prg[j].cleanupUniform ){
       level->prg[j].cleanupUniform((void*)&level->prg[j], YglTM_vdp1[_Ygl->drawframe]);
     }
+  _Ygl->min_fb_x = 1024;
+  _Ygl->max_fb_x = 0;
+  _Ygl->min_fb_y = 1024;
+  _Ygl->max_fb_y = 0;
     return ret;
 }
 
@@ -3117,6 +3188,7 @@ void YglUpdateVdp2Reg() {
 
 SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs) {
   SpriteMode ret = NONE;
+  if ((Vdp1Regs->TVMR & 0x1) == 1) return NONE;
   if (varVdp2Regs->CCCTL & (1<<6)) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;
@@ -3139,13 +3211,31 @@ void YglSetClearColor(float r, float g, float b){
   _Ygl->clear[3] = (float)(0xF8|NONE)/255.0f;
 }
 
+static void YglSetVDP1FB(int i){
+  GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
+  if (_Ygl->vdp1IsNotEmpty[i] != 0) {
+    _Ygl->vdp1On[i] = 1;
+    YglGenFrameBuffer();
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
+    glDrawBuffers(2, &DrawBuffers[i*2]);
+    releaseVDP1FB(i);
+    releaseVDP1DrawingFBMemRead(i);
+    glViewport(0,0, _Ygl->width, _Ygl->height);
+    YglBlitVDP1(_Ygl->vdp1AccessTex[i], _Ygl->rwidth, _Ygl->rheight, 1);
+    // clean up
+    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+    _Ygl->vdp1IsNotEmpty[i] = 0;
+  }
+}
+
 static void releaseVDP1FB(int i) {
+  //ne faire que la mise a jour de ce qui est ecrit.
+  //Ne pas ecrire au dela de l'adresse...
+  //Faire un read du FB avant un write pour recuperer le contenu.
   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   if (_Ygl->vdp1FrameBuff[i*2] != 0) {
     if (_Ygl->vdp1fb_buf[i] != NULL) {
       glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-      glDrawBuffers(2, &DrawBuffers[i*2]);
-      glViewport(0, 0, _Ygl->width, _Ygl->height);
       glActiveTexture(GL_TEXTURE0);
       glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1AccessTex[i]);
       glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp1_pbo[i]);
@@ -3153,27 +3243,15 @@ static void releaseVDP1FB(int i) {
       glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 512, 256, GL_RGBA, GL_UNSIGNED_BYTE, 0);
       glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
       _Ygl->vdp1fb_buf[i] = NULL;
-      _Ygl->vdp1IsNotEmpty[i] = 0;
+      YglSetVDP1FB(i);
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   }
 }
 
 void YglUpdateVDP1FB(void) {
-   GLenum DrawBuffers[4]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3};
   waitVdp1End(_Ygl->readframe);
-  if (_Ygl->vdp1IsNotEmpty[_Ygl->readframe] != 0) {
-    _Ygl->vdp1On[_Ygl->readframe] = 1;
-    YglGenFrameBuffer();
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-    glDrawBuffers(2, &DrawBuffers[_Ygl->readframe*2]);
-    releaseVDP1FB(_Ygl->readframe);
-    releaseVDP1DrawingFBMemRead(_Ygl->readframe);
-    glViewport(0,0, _Ygl->width, _Ygl->height);
-    YglBlitVDP1(_Ygl->vdp1AccessTex[_Ygl->readframe], _Ygl->rwidth, _Ygl->rheight, 0);
-    // clean up
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
-  }
+  YglSetVDP1FB(_Ygl->readframe);
   releaseVDP1DrawingFBMemRead(_Ygl->readframe);
 }
 
@@ -3318,7 +3396,9 @@ int setupColorMode(Vdp2 *varVdp2Regs, int layer) {
 
 SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer) {
   SpriteMode ret = NONE;
+
   const int enableBit[7] = {0, 1, 2, 3, 4, 0, 6};
+  if ((layer == 6) && ((Vdp1Regs->TVMR & 0x1) == 1)) return NONE;
   if (varVdp2Regs->CCCTL & (1<<enableBit[layer])) {
     if (((varVdp2Regs->CCCTL>>8)&0x1) == 0x1) {
       ret = AS_IS;

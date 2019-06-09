@@ -409,7 +409,7 @@ static void FASTCALL Vdp1ReadPriority(vdp1cmd_struct *cmd, int * priority, int *
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs);
 
 INLINE u32 VDP1COLOR16TO24(u16 temp) {
-  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7800) << 9| ((u32)temp & 0x8000) << 1); //Blue LSB is used for MSB bit.
+  return (((u32)temp & 0x1F) << 3 | ((u32)temp & 0x3E0) << 6 | ((u32)temp & 0x7C00) << 9| ((u32)temp & 0x8000) << 1); //Blue LSB is used for MSB bit.
 }
 
 INLINE u32 VDP1MSB(u16 temp) {
@@ -4345,13 +4345,11 @@ int isSquare(float *vert) {
   float vec1y = fabs(vert[3] - vert[1]);
   float vec2x = fabs(vert[4] - vert[2]);
   float vec2y = fabs(vert[5] - vert[7]);
-  if (_Ygl->polygonmode != PERSPECTIVE_CORRECTION) return 1;
   if ((vec1x == 0) && (vec2x == 0) && (vec1y == 0) && (vec2y == 0)) return 1;
   return 0;
 }
 
 int isTriangle(float *vert) {
-  if (_Ygl->polygonmode != PERSPECTIVE_CORRECTION) return 1;
   if ((vert[0] == vert[2]) && (vert[1] == vert[3])) return 1;
   if ((vert[2] == vert[4]) && (vert[3] == vert[5])) return 1;
   if ((vert[4] == vert[6]) && (vert[5] == vert[7])) return 1;
@@ -4384,7 +4382,7 @@ void fixVerticesSize(float *vert) {
     }
   }
 
-  if (square) {
+  //if (square) {
     float minx;
     float miny;
     int lt_index;
@@ -4424,7 +4422,7 @@ void fixVerticesSize(float *vert) {
         vert[(i << 1) + 1] += ny;
       }
     }
-  }
+  //}
 }
 
 void VIDOGLVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -4630,7 +4628,7 @@ static void  makeLinePolygon(s16 *v1, s16 *v2, float *outv) {
   ey = ny * THICK;
 
   // offset
-  offset = 0.0f;
+  offset = THICK;
 
   // triangle
   outv[0] = v1[0] - ex - dx + offset;
@@ -4723,8 +4721,8 @@ void VIDOGLVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vert[6] = (float)(s16)cmd.CMDXD;
   vert[7] = (float)(s16)cmd.CMDYD;
 
-  expandVertices(vert, sprite.vertices, ((cmd.CMDPMOD>>12)&0x1)==0);
-
+  //expandVertices(vert, sprite.vertices, !isSquare(vert));
+  memcpy(sprite.vertices, vert, sizeof(float)*8);
   fixVerticesSize(sprite.vertices);
 
   for (int i = 0; i<4; i++) {
@@ -5100,6 +5098,11 @@ void VIDOGLVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   v[1] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x0E));
   v[2] = Vdp1Regs->localX + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x10));
   v[3] = Vdp1Regs->localY + (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x12));
+
+  if ((v[0] == v[2]) && (v[1] == v[3])) {
+    v[2] += 1;
+    v[3] += 1;
+  }
 
   color = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x6);
   CMDPMOD = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x4);

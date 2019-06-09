@@ -1211,6 +1211,7 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "in vec4 v_texcoord; \n"
       "uniform sampler2D s_texture;  \n"
       "out vec4 fragColor; \n"
+      "out vec4 fragColorAttr; \n"
       "void main()   \n"
       "{  \n"
       "  ivec2 addr = ivec2(vec2(textureSize(s_texture, 0)) * v_texcoord.st / v_texcoord.q); \n"
@@ -1219,10 +1220,12 @@ const GLchar Yglprg_vpd1_half_luminance_f[] =
       "  fragColor.r = spriteColor.r * 0.5;\n "
       "  fragColor.g = spriteColor.g * 0.5;\n "
       "  fragColor.b = spriteColor.b * 0.5;\n "
+      "  fragColorAttr = vec4(0.0);\n"
       "  fragColor.a = spriteColor.a;\n "
       "}  \n";
 const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
 static YglVdp1CommonParam half_luminance = { 0 };
+static YglVdp1CommonParam half_luminance_tess = { 0 };
 
 
 /*------------------------------------------------------------------------------------
@@ -2576,6 +2579,19 @@ int YglTesserationProgramInit()
     Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS], &id_ght_tess);
 
     //---------------------------------------------------------------------------------------------------------
+    YGLLOG("PG_VDP1_HALF_LUMINANCE_TESS\n");
+    if (YglInitShader(PG_VDP1_HALF_LUMINANCE_TESS,
+      pYglprg_vdp1_gouraudshading_tess_v,
+      pYglprg_vdp1_half_luminance_f,
+      1,
+      pYglprg_vdp1_gouraudshading_tess_c,
+      pYglprg_vdp1_gouraudshading_tess_e,
+      pYglprg_vdp1_gouraudshading_tess_g) != 0)
+      return -1;
+
+    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], &half_luminance_tess);
+
+    //---------------------------------------------------------------------------------------------------------
     YGLLOG("PG_VDP1_SHADOW_TESS\n");
     if (YglInitShader(PG_VDP1_SHADOW_TESS,
       pYglprg_vdp1_gouraudshading_tess_v,
@@ -2847,6 +2863,17 @@ int YglProgramChange( YglLevel * level, int prgid )
       current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_mvpMatrix");
       current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_texMatrix");
       current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE], (const GLchar *)"s_texture");
+   }
+   else if( prgid == PG_VDP1_HALF_LUMINANCE_TESS )
+   {
+      current->setupUniform    = Ygl_uniformVdp1CommonParam;
+      current->cleanupUniform  = Ygl_cleanupVdp1CommonParam;
+      level->prg[level->prgcurrent].ids = &half_luminance_tess;
+      current->vertexp = 0;
+      current->texcoordp = 1;
+      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_mvpMatrix");
+      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_texMatrix");
+      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], (const GLchar *)"s_texture");
    }
    else if (prgid == PG_VDP1_MESH_TESS)
    {
@@ -3383,7 +3410,8 @@ int YglBlitSimple(int texture, int blend) {
 
 
 //--------------------------------------------------------------------------------------------------------------
-static int vdp1_prg = -1;
+static int vdp1_write_prg = -1;
+static int vdp1_read_prg = -1;
 static GLint vdp1MtxModelView = 0;
 
 static const char vdp1_v[] =
@@ -3397,7 +3425,7 @@ static const char vdp1_v[] =
       "   v_texcoord  = a_texcoord; \n"
       "} ";
 
-static const char vdp1_f[] =
+static const char vdp1_write_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
 "precision highp float; \n"
@@ -3411,16 +3439,41 @@ SHADER_VERSION
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
-"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+//"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+"  if ((int(tex.r * 255.0)&0x80) == 0) discard;\n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
 "}  \n";
 
-int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
+static const char vdp1_read_f[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+"in highp vec2 v_texcoord; \n"
+"uniform sampler2D s_texture;  \n"
+"out vec4 fragColor; \n"
+"void main()   \n"
+"{  \n"
+"  ivec2 addr; \n"
+"  addr.x = int( v_texcoord.x);          \n"
+"  addr.y = int(v_texcoord.y);          \n"
+"  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
+//"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
+"  if ((int(tex.a * 255.0)&0x80) == 0) discard;\n"
+"  fragColor.r = tex.a;         \n"
+"  fragColor.g = tex.b;         \n"
+"  fragColor.b = tex.g;         \n"
+"  fragColor.a = tex.r;         \n"
+"}  \n";
+
+int YglBlitVDP1(u32 srcTexture, float w, float h, int write) {
   const GLchar * fblit_vdp1_v[] = { vdp1_v, NULL };
-  const GLchar * fblit_vdp1_f[] = { vdp1_f, NULL };
+  const GLchar * fblit_vdp1_write_f[] = { vdp1_write_f, NULL };
+  const GLchar * fblit_vdp1_read_f[] = { vdp1_read_f, NULL };
+  const int flip = 0;
 
   float const vertexPosition[] = {
     1.0, -1.0f,
@@ -3441,17 +3494,17 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
     0.0f, h
   };
 
-  if (vdp1_prg == -1){
+  if (vdp1_write_prg == -1){
     GLuint vshader;
     GLuint fshader;
     GLint compiled, linked;
-    if (vdp1_prg != -1) glDeleteProgram(vdp1_prg);
-    vdp1_prg = glCreateProgram();
-    if (vdp1_prg == 0){
+    if (vdp1_write_prg != -1) glDeleteProgram(vdp1_write_prg);
+    vdp1_write_prg = glCreateProgram();
+    if (vdp1_write_prg == 0){
       return -1;
     }
 
-    YGLLOG("BLIT_VDP1\n");
+    YGLLOG("BLIT_VDP1_WRITE\n");
 
     vshader = glCreateShader(GL_VERTEX_SHADER);
     fshader = glCreateShader(GL_FRAGMENT_SHADER);
@@ -3462,36 +3515,85 @@ int YglBlitVDP1(u32 srcTexture, float w, float h, int flip) {
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in vertex shader.\n");
       Ygl_printShaderError(vshader);
-      vdp1_prg = -1;
+      vdp1_write_prg = -1;
       return -1;
     }
 
-    glShaderSource(fshader, 1, fblit_vdp1_f, NULL);
+    glShaderSource(fshader, 1, fblit_vdp1_write_f, NULL);
     glCompileShader(fshader);
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
       YGLLOG("Compile error in fragment shader.\n");
       Ygl_printShaderError(fshader);
-      vdp1_prg = -1;
+      vdp1_write_prg = -1;
       abort();
     }
 
-    glAttachShader(vdp1_prg, vshader);
-    glAttachShader(vdp1_prg, fshader);
-    glLinkProgram(vdp1_prg);
-    glGetProgramiv(vdp1_prg, GL_LINK_STATUS, &linked);
+    glAttachShader(vdp1_write_prg, vshader);
+    glAttachShader(vdp1_write_prg, fshader);
+    glLinkProgram(vdp1_write_prg);
+    glGetProgramiv(vdp1_write_prg, GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
       YGLLOG("Link error..\n");
-      Ygl_printShaderError(vdp1_prg);
-      vdp1_prg = -1;
+      Ygl_printShaderError(vdp1_write_prg);
+      vdp1_write_prg = -1;
+      abort();
+    }
+    glUniform1i(glGetUniformLocation(vdp1_write_prg, "s_texture"), 0);
+  }
+
+  if (vdp1_read_prg == -1){
+    GLuint vshader;
+    GLuint fshader;
+    GLint compiled, linked;
+    if (vdp1_read_prg != -1) glDeleteProgram(vdp1_read_prg);
+    vdp1_read_prg = glCreateProgram();
+    if (vdp1_read_prg == 0){
+      return -1;
+    }
+
+    YGLLOG("BLIT_VDP1_WRITE\n");
+
+    vshader = glCreateShader(GL_VERTEX_SHADER);
+    fshader = glCreateShader(GL_FRAGMENT_SHADER);
+
+    glShaderSource(vshader, 1, fblit_vdp1_v, NULL);
+    glCompileShader(vshader);
+    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in vertex shader.\n");
+      Ygl_printShaderError(vshader);
+      vdp1_read_prg = -1;
+      return -1;
+    }
+
+    glShaderSource(fshader, 1, fblit_vdp1_read_f, NULL);
+    glCompileShader(fshader);
+    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
+    if (compiled == GL_FALSE) {
+      YGLLOG("Compile error in fragment shader.\n");
+      Ygl_printShaderError(fshader);
+      vdp1_read_prg = -1;
       abort();
     }
 
-    GLUSEPROG(vdp1_prg);
-    glUniform1i(glGetUniformLocation(vdp1_prg, "s_texture"), 0);
+    glAttachShader(vdp1_read_prg, vshader);
+    glAttachShader(vdp1_read_prg, fshader);
+    glLinkProgram(vdp1_read_prg);
+    glGetProgramiv(vdp1_read_prg, GL_LINK_STATUS, &linked);
+    if (linked == GL_FALSE) {
+      YGLLOG("Link error..\n");
+      Ygl_printShaderError(vdp1_read_prg);
+      vdp1_read_prg = -1;
+      abort();
+    }
+    glUniform1i(glGetUniformLocation(vdp1_read_prg, "s_texture"), 0);
   }
-  else{
-    GLUSEPROG(vdp1_prg);
+
+  if (write == 0){
+    GLUSEPROG(vdp1_read_prg);
+  } else {
+    GLUSEPROG(vdp1_write_prg);
   }
 
   glDisable(GL_DEPTH_TEST);

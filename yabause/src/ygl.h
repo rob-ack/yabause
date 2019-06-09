@@ -283,6 +283,7 @@ void YglCacheDeInit(YglTextureManager * tm);
 int YglIsCached(YglTextureManager * tm, u64, YglCache *);
 void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
 void YglCacheReset(YglTextureManager * tm);
+void setupMaxSize();
 
 void YglCheckFBSwitch(int sync);
 
@@ -342,11 +343,12 @@ enum
 
    PG_VDP1_GOURAUDSHADING_TESS=52,
    PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS=53,
-   PG_VDP1_MESH_TESS=54,
-   PG_VDP1_MESH_TESS_IMPROVE=55,
-   PG_VDP1_SHADOW_TESS=56,
-   PG_VDP1_HALFTRANS_TESS=57,
-   PG_VDP1_MSB_SHADOW_TESS = 58,
+   PG_VDP1_HALF_LUMINANCE_TESS=54,
+   PG_VDP1_MESH_TESS=55,
+   PG_VDP1_MESH_TESS_IMPROVE=56,
+   PG_VDP1_SHADOW_TESS=57,
+   PG_VDP1_HALFTRANS_TESS=58,
+   PG_VDP1_MSB_SHADOW_TESS = 59,
 
    PG_MAX,
 };
@@ -664,6 +666,10 @@ typedef struct {
    int vpd1_running;
    int needVdp1Render;
    GLint m_viewport[4];
+   int min_fb_x;
+   int max_fb_x;
+   int min_fb_y;
+   int max_fb_y;
 
    GLuint cram_tex;
    GLuint cram_tex_pbo;
@@ -728,6 +734,10 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
 
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
+
+extern int YglBlitSimple(int texture, int blend);
+extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 
 int Ygl_uniformVDP2DrawFramebuffer( void * p, float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
 

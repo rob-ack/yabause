@@ -23,7 +23,7 @@
 */
 
 #include <windows.h>
-#include <WinDef.h>
+#include <windef.h>
 #include "core.h"
 #include "threads.h"
 

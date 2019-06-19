@@ -120,7 +120,7 @@ void DebugChangeOutput(Debug * d, DebugOutType t, char * s) {
 }
 
 #ifdef _WINDOWS
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

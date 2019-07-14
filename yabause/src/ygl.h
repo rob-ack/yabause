@@ -478,10 +478,10 @@ typedef enum
 typedef enum
 {
     RES_ORIGINAL = 1,
-    RES_2x = 2,
-    RES_4x = 4,
-    RES_8x = 8,
-    RES_16x = 16,
+    RES_480p = 2,
+    RES_720p = 4,
+    RES_1080p = 8,
+    RES_NATIVE = 16,
 } RESOLUTION_MODE;
 
 typedef enum
@@ -577,6 +577,8 @@ typedef struct {
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   float widthRatio;
+   float heightRatio;
    int density;
    int drawframe;
    int readframe;
@@ -608,6 +610,9 @@ typedef struct {
    GLuint screen_fbo;
    GLuint screen_fbotex[SPRITE];
 
+   GLuint rbg_compute_fbo;
+   GLuint rbg_compute_fbotex[2];
+
    GLuint window_fbo;
    GLuint window_fbotex[enBGMAX];
 
@@ -637,6 +642,7 @@ typedef struct {
    int Win_op[enBGMAX];
 
    YglMatrix mtxModelView;
+   YglMatrix rbgModelView;
 
    YglProgram windowpg;
 

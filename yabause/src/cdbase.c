@@ -517,7 +517,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    int matched = 0;
    FILE *trackfp = NULL;
    int trackfp_size = 0;
-   int fad = 0;
+   int fad = 150;
 
 	memset(trk, 0, sizeof(trk));
    disc.session_num = 1;
@@ -606,7 +606,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
          if (indexnum == 1)
          {
             // Update toc entry
-            fad += MSF_TO_FAD(min, sec, frame) + pregap + 150;
+            fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
          }
@@ -645,6 +645,9 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
    }
 
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
+
+   // buffer is no longer needed
+   free(temp_buffer);
 
    fclose(iso_file);
    return 0;
@@ -793,7 +796,7 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    int matched = 0;
    char *trackfp = NULL;
    int trackfp_size = 0;
-   int fad = 0;
+   int fad = 150;
    int pos;
 
    JZEndRecord* endRecord = (JZEndRecord*)malloc(sizeof(JZEndRecord));
@@ -900,10 +903,11 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
          if (sscanf(&data[index], "%d %d:%d:%d\r\n%n", &indexnum, &min, &sec, &frame,&pos) == EOF)
             break;
          index+= pos;
+
          if (indexnum == 1)
          {
             // Update toc entry
-            fad += MSF_TO_FAD(min, sec, frame) + pregap + 150;
+            fad += MSF_TO_FAD(min, sec, frame) + pregap;
             trk[track_num-1].fad_start = fad;
             trk[track_num-1].file_offset = MSF_TO_FAD(min, sec, frame) * trk[track_num-1].sector_size;
          }
@@ -943,6 +947,10 @@ static int LoadBinCueInZip(const char *filename, FILE *fp)
    }
 
    memcpy(disc.session[0].track, trk, track_num * sizeof(track_info_struct));
+
+   // buffer is no longer needed
+   free(temp_buffer);
+
    return 0;
 }
 

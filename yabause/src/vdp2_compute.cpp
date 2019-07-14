@@ -33,7 +33,7 @@ SHADER_VERSION_COMPUTE
 "#ifdef GL_ES\n"
 "precision highp float; \n"
 "#endif\n"
-"layout(local_size_x = 4, local_size_y = 4) in;\n"
+"layout(local_size_x = 16, local_size_y = 16) in;\n"
 "layout(rgba8, binding = 14) writeonly highp uniform image2D outSurface;\n"
 "layout(std430, binding = 15) readonly buffer VDP2DrawInfo { \n"
 "  float u_emu_height;\n"
@@ -103,7 +103,7 @@ SHADER_VERSION_COMPUTE
 "float getVdp2RegAsFloat(int id) {\n"
 "  return float(s_vdp2reg[id])/255.0;\n"
 "};\n"
-"FBCol getFB(int x, vec2 texcoord){ \n"
+"FBCol getFB(int x){ \n"
 "  FBCol ret;\n"
 "  ret.color = vec4(0.0);\n"
 "  ret.prio = 0;\n"
@@ -112,8 +112,8 @@ SHADER_VERSION_COMPUTE
 "  if (fbon != 1) return ret;\n"
 "  fbmode = 1;\n"
 "  vdp1mode = 1;\n"
-"  vec4 fbColor = texelFetch(s_vdp1FrameBuffer, ivec2(texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)), 0);\n"
-"  vec4 fbColorAttr = texelFetch(s_vdp1FrameBufferAttr, ivec2(texcoord.st * textureSize(s_vdp1FrameBufferAttr, 0)+ivec2(x, 0)), 0);\n"
+"  vec4 fbColor = texelFetch(s_vdp1FrameBuffer, texel+ivec2(x, 0), 0);\n"
+"  vec4 fbColorAttr = texelFetch(s_vdp1FrameBufferAttr, texel+ivec2(x, 0), 0);\n"
 "  vec4 tmpColor = vec4(0.0);\n"
 "  vec4 tmpmeshColor = vec4(0.0);\n"
 "  int line = int((u_vheight-texel.y) * u_emu_height)*24;\n"
@@ -238,8 +238,8 @@ static const char vdp2blit_end_f[] =" }\n"
 " return ret;\n"
 "}\n"
 
-"vec4 getPixel(sampler2D tex, vec2 st) {\n"
-" ivec2 addr = ivec2(textureSize(tex, 0) * st);\n"
+"vec4 getPixel(sampler2D tex) {\n"
+" ivec2 addr = texel;\n"
 " vec4 result = texelFetch( tex, addr,0 );\n"
 //" result.rgb = Filter( tex, st ).rgb;\n"
 " return result;\n"
@@ -360,15 +360,15 @@ static const char vdp2blit_end_f[] =" }\n"
 "  return empty;\n"
 "}  \n"
 
-"Col getBlur(ivec2 addr, Col pix, vec2 texcoord) \n"
+"Col getBlur(ivec2 addr, Col pix) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
 "  vec4 txcolll;\n"
 "  vec4 txcol = pix.Color;\n"
 "  if (pix.layer == 6) { \n"
-"    txcoll = getFB(-1, texcoord).color;\n"
-"    txcolll = getFB(-2, texcoord).color;\n"
+"    txcoll = getFB(-1).color;\n"
+"    txcolll = getFB(-2).color;\n"
 "  }\n"
 "  if (pix.layer == 0) { \n"
 "    txcoll = texelFetch( s_texture0, ivec2(addr.x-1, addr.y),0 );      \n"
@@ -400,7 +400,6 @@ static const char vdp2blit_end_f[] =" }\n"
 
 "void main()   \n"
 "{  \n"
-"  int x, y;\n"
 "  texel = ivec2(gl_GlobalInvocationID.xy);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
@@ -432,11 +431,11 @@ static const char vdp2blit_end_f[] =" }\n"
 "  float alphafourth = 1.0; \n"
 "  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
-"  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
+"  addr = texel; \n"
 "  colortop = colorback; \n"
 "  isRGBtop = 1; \n"
 "  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
-"  FBCol tmp = getFB(0,v_texcoord); \n"
+"  FBCol tmp = getFB(0); \n"
 "  FBColor = tmp.color;\n"
 "  FBPrio = tmp.prio;\n"
 "  FBShadow = tmp.meshColor;\n"
@@ -446,12 +445,12 @@ static const char vdp2blit_end_f[] =" }\n"
 "    FBPrio = 0;\n"
 "    shadow = 1;\n"
 "  }\n"
-"  if (screen_nb > 0) vdp2col0 = getPixel( s_texture0, v_texcoord.st ); \n"
-"  if (screen_nb > 1) vdp2col1 = getPixel( s_texture1, v_texcoord.st ); \n"
-"  if (screen_nb > 2) vdp2col2 = getPixel( s_texture2, v_texcoord.st ); \n"
-"  if (screen_nb > 3) vdp2col3 = getPixel( s_texture3, v_texcoord.st ); \n"
-"  if (screen_nb > 4) vdp2col4 = getPixel( s_texture4, v_texcoord.st ); \n"
-"  if (screen_nb > 5) vdp2col5 = getPixel( s_texture5, v_texcoord.st ); \n"
+"  if (screen_nb > 0) vdp2col0 = getPixel( s_texture0 ); \n"
+"  if (screen_nb > 1) vdp2col1 = getPixel( s_texture1 ); \n"
+"  if (screen_nb > 2) vdp2col2 = getPixel( s_texture2 ); \n"
+"  if (screen_nb > 3) vdp2col3 = getPixel( s_texture3 ); \n"
+"  if (screen_nb > 4) vdp2col4 = getPixel( s_texture4 ); \n"
+"  if (screen_nb > 5) vdp2col5 = getPixel( s_texture5 ); \n"
 "  for (int i = 7; i>0; i--) { \n"
 "    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
 "      int hasColor = 1;\n"
@@ -488,6 +487,7 @@ static const char vdp2blit_end_f[] =" }\n"
 "              alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n"
 "              isRGBsecond = 1;\n"
 "              use_lncl = 1;\n"
+"              foundColor2 = 1; \n"
 "            }\n"
 "            colortop = prio.Color; \n"
 "            modetop = prio.mode&0x7; \n"
@@ -495,48 +495,38 @@ static const char vdp2blit_end_f[] =" }\n"
 "            alphatop = prio.Color.a; \n"
 "            foundColor1 = 1; \n"
 "            if (isBlur[prio.layer] != 0) { \n"
-"              Col blur = getBlur(addr, prio, v_texcoord);"
+"              Col blur = getBlur(addr, prio);"
 "              modesecond = blur.mode&0x7; \n"
 "              colorsecond = blur.Color; \n"
 "              alphasecond = blur.Color.a; \n"
 "              isRGBsecond = blur.isRGB; \n"
-"              foundColor2 = 1; \n"
+"              foundColor2 = 1; \n" //semble corriger steep slope
+//le mesh mode deconne dans steep slope
 "            }\n"
-"          } else if (foundColor2 == 0) { \n"
-"            if ((use_lncl == 0)||(prio.lncl == 1)) {\n"
-"              if ((prio.lncl == 0)||((use_lncl == 1)&&(prio.lncl == 1))) { \n"
-"                colorthird = colorsecond;\n"
-"                alphathird = alphasecond;\n"
-"                modethird = modesecond;\n"
-"                isRGBthird = isRGBsecond;\n"
-"              } else { \n"
-"                ivec2 linepos; \n "
-"                linepos.y = 0; \n "
-"                linepos.x = int( (u_vheight-texel.y) * u_emu_height);\n"
-"                colorthird = texelFetch( s_lncl, linepos ,0 );\n"
-"                modethird = mode[6];\n"
-"                alphathird = float((int(colorthird.a * 255.0)&0xF8)>>3)/31.0;\n"
-"                isRGBthird = 1;\n"
-"                use_lncl = 1;\n"
-"              }\n"
-"              modesecond = prio.mode&0x7; \n"
-"              colorsecond = prio.Color; \n"
-"              alphasecond = prio.Color.a; \n"
-"              isRGBsecond = prio.isRGB; \n"
-"              foundColor2 = 1; \n"
+"          } else if (foundColor2 == 0) { \n" // A revoir du coup
+"            if (prio.lncl == 0) { \n"
+"              colorthird = colorsecond;\n"
+"              alphathird = alphasecond;\n"
+"              modethird = modesecond;\n"
+"              isRGBthird = isRGBsecond;\n"
 "            } else { \n"
-"              foundColor2 = 1; \n"
+"              ivec2 linepos; \n "
+"              linepos.y = 0; \n "
+"              linepos.x = int( (u_vheight-texel.y) * u_emu_height);\n"
+"              colorthird = texelFetch( s_lncl, linepos ,0 );\n"
+"              modethird = mode[6];\n"
+"              alphathird = float((int(colorthird.a * 255.0)&0xF8)>>3)/31.0;\n"
+"              isRGBthird = 1;\n"
+"              use_lncl = 1;\n"
 "              foundColor3 = 1; \n"
-"              colorfourth = colorthird;\n"
-"              alphafourth = alphathird;\n"
-"              isRGBfourth = isRGBthird; \n"
-"              modethird= prio.mode&0x7; \n"
-"              colorthird = prio.Color; \n"
-"              alphathird = prio.Color.a; \n"
-"              isRGBthird = prio.isRGB; \n"
-"            } \n"
+"            }\n"
+"            modesecond = prio.mode&0x7; \n"
+"            colorsecond = prio.Color; \n"
+"            alphasecond = prio.Color.a; \n"
+"            isRGBsecond = prio.isRGB; \n"
+"            foundColor2 = 1; \n"
 "            if (isBlur[prio.layer] != 0) { \n"
-"              Col blur = getBlur(addr, prio, v_texcoord);"
+"              Col blur = getBlur(addr, prio);"
 "              modesecond = blur.mode&0x7; \n"
 "              colorsecond = blur.Color; \n"
 "              alphasecond = blur.Color.a; \n"
@@ -801,8 +791,6 @@ public:
 
 	DEBUGWIP("resize %d, %d\n",width,height);
 
-	glGetError();
-
 	tex_width_ = width;
 	tex_height_ = height;
   }
@@ -858,6 +846,9 @@ public:
   void init( int width, int height ) {
 
 		if (scene_uniform != 0) return; // always inisialized!
+
+		tex_width_ = width;
+		tex_height_ = height;
 
 		glGenBuffers(1, &scene_uniform);
 		glBindBuffer(GL_SHADER_STORAGE_BUFFER, scene_uniform);
@@ -943,12 +934,12 @@ public:
 	void update( int outputTex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
 
     GLuint error;
-    int local_size_x = 4;
-    int local_size_y = 4;
+    int local_size_x = 16;
+    int local_size_y = 16;
 	  int nbScreen = 6;
 
-    int work_groups_x = 1 + (tex_width_ - 1) / local_size_x;
-    int work_groups_y = 1 + (tex_height_ - 1) / local_size_y;
+		int work_groups_x = (tex_width_) / local_size_x;
+    int work_groups_y = (tex_height_) / local_size_y;
 
 		int gltext[6] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5};
 

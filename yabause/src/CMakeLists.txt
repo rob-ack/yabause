@@ -31,8 +31,11 @@ set(kronos_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
+if (WIN32)
+set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
+else()
 set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
-
+endif(WIN32)
 
 set(kronos_SOURCES
 	bios.c
@@ -56,6 +59,29 @@ set(kronos_SOURCES
         junzip.c
 	)
 add_definitions(-DIMPROVED_SAVESTATES)
+
+set(kronos_SOURCES
+  ${kronos_SOURCES}
+	deps/chdr/chd.c
+	deps/chdr/bitstream.c
+	deps/chdr/huffman.c
+	deps/chdr/flac.c
+	deps/chdr/cdrom.c
+	deps/flac/stream_decoder.c
+	deps/flac/format.c
+	deps/flac/bitreader.c
+	deps/flac/crc.c
+	deps/flac/memory.c
+	deps/flac/lpc.c
+	deps/flac/cpu.c
+	deps/flac/md5.c
+	deps/flac/fixed.c
+	deps/lzma/LzmaEnc.c
+	deps/lzma/LzFind.c
+	deps/lzma/LzmaDec.c
+	)
+add_definitions(-DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/deps/chdr/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/lzma/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/crypto/ ${CMAKE_CURRENT_SOURCE_DIR}/deps/flac/include/)
 
 add_subdirectory(zlib)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
@@ -323,18 +349,6 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		check_function_exists(glXGetProcAddress GLXGETPROCADDRESS_OK)
 		if (GLXGETPROCADDRESS_OK)
 			add_definitions(-DHAVE_GLXGETPROCADDRESS=1)
-		endif()
-		string(COMPARE EQUAL ${YAB_PORTS} "glfw" glfw)
-		if( glfw )
-			if (WIN32)
-				set( GLFW_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/glfw/include/ )
-			else()
-				find_package(PkgConfig REQUIRED)
-				pkg_search_module(GLFW REQUIRED glfw3)
-			endif()
-				include_directories( ${GLFW_INCLUDE_DIRS} )
-
-			add_definitions(-DYAB_ASYNC_RENDERING)
 		endif()
 		add_definitions(-D_OGL3_)
 		if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")

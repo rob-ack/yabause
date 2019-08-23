@@ -15,7 +15,8 @@ INCLUDE_DIRS := $(CORE_DIR) \
 	$(LZMA_DIR)/C \
 	$(CRYPTO_DIR) \
 	$(FLAC_DIR)/include \
-	$(FLAC_DIR)/src/libFLAC/include
+	$(FLAC_DIR)/src/libFLAC/include \
+	$(ZLIB_DIR)
 
 SOURCES_S :=
 

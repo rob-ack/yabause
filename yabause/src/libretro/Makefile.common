@@ -102,6 +102,10 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(ZLIB_DIR)/zutil.c \
 	$(CORE_DIR)/libretro.c
 
+ifeq ($(ARCH_IS_WINDOWS), 1)
+	SOURCES_C += $(FLAC_DIR)/src/libFLAC/windows_unicode_filenames.c
+endif
+
 ifeq ($(FORCE_GLEW), 1)
 	SOURCES_C += $(SOURCE_DIR)/gllibs/glew/glew.c
 	INCLUDE_DIRS += $(SOURCE_DIR)/gllibs/include

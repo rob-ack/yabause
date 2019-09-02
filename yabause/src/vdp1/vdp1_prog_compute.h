@@ -9,10 +9,11 @@
 #define POLYGON 0
 #define DISTORTED 1
 #define NORMAL 2
-#define POLYLINE 3
-#define LINE 4
-#define SYSTEM_CLIPPING 5
-#define USER_CLIPPING 6
+#define SCALED 3
+#define POLYLINE 4
+#define LINE 5
+#define SYSTEM_CLIPPING 6
+#define USER_CLIPPING 7
 
 #define NB_COARSE_RAST_X 8
 #define NB_COARSE_RAST_Y 8
@@ -62,8 +63,7 @@ SHADER_VERSION_COMPUTE
 "  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
 "  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
 "  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16) | (uint(pix.b*255.0)<<8) | (uint(pix.a*255.0)<<0);\n"
-"  if ((int(pix.a * 255.0)&0x80) != 0)\n"
-"    Vdp1FB[idx] = val;\n"
+"  Vdp1FB[idx] = val;\n"
 "}\n";
 
 static const char vdp1_clear_f[] =
@@ -211,11 +211,13 @@ SHADER_VERSION_COMPUTE
 "  if (cmd[idx].type < "Stringify(POLYLINE)") {\n"
 "    if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
 "  }"
-"  if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5, 0.5)))) {return 2u;}\n"
-"  if (cmd[idx].type < "Stringify(LINE)") {\n"
-"    if (all(lessThanEqual(dist(P, Quad[1], Quad[2]), vec2(0.5, 0.5)))) {return 3u;}\n"
-"    if (all(lessThanEqual(dist(P, Quad[2], Quad[3]), vec2(0.5, 0.5)))) {return 4u;}\n"
-"    if (all(lessThanEqual(dist(P, Quad[3], Quad[0]), vec2(0.5, 0.5)))) {return 5u;}\n"
+"  if (cmd[idx].type != "Stringify(NORMAL)") {\n"
+"    if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5, 0.5)))) {return 2u;}\n"
+"    if (cmd[idx].type < "Stringify(LINE)") {\n"
+"      if (all(lessThanEqual(dist(P, Quad[1], Quad[2]), vec2(0.5, 0.5)))) {return 3u;}\n"
+"      if (all(lessThanEqual(dist(P, Quad[2], Quad[3]), vec2(0.5, 0.5)))) {return 4u;}\n"
+"      if (all(lessThanEqual(dist(P, Quad[3], Quad[0]), vec2(0.5, 0.5)))) {return 5u;}\n"
+"    }\n"
 "  }\n"
 "  return 0u;\n"
 "}\n"
@@ -233,8 +235,22 @@ SHADER_VERSION_COMPUTE
 
 "float cross( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }\n"
 
+"vec2 bary(ivec2 p, vec2 a, vec2 b, vec2 c, vec2 auv, vec2 buv, vec2 cuv) {\n"
+"  vec2 v0 = b - a;\n"
+"  vec2 v1 = c - a;\n"
+"  vec2 v2 = p - a;\n"
+"  float den = v0.x * v1.y - v1.x * v0.y;\n"
+"  float v = (v2.x * v1.y - v1.x * v2.y) / den;\n"
+"  float w = (v0.x * v2.y - v2.x * v0.y) / den;\n"
+"  float u = 1.0f - v - w;\n"
+"  return (u*auv+v*buv+w*cuv);\n"
+"}\n"
 
 "vec2 getTexCoord(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
@@ -252,6 +268,10 @@ SHADER_VERSION_COMPUTE
 
 "vec2 getTexCoordDistorted(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
 //http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
@@ -282,6 +302,10 @@ SHADER_VERSION_COMPUTE
 
 "vec2 getTexCoordPolygon(ivec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
 //http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
+"  if (all(lessThanEqual(abs(a-b),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(b-c),vec2(1.5)))) return bary(texel,a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(c-d),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
+"  if (all(lessThanEqual(abs(d-a),vec2(1.5)))) return bary(texel,a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
 "  vec2 p = vec2(texel)/upscale;\n"
 "  vec2 e = b-a;\n"
 "  vec2 f = d-a;\n"
@@ -654,8 +678,8 @@ SHADER_VERSION_COMPUTE
 "  uint colorcl = 0;\n"
 "  uint endcnt = 0;\n"
 "  uint normal_shadow = 0;\n"
-"  uint x = uint(uv.x*pixcmd.w - 0.1);\n"
-"  uint pos = (uint(pixcmd.h*uv.y - 0.1)*pixcmd.w+uint(uv.x*pixcmd.w - 0.1));\n"
+"  uint x = uint(uv.x*pixcmd.w - 0.001);\n"
+"  uint pos = (uint(pixcmd.h*uv.y - 0.001)*pixcmd.w+uint(uv.x*pixcmd.w - 0.001));\n"
 "  uint charAddr = pixcmd.CMDSRCA * 8 + pos;\n"
 "  uint dot;\n"
 "  bool SPD = ((pixcmd.CMDPMOD & 0x40u) != 0);\n"
@@ -1029,9 +1053,11 @@ SHADER_VERSION_COMPUTE
 "  cmdparameter_struct pixcmd;\n"
 "  uint discarded = 0;\n"
 "  vec2 texcoord = vec2(0);\n"
+"  vec2 gouraudcoord = vec2(0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
-"  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
-"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"  ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
+"  if (pos.x >= size.x || pos.y >= size.y ) return;\n"
+"  ivec2 texel = ivec2((vec4(float(pos.x),float(pos.y), 1.0, 1.0) * inverse(rot)).xy);\n"
 "  ivec2 index = ivec2((texel.x*"Stringify(NB_COARSE_RAST_X)")/size.x, (texel.y*"Stringify(NB_COARSE_RAST_Y)")/size.y);\n"
 "  ivec2 syslimit = sysClip;\n"
 "  ivec4 userlimit = usrClip;\n"
@@ -1057,10 +1083,10 @@ SHADER_VERSION_COMPUTE
 "      userlimit = ivec4(pixcmd.CMDXA,pixcmd.CMDYA,pixcmd.CMDXC,pixcmd.CMDYC);\n"
 "      continue;\n"
 "    }\n"
-"    if (any(greaterThan(texel,syslimit*upscale))) continue;\n"
+"    if (any(greaterThan(pos,syslimit*upscale))) continue;\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
 //Draw inside
-"      if (any(lessThan(texel,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
+"      if (any(lessThan(pos,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
 "    }\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
 //Draw outside
@@ -1069,6 +1095,7 @@ SHADER_VERSION_COMPUTE
 "    useGouraud = ((pixcmd.CMDPMOD & 0x4u) == 0x4u);\n"
 "    if (pixcmd.type == "Stringify(POLYGON)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1077,6 +1104,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(POLYLINE)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1085,6 +1113,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(LINE)") {\n"
 "      texcoord = getTexCoordPolygon(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1093,6 +1122,7 @@ SHADER_VERSION_COMPUTE
 "      }\n"
 "    } else if (pixcmd.type == "Stringify(DISTORTED)") {\n"
 "      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
 "      else {\n"
 "        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
@@ -1103,8 +1133,19 @@ SHADER_VERSION_COMPUTE
 "        newColor = ReadSpriteColor(pixcmd, texcoord, texel);\n"
 #endif
 "      }\n"
-"    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
+"    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
 "      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
+"      gouraudcoord = texcoord;\n"
+"      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
+"      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
+#ifdef USE_VDP1_TEX
+"      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
+#else
+"        newColor = ReadSpriteColor(pixcmd, texcoord, texel);\n"
+#endif
+"    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
+"      texcoord = vec2(float(texel.x-pixcmd.CMDXA+1)/float(pixcmd.CMDXB-pixcmd.CMDXA), float(texel.y-pixcmd.CMDYA+1)/float(pixcmd.CMDYD-pixcmd.CMDYA));\n"
+"      gouraudcoord = texcoord;\n"
 "      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
 "      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
 #ifdef USE_VDP1_TEX
@@ -1138,9 +1179,9 @@ static const char vdp1_improved_mesh_f[] =
 "      finalColorAttr.a = float(alpha)/255.0;\n"
 "      finalColorAttr.rgb = newColor.rgb;\n"
 "      if (useGouraud) {\n"
-"        finalColorAttr.r = clamp(finalColorAttr.r + mix(mix(pixcmd.G[0],pixcmd.G[4],texcoord.x), mix(pixcmd.G[12],pixcmd.G[8],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"        finalColorAttr.g = clamp(finalColorAttr.g + mix(mix(pixcmd.G[1],pixcmd.G[5],texcoord.x), mix(pixcmd.G[13],pixcmd.G[9],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"        finalColorAttr.b = clamp(finalColorAttr.b + mix(mix(pixcmd.G[2],pixcmd.G[6],texcoord.x), mix(pixcmd.G[14],pixcmd.G[10],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.r = clamp(finalColorAttr.r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.g = clamp(finalColorAttr.g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"        finalColorAttr.b = clamp(finalColorAttr.b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
 "      }\n"
 "      finalColorAttr.b = float(int(finalColorAttr.b*255.0)&0xFE)/255.0;\n"
 "      newColor = finalColor;\n"
@@ -1152,7 +1193,7 @@ static const char vdp1_continue_f[] =
 "      int oldmsb = (int(finalColorAttr.a * 255.0))>>7;\n"
 "      int prio = int(newColor.a * 255.0) & 0x7;\n"
 "      if ((int(newColor.a * 255.0) & 0xC0) == 0xC0) {\n"
-"        msb = (int(newColor.b*255.0)&0x1);\n"
+"        msb = (int(newColor.b*255.0)>>7);\n"
 "      }\n"
 "      if (msb == 0) {\n"
 "        newColor = vec4(0.0);\n"
@@ -1203,9 +1244,9 @@ static const char vdp1_continue_f[] =
 "      newColor.b = float((int(newColor.b*255.0)&0xF8)|mode)/255.0; \n"
 "    }\n"
 "    if (useGouraud) {\n"
-"      newColor.r = clamp(newColor.r + mix(mix(pixcmd.G[0],pixcmd.G[4],texcoord.x), mix(pixcmd.G[12],pixcmd.G[8],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"      newColor.g = clamp(newColor.g + mix(mix(pixcmd.G[1],pixcmd.G[5],texcoord.x), mix(pixcmd.G[13],pixcmd.G[9],texcoord.x), texcoord.y), 0.0, 1.0);\n"
-"      newColor.b = clamp(newColor.b + mix(mix(pixcmd.G[2],pixcmd.G[6],texcoord.x), mix(pixcmd.G[14],pixcmd.G[10],texcoord.x), texcoord.y), 0.0, 1.0);\n"
+"      newColor.r = clamp(newColor.r + mix(mix(pixcmd.G[0],pixcmd.G[4],gouraudcoord.x), mix(pixcmd.G[12],pixcmd.G[8],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"      newColor.g = clamp(newColor.g + mix(mix(pixcmd.G[1],pixcmd.G[5],gouraudcoord.x), mix(pixcmd.G[13],pixcmd.G[9],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
+"      newColor.b = clamp(newColor.b + mix(mix(pixcmd.G[2],pixcmd.G[6],gouraudcoord.x), mix(pixcmd.G[14],pixcmd.G[10],gouraudcoord.x), gouraudcoord.y), 0.0, 1.0);\n"
 "    }\n"
 "    finalColor = newColor;\n"
 "  }\n"
@@ -1214,7 +1255,6 @@ static const char vdp1_continue_f[] =
 #endif
 "  if ((finalColor == vec4(0.0)) && (finalColorAttr == vec4(0.0))) return;\n";
 static const char vdp1_end_f[] =
-"    vec4 pos = vec4(float(texel.x),float(texel.y), 1.0, 1.0) * rot;\n"
 "    imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "    imageStore(outSurfaceAttr,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColorAttr);\n"
 "}\n";

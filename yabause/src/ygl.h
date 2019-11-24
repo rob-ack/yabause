@@ -209,7 +209,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "vidshared.h"
 #include "vdp1.h"
 
-//#define DEBUG_BLIT
+// #define DEBUG_BLIT
 
 #ifdef DEBUG_BLIT
 #define NB_RENDER_LAYER 5
@@ -288,70 +288,34 @@ void setupMaxSize();
 
 void YglCheckFBSwitch(int sync);
 
-#define VDP1_COLOR_CL_REPLACE 0x00
-#define VDP1_COLOR_CL_SHADOW 0x10
-#define VDP1_COLOR_CL_HALF_LUMINANCE 0x20
-#define VDP1_COLOR_CL_GROW_LUMINACE 0x30
-#define VDP1_COLOR_CL_GROW_HALF_TRANSPARENT 0x40
-#define VDP1_COLOR_CL_MESH 0x80
-#define VDP1_COLOR_CL_MSB_SHADOW 0X50
-
 #define VDP2_CC_NONE 0x00
 
 enum
 {
-   PG_VDP1_NORMAL=1,
-   PG_VDP1_GOURAUDSHADING=2,
-   PG_VDP1_STARTUSERCLIP=3,
-   PG_VDP1_ENDUSERCLIP=4,
-   PG_VDP1_HALFTRANS=5,
-   PG_VDP1_SHADOW=6,
-   PG_VDP1_MSB_SHADOW=7,
-   PG_VDP1_GOURAUDSHADING_HALFTRANS=8,
-   PG_VDP1_HALF_LUMINANCE=9,
-   PG_VDP1_MESH=10,
-   PG_VDP1_MESH_IMPROVE=11,
-   PG_WINDOW=12,
-   PG_VDP2_NORMAL=17,
-   PG_VDP2_MOSAIC=19,
-   PG_VDP2_NORMAL_CRAM=21,
-   PG_VDP2_MOSAIC_CRAM=23,
+   //VDP1 Programs
+   //From 0 to 2*3*2*7*2
 
-   PG_VDP2_DRAWFRAMEBUFF_NONE=27,
-   PG_VDP2_DRAWFRAMEBUFF_AS_IS=28,
-   PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA=29,
-   PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA=30,
+   PG_VDP1_START = 1,
+   PG_VDP1_VDP2 = (2*2*3*2*2*7)+1, //337
 
-   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=35,
-   PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS=36,
-   PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA=37,
-   PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA=38,
+   PG_VDP1_STARTUSERCLIP=400,
+   PG_VDP1_ENDUSERCLIP=401,
 
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=39,
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS=40,
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA=41,
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA=42,
 
-   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=43,
-   PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS=44,
-   PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA=45,
-   PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA=46,
+   PG_VDP2_NORMAL=403,
+   PG_VDP2_MOSAIC=404,
+   PG_VDP2_NORMAL_CRAM=405,
+   PG_VDP2_MOSAIC_CRAM=406,
 
-   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=47,
-   PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS=48,
-   PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA=49,
-   PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA=50,
 
-   PG_VDP1_GOURAUDSHADING_TESS=52,
-   PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS=53,
-   PG_VDP1_HALF_LUMINANCE_TESS=54,
-   PG_VDP1_MESH_TESS=55,
-   PG_VDP1_MESH_TESS_IMPROVE=56,
-   PG_VDP1_SHADOW_TESS=57,
-   PG_VDP1_HALFTRANS_TESS=58,
-   PG_VDP1_MSB_SHADOW_TESS = 59,
 
-   PG_MAX,
+   PG_VDP2_DRAWFRAMEBUFF_NONE=512,
+   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128),
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*2),
+   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*3),
+   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*4),
+
+   PG_MAX = (PG_VDP2_DRAWFRAMEBUFF_NONE+128*5)
 };
 
 
@@ -361,11 +325,13 @@ typedef struct {
     GLint  tessLevelInner;
     GLint  tessLevelOuter;
     GLint  fbo;
-    GLint  fbo_attr;
     GLint  texsize;
     GLuint mtxModelView;
-    GLuint mtxTexture;
+    GLuint sysclip;
     GLuint tex0;
+    GLint vaid;
+    GLint vertexp;
+    GLint texcoordp;
 } YglVdp1CommonParam;
 
 #define TESS_COUNT (8)
@@ -406,7 +372,6 @@ typedef struct {
    GLuint vertexp;
    GLuint texcoordp;
    GLuint mtxModelView;
-   GLuint mtxTexture;
    GLuint color_offset;
    GLuint tex0;
    GLuint tex1;
@@ -547,8 +512,7 @@ typedef enum {
 	NONE = 1,
 	AS_IS = 2,
 	SRC_ALPHA = 3,
-	DST_ALPHA = 4,
-  CC_ON_MSB = 8
+	DST_ALPHA = 4
 } SpriteMode;
 
 typedef struct {
@@ -578,6 +542,10 @@ typedef struct {
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
+   int vdp1width;
+   int vdp1height;
+   float vdp1expandW;
+   float vdp1expandH;
    float widthRatio;
    float heightRatio;
    int density;
@@ -588,19 +556,18 @@ typedef struct {
    GLuint rboid_depth_win;
    GLuint vdp1fbo;
    GLuint vdp1fbowin;
-   GLuint vdp1FrameBuff[6];
+   GLuint vdp1FrameBuff[3];
    GLuint* vdp1Tex; //Texture for VDP1 CS
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
    void * pFrameBuffer;
    GLuint vdp1AccessFB;
-   GLuint vdp1AccessTex[2];
-   GLuint vdp1_pbo[2];
-   GLuint vdp1IsNotEmpty[2];
-   u32* vdp1fb_buf[2];
-   u8* vdp1fb_exactbuf[2];
-   u32* vdp1fb_buf_read[2];
+   GLuint vdp1AccessTex;
+   GLuint vdp1_pbo;
+   GLuint vdp1IsNotEmpty;
+   u32* vdp1fb_buf;
+   u32* vdp1fb_buf_read;
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
 
@@ -636,12 +603,13 @@ typedef struct {
    u32* win[2];
    u32 window_tex[2];
 
-   int Win0[enBGMAX];
-   int Win0_mode[enBGMAX];
-   int Win1[enBGMAX];
-   int Win1_mode[enBGMAX];
-
-   int Win_op[enBGMAX];
+   int Win0[enBGMAX+1];
+   int Win0_mode[enBGMAX+1];
+   int Win1[enBGMAX+1];
+   int Win1_mode[enBGMAX+1];
+   int WinS[enBGMAX+1];
+   int WinS_mode[enBGMAX+1];
+   int Win_op[enBGMAX+1];
 
    YglMatrix mtxModelView;
    YglMatrix rbgModelView;
@@ -711,8 +679,6 @@ typedef struct {
    GLuint textcoords_buf;
    GLuint vertexAttribute_buf;
 
-   int use_win[enBGMAX];
-   int use_cc_win;
    int vdp1_stencil_mode;
 
    int rbg_use_compute_shader;
@@ -720,6 +686,12 @@ typedef struct {
 
    float vdp1wratio;
    float vdp1hratio;
+
+   float vdp1wdensity;
+   float vdp1hdensity;
+
+   float vdp2wdensity;
+   float vdp2hdensity;
 
 } Ygl;
 
@@ -772,7 +744,7 @@ int YglVDP1AllocateTexture(vdp1cmd_struct * input, YglTexture * output, YglTextu
 
 void YglOnUpdateColorRamWord(u32 addr);
 void YglUpdateColorRam();
-int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
+int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
@@ -784,13 +756,13 @@ void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int d
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
 extern u8 * YglGetVDP2RegPointer();
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs);
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
@@ -826,7 +798,6 @@ void YglSetWindow(int id);
 
 int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id);
 int YglProgramInit();
-int YglTesserationProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 
@@ -849,7 +820,7 @@ extern GLuint RBGGenerator_getTexture( int id );
 extern void RBGGenerator_onFinish();
 
 extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs);
+extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
 extern void VDP2Generator_resize(int width, int height);
 
 
@@ -928,12 +899,23 @@ P priority
 s Shadow Flag
 
 */
-INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
-  u32 col = color;
-  if (C == 1) col &= 0x17FFF;
-  else col &= 0xFFFFFF;
-  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | ((Vdp2Lines[0].SPCTL & 0xF) << 17) | col;
+
+#ifdef DEBUG_PROG
+#define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
+#else
+#define GLUSEPROG(A) glUseProgram(A)
+#endif
+
+extern int VDP1_MASK;
+
+INLINE u32 VDP1COLOR(u16 TAG, u16 CMDCOLR) {
+  return (TAG << 16) | (CMDCOLR & VDP1_MASK);
 }
+
+INLINE u32 VDP1COLORFB(u16 CMDCOLR) {
+  return (0xFF<<16)|(CMDCOLR & VDP1_MASK);
+}
+
 
 INLINE u32 VDP2COLOR(int id, u32 alpha, u32 priority, u32 cc_on, u32 cramindex) {
   return (((alpha & 0xF8) | priority) << 24 | ((cc_on & 0x1)<<16) | (cramindex& 0xFEFFFF));

@@ -28,8 +28,14 @@
 #include "vidshared.h"
 #include "bicubic_shader.h"
 #include "scanline_shader.h"
+#include "common_glshader.h"
 
-#define YGLLOG
+#define YGLLOG //YuiMsg
+
+#define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
+
+#define QuoteIdent(ident) #ident
+#define Stringify(macro) QuoteIdent(macro)
 
 static int saveFB;
 static void Ygl_useTmpBuffer();
@@ -39,13 +45,8 @@ int YglBlitPerLineAlpha(u32 srcTexture, float w, float h, float * matrix, u32 pe
 
 extern int GlHeight;
 extern int GlWidth;
-static GLuint _prgid[PG_MAX] = { 0 };
 
-#ifdef DEBUG_PROG
-#define GLUSEPROG(A) printf("use prog %s (%d) @ %d\n", #A, A, __LINE__);glUseProgram(A)
-#else
-#define GLUSEPROG(A) glUseProgram(A)
-#endif
+static YglVdp1CommonParam _ids[PG_MAX] = { 0 };
 
 static void Ygl_printShaderError( GLuint shader )
 {
@@ -66,73 +67,55 @@ static void Ygl_printShaderError( GLuint shader )
   }
 }
 
-void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglVdp1CommonParam * param){
-
-  param->texsize = glGetUniformLocation(pgid, (const GLchar *)"u_texsize");
-  param->sprite = glGetUniformLocation(pgid, (const GLchar *)"u_sprite");
-  param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
-  param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
-  param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
-  param->fbo_attr = glGetUniformLocation(pgid, (const GLchar *)"u_fbo_attr");
-  param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
-  param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
-  param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
-}
+// void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglProgram* param){
+//
+//   param->texsize = glGetUniformLocation(pgid, (const GLchar *)"u_texsize");
+//   param->sprite = glGetUniformLocation(pgid, (const GLchar *)"u_sprite");
+//   param->tessLevelInner = glGetUniformLocation(pgid, (const GLchar *)"TessLevelInner");
+//   param->tessLevelOuter = glGetUniformLocation(pgid, (const GLchar *)"TessLevelOuter");
+//   param->fbo = glGetUniformLocation(pgid, (const GLchar *)"u_fbo");
+//   param->mtxModelView = glGetUniformLocation(pgid, (const GLchar *)"u_mvpMatrix");
+//   param->mtxTexture = glGetUniformLocation(pgid, (const GLchar *)"u_texMatrix");
+//   param->tex0 = glGetUniformLocation(pgid, (const GLchar *)"s_texture");
+//
+// }
 
 int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
-
   YglProgram * prg;
-  YglVdp1CommonParam * param;
+//  YglVdp1CommonParam * param;
 
   prg = p;
-  param = prg->ids;
-
   glEnableVertexAttribArray(prg->vertexp);
   glEnableVertexAttribArray(prg->texcoordp);
-  if (prg->vertexAttribute != NULL)
-  {
-    glEnableVertexAttribArray(prg->vaid);
-  }
-  else{
-    glDisableVertexAttribArray(prg->vaid);
-  }
-
-  if (param == NULL) return 0;
-
-  glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-
-  if (param->sprite != -1){
-    glUniform1i(param->sprite, 0);
+  if (prg->vaid > 0) {
+    if (prg->vertexAttribute != NULL)
+    {
+      glEnableVertexAttribArray(prg->vaid);
+    }
+    else{
+      glDisableVertexAttribArray(prg->vaid);
+    }
   }
 
-  if (param->tessLevelInner != -1) {
-    glUniform1f(param->tessLevelInner, (float)TESS_COUNT);
+  glUniform2f(prg->ids->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
+  glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1wratio), (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1hratio), _Ygl->vdp1height);
+
+  if (prg->ids->sprite != -1){
+    glUniform1i(prg->ids->sprite, 0);
   }
 
-  if (param->tessLevelOuter != -1) {
-    glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
+  if (prg->ids->tessLevelInner != -1) {
+    glUniform1f(prg->ids->tessLevelInner, (float)TESS_COUNT);
   }
 
-  if (param->fbo_attr != -1){
-    glUniform1i(param->fbo_attr, 2);
-    glActiveTexture(GL_TEXTURE2);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
+  if (prg->ids->tessLevelOuter != -1) {
+    glUniform1f(prg->ids->tessLevelOuter, (float)TESS_COUNT);
   }
 
-  if (param->fbo != -1){
-    glUniform1i(param->fbo, 1);
+  if (prg->ids->fbo != -1){
+    glUniform1i(prg->ids->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2]);
+    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
     #if !defined(_OGLES3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
@@ -144,92 +127,21 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
         }
     #endif
   }
-
-  if ((param->fbo_attr != -1) || (param->fbo != -1)){
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
-    glActiveTexture(GL_TEXTURE0);
-  }
-  return 0;
-}
-
-int Ygl_uniformVdp1ShadowParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id){
-
-  YglProgram * prg;
-  YglVdp1CommonParam * param;
-
-  prg = p;
-  param = prg->ids;
-
-  glEnableVertexAttribArray(prg->vertexp);
-  glEnableVertexAttribArray(prg->texcoordp);
-
-  glStencilFunc(GL_GREATER,1,0x01);
-  glStencilMask(0x01);
-  glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-  glEnable(GL_STENCIL_TEST);
-
-  if (param == NULL) return 0;
-
-  glUniform2f(param->texsize, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-
-  if (param->sprite != -1){
-    glUniform1i(param->sprite, 0);
-  }
-
-  if (param->tessLevelInner != -1) {
-    glUniform1f(param->tessLevelInner, (float)TESS_COUNT);
-  }
-
-  if (param->tessLevelOuter != -1) {
-    glUniform1f(param->tessLevelOuter, (float)TESS_COUNT);
-  }
-
-  if (param->fbo_attr != -1){
-    glUniform1i(param->fbo_attr, 1);
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe*2+1]);
-    #if !defined(_OGLES3_)
-        if (glTextureBarrier) glTextureBarrier();
-        else if (glTextureBarrierNV) glTextureBarrierNV();
-    #else
-        if( glMemoryBarrier ){
-          glMemoryBarrier(GL_FRAMEBUFFER_BARRIER_BIT|GL_TEXTURE_UPDATE_BARRIER_BIT|GL_TEXTURE_FETCH_BARRIER_BIT);
-        }else{
-          //glFinish();
-        }
-    #endif
-    glActiveTexture(GL_TEXTURE0);
-  }
-
-
   return 0;
 }
 
 int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   YglProgram * prg;
   prg = p;
-  glDisableVertexAttribArray(prg->vaid);
+  if (prg->vaid > 0) {
+    glDisableVertexAttribArray(prg->vaid);
+  }
   glActiveTexture(GL_TEXTURE1);
   glBindTexture(GL_TEXTURE_2D, 0);
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D, 0);
   return 0;
 }
-
-int Ygl_cleanupVdp1ShadowParam(void * p, YglTextureManager *tm){
-  glDisable(GL_STENCIL_TEST);
-  return 0;
-}
-
 
 /*------------------------------------------------------------------------------------
  *  Normal Draw
@@ -259,9 +171,7 @@ SHADER_VERSION
 "uniform float u_vheight; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
-"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
-"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()   \n"
@@ -273,10 +183,6 @@ SHADER_VERSION
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  addr.x = int(v_texcoord.x);  \n"
 "  addr.y = int(v_texcoord.y);  \n"
-"  if (is_window !=0) {\n"
-"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy), 0 );\n"
-"    if (win.a == 0.0) discard;\n"
-"  }\n"
 "  vec4 txcol = texelFetch( s_texture, addr,0 );         \n"
 "  int msb = int(txcol.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
@@ -295,8 +201,6 @@ const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
 static int id_normal_s_texture = -1;
 static int id_normal_color_offset = -1;
 static int id_normal_matrix = -1;
-static int id_normal_s_window = -1;
-static int id_normal_iswindow = -1;
 static int id_normal_vheight = -1;
 static int id_normal_emu_height = -1;
 
@@ -309,8 +213,6 @@ int Ygl_uniformNormal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
   glEnableVertexAttribArray(0);
   glEnableVertexAttribArray(1);
   glUniform1i(id_normal_s_texture, 0);
-  glUniform1i(id_normal_s_window, 3);
-  glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
   glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
   glUniform1f(id_normal_vheight, (float)_Ygl->rheight);
   glUniform1f(id_normal_emu_height,  (float)_Ygl->rheight / (float)_Ygl->rheight);
@@ -339,13 +241,10 @@ SHADER_VERSION
 "uniform vec4 u_color_offset;\n"
 "uniform float u_emu_height;\n"
 "uniform float u_vheight; \n"
-"uniform float u_emu_width;\n"
 "uniform float u_vwidth; \n"
 "uniform highp sampler2D s_texture;\n"
 "uniform sampler2D s_perline;  \n"
-"uniform sampler2D s_window;  \n"
 "uniform int is_perline; \n"
-"uniform int is_window; \n"
 "uniform sampler2D s_color;\n"
 "out vec4 fragColor;\n"
 "void main()\n"
@@ -355,10 +254,6 @@ SHADER_VERSION
 "  linepos.y = 0; \n "
 "  linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
-"  if (is_window !=0) {\n"
-"    vec4 win = texelFetch( s_window, ivec2(gl_FragCoord.xy * vec2(u_emu_width, u_emu_height)),0 );\n"
-"    if (win.a == 0.0) discard;\n"
-"  }\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
 "  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) ,0 )  , 0 );\n"
@@ -379,9 +274,7 @@ SHADER_VERSION
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
 static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_s_perline = -1;
-static int id_normal_cram_s_window = -1;
 static int id_normal_cram_isperline = -1;
-static int id_normal_cram_iswindow = -1;
 static int id_normal_cram_emu_height = -1;
 static int id_normal_cram_emu_width = -1;
 static int id_normal_cram_vheight = -1;
@@ -401,8 +294,6 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1i(id_normal_cram_s_perline, 2);
-  glUniform1i(id_normal_cram_s_window, 3);
-  glUniform1i(id_normal_cram_iswindow, _Ygl->use_win[id] != 0);
   glUniform1i(id_normal_cram_isperline, (_Ygl->perLine[id] != 0));
   if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
     glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
@@ -580,8 +471,6 @@ int Ygl_uniformMosaic(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id
     glEnableVertexAttribArray(prg->vertexp);
     glEnableVertexAttribArray(prg->texcoordp);
     glUniform1i(id_normal_s_texture, 0);
-    glUniform1i(id_normal_s_window, 3);
-    glUniform1i(id_normal_iswindow, _Ygl->use_win[id] != 0);
     glUniform4fv(prg->color_offset, 1, prg->color_offset_val);
     glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
   }
@@ -613,197 +502,95 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
  *  UserClip Operation
  * ----------------------------------------------------------------------------------*/
 const GLchar Yglprg_userclip_v[] =
-      SHADER_VERSION
       "uniform mat4 u_mvpMatrix;    \n"
       "layout (location = 0) in vec4 a_position;               \n"
       "void main()                  \n"
       "{                            \n"
       "   gl_Position = a_position*u_mvpMatrix; \n"
-      "} ";
-const GLchar * pYglprg_userclip_v[] = {Yglprg_userclip_v, NULL};
+      "}\n";
 
 const GLchar Yglprg_userclip_f[] =
-      SHADER_VERSION
       "#ifdef GL_ES\n"
       "precision highp float;                            \n"
       "#endif\n"
       "out vec4 fragColor;            \n"
       "void main()                                         \n"
-      "{                                                   \n"
-      "  fragColor = vec4( 0.0 );\n"
-      "}                                                   \n";
-const GLchar * pYglprg_userclip_f[] = {Yglprg_userclip_f, NULL};
-
-/*------------------------------------------------------------------------------------
- *  Window Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_window_v[] =
-      SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;    \n"
-      "layout (location = 0) in vec4 a_position;    \n"
-      "void main()       \n"
       "{ \n"
-      "   gl_Position = a_position; \n"
-      "} ";
-const GLchar * pYglprg_window_v[] = {Yglprg_window_v, NULL};
+      "  vec2 tag = vec2(0.0);\n"
+      "  vec4 outColor = vec4( 0.0 );\n";
 
-const GLchar Yglprg_window_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float; \n"
-      "#endif\n"
-      "out vec4 fragColor; \n"
-      "uniform sampler2D s_win0;  \n"
-      "uniform sampler2D s_win1;  \n"
-      "uniform float u_vheight; \n"
-      "uniform int win0; \n"
-      "uniform int win1; \n"
-      "uniform int winOp; \n"
-      "uniform int win0mode;  \n"
-      "uniform int win1mode;  \n"
-      "void main()   \n"
-      "{  \n"
-      "  ivec2 linepos; \n "
-      "  int validw0 = 1; \n"
-      "  int validw1 = 1; \n"
-      "  linepos.y = 0; \n "
-      "  linepos.x = int(u_vheight-gl_FragCoord.y);\n"
-      "  int pos = int(gl_FragCoord.x);\n"
-      "  int valid = 0; \n"
-      "  if (winOp != 0) valid = 1;\n"
-      "  if (win0 != 0) {\n"
-      "    vec4 lineW0 = texelFetch(s_win0,linepos,0);\n"
-      "    int startW0 = int(lineW0.r*255.0) | (int(lineW0.g*255.0)<<8);\n"
-      "    int endW0 = int(lineW0.b*255.0) | (int(lineW0.a*255.0)<<8);\n"
-      "    if (win0mode != 0) { \n"
-      "      if ((startW0 < endW0) && ((pos < startW0) || (pos >= endW0))) validw0 = 0;\n"
-      "      if (startW0 == endW0) validw0 = 0;\n"
-      "    } else { \n"
-      "      if ((startW0 < endW0) && ((pos >= startW0) && (pos < endW0))) validw0 = 0;\n"
-      "    }\n"
-      "  } else validw0 = valid;\n"
-      "  if (win1 != 0) {\n"
-      "    vec4 lineW1 = texelFetch(s_win1,linepos,0);\n"
-      "    int startW1 = int(lineW1.r*255.0) | (int(lineW1.g*255.0)<<8);\n"
-      "    int endW1 = int(lineW1.b*255.0) | (int(lineW1.a*255.0)<<8);\n"
-      "    if (win1mode != 0) { \n"
-      "      if ((startW1 < endW1) && ((pos < startW1) || (pos >= endW1))) validw1 = 0;\n"
-      "      if (startW1 == endW1) validw1 = 0;\n"
-      "    } else { \n"
-      "      if ((startW1 < endW1) && ((pos >= startW1) && (pos < endW1))) validw1 = 0;\n"
-      "    }\n"
-      "  } else validw1 = valid;\n"
-      "  if (winOp != 0) { \n"
-      "    if ((validw0 == 1) && (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
-      "    else discard;\n"
-      "  } else { \n"
-      "    if ((validw0 == 1) || (validw1 == 1)) fragColor = vec4( 0.0, 0.0, 0.0, 1.0 );\n"
-      "    else discard;\n"
-      "  }\n"
-      "}  \n";
-const GLchar * pYglprg_window_f[] = {Yglprg_window_f, NULL};
+#define MESH_PROCESS \
+"if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n \
+  if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n \
+    discard; \n \
+  } \n \
+}else{ \n \
+  if( (int(gl_FragCoord.x) & 0x01) == 1 ){ \n \
+    discard;\n \
+  } \n \
+} \n"
 
-int Ygl_uniformWindow(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
-{
-   YglProgram * prg;
-   prg = p;
-   GLUSEPROG(prg->prgid );
-   glUniform1i(_Ygl->windowpg.tex0, 0);
-   glUniform1i(_Ygl->windowpg.tex1, 1);
-   glUniform1f(_Ygl->windowpg.vheight, (float)_Ygl->rheight);
-   glEnableVertexAttribArray(0);
-   glDisableVertexAttribArray(1);
-   glDisableVertexAttribArray(2);
-   return 0;
-}
+#define MESH_IMPROVED_PROCESS(A, B) \
+" tag = "Stringify(A)".rg; \n \
+  "Stringify(A)".rg = "Stringify(B)".rg; \n"
 
-int Ygl_cleanupWindow(void * p, YglTextureManager *tm )
-{
-   YglProgram * prg;
-   prg = p;
-   return 0;
-}
+// we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
+#define GOURAUD_PROCESS(A) "\
+int Rg = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+int Gg = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+int Bg = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rg | ((Gg & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Gg>>3) | (Bg<<2) | MSBg)/255.0;\n"
+
+#define HALF_TRANPARENT_MIX(A, B) \
+"if ((col"Stringify(B)" & 0x8000) != 0) { \
+  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
+}\n"
+
+#define HALF_LUMINANCE(A) \
+"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
+"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
+"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
+
+#define SHADOW(A) \
+"if ((col"Stringify(A)" & 0x8000) != 0) { \n\
+  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
+  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
+  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
+  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
+  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
+  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
+} else discard;\n"
+
+
+#define COLINDEX(A) \
+"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define RECOLINDEX(A) \
+"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+
+#define COLZERO(A) \
+"if (col"Stringify(A)" == 0) discard;\n"
+
+#define TAGINDEX(A) \
+"int tag"Stringify(A)" = (int("Stringify(A)".b*255.0) | (int("Stringify(A)".a*255.0)<<8));\n"
+
+#define TAGZERO(A) \
+"if (tag"Stringify(A)" != 0) discard;\n"
 
 /*------------------------------------------------------------------------------------
- *  VDP1 Normal Draw
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_normal_v[] =
-      SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;    \n"
-      "uniform vec2 u_texsize;    \n"
-      "layout (location = 0) in vec4 a_position;   \n"
-      "layout (location = 1) in vec4 a_texcoord;   \n"
-      "out   vec4 v_texcoord;     \n"
-      "void main()       \n"
-      "{ \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
-      "   v_texcoord  = a_texcoord; \n"
-      "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
-      "   v_texcoord.y  = v_texcoord.y / u_texsize.y;\n"
-      "} ";
-const GLchar * pYglprg_vdp1_normal_v[] = {Yglprg_vdp1_normal_v, NULL};
-
-const GLchar Yglprg_vpd1_normal_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float; \n"
-      "#endif\n"
-      "in vec4 v_texcoord; \n"
-      "uniform sampler2D s_texture;  \n"
-      "out vec4 fragColor; \n"
-      "void main()   \n"
-      "{  \n"
-      "  vec2 addr = v_texcoord.st;  \n"
-      "  addr.s = addr.s / (v_texcoord.q);      \n"
-      "  addr.t = addr.t / (v_texcoord.q);      \n"
-      "  vec4 FragColor = texture( s_texture, addr );      \n"
-      "  /*if( FragColor.a == 0.0 ) discard;*/     \n"
-      "  fragColor = FragColor;\n "
-      "}  \n";
-const GLchar * pYglprg_vdp1_normal_f[] = {Yglprg_vpd1_normal_f, NULL};
-static int id_vdp1_normal_s_texture_size = -1;
-static int id_vdp1_normal_s_texture = -1;
-
-int Ygl_uniformVdp1Normal(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
-{
-   YglProgram * prg;
-   prg = p;
-   glEnableVertexAttribArray(prg->vertexp);
-   glEnableVertexAttribArray(prg->texcoordp);
-   glUniform1i(id_vdp1_normal_s_texture, 0);
-   glUniform2f(id_vdp1_normal_s_texture_size, YglTM_vdp1[_Ygl->drawframe]->width, YglTM_vdp1[_Ygl->drawframe]->height);
-   return 0;
-}
-
-int Ygl_cleanupVdp1Normal(void * p, YglTextureManager *tm )
-{
-   YglProgram * prg;
-   prg = p;
-   return 0;
-}
-
-/*------------------------------------------------------------------------------------
-*  VDP1 GlowShading Operation with tessellation
+*  VDP1 Operation with tessellation
 * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_gouraudshading_tess_v[] =
-SHADER_VERSION_TESS
-"layout (location = 0) in vec3 a_position; \n"
-"layout (location = 1) in vec4 a_texcoord; \n"
-"layout (location = 2) in vec4 a_grcolor;  \n"
-"uniform vec2 u_texsize;    \n"
-"out vec3 v_position;  \n"
-"out vec4 v_texcoord; \n"
-"out vec4 v_vtxcolor; \n"
-"void main() {     \n"
-"   v_position  = a_position; \n"
-"   v_vtxcolor  = a_grcolor;  \n"
-"   v_texcoord  = a_texcoord; \n"
-"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-"}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_tess_v[] = { Yglprg_vdp1_gouraudshading_tess_v, NULL };
-
-const GLchar Yglprg_tess_c[] =
+const GLchar Yglprg_gouraud_tess_c[] =
 SHADER_VERSION_TESS
 "layout(vertices = 4) out; //<???? what does it means? \n"
 "in vec3 v_position[];  \n"
@@ -832,9 +619,8 @@ SHADER_VERSION_TESS
 "		gl_TessLevelOuter[3] = TessLevelOuter; \n"
 "	} \n"
 "} \n";
-const GLchar * pYglprg_vdp1_gouraudshading_tess_c[] = { Yglprg_tess_c, NULL };
 
-const GLchar Yglprg_tess_e[] =
+const GLchar Yglprg_gouraud_tess_e[] =
 SHADER_VERSION_TESS
 "layout(quads, equal_spacing, ccw) in; \n"
 "in vec3 tcPosition[]; \n"
@@ -859,9 +645,8 @@ SHADER_VERSION_TESS
 "	vec4 cb = mix(tcColor[1], tcColor[2], u); \n"
 "	teColor = mix(ca, cb, v); \n"
 "} \n";
-const GLchar * pYglprg_vdp1_gouraudshading_tess_e[] = { Yglprg_tess_e, NULL };
 
-const GLchar Yglprg_tess_g[] =
+const GLchar Yglprg_gouraud_tess_g[] =
 SHADER_VERSION_TESS
 "uniform mat4 Modelview; \n"
 "uniform mat3 NormalMatrix; \n"
@@ -888,409 +673,6 @@ SHADER_VERSION_TESS
 " \n"
 "	EndPrimitive(); \n"
 "} \n";
-const GLchar * pYglprg_vdp1_gouraudshading_tess_g[] = { Yglprg_tess_g, NULL };
-
-static YglVdp1CommonParam id_gt = { 0 };
-
-
-/*------------------------------------------------------------------------------------
- *  VDP1 GlowShading Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_gouraudshading_v[] =
-SHADER_VERSION
-"uniform mat4 u_mvpMatrix;     \n"
-"uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;    \n"
-"layout (location = 1) in vec4 a_texcoord;    \n"
-"layout (location = 2) in vec4 a_grcolor;     \n"
-"out  vec4 v_texcoord;    \n"
-"out  vec4 v_vtxcolor;    \n"
-"void main() { \n"
-"   v_vtxcolor  = a_grcolor;   \n"
-"   v_texcoord  = a_texcoord; \n"
-"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_v[] = {Yglprg_vdp1_gouraudshading_v, NULL};
-
-const GLchar Yglprg_vdp1_gouraudshading_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;\n"
-"#endif\n"
-"uniform sampler2D u_sprite;\n"
-"in vec4 v_texcoord;\n"
-"in vec4 v_vtxcolor;\n"
-"out vec4 fragColor; \n"
-"out vec4 fragColorAttr; \n"
-"void main() {\n"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  int shadow = 0;\n"
-"  int additionnal = int(spriteColor.a * 255.0)&0xF8;\n"
-"  if (additionnal == 0xC0) {\n"
-"    if (((int(spriteColor.b * 255.0)&0xFE)==0x80) && (spriteColor.rg == vec2(0.0))) shadow = 1;\n"
-"  }\n"
-"  if (shadow != 0) {\n"
-"    fragColorAttr.rgb = vec3(0.0);\n"
-"    fragColorAttr.a = float(0x80)/255.0;\n"
-"    fragColor.rgb = vec3(0.0);\n"
-"  } else { \n"
-"    fragColorAttr = vec4(0.0);\n"
-"    fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
-"  }\n"
-"  fragColor.a = spriteColor.a;  \n"
-"}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_f[] = {Yglprg_vdp1_gouraudshading_f, NULL};
-
-static YglVdp1CommonParam id_g = { 0 };
-
-/*------------------------------------------------------------------------------------
- *  VDP1 MSB shadow Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_msb_shadow_v[] =
-SHADER_VERSION
-"uniform mat4 u_mvpMatrix;     \n"
-"uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;    \n"
-"layout (location = 1) in vec4 a_texcoord;    \n"
-"out  vec4 v_texcoord;    \n"
-"void main() { \n"
-"   v_texcoord  = a_texcoord; \n"
-"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"}\n";
-const GLchar * pYglprg_vdp1_msb_shadow_v[] = {Yglprg_vdp1_msb_shadow_v, NULL};
-
-const GLchar Yglprg_vdp1_msb_shadow_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;\n"
-"#endif\n"
-"uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo_attr;\n"
-"in  vec4 v_texcoord;    \n"
-"out vec4 fragColorAttr; \n"
-"void main() {\n"
-"  int mode;\n"
-"  ivec2 addr = ivec2(textureSize(u_sprite, 0) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;\n"
-"  int msb = 0;\n"
-"  fragColorAttr = texelFetch(u_fbo_attr,ivec2(gl_FragCoord.xy),0);\n"
-"  int oldmsb = (int(fragColorAttr.a * 255.0))>>7;\n"
-"  int prio = int(spriteColor.a * 255.0) & 0x7;\n"
-"  if ((int(spriteColor.a * 255.0) & 0xC0) == 0xC0) {\n"
-"    msb = (int(spriteColor.b*255.0)>>7);\n"
-"  }\n"
-"  if (msb == 0) discard;\n"
-"  fragColorAttr.a = float((msb | oldmsb)<<7 | prio)/255.0;\n"
-"}\n";
-const GLchar * pYglprg_vdp1_msb_shadow_f[] = {Yglprg_vdp1_msb_shadow_f, NULL};
-
-static YglVdp1CommonParam id_msb_s = { 0 };
-
-
-/*------------------------------------------------------------------------------------
- *  VDP1 GlowShading and Half Trans Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_gouraudshading_hf_v[] =
-      SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;     \n"
-      "uniform vec2 u_texsize;    \n"
-      "layout (location = 0) in vec4 a_position;    \n"
-      "layout (location = 1) in vec4 a_texcoord;    \n"
-      "layout (location = 2) in vec4 a_grcolor;     \n"
-      "out  vec4 v_texcoord;    \n"
-      "out  vec4 v_vtxcolor;    \n"
-      "void main() { \n"
-      "   v_vtxcolor  = a_grcolor;   \n"
-      "   v_texcoord  = a_texcoord; \n"
-      "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-      "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
-      "}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_hf_v[] = {Yglprg_vdp1_gouraudshading_hf_v, NULL};
-
-const GLchar Yglprg_vdp1_gouraudshading_hf_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float;         \n"
-      "#endif\n"
-      "uniform highp sampler2D u_sprite;      \n"
-      "uniform highp sampler2D u_fbo;         \n"
-      "in vec4 v_texcoord;         \n"
-      "in vec4 v_vtxcolor;         \n"
-      "out vec4 fragColor; \n "
-      "void main() {    \n"
-      "  int mode;\n"
-      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-      "  if( spriteColor.a == 0.0 ) discard;         \n"
-      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-      "  int additional = int(fboColor.a * 255.0);\n"
-      "  mode = int(spriteColor.b*255.0)&0x7; \n"
-      "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-      "  spriteColor += vec4(v_vtxcolor.r,v_vtxcolor.g,v_vtxcolor.b,0.0);\n"
-      "  if( (additional & 0x40) == 0 ) \n"
-      "  { \n"
-      "    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
-      "    fragColor.a = spriteColor.a; \n"
-      "  }else{         \n"
-      "    fragColor = spriteColor;  \n"
-      "  }   \n"
-      "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-      "}\n";
-const GLchar * pYglprg_vdp1_gouraudshading_hf_f[] = {Yglprg_vdp1_gouraudshading_hf_f, NULL};
-
-
-static YglVdp1CommonParam id_ght = { 0 };
-static YglVdp1CommonParam id_ght_tess = { 0 };
-
-
-/*------------------------------------------------------------------------------------
- *  VDP1 Half Trans Operation
- * ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_halftrans_v[] =
-        SHADER_VERSION
-        "uniform mat4 u_mvpMatrix;     \n"
-        "uniform vec2 u_texsize;    \n"
-        "layout (location = 0) in vec4 a_position;    \n"
-        "layout (location = 1) in vec4 a_texcoord;    \n"
-        "layout (location = 2) in vec4 a_grcolor;     \n"
-        "out  vec4 v_texcoord;    \n"
-        "out  vec4 v_vtxcolor;    \n"
-        "void main() { \n"
-        "   v_vtxcolor  = a_grcolor;   \n"
-        "   v_texcoord  = a_texcoord; \n"
-        "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-        "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-        "   gl_Position = a_position*u_mvpMatrix; \n"
-        "}\n";
-
-const GLchar * pYglprg_vdp1_halftrans_v[] = {Yglprg_vdp1_halftrans_v, NULL};
-
-const GLchar Yglprg_vdp1_halftrans_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float;         \n"
-      "#endif\n"
-      "uniform highp sampler2D u_sprite;          \n"
-      "uniform highp sampler2D u_fbo;   \n"
-      "in vec4 v_texcoord;         \n"
-      "out vec4 fragColor; \n "
-      "void main() {    \n"
-      "  int mode; \n"
-      "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-      "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-      "  if( spriteColor.a == 0.0 ) discard;         \n"
-      "  mode = int(spriteColor.b*255.0)&0x7; \n"
-      "  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-      "  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-      "  int additional = int(fboColor.a * 255.0);\n"
-      "  if( (additional & 0x40) == 0 ) \n"
-      "  {   \n"
-      "    fragColor = spriteColor*0.5 + fboColor*0.5;     \n"
-      "    fragColor.a = fboColor.a; \n"
-      "  }else{         \n"
-      "    fragColor = spriteColor;  \n"
-      "  }   \n"
-      "  fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-      "}\n";
-const GLchar * pYglprg_vdp1_halftrans_f[] = {Yglprg_vdp1_halftrans_f, NULL};
-
-static YglVdp1CommonParam hf = {0};
-static YglVdp1CommonParam hf_tess = {0};
-
-/*------------------------------------------------------------------------------------
-*  VDP1 Mesh Operaion
-* ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_mesh_v[] =
-SHADER_VERSION
-"uniform mat4 u_mvpMatrix;     \n"
-"uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;    \n"
-"layout (location = 1) in vec4 a_texcoord;    \n"
-"layout (location = 2) in vec4 a_grcolor;     \n"
-"out  vec4 v_texcoord;    \n"
-"out  vec4 v_vtxcolor;    \n"
-"void main() { \n"
-"   v_vtxcolor  = a_grcolor;   \n"
-"   v_texcoord  = a_texcoord; \n"
-"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"}\n";
-const GLchar * pYglprg_vdp1_mesh_v[] = { Yglprg_vdp1_mesh_v, NULL };
-
-const GLchar Yglprg_vdp1_mesh_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;         \n"
-"#endif\n"
-"uniform sampler2D u_sprite;      \n"
-"uniform sampler2D u_fbo;         \n"
-"in vec4 v_texcoord;         \n"
-"in vec4 v_vtxcolor;         \n"
-"out vec4 fragColor; \n "
-"out vec4 fragColorAttr; \n"
-"void main() {    \n"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;         \n"
-"  if( (int(gl_FragCoord.y) & 0x01) == 0 ){ \n"
-"    if( (int(gl_FragCoord.x) & 0x01) == 0 ){ \n"
-"       discard;"
-"    } \n"
-"  }else{ \n"
-"    if( (int(gl_FragCoord.x) & 0x01) == 1 ){ \n"
-"       discard;"
-"    } \n"
-"  } \n"
-"  fragColorAttr = vec4(0.0);\n"
-"  fragColor.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));     \n"
-"  fragColor.a = spriteColor.a;  \n"
-"}\n";
-
-//utiliser un bit dans la caouche attribut pour ameliorer le blend et faire une couche a 50%
-const GLchar Yglprg_vdp1_mesh_improve_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;         \n"
-"#endif\n"
-"uniform sampler2D u_sprite;      \n"
-"uniform sampler2D u_fbo;         \n"
-"in vec4 v_texcoord;         \n"
-"in vec4 v_vtxcolor;         \n"
-"out vec4 fragColor; \n "
-"out vec4 fragColorAttr; \n"
-"void main() {    \n"
-"  int alpha = 0x0;\n"
-"  int prio = 0;"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;         \n"
-"  prio = (int(spriteColor.a *255.0) & 0x7);\n"
-"  fragColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-"  fragColor.a = float((int(fragColor.a *255.0) & 0xF8)|prio)/255.0;\n"
-"  fragColorAttr.rgb  = clamp(spriteColor.rgb+v_vtxcolor.rgb,vec3(0.0),vec3(1.0));\n"
-"  fragColorAttr.b = float(int(fragColorAttr.b*255.0)&0xFE)/255.0;\n"
-"  if ((int(spriteColor.a * 255.0) & 0x40) == 0) alpha = 0x08;\n"
-"  alpha = alpha | 0x40 | prio;\n"
-"  fragColorAttr.a = float(alpha)/255.0;\n"
-"}\n";
-
-const GLchar * pYglprg_vdp1_mesh_f[] = { Yglprg_vdp1_mesh_f, NULL };
-const GLchar * pYglprg_vdp1_mesh_improve_f[] = { Yglprg_vdp1_mesh_improve_f, NULL };
-
-static YglVdp1CommonParam mesh = { 0 };
-static YglVdp1CommonParam mesh_improve = { 0 };
-static YglVdp1CommonParam grow_tess = { 0 };
-static YglVdp1CommonParam mesh_tess = { 0 };
-static YglVdp1CommonParam mesh_tess_improve = { 0 };
-static YglVdp1CommonParam id_msb_tess = { 0 };
-
-/*------------------------------------------------------------------------------------
-*  VDP1 Half luminance Operaion
-* ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_half_luminance_v[] =
-      SHADER_VERSION
-      "uniform mat4 u_mvpMatrix;    \n"
-      "uniform vec2 u_texsize;    \n"
-      "layout (location = 0) in vec4 a_position;   \n"
-      "layout (location = 1) in vec4 a_texcoord;   \n"
-      "out   vec4 v_texcoord;     \n"
-      "void main()       \n"
-      "{ \n"
-      "   gl_Position = a_position*u_mvpMatrix; \n"
-      "   v_texcoord  = a_texcoord; \n"
-      "   v_texcoord.x  = v_texcoord.x / u_texsize.x;\n"
-      "   v_texcoord.y  = v_texcoord.y / u_texsize.y;\n"
-      "} ";
-const GLchar * pYglprg_vdp1_half_luminance_v[] = {Yglprg_vdp1_half_luminance_v, NULL};
-
-const GLchar Yglprg_vpd1_half_luminance_f[] =
-      SHADER_VERSION
-      "#ifdef GL_ES\n"
-      "precision highp float; \n"
-      "#endif\n"
-      "in vec4 v_texcoord; \n"
-      "uniform sampler2D s_texture;  \n"
-      "out vec4 fragColor; \n"
-      "out vec4 fragColorAttr; \n"
-      "void main()   \n"
-      "{  \n"
-      "  ivec2 addr = ivec2(vec2(textureSize(s_texture, 0)) * v_texcoord.st / v_texcoord.q); \n"
-      "  vec4 spriteColor = texelFetch(s_texture,addr,0);\n"
-      "  if( spriteColor.a == 0.0 ) discard;         \n"
-      "  fragColor.r = spriteColor.r * 0.5;\n "
-      "  fragColor.g = spriteColor.g * 0.5;\n "
-      "  fragColor.b = spriteColor.b * 0.5;\n "
-      "  fragColorAttr = vec4(0.0);\n"
-      "  fragColor.a = spriteColor.a;\n "
-      "}  \n";
-const GLchar * pYglprg_vdp1_half_luminance_f[] = {Yglprg_vpd1_half_luminance_f, NULL};
-static YglVdp1CommonParam half_luminance = { 0 };
-static YglVdp1CommonParam half_luminance_tess = { 0 };
-
-
-/*------------------------------------------------------------------------------------
-*  VDP1 Shadow Operation
-*    hard/vdp1/hon/p06_37.htm
-* ----------------------------------------------------------------------------------*/
-const GLchar Yglprg_vdp1_shadow_v[] =
-SHADER_VERSION
-"uniform mat4 u_mvpMatrix;     \n"
-"uniform vec2 u_texsize;    \n"
-"layout (location = 0) in vec4 a_position;    \n"
-"layout (location = 1) in vec4 a_texcoord;    \n"
-"layout (location = 2) in vec4 a_grcolor;     \n"
-"out  vec4 v_texcoord;    \n"
-"out  vec4 v_vtxcolor;    \n"
-"void main() { \n"
-"   v_vtxcolor  = a_grcolor;   \n"
-"   v_texcoord  = a_texcoord; \n"
-"   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
-"   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
-"   gl_Position = a_position*u_mvpMatrix; \n"
-"}\n";
-
-const GLchar * pYglprg_vdp1_shadow_v[] = { Yglprg_vdp1_shadow_v, NULL };
-
-const GLchar Yglprg_vdp1_shadow_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float;\n"
-"#endif\n"
-"uniform sampler2D u_sprite;\n"
-"uniform highp sampler2D u_fbo;\n"
-"in vec4 v_texcoord;\n"
-"out vec4 fragColor; \n "
-"void main() { \n"
-"  int mode;\n"
-"  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
-"  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
-"  if( spriteColor.a == 0.0 ) discard;         \n"
-"  mode = int(spriteColor.b*255.0)&0x7; \n"
-"  spriteColor.b = float((int(spriteColor.b*255.0)&0xF8)>>3)/31.0; \n"
-"  vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
-"  int additional = int(fboColor.a * 255.0);\n"
-"  if( ((additional & 0xC0)==0x80) ) { \n"
-"    fragColor = vec4(fboColor.r*0.5,fboColor.g*0.5,fboColor.b*0.5,fboColor.a);\n"
-"    fragColor.b = float((int(fragColor.b*255.0)&0xF8)|mode)/255.0; \n"
-"  }else{\n"
-"    discard;"
-"  }\n"
-"}\n";
-const GLchar * pYglprg_vdp1_shadow_f[] = { Yglprg_vdp1_shadow_f, NULL };
-
-static YglVdp1CommonParam shadow = { 0 };
-static YglVdp1CommonParam shadow_tess = { 0 };
-
-
 /*------------------------------------------------------------------------------------
  *  VDP1 UserClip Operation
  * ----------------------------------------------------------------------------------*/
@@ -1357,6 +739,7 @@ int Ygl_uniformStartUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs,
       _Ygl->vdp1_stencil_mode =3;
       glStencilFunc(GL_ALWAYS,0,0xFF);
    }
+   glUniform3i(prg->ids->sysclip, (int)(Vdp1Regs->systemclipX2 * _Ygl->vdp1width)/512, (int)(Vdp1Regs->systemclipY2 * _Ygl->vdp1height)/256, _Ygl->vdp1height);
 
    glEnableVertexAttribArray(0);
    glEnableVertexAttribArray(1);
@@ -1382,7 +765,206 @@ int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, i
 
 int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
 
+const GLchar version_core_3_3[] = {
+SHADER_VERSION
+};
 
+const GLchar version_core_4_2[] = {
+SHADER_VERSION_TESS
+};
+
+const GLchar* vdp1drawversion[2]= {
+  version_core_3_3,
+  version_core_4_2
+};
+
+const GLchar vdp1drawstart[] = {
+  "#ifdef GL_ES\n"
+  "precision highp float;\n"
+  "#endif\n"
+  "uniform sampler2D u_sprite;\n"
+  "uniform sampler2D u_fbo;\n"
+  "uniform ivec3 sysClip;\n"
+  "in vec4 v_texcoord;\n"
+  "in vec4 v_vtxcolor; \n"
+  "out vec4 fragColor; \n"
+  "void main() {\n"
+  "  vec4 outColor = vec4(0.0);\n"
+  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
+  "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
+  "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
+  "  vec2 tag = vec2(0.0);\n"
+  COLINDEX(spriteColor)
+};
+
+//SPD Mode handling
+const GLchar spd_on[] = {
+COLZERO(spriteColor)
+};
+
+const GLchar spd_off[] =
+{"//No Spd\n"};
+
+const GLchar* vdp1drawcheck[2]= {
+  spd_on,
+  spd_off
+};
+
+//END Mode handling
+const GLchar end_on[] = {
+TAGINDEX(spriteColor)
+TAGZERO(spriteColor)
+};
+
+const GLchar end_off[] =
+{"//No End\n"};
+
+const GLchar* vdp1drawcheckend[2]= {
+  end_on,
+  end_off
+};
+
+//Mesh Mode handling
+const GLchar no_mesh[] =
+{"//No mesh\n"};
+
+const GLchar mesh[] = {
+MESH_PROCESS
+};
+
+const GLchar improved_mesh[] = {
+  "vec4 curColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  MESH_IMPROVED_PROCESS(outColor, curColor)
+};
+
+const GLchar* vdp1drawmesh[3]= {
+  no_mesh,
+  mesh,
+  improved_mesh
+};
+
+//MSB process
+const GLchar no_msb[] =
+{"//No MSB\n"};
+
+const GLchar msb[] = {
+  "  vec4 currentColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  "  currentColor.g = float(int(currentColor.g * 255.0)|0x80)/255.0;\n"
+  "  fragColor = currentColor;\n"
+  "  return;\n"
+};
+
+const GLchar* vdp1drawmsb[2]= {
+  no_msb,
+  msb
+};
+
+//Color calculation mode
+const GLchar replace_mode[] = {
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar shadow_mode[] = {
+  "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  COLINDEX(fboColor)
+  SHADOW(fboColor)
+    "outColor.rg = fboColor.rg;\n"
+};
+
+const GLchar half_luminance_mode[] = {
+  HALF_LUMINANCE(spriteColor)
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar half_trans_mode[] = {
+  "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  COLINDEX(fboColor)
+  HALF_TRANPARENT_MIX(spriteColor, fboColor)
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar gouraud_mode[] = {
+  GOURAUD_PROCESS(spriteColor)
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar gouraud_half_luminance_mode[] = {
+  GOURAUD_PROCESS(spriteColor)
+  RECOLINDEX(spriteColor)
+  HALF_LUMINANCE(spriteColor)
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar gouraud_half_trans_mode[] = {
+  GOURAUD_PROCESS(spriteColor)
+  RECOLINDEX(spriteColor)
+  "vec4 fboColor    = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
+  COLINDEX(fboColor)
+  HALF_TRANPARENT_MIX(spriteColor, fboColor)
+  "outColor.rg = spriteColor.rg;\n"
+};
+
+const GLchar nothing_mode[] =
+{"//No CC mode\n"};
+
+const GLchar* vdp1drawmode[8]= {
+  replace_mode,
+  shadow_mode,
+  half_luminance_mode,
+  half_trans_mode,
+  gouraud_mode,
+  gouraud_half_luminance_mode,
+  gouraud_half_trans_mode,
+  nothing_mode
+};
+
+//ENd of shaders
+const GLchar vdp1drawend[] = {
+  "  fragColor.rgba = vec4(outColor.rg, tag);\n"
+  "}\n"
+};
+
+//Common Vertex shader
+const GLchar vdp1drawvertex_normal[] = {
+  "layout (location = 0) in vec4 a_position; \n"
+  "layout (location = 1) in vec4 a_texcoord; \n"
+  "layout (location = 2) in vec4 a_grcolor;  \n"
+  "uniform vec2 u_texsize;    \n"
+  "uniform mat4 u_mvpMatrix; \n"
+  "out vec3 v_position;  \n"
+  "out vec4 v_texcoord; \n"
+  "out vec4 v_vtxcolor; \n"
+  "void main() {     \n"
+  "   gl_Position  = a_position*u_mvpMatrix; \n"
+  "   v_vtxcolor  = a_grcolor;  \n"
+  "   v_texcoord  = a_texcoord; \n"
+  "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+  "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
+  "}\n"
+};
+
+const GLchar vdp1drawvertex_tess[] = {
+  "layout (location = 0) in vec4 a_position; \n"
+  "layout (location = 1) in vec4 a_texcoord; \n"
+  "layout (location = 2) in vec4 a_grcolor;  \n"
+  "uniform vec2 u_texsize;    \n"
+  "uniform mat4 u_mvpMatrix; \n"
+  "out vec3 v_position;  \n"
+  "out vec4 v_texcoord; \n"
+  "out vec4 v_vtxcolor; \n"
+  "void main() {     \n"
+  "   v_position  = a_position.xyz; \n"
+  "   v_vtxcolor  = a_grcolor;  \n"
+  "   v_texcoord  = a_texcoord; \n"
+  "   v_texcoord.x  = v_texcoord.x / u_texsize.x; \n"
+  "   v_texcoord.y  = v_texcoord.y / u_texsize.y; \n"
+  "}\n"
+};
+
+const GLchar* vdp1drawvertex[2]= {
+  vdp1drawvertex_normal,
+  vdp1drawvertex_tess
+};
 
 /*------------------------------------------------------------------------------------
  *  VDP2 Draw Frame buffer Operation
@@ -1390,13 +972,11 @@ int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
 
 typedef struct  {
   int idvdp1FrameBuffer;
-  int idvdp1FrameBufferAttr;
   int idvdp2regs;
   int idcram;
-  int idline;
 } DrawFrameBufferUniform;
 
-#define MAX_FRAME_BUFFER_UNIFORM (48)
+#define MAX_FRAME_BUFFER_UNIFORM (128*5)
 
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
@@ -1427,785 +1007,202 @@ refrence:
 
 */
 
-const GLchar Yglprg_vdp2_drawfb_cram_f[] =
-"  FBCol ret;\n"
-"  ret.color = vec4(0.0);\n"
-"  ret.prio = 0;\n"
-"  ret.meshColor = vec4(0.0);\n"
-"  ret.mesh = 0;\n"
-"  if (fbon != 1) return ret;\n"
-"  fbmode = 1;\n"
-"  vdp1mode = 1;\n"
-"  vec4 fbColor = texelFetch(s_vdp1FrameBuffer, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBuffer, 0)+ivec2(x, 0)), 0);\n"
-"  vec4 fbColorAttr = texelFetch(s_vdp1FrameBufferAttr, ivec2(v_texcoord.st * textureSize(s_vdp1FrameBufferAttr, 0)+ivec2(x, 0)), 0);\n"
-"  vec4 tmpColor = vec4(0.0);\n"
-"  vec4 tmpmeshColor = vec4(0.0);\n"
-"  int line = int((u_vheight-gl_FragCoord.y) * u_emu_height)*24;\n"
-"  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
-"  vec3 u_coloroffset_sign = vec3(texelFetch(s_vdp2reg, ivec2(20 + line, 0), 0).r, texelFetch(s_vdp2reg, ivec2(21+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(22+line,0), 0).r);\n"
-"  if (u_coloroffset_sign.r != 0.0) u_coloroffset.r = float(int(u_coloroffset.r*255.0)-256.0)/255.0;\n"
-"  if (u_coloroffset_sign.g != 0.0) u_coloroffset.g = float(int(u_coloroffset.g*255.0)-256.0)/255.0;\n"
-"  if (u_coloroffset_sign.b != 0.0) u_coloroffset.b = float(int(u_coloroffset.b*255.0)-256.0)/255.0;\n"
-"  int u_color_ram_offset = int(texelFetch(s_vdp2reg, ivec2(23+line,0), 0).r*255.0)<<8;\n"
-"  int u_cctl = int(texelFetch(s_vdp2reg, ivec2(16+line,0), 0).r*255.0);\n"
-"  int additional = int(fbColor.a * 255.0);\n"
-"  int additionalAttr = int(fbColorAttr.a * 255.0);\n"
-"  int additionalAlpha = int(fbColorAttr.r * 255.0);\n"
-"  if( ((additional & 0x80) == 0) && ((additionalAttr & 0xC0) == 0) ){ return ret;} // show? \n"
-"  int prinumber = (additional&0x07); \n"
-"  int primesh = additionalAttr&0x7;\n"
-"  int tmpmeshprio = 0;\n"
-"  int depth = int(texelFetch(s_vdp2reg, ivec2(prinumber+8+line,0), 0).r*255.0);\n"
-"  int alpha = int(texelFetch(s_vdp2reg, ivec2(((additional>>3)&0x07)+line,0), 0).r*255.0)<<3; \n"
-"  int opaque = 0xF8;\n"
-"  int tmpmesh = 0;\n"
-"  int msb = int(fbColor.b*255.0)&0x1;\n"
-"  fbColor.b = float(int(fbColor.b * 255.0)&0xFE)/255.0;\n"
-"  vec4 txcol=vec4(0.0,0.0,0.0,1.0);\n"
-"  if((additional & 0x80) != 0) {\n"
-"    if( (additional & 0x40) != 0 ){  // index color? \n"
-"      int colindex = ( int(fbColor.g*255.0)<<8 | int(fbColor.r*255.0)); \n"
-"      if( colindex == 0 && prinumber == 0 && ((additionalAttr & 0x80) == 0)) { \n"
-"        if ((additionalAttr & 0x40) != 0) {\n"
-"          if ((additionalAttr & 0x08) != 0) {\n"
-"            ret.meshColor.rgb = fbColorAttr.rgb;\n"
-"          } else { \n"
-"            colindex = ( int(fbColorAttr.g*255.0)<<8 | int(fbColorAttr.r*255.0)); \n"
-"            if( colindex != 0) {\n"
-"              colindex = colindex + u_color_ram_offset; \n"
-"              txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"              ret.meshColor.rgb = txcol.rgb;\n"
-"            } else { \n"
-"              ret.meshColor.rgb = vec3(0.0);\n"
-"            }\n"
-"          }\n"
-"          ret.meshColor.a = fbColor.a;\n"
-"          ret.mesh = 1;\n"
-"        }\n"
-"        ret.meshPrio = int(texelFetch(s_vdp2reg, ivec2(primesh+8+line,0), 0).r*255.0);\n"
-"        return ret; \n"
-"      } // hard/vdp1/hon/p02_11.htm 0 data is ignoerd \n"
-"      if(( colindex != 0 || prinumber != 0) && ((additionalAttr & 0x80) == 0)){\n"
-"        colindex = colindex + u_color_ram_offset; \n"
-"        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"        if (txcol.a != 0.0) msb = 1;\n" //linked to VDP2 ColorRam alpha management
-"        else msb = 0;\n"
-"        tmpColor = txcol;\n"
-"      } else { \n"
-"        tmpColor = vec4(0.0);\n"
-"      }\n"
-"    }else{ // direct color \n"
-"      tmpColor = fbColor;\n"
-"    } \n"
-"    tmpColor.rgb = clamp(tmpColor.rgb + u_coloroffset, vec3(0.0), vec3(1.0));  \n"
-"  } else { \n"
-"    tmpColor = fbColor;\n"
-"  } \n"
-"  if ((additionalAttr & 0x80) != 0) {\n"
-"    if (tmpColor.rgb == vec3(0.0)) {\n"
-"      alpha = 0x78;\n"
-"      vdp1mode = 5;\n"
-"      fbmode = 0;\n"
-"    } else { \n"
-"      if (int(texelFetch(s_vdp2reg, ivec2((additionalAttr & 0x7)+8+line,0), 0).r*255.0)-1 == depth) {\n"
-"        tmpColor.rgb = tmpColor.rgb * 0.5;\n"
-"      }\n"
-"    }\n"
-"  } \n"
-"  if ((additionalAttr & 0x40) != 0) {\n"
-"    if ((additionalAttr & 0x08) != 0) {\n"
-"      tmpmeshColor.rgb = fbColorAttr.rgb;\n"
-"    } else { \n"
-"      int colindex = ( int(fbColorAttr.g*255.0)<<8 | int(fbColorAttr.r*255.0)); \n"
-"      if( colindex != 0) {\n"
-"        colindex = colindex + u_color_ram_offset; \n"
-"        txcol = texelFetch( s_color,  ivec2( colindex ,0 )  , 0 );\n"
-"        tmpmeshColor.rgb = txcol.rgb;\n"
-"      } else { \n"
-"        tmpmeshColor.rgb = vec3(0.0);\n"
-"      }\n"
-"    }\n"
-"    tmpmeshColor.a = fbColor.a;\n"
-"    tmpmeshprio = int(texelFetch(s_vdp2reg, ivec2(primesh+8+line,0), 0).r*255.0);"
-"    tmpmesh = 1;\n"
-"  }\n"
-"  if (fbmode != 0) {\n";
-/*
- Color calculation option
-  hard/vdp2/hon/p09_21.htm
-*/
-const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " alpha = opaque; \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ alpha = opaque; fbmode = 0;} \n ";
-const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ alpha = opaque; fbmode = 0;} \n ";
-
-
-const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
-"\n";
-const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-" if (fbmode == 1) vdp1mode = 2; \n";
-const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-" if (fbmode == 1) vdp1mode = 3; \n";
-const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-" if (fbmode == 1) vdp1mode = 4; \n";
-
-const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
-" }\n"
-" if(additionalAlpha != 0) {\n"
-"   alpha = 0x78;\n"
-"   vdp1mode = 3;\n"
-" }\n"
-" tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
-" ret.color = tmpColor;\n"
-" ret.meshColor = tmpmeshColor;\n"
-" ret.mesh = tmpmesh;\n"
-" ret.meshPrio = tmpmeshprio;\n"
-" ret.prio = depth;\n";
-
-
 //--------------------------------------------------------------------------------------------------------------
-
-static const char vdp2blit_start_f[] =
+static const char vdp2blit_gl_start_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
 "precision highp float; \n"
 "#endif\n"
 "in vec2 v_texcoord; \n"
-"uniform sampler2D s_back;  \n"
-"uniform sampler2D s_lncl;  \n"
-"uniform sampler2D s_cc_win;  \n"
-"uniform int u_lncl[7];  \n"
 "out vec4 finalColor; \n"
-"uniform sampler2D s_vdp2reg; \n"
-"uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform sampler2D s_vdp1FrameBufferAttr;\n"
-"uniform sampler2D s_color; \n"
-"uniform sampler2D s_line; \n"
-"int fbmode = 1;\n"
-"int vdp1mode = 1;\n"
-
-"vec4 FBColor = vec4(0.0);\n"
-"vec4 vdp2col0 = vec4(0.0);\n"
-"vec4 vdp2col1 = vec4(0.0);\n"
-"vec4 vdp2col2 = vec4(0.0);\n"
-"vec4 vdp2col3 = vec4(0.0);\n"
-"vec4 vdp2col4 = vec4(0.0);\n"
-"vec4 vdp2col5 = vec4(0.0);\n"
-"vec4 FBShadow = vec4(0.0);\n"
-"int FBPrio = 0;\n"
-"int FBMesh = 0;\n"
-"int FBMeshPrio = 0;\n"
-"int NoVdp1 = 0;\n"
-
-#ifdef DEBUG_BLIT
-"out vec4 topColor; \n"
-"out vec4 secondColor; \n"
-"out vec4 thirdColor; \n"
-"out vec4 fourthColor; \n"
-#endif
-"uniform float u_emu_height;\n"
-"uniform float u_vheight; \n"
-
 "uniform sampler2D s_texture0;  \n"
 "uniform sampler2D s_texture1;  \n"
 "uniform sampler2D s_texture2;  \n"
 "uniform sampler2D s_texture3;  \n"
 "uniform sampler2D s_texture4;  \n"
 "uniform sampler2D s_texture5;  \n"
-"uniform int fbon;  \n"
-"uniform int screen_nb;  \n"
+"uniform sampler2D s_back;  \n"
+"uniform sampler2D s_lncl;  \n"
+"uniform sampler2D s_vdp1FrameBuffer;\n"
+"uniform sampler2D s_win0;  \n"
+"uniform sampler2D s_win1;  \n"
+"uniform sampler2D s_color; \n"
+"uniform sampler2D s_vdp2reg; \n"
+"uniform float u_emu_height;\n"
+"uniform float u_emu_vdp1_width;\n"
+"uniform float u_emu_vdp2_width;\n"
+"uniform float u_vheight; \n"
+"uniform vec2 vdp1Ratio; \n"
+"uniform int fbon; \n"
+"uniform int screen_nb; \n"
+"uniform int ram_mode; \n"
+"uniform int extended_cc; \n"
+"uniform int u_lncl[7];  \n"
 "uniform int mode[7];  \n"
 "uniform int isRGB[6]; \n"
 "uniform int isBlur[7]; \n"
-"uniform int ram_mode; \n"
-"uniform int extended_cc; \n"
-"uniform int use_cc_win; \n"
-"int cc_enabled; \n"
-
-"struct Col \n"
-"{ \n"
-"  vec4 Color; \n"
-"  vec4 meshColor;\n"
-"  int mesh;\n"
-"  int lncl; \n"
-"  int mode; \n"
-"  int isRGB; \n"
-"  int isSprite; \n"
-"  int layer; \n"
-"}; \n"
-
-"struct FBCol \n"
-"{ \n"
-"  vec4 color; \n"
-"  vec4 meshColor; \n"
-"  int mesh;\n"
-"  int prio; \n"
-"  int meshPrio;\n"
-"}; \n"
-
-"FBCol getFB(int x){ \n";
-
-static const char vdp2blit_partial_end_f[] =
-" return ret;\n"
-"}\n";
-
-static const char vdp2blit_filter_f[] =
-"vec4 getPixel(sampler2D tex, vec2 st) {\n"
-" ivec2 addr = ivec2(textureSize(tex, 0) * st);\n"
-" vec4 result = texelFetch( tex, addr,0 );\n"
-//" result.rgb = Filter( tex, st ).rgb;\n"
-" return result;\n"
-"}\n";
-
-static const char vdp2blit_end_f[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
-"{  \n"
-"  Col ret, empty; \n"
-"  vec4 tmpColor;\n"
-"  int remPrio = nbPrio;\n"
-"  empty.Color = vec4(0.0);\n"
-"  empty.mode = 0;\n"
-"  empty.lncl = 0;\n"
-"  empty.isSprite = 0;\n"
-"  empty.layer = -1;\n"
-"  empty.meshColor = vec4(0.0);\n"
-"  empty.mesh = 0;\n"
-"  ret = empty;\n"
-"  int priority; \n"
-"  int alpha; \n"
-"  if ((fbon == 1) && (prio == FBPrio)) {\n"
-"    ret.mode = int(FBColor.a*255.0)&0x7; \n"
-"    ret.lncl = u_lncl[6];\n"
-"    ret.Color = FBColor; \n"
-"    remPrio = remPrio - 1;\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.isRGB = 0;\n" //Shall not be the case always... Need to get RGB format per pixel
-"    ret.isSprite = 1;\n"
-"    ret.layer = 6;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 0) return empty;\n"
-"  ret.isSprite = 0;\n"
-"  tmpColor = vdp2col0; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[0];\n"
-"    ret.Color = tmpColor; \n"
-"    ret.isRGB = isRGB[0];\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[0]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 0;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 1) return empty;\n"
-"  tmpColor = vdp2col1; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[1];\n"
-"    ret.isRGB = isRGB[1];\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[1]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 1;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 2) return empty;\n"
-"  tmpColor = vdp2col2; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[2];\n"
-"    ret.isRGB = isRGB[2];\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[2]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 2;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 3) return empty;\n"
-"  tmpColor = vdp2col3; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[3];\n"
-"    ret.isRGB = isRGB[3];\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[3]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 3;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 4) return empty;\n"
-"  tmpColor = vdp2col4; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=u_lncl[4];\n"
-"    ret.isRGB = isRGB[4];\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[4]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 4;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 5) return empty;\n"
-"  tmpColor = vdp2col5; \n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if (priority == prio) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=u_lncl[5];\n"
-"    ret.isRGB = isRGB[5];\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[5]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 5;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  return empty;\n"
-"}  \n"
-
-"Col getBlur(ivec2 addr, Col pix) \n"
-"{  \n"
-"  Col ret = pix;\n"
-"  vec4 txcoll;\n"
-"  vec4 txcolll;\n"
-"  vec4 txcol = pix.Color;\n"
-"  if (pix.layer == 6) { \n"
-"    txcoll = getFB(-1).color;\n"
-"    txcolll = getFB(-2).color;\n"
-"  }\n"
-"  if (pix.layer == 0) { \n"
-"    txcoll = texelFetch( s_texture0, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture0, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  if (pix.layer == 1) { \n"
-"    txcoll = texelFetch( s_texture1, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture1, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  if (pix.layer == 2) { \n"
-"    txcoll = texelFetch( s_texture2, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture2, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  if (pix.layer == 3) { \n"
-"    txcoll = texelFetch( s_texture3, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture3, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  if (pix.layer == 4) { \n"
-"    txcoll = texelFetch( s_texture4, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture4, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  if (pix.layer == 5) { \n"
-"    txcoll = texelFetch( s_texture5, ivec2(addr.x-1, addr.y),0 );      \n"
-"    txcolll = texelFetch( s_texture5, ivec2(addr.x-2, addr.y),0 );      \n"
-"  }\n"
-"  ret.Color.rgb = txcol.rgb/2.0 + txcoll.rgb/4.0 + txcolll.rgb/4.0; \n"
-"  return ret; \n"
-"}  \n"
-
-"void main()   \n"
-"{  \n"
-"  vec4 topImage = vec4(0.0);; \n"
-"  vec4 secondImage = vec4(0.0);; \n"
-"  vec4 colortop = vec4(0.0);  \n"
-"  vec4 colorsecond = vec4(0.0); \n"
-"  vec4 colorthird = vec4(0.0); \n"
-"  vec4 colorfourth = vec4(0.0); \n"
-"  vec4 colorback = vec4(0.0); \n"
-"  int foundColor1 = 0; \n"
-"  int foundColor2 = 0; \n"
-"  int foundColor3 = 0; \n"
-"  int modetop = 1; \n"
-"  int modesecond = 1; \n"
-"  int modethird = 1; \n"
-"  int isRGBtop = 0;\n"
-"  int isRGBsecond = 0;\n"
-"  int isRGBthird = 0;\n"
-"  int isRGBfourth = 0;\n"
-"  int use_lncl = 0; \n"
-"  int shadow = 0;\n"
-"  int mesh = 0;\n"
-"  vec3 meshCol = vec3(0.0);\n"
-"  float alphatop = 1.0; \n"
-"  float alphasecond = 1.0; \n"
-"  float alphathird = 1.0; \n"
-"  float alphafourth = 1.0; \n"
-"  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
-"  colorback = texelFetch( s_back, addr,0 ); \n"
-"  addr = ivec2(textureSize(s_texture0, 0) * v_texcoord.st); \n"
-"  colortop = colorback; \n"
-"  isRGBtop = 1; \n"
-"  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
-"  FBCol tmp = getFB(0); \n"
-"  FBColor = tmp.color;\n"
-"  FBPrio = tmp.prio;\n"
-"  FBShadow = tmp.meshColor;\n"
-"  FBMeshPrio = tmp.meshPrio;\n"
-"  FBMesh = tmp.mesh;\n"
-"  if ((int(FBColor.a * 255.0)&0x7) == 5) {\n"
-"    FBPrio = 0;\n"
-"    shadow = 1;\n"
-"  }\n"
-"  if (screen_nb > 0) vdp2col0 = getPixel( s_texture0, v_texcoord.st ); \n"
-"  if (screen_nb > 1) vdp2col1 = getPixel( s_texture1, v_texcoord.st ); \n"
-"  if (screen_nb > 2) vdp2col2 = getPixel( s_texture2, v_texcoord.st ); \n"
-"  if (screen_nb > 3) vdp2col3 = getPixel( s_texture3, v_texcoord.st ); \n"
-"  if (screen_nb > 4) vdp2col4 = getPixel( s_texture4, v_texcoord.st ); \n"
-"  if (screen_nb > 5) vdp2col5 = getPixel( s_texture5, v_texcoord.st ); \n"
-"  for (int i = 7; i>0; i--) { \n"
-"    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
-"      int hasColor = 1;\n"
-"      while (hasColor != 0) {\n"
-"        if ((foundColor1 == 0) && (fbon == 1) && (i == FBMeshPrio)) {\n"
-"          if (FBMesh == 1) {\n"
-"            mesh = 1;\n"
-"            meshCol = FBShadow.rgb;\n"
-"          }\n"
-"        }\n"
-"        Col prio = getPriorityColor(i, hasColor);\n"
-"        hasColor = hasColor+1;\n"
-"        if (prio.mode != 0) { \n"
-"          if (foundColor1 == 0) { \n"
-"            prio.mode = (prio.mode & 0x7); \n"
-"            if (prio.isSprite == 0) {\n"
-"              if ((int(prio.Color.b*255.0)&0x1) == 0) {\n"
-                 //Special color calulation mode => CC is off on this pixel
-"                prio.mode = 1;\n"
-"                prio.Color.a = 1.0;\n"
-"              }\n"
-"            }\n"
-"            if (prio.lncl == 0) { \n"
-"              colorsecond = colortop;\n"
-"              alphasecond = alphatop;\n"
-"              modesecond = modetop;\n"
-"              isRGBsecond = isRGBtop;\n"
-"            } else { \n"
-"              ivec2 linepos; \n "
-"              linepos.y = 0; \n "
-"              linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-"              colorsecond = texelFetch( s_lncl, linepos ,0 );\n"
-"              modesecond = mode[6];\n"
-"              alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n"
-"              isRGBsecond = 1;\n"
-"              use_lncl = 1;\n"
-"              foundColor2 = 1; \n"
-"            }\n"
-"            colortop = prio.Color; \n"
-"            modetop = prio.mode&0x7; \n"
-"            isRGBtop = prio.isRGB; \n"
-"            alphatop = prio.Color.a; \n"
-"            foundColor1 = 1; \n"
-"            if (isBlur[prio.layer] != 0) { \n"
-"              Col blur = getBlur(addr, prio);"
-"              modesecond = blur.mode&0x7; \n"
-"              colorsecond = blur.Color; \n"
-"              alphasecond = blur.Color.a; \n"
-"              isRGBsecond = blur.isRGB; \n"
-"              foundColor2 = 1; \n" //semble corriger steep slope
-//le mesh mode deconne dans steep slope
-"            }\n"
-"          } else if (foundColor2 == 0) { \n" // A revoir du coup
-"            if (prio.lncl == 0) { \n"
-"              colorthird = colorsecond;\n"
-"              alphathird = alphasecond;\n"
-"              modethird = modesecond;\n"
-"              isRGBthird = isRGBsecond;\n"
-"            } else { \n"
-"              ivec2 linepos; \n "
-"              linepos.y = 0; \n "
-"              linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-"              colorthird = texelFetch( s_lncl, linepos ,0 );\n"
-"              modethird = mode[6];\n"
-"              alphathird = float((int(colorthird.a * 255.0)&0xF8)>>3)/31.0;\n"
-"              isRGBthird = 1;\n"
-"              use_lncl = 1;\n"
-"              foundColor3 = 1; \n"
-"            }\n"
-"            modesecond = prio.mode&0x7; \n"
-"            colorsecond = prio.Color; \n"
-"            alphasecond = prio.Color.a; \n"
-"            isRGBsecond = prio.isRGB; \n"
-"            foundColor2 = 1; \n"
-"            if (isBlur[prio.layer] != 0) { \n"
-"              Col blur = getBlur(addr, prio);"
-"              modesecond = blur.mode&0x7; \n"
-"              colorsecond = blur.Color; \n"
-"              alphasecond = blur.Color.a; \n"
-"              isRGBsecond = blur.isRGB; \n"
-"              foundColor2 = 1; \n"
-"            }\n"
-"          } else if (foundColor3 == 0) { \n"
-"            if (prio.lncl == 0) { \n"
-"              colorfourth = colorthird;\n"
-"              alphafourth = alphathird;\n"
-"              isRGBfourth = isRGBthird; \n"
-"            } else { \n"
-"              ivec2 linepos; \n "
-"              linepos.y = 0; \n "
-"              linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
-"              colorfourth = texelFetch( s_lncl, linepos ,0 );\n"
-"              alphafourth = float((int(colorfourth.a * 255.0)&0xF8)>>3)/31.0;\n"
-"              isRGBfourth = 1;\n"
-"              use_lncl = 1;\n"
-"            }\n"
-"            modethird= prio.mode&0x7; \n"
-"            colorthird = prio.Color; \n"
-"            alphathird = prio.Color.a; \n"
-"            isRGBthird = prio.isRGB; \n"
-"            foundColor3 = 1; \n"
-"          } \n"
-"        } \n"
-"        if (((prio.mode&0x7) == 0) || ((foundColor1 == 1)&&(foundColor2 == 1)&&(foundColor3 == 1))) { \n"
-"          hasColor = 0; \n"
-"        } \n"
-"      }\n"
-"    } \n"
-"  } \n"
-"  if ((FBMesh == 1) && (foundColor1 == 0)) {\n"
-"    mesh = 1;\n"
-"    meshCol = FBShadow.rgb;\n"
-"  }\n"
-//Take care  of the extended coloration mode
-"  cc_enabled = use_cc_win;\n"
-"  if (use_cc_win != 0) {\n"
-"    ivec2 cc_addr = ivec2(textureSize(s_cc_win, 0) * v_texcoord.st); \n"
-"    vec4 tmp = texelFetch( s_cc_win, cc_addr ,0 ); \n"
-"    if (tmp.a == 0.0) cc_enabled = 0;\n"
-"  }\n"
-"  if (cc_enabled == 0) {\n"
-"  if (extended_cc != 0) { \n"
-"    if (ram_mode == 0) { \n"
-"      if (use_lncl == 0) { \n"
-"        if (modesecond == 1) \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"        else \n"
-"          secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"      } else {\n"
-"        if (modesecond == 1) \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"        else {\n"
-"          if (modethird == 1) \n"
-"            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"          else \n"
-"            secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
-"        }\n"
-"      }\n"
-"    } else {\n"
-"      if (use_lncl == 0) { \n"
-"       if (isRGBthird == 0) { \n"
-"          secondImage.rgb = vec3(colorsecond.rgb); \n"
-"       } else { \n"
-"         if (modesecond == 1) { \n"
-"           secondImage.rgb = vec3(colorsecond.rgb); \n"
-"         } else {\n"
-"           secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"         } \n"
-"       }\n"
-"      } else {\n"
-"       if (isRGBthird == 0) { \n"
-"           secondImage.rgb = vec3(colorsecond.rgb); \n"
-"       } else { \n"
-"         if (isRGBfourth == 0) {\n"
-"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"           else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"         } else { \n"
-"           if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"           else { \n"
-"             if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"             else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
-"           }\n"
-"         }\n"
-"       }\n"
-"      }\n"
-"    } \n"
-"  } else { \n"
-"    secondImage.rgb = vec3(colorsecond.rgb); \n"
-"  } \n"
-
-"  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
-"  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
-"  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
-"  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
-
-"  finalColor = vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0); \n"
-"  } else {\n"
-"  finalColor = vec4(colortop.rgb, 1.0);\n"
-"  }\n"
-"  if (shadow == 1) finalColor.rgb = finalColor.rgb * 0.5;\n"
-"  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
+"uniform int isShadow[6]; \n"
+"uniform int use_sp_win; \n"
+"uniform int use_trans_shadow; \n"
+"uniform ivec2 tvSize;\n"
+"uniform mat4 fbMat;\n"
+"uniform int win_s[8]; \n"
+"uniform int win_s_mode[8]; \n"
+"uniform int win0[8]; \n"
+"uniform int win0_mode[8]; \n"
+"uniform int win1[8]; \n"
+"uniform int win1_mode[8]; \n"
+"uniform int win_op[8]; \n"
 #ifdef DEBUG_BLIT
-"  topColor = topImage;\n"
-"  secondColor = secondImage;\n"
-"  thirdColor = colortop;\n"
-"  fourthColor.rgb = FBShadow.rgb;\n"
-"  fourthColor.a = (FBMeshPrio*8.0+mesh*128.0)/255.0;\n"
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+"int PosY = int(gl_FragCoord.y);\n"
+"int PosX = int(gl_FragCoord.x);\n"
+;
+
+const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
+"int getVDP2Reg(int id) {\n"
+"  return int(texelFetch(s_vdp2reg, ivec2(id, 0), 0).r*255.0);\n"
+"}\n"
+"FBCol getFB(int x, ivec2 addr){ \n"
+"  vec4 lineCoord = vec4(gl_FragCoord.x, (u_vheight-gl_FragCoord.y), 0.0, 0.0);\n"
+"  int line = int(lineCoord.y * u_emu_height)*24;\n"
+"  vec3 u_coloroffset = vec3(texelFetch(s_vdp2reg, ivec2(17 + line,0), 0).r, texelFetch(s_vdp2reg, ivec2(18+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(19+line,0), 0).r);\n"
+"  vec3 u_coloroffset_sign = vec3(texelFetch(s_vdp2reg, ivec2(20 + line, 0), 0).r, texelFetch(s_vdp2reg, ivec2(21+line,0), 0).r, texelFetch(s_vdp2reg, ivec2(22+line,0), 0).r);\n";
+
+static const GLchar vdp2blit_gl_end_f[] =
+"";
+
+static const GLchar vdp2blit_gl_final_f[] =
+#ifdef DEBUG_BLIT
+"  topColor = colortop;\n"
+"  secondColor = colorsecond;\n"
+"  thirdColor = FBTest;\n"
+"  fourthColor = FBShadow;\n"
 #endif
 "} \n";
 
-const GLchar * pYglprg_vdp2_blit_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_no_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+const GLchar * prg_input_f[PG_MAX][9];
+const GLchar * prg_input_v[PG_MAX][3];
+const GLchar * prg_input_c[PG_MAX][2];
+const GLchar * prg_input_e[PG_MAX][2];
+const GLchar * prg_input_g[PG_MAX][2];
 
+void initDrawShaderCode() {
+  initVDP2DrawCode(vdp2blit_gl_start_f, Yglprg_vdp2_drawfb_gl_cram_f, vdp2blit_gl_end_f, vdp2blit_gl_final_f);
 
-const GLchar * pYglprg_vdp2_blit_less_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_less_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_less_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+  //VDP1 Programs
+  for (int m = 0; m<2; m++) {
+    //Normal or tesselation mode
+    for (int i = 0; i<2; i++) {
+       // MSB or not MSB
+      for (int j = 0; j<3; j++) {
+       // Mesh, Mesh improve or None
+        for (int k = 0; k<2; k++) {
+          //SPD or not
+          for (int k1 = 0; k1<2; k1++) {
+            //END code or not
+            for (int l = 0; l<7; l++) {
+              //7 color calculation mode
+              int index = l+7*(k1+2*(k+2*(j+3*(i+2*m))));
+              prg_input_f[index][0] = vdp1drawversion[m];
+              prg_input_f[index][1] = vdp1drawstart;
+              prg_input_f[index][2] = vdp1drawcheckend[k1];
+              prg_input_f[index][3] = vdp1drawcheck[k];
+              prg_input_f[index][4] = vdp1drawmsb[i];
+              prg_input_f[index][5] = vdp1drawmode[l];
+              prg_input_f[index][6] = vdp1drawmesh[j];
+              prg_input_f[index][7] = vdp1drawend;
+              prg_input_f[index][8] =  NULL;
 
-const GLchar * pYglprg_vdp2_blit_equal_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_equal_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_equal_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+              prg_input_v[index][0] = vdp1drawversion[m];
+              prg_input_v[index][1] = vdp1drawvertex[m];
+              prg_input_v[index][2] = NULL;
 
-const GLchar * pYglprg_vdp2_blit_more_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_more_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_more_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+              if(m!=1) {
+                prg_input_c[index][0] = NULL;
+                prg_input_c[index][1] = NULL;
+                prg_input_e[index][0] = NULL;
+                prg_input_e[index][1] = NULL;
+                prg_input_g[index][0] = NULL;
+                prg_input_g[index][1] = NULL;
+              } else {
+                prg_input_c[index][0] = Yglprg_gouraud_tess_c;
+                prg_input_c[index][1] = NULL;
+                prg_input_e[index][0] = Yglprg_gouraud_tess_e;
+                prg_input_e[index][1] = NULL;
+                prg_input_g[index][0] = Yglprg_gouraud_tess_g;
+                prg_input_g[index][1] = NULL;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  //Handle start and end user clip
 
-const GLchar * pYglprg_vdp2_blit_msb_none_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_none_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_as_is_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_as_is_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_src_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
-const GLchar * pYglprg_vdp2_blit_msb_dst_alpha_f[] = { vdp2blit_start_f, Yglprg_vdp2_drawfb_cram_f, Yglprg_vdp2_drawfb_cram_msb_color_col_f, Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f, Yglprg_vdp2_drawfb_cram_eiploge_f, vdp2blit_partial_end_f,  vdp2blit_filter_f, vdp2blit_end_f, NULL };
+  //Start user clip
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_f;
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][2] = vdp1drawcheckend[1];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][3] = vdp1drawcheck[1];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][7] = vdp1drawend;
+  prg_input_f[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][8] = NULL;
 
-void Ygl_initDrawFrameBuffershader(int id);
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_v;
+  prg_input_v[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][2] = NULL;
 
-int YglInitDrawFrameBufferShaders(int id) {
+  prg_input_c[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_c[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_e[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_e[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_g[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_g[PG_VDP1_STARTUSERCLIP - PG_VDP1_START][1] = NULL;
 
-  if (id == PG_VDP2_DRAWFRAMEBUFF_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_DST_ALPHA);
+  //End user clip
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_f;
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][2] = vdp1drawcheckend[1];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][3] = vdp1drawcheck[1];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][4] = vdp1drawmsb[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][5] = vdp1drawmode[7];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][6] = vdp1drawmesh[0];
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = vdp1drawend;
+  prg_input_f[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][8] = NULL;
 
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = vdp1drawversion[0];
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = Yglprg_userclip_v;
+  prg_input_v[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][7] = NULL;
 
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_less_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_LESS_DST_ALPHA);
+  prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_c[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_e[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_e[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
+  prg_input_g[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][0] = NULL;
+  prg_input_g[PG_VDP1_ENDUSERCLIP - PG_VDP1_START][1] = NULL;
 
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_equal_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_EUQAL_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_more_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MORE_DST_ALPHA);
-
-
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_NONE) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_NONE --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_none_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_NONE);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_as_is_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_AS_IS);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_src_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_SRC_ALPHA);
-  }
-  if (id == PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA) {
-    YGLLOG("PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA --START--\n");
-    if (YglInitShader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA, pYglprg_vdp2_blit_v, pYglprg_vdp2_blit_msb_dst_alpha_f, 8, NULL, NULL, NULL) != 0) { return -1; }
-    Ygl_initDrawFrameBuffershader(PG_VDP2_DRAWFRAMEBUFF_MSB_DST_ALPHA);
-  }
-  return 0;
 }
 
-
-void Ygl_initDrawFrameBuffershader(int id) {
-
-  int arrayid = id- PG_VDP2_DRAWFRAMEBUFF_NONE;
+int YglInitDrawFrameBufferShaders(int id, int CS) {
+ //printf ("Use prog %d\n", id); //16
+ int arrayid = id-PG_VDP2_DRAWFRAMEBUFF_NONE;
+ //printf ("getArray %d\n", arrayid); //16
+  compileVDP2Prog(id, pYglprg_vdp2_blit_v, CS);
   if ( arrayid < 0 || arrayid >= MAX_FRAME_BUFFER_UNIFORM) {
     abort();
   }
-
   g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBuffer");
-  g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp1FrameBufferAttr");
   g_draw_framebuffer_uniforms[arrayid].idvdp2regs = glGetUniformLocation(_prgid[id], (const GLchar *)"s_vdp2reg");
   g_draw_framebuffer_uniforms[arrayid].idcram = glGetUniformLocation(_prgid[id], (const GLchar *)"s_color");
-  g_draw_framebuffer_uniforms[arrayid].idline = glGetUniformLocation(_prgid[id], (const GLchar *)"s_line");
+  return 0;
 }
 
 
@@ -2213,41 +1210,16 @@ void Ygl_initDrawFrameBuffershader(int id) {
 *  VDP2 Draw Frame buffer Operation( Shadow drawing for ADD color mode )
 * ----------------------------------------------------------------------------------*/
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* varVdp2Regs)
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs)
 {
    int arrayid;
 
-   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
-
-   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
-   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
-   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
-   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
-
-   if ( SPCCN ) {
-     const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-     switch (SPCCCS)
-     {
-       case 0:
-         pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_NONE;
-         break;
-       case 1:
-         pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE;
-         break;
-       case 2:
-         pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_NONE;
-         break;
-       case 3:
-         pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_NONE;
-         break;
-    }
-  }
-  pgid += mode-NONE;
+   int pgid = setupVDP2Prog(varVdp2Regs, 0);
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
 
   if (_prgid[pgid] == 0) {
-    if (YglInitDrawFrameBufferShaders(pgid) != 0) {
+    if (YglInitDrawFrameBufferShaders(pgid, 0) != 0) {
       return -1;
     }
   }
@@ -2266,7 +1238,6 @@ int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, SpriteMode mode, Vdp2* var
   glActiveTexture(GL_TEXTURE12);
   glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
 
-  glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBufferAttr, 10);
   glUniform1i(g_draw_framebuffer_uniforms[arrayid].idvdp1FrameBuffer, 9);
   return _prgid[pgid];
 }
@@ -2286,147 +1257,41 @@ int Ygl_cleanupAddBlend(void * p, YglTextureManager *tm)
    return 0;
 }
 
-int YglGetProgramId( int prg )
-{
-   return _prgid[prg];
-}
-
-int YglInitShader(int id, const GLchar * vertex[], const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] )
-{
-    GLint compiled,linked;
-    GLuint vshader;
-    GLuint fshader;
-  GLuint tcsHandle = 0;
-  GLuint tesHandle = 0;
-  GLuint gsHandle = 0;
-
-   _prgid[id] = glCreateProgram();
-    if (_prgid[id] == 0 ) return -1;
-
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-  fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, vertex, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-       YGLLOG( "Compile error in vertex shader. %d\n", id );
-       Ygl_printShaderError(vshader);
-       _prgid[id] = 0;
-       return -1;
-    }
-
-    glShaderSource(fshader, fcount, frag, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-       YGLLOG( "Compile error in fragment shader.%d \n", id);
-       Ygl_printShaderError(fshader);
-       _prgid[id] = 0;
-       return -1;
-     }
-
-    glAttachShader(_prgid[id], vshader);
-    glAttachShader(_prgid[id], fshader);
-
-  if (tc != NULL){
-    tcsHandle = glCreateShader(GL_TESS_CONTROL_SHADER);
-    if (tcsHandle == 0){
-      YGLLOG("GL_TESS_CONTROL_SHADER is not supported\n");
-    }
-    glShaderSource(tcsHandle, 1, tc, NULL);
-    glCompileShader(tcsHandle);
-    glGetShaderiv(tcsHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_CONTROL_SHADER shader.\n");
-      Ygl_printShaderError(tcsHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], tcsHandle);
-  }
-  if (te != NULL){
-    tesHandle = glCreateShader(GL_TESS_EVALUATION_SHADER);
-    if (tesHandle == 0){
-      YGLLOG("GL_TESS_EVALUATION_SHADER is not supported\n");
-    }
-    glShaderSource(tesHandle, 1, te, NULL);
-    glCompileShader(tesHandle);
-    glGetShaderiv(tesHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(tesHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], tesHandle);
-  }
-  if (g != NULL){
-    gsHandle = glCreateShader(GL_GEOMETRY_SHADER);
-    if (gsHandle == 0){
-      YGLLOG("GL_GEOMETRY_SHADER is not supported\n");
-    }
-    glShaderSource(gsHandle, 1, g, NULL);
-    glCompileShader(gsHandle);
-    glGetShaderiv(gsHandle, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-      Ygl_printShaderError(gsHandle);
-      _prgid[id] = 0;
-      return -1;
-    }
-    glAttachShader(_prgid[id], gsHandle);
-  }
-
-    glLinkProgram(_prgid[id]);
-    glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-       YGLLOG("Link error..\n");
-       Ygl_printShaderError(_prgid[id]);
-       _prgid[id] = 0;
-       return -1;
-    }
-    return 0;
-}
-
 int YglProgramInit()
 {
    YGLLOG("PG_VDP2_NORMAL\n");
+
+   initDrawShaderCode();
    //
-   if (YglInitShader(PG_VDP2_NORMAL, pYglprg_vdp2_normal_v, pYglprg_vdp2_normal_f, 1, NULL, NULL, NULL) != 0)
+   if (YglInitShader(PG_VDP2_NORMAL, pYglprg_vdp2_normal_v, 1, pYglprg_vdp2_normal_f, 1, NULL, NULL, NULL) != 0)
       return -1;
 //vdp2 normal looks not to be setup as it should
   id_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_texture");
   //id_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_texsize");
   id_normal_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_color_offset");
-  id_normal_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"s_window");
-  id_normal_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"is_window");
   id_normal_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_mvpMatrix");
   id_normal_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_vheight");
   id_normal_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL], (const GLchar *)"u_emu_height");
 
    YGLLOG("PG_VDP2_NORMAL_CRAM\n");
 
-  if (YglInitShader(PG_VDP2_NORMAL_CRAM, pYglprg_vdp2_normal_v, pYglprg_normal_cram_f, 1, NULL, NULL, NULL) != 0)
+  if (YglInitShader(PG_VDP2_NORMAL_CRAM, pYglprg_vdp2_normal_v, 1, pYglprg_normal_cram_f, 1, NULL, NULL, NULL) != 0)
     return -1;
 
   id_normal_cram_s_texture = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_texture");
   id_normal_cram_s_color = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_color");
   id_normal_cram_s_perline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_perline");
-  id_normal_cram_s_window = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"s_window");
   id_normal_cram_isperline = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_perline");
-  id_normal_cram_iswindow = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"is_window");
   id_normal_cram_color_offset = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_color_offset");
   id_normal_cram_matrix = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_mvpMatrix");
   id_normal_cram_emu_height = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_height");
   id_normal_cram_vheight = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vheight");
-  id_normal_cram_emu_width = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_emu_width");
   id_normal_cram_vwidth = glGetUniformLocation(_prgid[PG_VDP2_NORMAL_CRAM], (const GLchar *)"u_vwidth");
 
 
 #if 0
   YGLLOG("PG_VDP2_MOSAIC\n");
-  if (YglInitShader(PG_VDP2_MOSAIC, pYglprg_vdp1_normal_v, pYglprg_mosaic_f, NULL, NULL, NULL) != 0)
+  if (YglInitShader(PG_VDP2_MOSAIC, pYglprg_vdp1_replace_v, 1, pYglprg_mosaic_f, NULL, NULL, NULL) != 0)
     return -1;
   id_mosaic_s_texture = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"s_texture");
   id_mosaic = glGetUniformLocation(_prgid[PG_VDP2_MOSAIC], (const GLchar *)"u_mosaic");
@@ -2437,230 +1302,57 @@ int YglProgramInit()
 
    _prgid[PG_VDP2_MOSAIC_CRAM] = _prgid[PG_VDP2_NORMAL_CRAM];
 
-   YGLLOG("PG_VDP1_NORMAL\n");
-   //
-   if (YglInitShader(PG_VDP1_NORMAL, pYglprg_vdp1_normal_v, pYglprg_vdp1_normal_f,1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   id_vdp1_normal_s_texture = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
-   id_vdp1_normal_s_texture_size = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"u_texsize");
-
-
-
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_GOURAUDSHADING\n");
-
-   if (YglInitShader(PG_VDP1_GOURAUDSHADING, pYglprg_vdp1_gouraudshading_v, pYglprg_vdp1_gouraudshading_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING], &id_g);
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_MSB_SHADOW\n");
-
-   //
-   if (YglInitShader(PG_VDP1_MSB_SHADOW, pYglprg_vdp1_msb_shadow_v, pYglprg_vdp1_msb_shadow_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MSB_SHADOW], &id_msb_s);
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_HALFTRANS\n");
-
-   //
-   if (YglInitShader(PG_VDP1_HALFTRANS, pYglprg_vdp1_halftrans_v, pYglprg_vdp1_halftrans_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALFTRANS], &hf);
-
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_SHADOW\n");
-
-   //
-   if (YglInitShader(PG_VDP1_SHADOW, pYglprg_vdp1_shadow_v, pYglprg_vdp1_shadow_f, 1, NULL, NULL, NULL) != 0)
-     return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_SHADOW], &shadow);
-
-   shadow.sprite = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_sprite");
-   shadow.fbo = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_fbo");
-
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_GOURAUDSHADING_HALFTRANS\n");
-
-   if (YglInitShader(PG_VDP1_GOURAUDSHADING_HALFTRANS, pYglprg_vdp1_gouraudshading_hf_v, pYglprg_vdp1_gouraudshading_hf_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS], &id_ght);
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_HALF_LUMINANCE\n");
-
-   if (YglInitShader(PG_VDP1_HALF_LUMINANCE, pYglprg_vdp1_half_luminance_v, pYglprg_vdp1_half_luminance_f, 1, NULL, NULL, NULL) != 0)
-     return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALF_LUMINANCE], &half_luminance);
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_MESH\n");
-
-   if (YglInitShader(PG_VDP1_MESH, pYglprg_vdp1_mesh_v, pYglprg_vdp1_mesh_f, 1, NULL, NULL, NULL) != 0)
-     return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MESH], &mesh);
-
-   //-----------------------------------------------------------------------------------------------------------
-   YGLLOG("PG_VDP1_MESH_IMPROVE\n");
-
-   if (YglInitShader(PG_VDP1_MESH_IMPROVE, pYglprg_vdp1_mesh_v, pYglprg_vdp1_mesh_improve_f, 1, NULL, NULL, NULL) != 0)
-     return -1;
-
-   Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MESH_IMPROVE], &mesh_improve);
-
-   YGLLOG("PG_WINDOW\n");
-   //
-   if (YglInitShader(PG_WINDOW, pYglprg_window_v, pYglprg_window_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-   _Ygl->windowpg.prgid=_prgid[PG_WINDOW];
-   _Ygl->windowpg.setupUniform    = Ygl_uniformWindow;
-   _Ygl->windowpg.cleanupUniform  = Ygl_cleanupWindow;
-   _Ygl->windowpg.vertexp         = glGetAttribLocation(_prgid[PG_WINDOW],(const GLchar *)"a_position");
-   _Ygl->windowpg.mtxModelView    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_mvpMatrix");
-   _Ygl->windowpg.vheight    = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"u_vheight");
-   _Ygl->windowpg.var1   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0");
-   _Ygl->windowpg.var2   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win0mode");
-   _Ygl->windowpg.var3   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1");
-   _Ygl->windowpg.var4   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"win1mode");
-   _Ygl->windowpg.var5   = glGetUniformLocation(_prgid[PG_WINDOW],(const GLchar *)"winOp");
-   _Ygl->windowpg.tex0 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win0");
-   _Ygl->windowpg.tex1 = glGetUniformLocation(_prgid[PG_WINDOW], (const GLchar *)"s_win1");
-
-   YGLLOG("PG_VDP1_STARTUSERCLIP\n");
-   //
-   if (YglInitShader(PG_VDP1_STARTUSERCLIP, pYglprg_userclip_v, pYglprg_userclip_f, 1, NULL, NULL, NULL) != 0)
-      return -1;
-
-  _prgid[PG_VDP1_ENDUSERCLIP] = _prgid[PG_VDP1_STARTUSERCLIP];
-
    return 0;
 }
 
-int YglTesserationProgramInit()
-{
-  //-----------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_GOURAUDSHADING_TESS\n");
-    if (YglInitShader(PG_VDP1_GOURAUDSHADING_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_gouraudshading_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
+void initVDPProg(YglProgram* prog, int id) {
+  int ret = -1;
+  int init = 0;
+  prog->vaid = 0;
+  prog->id = 0;
 
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_TESS], &grow_tess);
-
-  //-----------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_MSB_SHADOW_TESS\n");
-    if (YglInitShader(PG_VDP1_MSB_SHADOW_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_msb_shadow_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MSB_SHADOW_TESS], &id_msb_tess);
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_MESH_TESS\n");
-    if (YglInitShader(PG_VDP1_MESH_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_mesh_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MESH_TESS], &mesh_tess);
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_MESH_TESS_IMPROVE\n");
-    if (YglInitShader(PG_VDP1_MESH_TESS_IMPROVE,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_mesh_improve_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_MESH_TESS_IMPROVE], &mesh_tess_improve);
-
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS\n");
-    if (YglInitShader(PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_gouraudshading_hf_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS], &id_ght_tess);
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_HALF_LUMINANCE_TESS\n");
-    if (YglInitShader(PG_VDP1_HALF_LUMINANCE_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_half_luminance_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], &half_luminance_tess);
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_SHADOW_TESS\n");
-    if (YglInitShader(PG_VDP1_SHADOW_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_shadow_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-    shadow_tess.sprite = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_sprite");
-    shadow_tess.tessLevelInner = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"TessLevelInner");
-    shadow_tess.tessLevelOuter = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"TessLevelOuter");
-    shadow_tess.fbo = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_fbo");
-    shadow_tess.fbo_attr = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_fbo_attr");
-
-    //---------------------------------------------------------------------------------------------------------
-    YGLLOG("PG_VDP1_HALFTRANS_TESS\n");
-    if (YglInitShader(PG_VDP1_HALFTRANS_TESS,
-      pYglprg_vdp1_gouraudshading_tess_v,
-      pYglprg_vdp1_halftrans_f,
-      1,
-      pYglprg_vdp1_gouraudshading_tess_c,
-      pYglprg_vdp1_gouraudshading_tess_e,
-      pYglprg_vdp1_gouraudshading_tess_g) != 0)
-      return -1;
-
-  Ygl_Vdp1CommonGetUniformId(_prgid[PG_VDP1_HALFTRANS_TESS], &hf_tess);
-
-  return 0;
+  if (_prgid[id] == 0) {
+    YGLLOG("Compile program %d\n",id);
+    init = 1;
+    YglInitShader(id, prg_input_v[id-PG_VDP1_START], 2, prg_input_f[id-PG_VDP1_START], 8, prg_input_c[id-PG_VDP1_START],prg_input_e[id-PG_VDP1_START],prg_input_g[id-PG_VDP1_START]);
+  }
+  if (_prgid[id] == 0) {
+    YuiMsg("Prog %d is not able to compile\n", id);
+    abort();
+  }
+  if (init == 1) {
+    _ids[id].sprite = glGetUniformLocation(_prgid[id], (const GLchar *)"u_sprite");
+    _ids[id].tessLevelInner = glGetUniformLocation(_prgid[id], (const GLchar *)"TessLevelInner");
+    _ids[id].tessLevelOuter = glGetUniformLocation(_prgid[id], (const GLchar *)"TessLevelOuter");
+    _ids[id].fbo = glGetUniformLocation(_prgid[id], (const GLchar *)"u_fbo");
+    _ids[id].texsize = glGetUniformLocation(_prgid[id], (const GLchar *)"u_texsize");
+    _ids[id].mtxModelView = glGetUniformLocation(_prgid[id], (const GLchar *)"u_mvpMatrix");
+    _ids[id].tex0 = glGetUniformLocation(_prgid[id], (const GLchar *)"s_texture");
+    _ids[id].vaid = glGetAttribLocation(_prgid[id], (const GLchar *)"a_grcolor");
+    _ids[id].vertexp = glGetAttribLocation(_prgid[id], (const GLchar *)"a_position");
+    _ids[id].texcoordp = glGetAttribLocation(_prgid[id], (const GLchar *)"a_texcoord");
+    _ids[id].sysclip = glGetUniformLocation(_prgid[id], (const GLchar *)"sysClip");
+  }
+  prog->prgid=id;
+  prog->prg=_prgid[id];
+  prog->vaid = _ids[id].vaid;
+  prog->mtxModelView = _ids[id].mtxModelView;
+  switch(id) {
+    case PG_VDP1_STARTUSERCLIP:
+    case PG_VDP1_ENDUSERCLIP:
+      prog->setupUniform = Ygl_uniformStartUserClip;
+      prog->cleanupUniform = Ygl_cleanupStartUserClip;
+      prog->vertexp = 0;//glGetUniformLocation(_prgid[id], (const GLchar *)"a_position");
+      prog->texcoordp = -1;//glGetUniformLocation(_prgid[id], (const GLchar *)"a_texcoord");
+    break;
+    default:
+      prog->setupUniform = Ygl_uniformVdp1CommonParam;
+      prog->cleanupUniform = Ygl_cleanupVdp1CommonParam;
+      prog->vertexp = _ids[id].vertexp;
+      prog->texcoordp = _ids[id].texcoordp;
+  }
+  prog->ids = &_ids[id];
+  // YGLLOG("Compile program %d success\n",id);
 }
 
 int YglProgramChange( YglLevel * level, int prgid )
@@ -2709,12 +1401,8 @@ int YglProgramChange( YglLevel * level, int prgid )
          return -1;
 #endif
    }
-
    current = &level->prg[level->prgcurrent];
-   level->prg[level->prgcurrent].prgid=prgid;
-   level->prg[level->prgcurrent].prg=_prgid[prgid];
-   level->prg[level->prgcurrent].vaid = 0;
-   level->prg[level->prgcurrent].id = 0;
+   initVDPProg(current, prgid);
 
    if (prgid == PG_VDP2_NORMAL)
    {
@@ -2729,7 +1417,6 @@ int YglProgramChange( YglLevel * level, int prgid )
    {
      current->setupUniform = Ygl_uniformNormalCram;
      current->cleanupUniform = Ygl_cleanupNormalCram;
-
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
@@ -2752,212 +1439,6 @@ int YglProgramChange( YglLevel * level, int prgid )
      current->vertexp = 0;
      current->texcoordp = 1;
      current->mtxModelView = id_normal_cram_matrix;
-   }else if( prgid == PG_VDP1_NORMAL )
-   {
-      current->setupUniform    = Ygl_uniformVdp1Normal;
-      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_NORMAL], (const GLchar *)"s_texture");
-
-   }else if( prgid == PG_VDP1_GOURAUDSHADING )
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &id_g;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-      level->prg[level->prgcurrent].vaid = 2;
-      current->mtxModelView = id_g.mtxModelView;
-      current->mtxTexture = id_g.mtxTexture;
-      current->tex0 = id_g.tex0;
-   }
-   else if (prgid == PG_VDP1_MSB_SHADOW)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
-     level->prg[level->prgcurrent].ids = &id_msb_s;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = id_msb_s.mtxModelView;
-     current->mtxTexture = id_msb_s.mtxTexture;
-     current->tex0 = id_msb_s.tex0;
-   }
-   else if (prgid == PG_VDP1_GOURAUDSHADING_TESS ){
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &grow_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = grow_tess.mtxModelView;
-     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"u_texMatrix");
-     current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"s_texture");
-   }
-   else if (prgid == PG_VDP1_MSB_SHADOW_TESS){
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1ShadowParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1ShadowParam;
-     level->prg[level->prgcurrent].ids = &id_msb_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = grow_tess.mtxModelView;
-     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"u_texMatrix");
-     current->tex0 = -1; // glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING], (const GLchar *)"s_texture");
-   }
-   else if (prgid == PG_VDP1_STARTUSERCLIP)
-   {
-      level->prg[level->prgcurrent].setupUniform = Ygl_uniformStartUserClip;
-      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupStartUserClip;
-      current->vertexp         = 0;
-      current->texcoordp       = -1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_STARTUSERCLIP],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-
-   }
-   else if( prgid == PG_VDP1_ENDUSERCLIP )
-   {
-      level->prg[level->prgcurrent].setupUniform = Ygl_uniformEndUserClip;
-      level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupEndUserClip;
-      current->vertexp         = 0;
-      current->texcoordp       = -1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_ENDUSERCLIP],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = -1; //glGetUniformLocation(_prgid[PG_VDP1_NORMAL],(const GLchar *)"u_texMatrix");
-   }
-   else if( prgid == PG_VDP1_HALFTRANS )
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-    level->prg[level->prgcurrent].ids = &hf;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS],(const GLchar *)"u_texMatrix");
-
-   }
-   else if (prgid == PG_VDP1_HALFTRANS_TESS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &hf_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_HALFTRANS_TESS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-
-   }
-   else if (prgid == PG_VDP1_SHADOW_TESS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &shadow_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_SHADOW_TESS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1; // glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_texMatrix");
-
-   }
-   else if (prgid == PG_VDP1_SHADOW)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &shadow;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = glGetUniformLocation(_prgid[PG_VDP1_SHADOW], (const GLchar *)"u_texMatrix");
-
-   }
-   else if (prgid == PG_VDP1_MESH)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &mesh;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-
-   }
-   else if (prgid == PG_VDP1_MESH_IMPROVE)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &mesh_improve;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_IMPROVE], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-
-   }
-   else if( prgid == PG_VDP1_HALF_LUMINANCE )
-   {
-      current->setupUniform    = Ygl_uniformVdp1Normal;
-      current->cleanupUniform  = Ygl_cleanupVdp1Normal;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE],(const GLchar *)"u_texMatrix");
-      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE], (const GLchar *)"s_texture");
-   }
-   else if( prgid == PG_VDP1_HALF_LUMINANCE_TESS )
-   {
-      current->setupUniform    = Ygl_uniformVdp1CommonParam;
-      current->cleanupUniform  = Ygl_cleanupVdp1CommonParam;
-      level->prg[level->prgcurrent].ids = &half_luminance_tess;
-      current->vertexp = 0;
-      current->texcoordp = 1;
-      current->mtxModelView    = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_mvpMatrix");
-      current->mtxTexture      = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS],(const GLchar *)"u_texMatrix");
-      current->tex0 = glGetUniformLocation(_prgid[PG_VDP1_HALF_LUMINANCE_TESS], (const GLchar *)"s_texture");
-   }
-   else if (prgid == PG_VDP1_MESH_TESS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &mesh_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_TESS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-   }
-   else if (prgid == PG_VDP1_MESH_TESS_IMPROVE)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &mesh_tess_improve;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_MESH_TESS_IMPROVE], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-   }
-   else if (prgid == PG_VDP1_GOURAUDSHADING_HALFTRANS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &id_ght;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-   }
-   else if (prgid == PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS)
-   {
-     level->prg[level->prgcurrent].setupUniform = Ygl_uniformVdp1CommonParam;
-     level->prg[level->prgcurrent].cleanupUniform = Ygl_cleanupVdp1CommonParam;
-     level->prg[level->prgcurrent].ids = &id_ght_tess;
-     current->vertexp = 0;
-     current->texcoordp = 1;
-     level->prg[level->prgcurrent].vaid = 2;
-     current->mtxModelView = glGetUniformLocation(_prgid[PG_VDP1_GOURAUDSHADING_HALFTRANS_TESS], (const GLchar *)"u_mvpMatrix");
-     current->mtxTexture = -1;
-   }else{
-      level->prg[level->prgcurrent].setupUniform = NULL;
-      level->prg[level->prgcurrent].cleanupUniform = NULL;
    }
    return 0;
 
@@ -3080,7 +1561,7 @@ int YglDrawBackScreen() {
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* lncl, GLuint* vdp1fb, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -3098,18 +1579,48 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     0.0f, 1.0f
   };
     float offsetcol[4];
+    YglMatrix vdp1Mat;
+
+    YglLoadIdentity(&vdp1Mat);
+
+    if (Vdp1Regs->TVMR & 0x02) {
+      YglMatrix translate, rotation, scale, fuse;
+      //Translate to center of rotation
+      YglLoadIdentity(&translate);
+      translate.m[0][3] = (-Vdp1ParaA.Cx - (float)_Ygl->rwidth/2.0f )* (float)_Ygl->vdp1width/512.0f;
+      translate.m[1][3] = (-Vdp1ParaA.Cy - (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
+
+      //Il faut calculer ou partent les points...
+
+      //Rotate and translate back to the (Xst,Yst) from (0,0)
+      YglLoadIdentity(&rotation);
+      rotation.m[0][0] = Vdp1ParaA.deltaX;
+      rotation.m[0][1] = Vdp1ParaA.deltaY;
+      rotation.m[0][3] = (Vdp1ParaA.Xst + Vdp1ParaA.Cx + (float)_Ygl->rwidth/2.0f)* (float)_Ygl->vdp1width/512.0f;
+      rotation.m[1][0] = Vdp1ParaA.deltaXst;
+      rotation.m[1][1] = Vdp1ParaA.deltaYst;
+      rotation.m[1][3] = (Vdp1ParaA.Yst + Vdp1ParaA.Cy + (float)_Ygl->rheight/2.0f)* (float)_Ygl->vdp1height/256.0f;
+
+      YglLoadIdentity(&scale);
+      float scaleX = rotation.m[0][0]*rotation.m[0][0]+rotation.m[0][1]*rotation.m[0][1];
+      float scaleY = rotation.m[1][0]*rotation.m[1][0]+rotation.m[1][1]*rotation.m[1][1];
+      scale.m[0][0] = (scaleX!=0)?1/(scaleX):1.0;
+      scale.m[1][1] = (scaleY!=0)?1/(scaleY):1.0;
+      //merge transformations
+      YglMatrixMultiply(&fuse, &rotation, &translate);
+      YglMatrixMultiply(&vdp1Mat, &scale, &fuse);
+    }
 
     glBindVertexArray(_Ygl->vao);
 
-    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, getSpriteRenderMode(varVdp2Regs), varVdp2Regs );
+    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, varVdp2Regs );
 
-    glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
+    if (vdp1fb != NULL) {
+      glActiveTexture(GL_TEXTURE9);
+      glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
+    } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
-    glActiveTexture(GL_TEXTURE10);
-    glBindTexture(GL_TEXTURE_2D, vdp1fb[1]);
-
-  int gltext[14] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13};
+  int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
 
 
 #ifdef DEBUG_BLIT
@@ -3128,17 +1639,33 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_cc_win"), 13);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
 
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),(float)(_Ygl->vdp1width) / (float)(_Ygl->rwidth));
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x400) != 0) );
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_cc_win"), (_Ygl->use_cc_win != 0) );
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "mode"), 7, modescreens);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isRGB"), 6, isRGB);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isBlur"), 7, isBlur);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "isShadow"), 6, isShadow);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_sp_win"), ((varVdp2Regs->SPCTL>>4)&0x1));
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "use_trans_shadow"), ((varVdp2Regs->SDCTL>>8)&0x1));
+  glUniform2i(glGetUniformLocation(vdp2blit_prg, "tvSize"), _Ygl->rwidth, _Ygl->rheight);
+  glUniformMatrix4fv(glGetUniformLocation(vdp2blit_prg, "fbMat"), 1, GL_FALSE, vdp1Mat.m);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), enBGMAX+1, Win0_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), enBGMAX+1, Win1);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), enBGMAX+1, Win1_mode);
+  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), enBGMAX+1, Win_op);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -3154,10 +1681,10 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
 
-  if (_Ygl->use_cc_win != 0) {
-    glActiveTexture(GL_TEXTURE13);
-    glBindTexture(GL_TEXTURE_2D, _Ygl->window_cc_fbotex);
-  }
+  glActiveTexture(GL_TEXTURE14);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[0]);
+  glActiveTexture(GL_TEXTURE15);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->window_tex[1]);
 
   int id = 0;
   for (int i=0; i<nbScreen; i++) {
@@ -3175,143 +1702,17 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glActiveTexture(gltext[8]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->lincolor_tex);
 
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "u_lncl"), 7, lncl); //_Ygl->prioVa
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   // Clean up
-  for (int i = 0; i<14; i++) {
+  for (int i = 0; i<16; i++) {
     glActiveTexture(gltext[i]);
     glBindTexture(GL_TEXTURE_2D, 0);
   }
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
   glDisable(GL_BLEND);
-
-  return 0;
-}
-
-static int opaque_prg = -1;
-
-static const char opaque_v[] =
-      SHADER_VERSION
-      "layout (location = 0) in vec2 a_position;   \n"
-      "layout (location = 1) in vec2 a_texcoord;   \n"
-      "out vec2 v_texcoord;     \n"
-      "void main()       \n"
-      "{ \n"
-      " gl_Position = vec4(a_position.x, a_position.y, 0.0, 1.0); \n"
-      " v_texcoord  = a_texcoord; \n"
-      "} ";
-
-static const char opaque_f[] =
-SHADER_VERSION
-"#ifdef GL_ES\n"
-"precision highp float; \n"
-"#endif\n"
-"in vec2 v_texcoord; \n"
-"uniform sampler2D s_texture;  \n"
-"out vec4 fragColor; \n"
-"void main()   \n"
-"{  \n"
-"  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
-"  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;  \n"
-"  fragColor.a = 1.0;  \n"
-"}  \n";
-
-int YglBlitOpaque(int texture) {
-  const GLchar * fblit_opaque_v[] = { opaque_v, NULL };
-  const GLchar * fblit_opaque_f[] = { opaque_f, NULL };
-
-  float const vertexPosition[] = {
-    1.0, -1.0f,
-    -1.0, -1.0f,
-    1.0, 1.0f,
-    -1.0, 1.0f };
-
-  float const textureCoord[] = {
-    1.0f, 0.0f,
-    0.0f, 0.0f,
-    1.0f, 1.0f,
-    0.0f, 1.0f
-  };
-
-  if (opaque_prg == -1){
-    GLuint vshader;
-    GLuint fshader;
-    GLint compiled, linked;
-    if (opaque_prg != -1) glDeleteProgram(opaque_prg);
-    opaque_prg = glCreateProgram();
-    if (opaque_prg == 0){
-      return -1;
-    }
-
-    YGLLOG("BLIT_OPAQUE\n");
-
-    vshader = glCreateShader(GL_VERTEX_SHADER);
-    fshader = glCreateShader(GL_FRAGMENT_SHADER);
-
-    glShaderSource(vshader, 1, fblit_opaque_v, NULL);
-    glCompileShader(vshader);
-    glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in vertex shader.\n");
-      Ygl_printShaderError(vshader);
-      opaque_prg = -1;
-      return -1;
-    }
-
-    glShaderSource(fshader, 1, fblit_opaque_f, NULL);
-    glCompileShader(fshader);
-    glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
-    if (compiled == GL_FALSE) {
-      YGLLOG("Compile error in fragment shader.\n");
-      Ygl_printShaderError(fshader);
-      opaque_prg = -1;
-      abort();
-    }
-
-    glAttachShader(opaque_prg, vshader);
-    glAttachShader(opaque_prg, fshader);
-    glLinkProgram(opaque_prg);
-    glGetProgramiv(opaque_prg, GL_LINK_STATUS, &linked);
-    if (linked == GL_FALSE) {
-      YGLLOG("Link error..\n");
-      Ygl_printShaderError(opaque_prg);
-      opaque_prg = -1;
-      abort();
-    }
-
-    GLUSEPROG(opaque_prg);
-    glUniform1i(glGetUniformLocation(opaque_prg, "s_texture"), 0);
-  }
-  else{
-    GLUSEPROG(opaque_prg);
-  }
-
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_BLEND);
-
-  glEnableVertexAttribArray(0);
-  glEnableVertexAttribArray(1);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->vertexPosition_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
-  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ARRAY_BUFFER, _Ygl->textureCoord_buf);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(textureCoord), textureCoord, GL_STREAM_DRAW);
-  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
-
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texture);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-  // Clean up
-  glActiveTexture(GL_TEXTURE0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
 
   return 0;
 }
@@ -3342,7 +1743,7 @@ SHADER_VERSION
 "{  \n"
 "  ivec2 addr = ivec2(textureSize(s_texture, 0) * v_texcoord.st); \n"
 "  fragColor = texelFetch( s_texture, addr,0 );         \n"
-"  if (fragColor.a == 0.0) discard;  \n"
+"  if (all(equal(fragColor.rg,vec2(0.0)))) discard;  \n"
 //"  fragColor.a = 1.0;  \n"
 "}  \n";
 
@@ -3478,12 +1879,11 @@ SHADER_VERSION
 "  addr.x = int( v_texcoord.x);          \n"
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
-//"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
-"  if ((int(tex.r * 255.0)&0x80) == 0) discard;\n"
+"  if (all(equal(tex.rg,vec2(0.0)))) discard;   \n"
 "  fragColor.r = tex.a;         \n"
 "  fragColor.g = tex.b;         \n"
-"  fragColor.b = tex.g;         \n"
-"  fragColor.a = tex.r;         \n"
+"  fragColor.b = 0.0;         \n"
+"  fragColor.a = 0.0;         \n"
 "}  \n";
 
 static const char vdp1_read_f[] =
@@ -3501,9 +1901,8 @@ SHADER_VERSION
 "  addr.y = int(v_texcoord.y);          \n"
 "  vec4 tex = texelFetch( s_texture, addr,0 );         \n"
 //"  if (tex.agb == vec3(0.0)) tex.ragb = vec4(0.5, 0.0, 0.0, 0.0);   \n"
-"  if ((int(tex.a * 255.0)&0x80) == 0) discard;\n"
-"  fragColor.r = tex.a;         \n"
-"  fragColor.g = tex.b;         \n"
+"  fragColor.r = 0.0;         \n"
+"  fragColor.g = 0.0;         \n"
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
 "}  \n";
@@ -3900,10 +2299,15 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosition), vertexPosition, GL_STREAM_DRAW);
   glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
-  if (textureCoord_buf[yabsys.isRotated] == 0)
-     glGenBuffers(1, &textureCoord_buf[yabsys.isRotated]);
-  glBindBuffer(GL_ARRAY_BUFFER, textureCoord_buf[yabsys.isRotated]);
-  glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), &textureCoord[yabsys.isRotated * 8], GL_STREAM_DRAW);
+#ifndef __LIBRETRO__
+  u32 isRotated = yabsys.isRotated;
+#else
+  u32 isRotated = 0;
+#endif
+  if (textureCoord_buf[isRotated] == 0)
+     glGenBuffers(1, &textureCoord_buf[isRotated]);
+  glBindBuffer(GL_ARRAY_BUFFER, textureCoord_buf[isRotated]);
+  glBufferData(GL_ARRAY_BUFFER, 8*sizeof(float), &textureCoord[isRotated * 8], GL_STREAM_DRAW);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(1);
   glUniform1f(u_w, width);

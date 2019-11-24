@@ -38,6 +38,7 @@
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
+int VDP1_MASK = 0xFFFF;
 
 VideoInterface_struct *VIDCore=NULL;
 extern VideoInterface_struct *VIDCoreList[];
@@ -133,11 +134,11 @@ u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-   addr &= 0x3FFFF;
+   addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
+      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(0, addr, val);
       return;
    }
 }
@@ -145,11 +146,11 @@ void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8* mem, u32 addr, u
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-   addr &= 0x3FFFF;
+  addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
+      if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(1, addr, val);
       return;
    }
 }
@@ -157,12 +158,12 @@ void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8* mem, u32 addr, u
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-   addr &= 0x3FFFF;
+  addr &= 0x7FFFF;
 
    if (VIDCore->Vdp1WriteFrameBuffer)
    {
-      VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
-      return;
+     if (addr < 0x40000) VIDCore->Vdp1WriteFrameBuffer(2, addr, val);
+     return;
    }
 }
 
@@ -182,6 +183,8 @@ int Vdp1Init(void) {
    Vdp1Regs->TVMR = 0;
    Vdp1Regs->FBCR = 0;
    Vdp1Regs->PTMR = 0;
+
+   VDP1_MASK = 0xFFFF;
 
    vdp1Ram_update_start = 0x0;
    vdp1Ram_update_end = 0x80000;
@@ -265,6 +268,7 @@ void Vdp1Reset(void) {
    Vdp1Regs->EWLR = 0;
    Vdp1Regs->EWRR = 0;
    Vdp1Regs->ENDR = 0;
+   VDP1_MASK = 0xFFFF;
    VIDCore->Vdp1Reset();
 }
 
@@ -284,7 +288,6 @@ u8 FASTCALL Vdp1ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-u16 COPR[313*(int)(DECILINE_STEP)];
 
 u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
    addr &= 0xFF;
@@ -297,8 +300,7 @@ u16 FASTCALL Vdp1ReadWord(SH2_struct *context, u8* mem, u32 addr) {
          return Vdp1Regs->LOPR;
       case 0x14:
         FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
-         //return Vdp1Regs->COPR;
-         return COPR[(yabsys.LineCount-1)*20 + yabsys.DecilineCount];
+         return Vdp1Regs->COPR;
       case 0x16:
          return 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
       default:
@@ -396,31 +398,14 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void setupCOPR(u16 *addr, u32 commandCounter) {
-  float step = (float)((yabsys.MaxLineCount - yabsys.LineCount) * DECILINE_STEP) / (float)(commandCounter+1);
-  for (int i=0; i<yabsys.LineCount*DECILINE_STEP; i++) {
-    COPR[i] = 0;
-  }
-  float hstep = step;
-  int p = 0;
-  for (int i=yabsys.LineCount*DECILINE_STEP; i< yabsys.MaxLineCount*DECILINE_STEP; i++) {
-    COPR[i] = addr[p];
-    hstep -= 1.0;
-    if (hstep < 0.0) {
-      hstep += step;
-      p++;
-    }
-  }
-}
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 addr[2000];
    u16 command = T1ReadWord(ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
 
-   addr[commandCounter] = regs->addr >> 3;
+   regs->COPR = regs->addr >> 3;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       // First, process the command
@@ -461,8 +446,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
             regs->LOPR = regs->addr >> 3;
-            addr[commandCounter] = regs->addr >> 3;
-            setupCOPR(&addr[0], commandCounter);
+            regs->COPR = regs->addr >> 3;
             return;
          }
       }
@@ -470,8 +454,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
 		  regs->LOPR = regs->addr >> 3;
-		  addr[commandCounter] = regs->addr >> 3;
-      setupCOPR(&addr[0], commandCounter);
+		  regs->COPR = regs->addr >> 3;
 		  return;
 	  }
 
@@ -500,10 +483,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       }
 
       command = T1ReadWord(ram, regs->addr);
-      addr[commandCounter] = regs->addr >> 3;
+      regs->COPR = regs->addr >> 3;
       commandCounter++;
    }
-   setupCOPR(&addr[0], commandCounter-1);
 }
 
 //ensure that registers are set correctly
@@ -996,41 +978,39 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          AddString(outstring, "Transparent Pixel Enabled\r\n");
       }
 
-      AddString(outstring, "Color mode: ");
+      if (cmd.CMDCTRL & 0x0004){
+          AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
+      } else {
+          AddString(outstring, "Color mode: ");
 
-      switch ((cmd.CMDPMOD >> 3) & 0x7)
-      {
-         case 0:
-            AddString(outstring, "4 BPP(16 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 1:
-            AddString(outstring, "4 BPP(16 color LUT)\r\n");
-            AddString(outstring, "Color lookup table: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 2:
-            AddString(outstring, "8 BPP(64 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 3:
-            AddString(outstring, "8 BPP(128 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 4:
-            AddString(outstring, "8 BPP(256 color bank)\r\n");
-            AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR << 3));
-            break;
-         case 5:
-            AddString(outstring, "15 BPP(RGB)\r\n");
-
-            // Only non-textured commands
-            if (cmd.CMDCTRL & 0x0004)
-            {
-               AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
-            }
-            break;
-         default: break;
-      }
+          switch ((cmd.CMDPMOD >> 3) & 0x7)
+          {
+             case 0:
+                AddString(outstring, "4 BPP(16 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 1:
+                AddString(outstring, "4 BPP(16 color LUT)\r\n");
+                AddString(outstring, "Color lookup table: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 2:
+                AddString(outstring, "8 BPP(64 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 3:
+                AddString(outstring, "8 BPP(128 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 4:
+                AddString(outstring, "8 BPP(256 color bank)\r\n");
+                AddString(outstring, "Color bank: %08X\r\n", (cmd.CMDCOLR));
+                break;
+             case 5:
+                AddString(outstring, "15 BPP(RGB)\r\n");
+                break;
+             default: break;
+          }
+        }
 
       AddString(outstring, "Color Calc. mode: ");
 

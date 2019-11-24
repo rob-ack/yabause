@@ -96,6 +96,8 @@
 
 #include <inttypes.h>
 
+#define DECILINE_STEP (20.0)
+
 //#define DEBUG_ACCURACY
 
 #define THREAD_LOG //printf
@@ -556,13 +558,13 @@ int YabauseInit(yabauseinit_struct *init)
 		   }
 		   yabsys.emulatebios = 0;
 	   }
-	   else
+	   else {
 		   yabsys.emulatebios = 1;
+       T2WriteLong(BiosRom, 0x04, 0x06002000); // set base stack pointer
+     }
    }
-   else {
-     yabsys.emulatebios = 1;
-     T2WriteLong(BiosRom, 0x04, 0x06002000); // set base stack pointer
-   }
+   else yabsys.emulatebios = 0;
+
    yabsys.usequickload = 0;
 
    YabauseResetNoLoad();
@@ -611,7 +613,7 @@ int YabauseInit(yabauseinit_struct *init)
       }
    }
 
-   if (Cs2GetRegionID() == 0xC) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
+   if (Cs2GetRegionID() >= 0xA) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
    else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
 
 #ifdef HAVE_GDBSTUB
@@ -1268,6 +1270,7 @@ int YabauseQuickLoadGame(void)
 
    Cs2Area->outconcddev = Cs2Area->filter + 0;
    Cs2Area->outconcddevnum = 0;
+   Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
 
    // read in lba 0/FAD 150
    if ((lgpartition = Cs2ReadUnFilteredSector(150)) == NULL)

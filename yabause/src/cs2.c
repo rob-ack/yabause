@@ -81,6 +81,7 @@ enum CDB_DATATRANSTYPE
 #define ToBCD(val) ((val % 10 ) + ((val / 10 ) << 4))
 
 #define SEEK_TIME (60000*5)
+#define SEEK_TIME_MIN (60000)
 
 Cs2 * Cs2Area = NULL;
 ip_struct *cdip = NULL;
@@ -556,7 +557,7 @@ int Cs2ChangeCDCore(int coreid, const char *cdpath)
    Cs2Area->status = CDB_STAT_PAUSE;
    SmpcRecheckRegion();
 
-   if (Cs2GetRegionID() == 0xC) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
+   if (Cs2GetRegionID() >= 0xA) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
    else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
 
    return 0;
@@ -755,6 +756,7 @@ int Cs2ForceCloseTray( int coreid, const char * cdpath ){
 		  return -2;
 	  }
   }
+  Cs2Area->cdi->ReadTOC(Cs2Area->TOC);
   return 0;
 };
 
@@ -827,6 +829,7 @@ void Cs2Exec(u32 timing) {
                case 0:
                   // Sector Read OK
                   Cs2Area->FAD++;
+                  Cs2Area->track = Cs2FADToTrack(Cs2Area->FAD);
                   Cs2Area->cdi->ReadAheadFAD(Cs2Area->FAD);
 
                   if (playpartition != NULL)
@@ -1421,7 +1424,7 @@ void Cs2InitializeCDSystem(void) {
     Cs2Area->blockfreespace = MAX_BLOCKS;
 
     // initialize TOC
-    memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
+   // memset(Cs2Area->TOC, 0xFF, sizeof(Cs2Area->TOC));
 
     // clear filesystem stuff
     Cs2Area->curdirsect = 0;
@@ -1631,7 +1634,10 @@ void Cs2PlayDisc(void) {
   // Calculate Seek time
   int length = abs((int)Cs2Area->playendFAD - (int)Cs2Area->FAD);
   CDLOG("cs2\t:Seek length = %d", length);
-  Cs2Area->_periodictiming = length; // seektime 2856 is the minimum for athlete king
+  // A CD is 74 min = 74*4500 = 333000 FAD Max
+  // Max SEEK_TIME = 300000 us
+  // Assume min seek time is then constant at 60000 ms
+  Cs2Area->_periodictiming = SEEK_TIME_MIN + (SEEK_TIME-SEEK_TIME_MIN)*length / 333000; // seektime 2856 is the minimum for athlete king
   if (Cs2Area->_periodictiming > SEEK_TIME) {
     Cs2Area->_periodictiming = SEEK_TIME;
   }

@@ -44,6 +44,18 @@
 #define Y_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define Y_MIN(a, b) ((a) < (b) ? (a) : (b))
 
+
+#define DEBUG_BAD_COORD //YuiMsg
+
+#define  CONVERTCMD(A) {\
+  s32 toto = (A);\
+  if (((A)&0x7000) != 0) (A) |= 0xF000;\
+  else (A) &= ~0xF800;\
+  ((A) = (s32)(s16)(A));\
+  if (((A)) < -1024) { DEBUG_BAD_COORD("Bad(-1024) %x (%d, 0x%x)\n", (A), (A), toto);}\
+  if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d, 0x%x)\n", (A), (A), toto);}\
+}
+
 #define CLAMP(A,LOW,HIGH) ((A)<(LOW)?(LOW):((A)>(HIGH))?(HIGH):(A))
 
 #define LOG_AREA
@@ -160,11 +172,11 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if (cmd.CMDSIZE == 0) {
+  if ((cmd.CMDSIZE & 0x8000)) {
+    regs->EDSR |= 2;
     return; // BAD Command
   }
 
@@ -176,13 +188,15 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
 
-  if (badgeometry == 1) return;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
 
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
+  if (cmd.w == 0 || cmd.h == 0) {
+    return; //bad command
+  }
 
   cmd.CMDXB = cmd.CMDXA + cmd.w;
   cmd.CMDYB = cmd.CMDYA;
@@ -222,7 +236,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   s16 rw = 0, rh = 0;
   s16 x, y;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
@@ -240,25 +253,12 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (((cmd.CMDCTRL & 0xF00) >> 8) == 0) {
-    if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-    if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  } else {
-    if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-    if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  }
-
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA;
-  cmd.CMDYA = (s16)cmd.CMDYA;
-  cmd.CMDXB = (s16)cmd.CMDXB;
-  cmd.CMDYB = (s16)cmd.CMDYB;
-  cmd.CMDXC = (s16)cmd.CMDXC;
-  cmd.CMDYC = (s16)cmd.CMDYC;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
 
   x = cmd.CMDXA;
   y = cmd.CMDYA;
@@ -320,7 +320,7 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   default: break;
   }
 
-  cmd.CMDXA = x  + Vdp1Regs->localX;
+  cmd.CMDXA = x + Vdp1Regs->localX;
   cmd.CMDYA = y + Vdp1Regs->localY;
   cmd.CMDXB = x + rw  + Vdp1Regs->localX;
   cmd.CMDYB = y + Vdp1Regs->localY;
@@ -334,7 +334,6 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-//printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -361,7 +360,6 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   vdp1cmd_struct cmd;
   YglTexture texture;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
@@ -377,33 +375,29 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
-
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   if ((cmd.CMDPMOD >> 3) & 0x7u == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-//printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -426,32 +420,27 @@ if ((cmd.CMDPMOD & 4))
 void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
-
-  //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
@@ -474,7 +463,6 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYGON;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -484,30 +472,27 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   LOG_CMD("%d\n", __LINE__);
 
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
@@ -530,7 +515,6 @@ if ((cmd.CMDPMOD & 4))
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYLINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -542,32 +526,27 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   LOG_CMD("%d\n", __LINE__);
 
   vdp1cmd_struct cmd;
-  int badgeometry = 1;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
   Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
 
-  if (((cmd.CMDXA & 0xFC00) == 0x0) || ((cmd.CMDXA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYA & 0xFC00) == 0x0) || ((cmd.CMDYA & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXB & 0xFC00) == 0x0) || ((cmd.CMDXB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYB & 0xFC00) == 0x0) || ((cmd.CMDYB & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXC & 0xFC00) == 0x0) || ((cmd.CMDXC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYC & 0xFC00) == 0x0) || ((cmd.CMDYC & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDXD & 0xFC00) == 0x0) || ((cmd.CMDXD & 0xFC00) == 0xFC00)) badgeometry = 0;
-  if (((cmd.CMDYD & 0xFC00) == 0x0) || ((cmd.CMDYD & 0xFC00) == 0xFC00)) badgeometry = 0;
+  CONVERTCMD(cmd.CMDXA);
+  CONVERTCMD(cmd.CMDYA);
+  CONVERTCMD(cmd.CMDXB);
+  CONVERTCMD(cmd.CMDYB);
+  CONVERTCMD(cmd.CMDXC);
+  CONVERTCMD(cmd.CMDYC);
+  CONVERTCMD(cmd.CMDXD);
+  CONVERTCMD(cmd.CMDYD);
 
-  if (badgeometry == 1) return;
-
-  cmd.CMDXA = (s16)cmd.CMDXA + Vdp1Regs->localX;
-  cmd.CMDYA = (s16)cmd.CMDYA + Vdp1Regs->localY;
-  cmd.CMDXB = (s16)cmd.CMDXB + Vdp1Regs->localX;
-  cmd.CMDYB = (s16)cmd.CMDYB + Vdp1Regs->localY;
-  cmd.CMDXC = (s16)cmd.CMDXC + Vdp1Regs->localX;
-  cmd.CMDYC = (s16)cmd.CMDYC + Vdp1Regs->localY;
-  cmd.CMDXD = (s16)cmd.CMDXD + Vdp1Regs->localX;
-  cmd.CMDYD = (s16)cmd.CMDYD + Vdp1Regs->localY;
-
-  //printf("(%d,%d) (%d,%d) (%d,%d) (%d,%d)\n", cmd.CMDXA, cmd.CMDYA, cmd.CMDXB, cmd.CMDYB, cmd.CMDXC, cmd.CMDYC, cmd.CMDXD, cmd.CMDYD);
+  cmd.CMDXA += Vdp1Regs->localX;
+  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXB += Vdp1Regs->localX;
+  cmd.CMDYB += Vdp1Regs->localY;
+  cmd.CMDXC += Vdp1Regs->localX;
+  cmd.CMDYC += Vdp1Regs->localY;
+  cmd.CMDXD += Vdp1Regs->localX;
+  cmd.CMDYD += Vdp1Regs->localY;
 
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
@@ -590,7 +569,6 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = LINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-  //printf("%d %d %d %d %d %d %d %d\n", vdp1cmd.P[0], vdp1cmd.P[1], vdp1cmd.P[2], vdp1cmd.P[3], vdp1cmd.P[4], vdp1cmd.P[5], vdp1cmd.P[6], vdp1cmd.P[7]);
 
   vdp1_add(&cmd,0);
 }
@@ -619,7 +597,6 @@ void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
   vdp1_add(&cmd,1);
   Vdp1Regs->systemclipX2 = cmd.CMDXC;
   Vdp1Regs->systemclipY2 = cmd.CMDYC;
-  //printf("System (0,0) (%d,%d)\n", Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2);
 }
 
 #endif

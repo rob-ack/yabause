@@ -62,7 +62,7 @@ static int YglGenFrameBuffer();
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-u32 * YglGetColorRamPointer();
+u32 * YglGetColorRamPointer(int line);
 
 int YglGenFrameBuffer();
 
@@ -546,7 +546,6 @@ YglTextureManager * YglTMInit(unsigned int w, unsigned int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-  YglGetColorRamPointer();
 
   return tm;
 }
@@ -3452,45 +3451,32 @@ void YglShowTexture(void) {
    _Ygl->st = !_Ygl->st;
 }
 
-u32 * YglGetColorRamPointer() {
+u32 * YglGetColorRamPointer(int line) {
   int error;
   glActiveTexture(GL_TEXTURE0);
   if (_Ygl->cram_tex == 0) {
     glGenTextures(1, &_Ygl->cram_tex);
-#if 0
-    glGenBuffers(1, &_Ygl->cram_tex_pbo);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->cram_tex_pbo);
-    glBufferData(GL_PIXEL_UNPACK_BUFFER, 2048 * 4, NULL, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-#endif
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2048, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 2048, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    _Ygl->colupd_min_addr = 0xFFFFFFFF ;
-    _Ygl->colupd_max_addr = 0x00000000;
-
-
-
+   for (int i= 0; i<512; i++) {
+     _Ygl->colupd_min_addr[i] = 0xFFFFFFFF ;
+     _Ygl->colupd_max_addr[i] = 0x00000000;
+   }
   }
 
   if (_Ygl->cram_tex_buf == NULL) {
-#if 0
-    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->cram_tex_pbo);
-    _Ygl->cram_tex_buf = (u32 *)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, 2048 * 4, GL_MAP_WRITE_BIT /*| GL_MAP_INVALIDATE_BUFFER_BIT*/);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-#endif
-    _Ygl->cram_tex_buf = malloc(2048 * 4);
-    memset(_Ygl->cram_tex_buf, 0, 2048 * 4);
-    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,2048, 1,GL_RGBA, GL_UNSIGNED_BYTE,_Ygl->cram_tex_buf);
+    _Ygl->cram_tex_buf = malloc(2048 * 4*512);
+    memset(_Ygl->cram_tex_buf, 0, 2048 * 4*512);
+    glTexSubImage2D(GL_TEXTURE_2D,0,0,0,2048, 512,GL_RGBA, GL_UNSIGNED_BYTE,_Ygl->cram_tex_buf);
   }
 
-  return _Ygl->cram_tex_buf;
+  return &_Ygl->cram_tex_buf[2048*line];
 }
 
 void YglOnUpdateColorRamWord(u32 addr) {
@@ -3498,15 +3484,14 @@ void YglOnUpdateColorRamWord(u32 addr) {
   u32 * buf;
   if (_Ygl == NULL) return;
 
-  //YabThreadLock(_Ygl->crammutex);
-  Vdp2ColorRamUpdated = 1;
+  Vdp2ColorRamUpdated[yabsys.LineCount] = 1;
 
-  if (_Ygl->colupd_min_addr > addr)
-    _Ygl->colupd_min_addr = addr;
-  if (_Ygl->colupd_max_addr < addr)
-    _Ygl->colupd_max_addr = addr;
+  if (_Ygl->colupd_min_addr[yabsys.LineCount] > addr)
+    _Ygl->colupd_min_addr[yabsys.LineCount] = addr;
+  if (_Ygl->colupd_max_addr[yabsys.LineCount] < addr)
+    _Ygl->colupd_max_addr[yabsys.LineCount] = addr;
 
-  buf = _Ygl->cram_tex_buf;
+  buf = YglGetColorRamPointer(yabsys.LineCount);
   if (buf == NULL) {
     //YabThreadUnLock(_Ygl->crammutex);
     return;
@@ -3539,50 +3524,97 @@ void YglOnUpdateColorRamWord(u32 addr) {
   //YabThreadUnLock(_Ygl->crammutex);
 }
 
-
-void YglUpdateColorRam() {
-  u32 * buf;
-  int index_shft  = 1;
-  u32 start_addr,size;
-  //YabThreadLock(_Ygl->crammutex);
-  if (Vdp2ColorRamUpdated) {
-    Vdp2ColorRamUpdated = 0;
-    if (_Ygl->colupd_min_addr > _Ygl->colupd_max_addr) {
-      //YabThreadUnLock(_Ygl->crammutex);
-      return; // !? not initilized?
-    }
-
-    buf = YglGetColorRamPointer();
+void updateVdp2ColorRam(int line){
+  if ((Vdp2ColorRamUpdated[line] != 0)||(Vdp2ColorRamToSync[line] != 0)) {
+    u32 start_addr,size;
+    u32 start, end;
+    int index_shft  = 1;
+    u32* src = YglGetColorRamPointer(line);
+    u32* dst = YglGetColorRamPointer(line+1);
     if (Vdp2Internal.ColorMode == 2) {
       index_shft = 2;
     }
-    glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
-    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    _Ygl->colupd_min_addr &= 0xFFF;
-    _Ygl->colupd_max_addr &= 0xFFF;
-    start_addr = (_Ygl->colupd_min_addr >> index_shft);
-    size = ((_Ygl->colupd_max_addr - _Ygl->colupd_min_addr) >> index_shft) + 1;
-#if 0
-    glTexSubImage2D(GL_TEXTURE_2D,
+    start = _Ygl->colupd_min_addr[line]&0xFFF;
+    end = _Ygl->colupd_max_addr[line]&0xFFF;
+    // if (start > end) return;
+    start_addr = (start >> index_shft);
+    size = ((end - start) >> index_shft) + 1;
+    memcpy(&dst[start_addr], &src[start_addr], size*sizeof(int));
+    _Ygl->colupd_min_addr[line+1] = _Ygl->colupd_min_addr[line];
+    _Ygl->colupd_max_addr[line+1] = _Ygl->colupd_max_addr[line];
+  }
+  Vdp2ColorRamToSync[line+1] = Vdp2ColorRamToSync[line];
+  Vdp2ColorRamUpdated[line+1] = Vdp2ColorRamUpdated[line];
+}
+
+static int needToSync = 0;
+void syncColorRam(void) {
+  if (needToSync != 0) {
+    int index_shft  = 1;
+    u32 start_addr,size;
+    u32 start, end;
+    u32* src = YglGetColorRamPointer(yabsys.MaxLineCount-1);
+    u32* dst = YglGetColorRamPointer(0);
+    start = _Ygl->colupd_min_addr[yabsys.MaxLineCount-1]&0xFFF;
+    end = _Ygl->colupd_max_addr[yabsys.MaxLineCount-1]&0xFFF;
+    if (start <= end) {
+      if (Vdp2Internal.ColorMode == 2) {
+        index_shft = 2;
+      }
+      start_addr = (start >> index_shft);
+      size = ((end - start) >> index_shft) + 1;
+      memcpy(&dst[start_addr], &src[start_addr], size*sizeof(int));
+      _Ygl->colupd_min_addr[0] = _Ygl->colupd_min_addr[yabsys.MaxLineCount-1];
+      _Ygl->colupd_max_addr[0] = _Ygl->colupd_max_addr[yabsys.MaxLineCount-1];
+      Vdp2ColorRamToSync[0] = 1;
+    }
+  }
+  needToSync = 0;
+}
+
+static void updateColorRamLine(int lineStart, int start, int end)
+{
+  int index_shft  = 1;
+  u32 * buf;
+  u32 start_addr,size;
+  if (Vdp2Internal.ColorMode == 2) {
+    index_shft = 2;
+  }
+  start &= 0xFFF;
+  end &= 0xFFF;
+
+  if (start > end) {
+    return;
+  }
+  buf = YglGetColorRamPointer(lineStart);
+
+  Vdp2ColorRamUpdated[lineStart] = 0;
+  Vdp2ColorRamToSync[lineStart] = 0;
+  start_addr = (start >> index_shft);
+  size = ((end - start) >> index_shft) + 1;
+  glTexSubImage2D(GL_TEXTURE_2D,
       0,
-      0, 0,
-      2048, 1,
-      GL_RGBA, GL_UNSIGNED_BYTE,
-      buf);
-#else
-    glTexSubImage2D(GL_TEXTURE_2D,
-      0,
-      start_addr, 0,
+      start_addr, lineStart,
       size, 1,
       GL_RGBA, GL_UNSIGNED_BYTE,
       &buf[start_addr] );
-#endif
-    _Ygl->colupd_min_addr = 0xFFFFFFFF;
-    _Ygl->colupd_max_addr = 0x00000000;
-  }
-  //YabThreadUnLock(_Ygl->crammutex);
-  return;
+}
 
+void YglUpdateColorRam() {
+  int startUpdate = -1;
+  //YabThreadLock(_Ygl->crammutex);
+  glBindTexture(GL_TEXTURE_2D, _Ygl->cram_tex);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+  int dirty = 0;
+  for (int l=0; l<yabsys.VBlankLineCount; l++){
+    if ((Vdp2ColorRamUpdated[l] != 0) && (l!=0)) needToSync = 1;
+    updateColorRamLine(l, _Ygl->colupd_min_addr[l], _Ygl->colupd_max_addr[l]);
+    _Ygl->colupd_min_addr[l] = 0xFFFFFFFF;
+    _Ygl->colupd_max_addr[l] = 0x00000000;
+  }
+  syncColorRam();
+
+  return;
 }
 
 

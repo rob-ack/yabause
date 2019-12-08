@@ -559,12 +559,8 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
       case 0x010:
 
          context->onchip.TIER = (val & 0x8E) | 0x1;
-         if ((val & 0x80) && (context == SSH2) && (SSH2->onchip.FTCSR & 0x80)){
-            SH2SendInterrupt(SSH2, (SSH2->onchip.VCRC >> 8) & 0x7F, (SSH2->onchip.IPRB >> 8) & 0xF);
-         }
-
-         if ((val & 0x80) && (context == MSH2) && (MSH2->onchip.FTCSR & 0x80)){
-           SH2SendInterrupt(MSH2, (MSH2->onchip.VCRC >> 8) & 0x7F, (MSH2->onchip.IPRB >> 8) & 0xF);
+         if ((val & 0x80) && (context->onchip.FTCSR & 0x80)){
+            SH2SendInterrupt(context, (context->onchip.VCRC >> 8) & 0x7F, (context->onchip.IPRB >> 8) & 0xF);
          }
          return;
       case 0x011:
@@ -830,16 +826,41 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
             context->onchip.DVCR |= 1;
 
             if (context->onchip.DVCR & 0x2)
-               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
          }
          else
          {
             s32 quotient = ((s32) val) / divisor;
             s32 remainder = ((s32) val) % divisor;
-            context->onchip.DVDNTL = quotient;
-            context->onchip.DVDNTUL = quotient;
-            context->onchip.DVDNTH = remainder;
-            context->onchip.DVDNTUH = remainder;
+
+            if (quotient > 0x7FFFFFFF)
+            {
+               context->onchip.DVCR |= 1;
+               context->onchip.DVDNTL = 0x7FFFFFFF;
+               context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
+
+               if (context->onchip.DVCR & 0x2) {
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
+              }
+            }
+            else if ((s32)(quotient >> 32) < -1)
+            {
+               context->onchip.DVCR |= 1;
+               context->onchip.DVDNTL = 0x80000000;
+               context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
+
+               if (context->onchip.DVCR & 0x2) {
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
+              }
+            }
+            else
+            {
+               context->onchip.DVDNTL = quotient;
+               context->onchip.DVDNTH = remainder;
+            }
+
+            context->onchip.DVDNTUL = context->onchip.DVDNTL;
+            context->onchip.DVDNTUH = context->onchip.DVDNTH;
          }
          return;
       }
@@ -880,7 +901,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
             context->onchip.DVCR |= 1;
 
             if (context->onchip.DVCR & 0x2)
-               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+               SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
          }
          else
          {
@@ -894,7 +915,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
 
                if (context->onchip.DVCR & 0x2)
-                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
             }
             else if ((s32)(quotient >> 32) < -1)
             {
@@ -903,7 +924,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTH = 0xFFFFFFFE; // fix me
 
                if (context->onchip.DVCR & 0x2)
-                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (MSH2->onchip.IPRA >> 12) & 0xF);
+                  SH2SendInterrupt(context, context->onchip.VCRDIV & 0x7F, (context->onchip.IPRA >> 12) & 0xF);
             }
             else
             {

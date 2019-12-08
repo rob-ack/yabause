@@ -401,13 +401,11 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
-   u16 command = T1ReadWord(ram, regs->addr);
+   u16 command = Vdp1RamReadWord(NULL, ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
-
-   regs->COPR = regs->addr >> 3;
-
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+      regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -445,16 +443,15 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            regs->LOPR = regs->addr >> 3;
-            regs->COPR = regs->addr >> 3;
+            regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             return;
          }
       }
 
 	  // Force to quit internal command error( This technic(?) is used by BATSUGUN )
 	  if (regs->EDSR & 0x02){
-		  regs->LOPR = regs->addr >> 3;
-		  regs->COPR = regs->addr >> 3;
+
+		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
 		  return;
 	  }
 
@@ -482,8 +479,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       }
 
-      command = T1ReadWord(ram, regs->addr);
-      regs->COPR = regs->addr >> 3;
+      command = Vdp1RamReadWord(NULL,ram, regs->addr);
+      //If we change directly CPR to last value, scorcher will not boot.
+      //If we do not change it, Noon will not start
+      //So store the value and update COPR with last value at VBlank In
+      regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
 }
@@ -522,7 +522,6 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
             regs->EDSR |= 2;
-            regs->LOPR = regs->addr >> 3;
             regs->COPR = regs->addr >> 3;
             return;
          }
@@ -573,6 +572,7 @@ void Vdp1Draw(void)
      //Vdp1Regs->EDSR >>= 1;
      /* this should be done after a frame change or a plot trigger */
      Vdp1Regs->COPR = 0;
+     Vdp1Regs->lCOPR = 0;
 
      VIDCore->Vdp1Draw();
    }
@@ -592,6 +592,7 @@ void Vdp1NoDraw(void) {
    //Vdp1Regs->EDSR >>= 1;
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
+   Vdp1Regs->lCOPR = 0;
 
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
 }
@@ -1640,6 +1641,9 @@ static void startField(void) {
 
     VIDCore->Vdp1FrameChange();
     Vdp1External.current_frame = !Vdp1External.current_frame;
+    Vdp1Regs->LOPR = Vdp1Regs->COPR;
+    Vdp1Regs->COPR = 0;
+    Vdp1Regs->lCOPR = 0;
     Vdp1Regs->EDSR >>= 1;
 
     FRAMELOG("[VDP1] Displayed framebuffer changed. EDSR=%02X", Vdp1Regs->EDSR);
@@ -1687,6 +1691,7 @@ void Vdp1HBlankOUT(void)
 
 void Vdp1VBlankIN(void)
 {
+  Vdp1Regs->COPR = Vdp1Regs->lCOPR;
 }
 
 //////////////////////////////////////////////////////////////////////////////

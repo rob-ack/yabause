@@ -142,7 +142,7 @@ SHADER_VERSION_COMPUTE
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "      kdata = (((kdata) >> 8 & 0xFFu) | ((kdata) & 0xFFu) << 8);\n"
 "    }else{\n"
-"      kdata = cram[ ((0x800u + (addr&0x7FFu))>>2)  ]; \n"
+"      kdata = cram[ (((0x800u + (addr&0x7FFu))<< cram_shift)>>2)  ]; \n"
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "    }\n"
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
@@ -154,7 +154,7 @@ SHADER_VERSION_COMPUTE
 "	     kdata = vram[ addr>>2 ]; \n"
 "      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "    }else{\n"
-"      kdata = cram[ ((0x800u + (addr&0x7FFFu) )>>2) ]; \n"
+"      kdata = cram[ (((0x800u + (addr&0x7FFu) )<< cram_shift)>>2) ]; \n"
 "      kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"
 "    }\n"
 "	 if( para[paramid].linecoefenab != 0) lineaddr = (kdata >> 24) & 0x7Fu; else lineaddr = 0u;\n"
@@ -192,7 +192,7 @@ SHADER_VERSION_COMPUTE
 
 "uint get_cram_msb(uint colorindex) { \n"
 "	uint colorval = 0u; \n"
-"	colorindex = (colorindex << cram_shift) & 0xFFFu; \n"
+"	colorindex = (0x800u + (colorindex&0x7FFu))<< cram_shift; \n"
 "	colorval = cram[colorindex >> 2]; \n"
 "	if ((colorindex & 0x02u) != 0u) { colorval >>= 16; } \n"
 "	return (colorval & 0x8000u); \n"
@@ -203,51 +203,18 @@ SHADER_VERSION_COMPUTE
 " return vec4(float((ret >> 0)&0xFFu)/255.0,float((ret >> 8)&0xFFu)/255.0, float((ret >> 16)&0xFFu)/255.0, float((ret >> 24)&0xFFu)/255.0);"
 "\n}"
 
-"uint PixelIsSpecialPriority(uint specialcode_, uint dot)\n"
-"{\n"
-"   dot &= 0xfu;\n"
-"   if ((specialcode_ & 0x01u) != 0u)\n"
-"   {\n"
-"      if (dot == 0u || dot == 1u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x02u) != 0u)\n"
-"   {\n"
-"      if (dot == 2u || dot == 3u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x04u) != 0u)\n"
-"   {\n"
-"      if (dot == 4u || dot == 5u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x08u) != 0u)\n"
-"   {\n"
-"      if (dot == 6u || dot == 7u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x10u) != 0u)\n"
-"   {\n"
-"      if (dot == 8u || dot == 9u)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x20u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xau || dot == 0xbu)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x40u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xcu || dot == 0xdu)\n"
-"         return 1u;\n"
-"   }\n"
-"   if ((specialcode_ & 0x80u) != 0u)\n"
-"   {\n"
-"      if (dot == 0xeu || dot == 0xfu)\n"
-"         return 1u;\n"
-"   }\n"
-"   return 0u;\n"
-"}\n"
+"int PixelIsSpecialPriority( uint specialcode, uint dot ) { \n"
+"  dot &= 0xfu; \n"
+"  if ( (specialcode & 0x01u) != 0u && (dot == 0u || dot == 1u) ){ return 1;} \n"
+"  if ( (specialcode & 0x02u) != 0u && (dot == 2u || dot == 3u) ){ return 1;} \n"
+"  if ( (specialcode & 0x04u) != 0u && (dot == 4u || dot == 5u) ){ return 1;} \n"
+"  if ( (specialcode & 0x08u) != 0u && (dot == 6u || dot == 7u) ){ return 1;} \n"
+"  if ( (specialcode & 0x10u) != 0u && (dot == 8u || dot == 9u) ){ return 1;} \n"
+"  if ( (specialcode & 0x20u) != 0u && (dot == 0xau || dot == 0xbu) ){ return 1;} \n"
+"  if ( (specialcode & 0x40u) != 0u && (dot == 0xcu || dot == 0xdu) ){ return 1;} \n"
+"  if ( (specialcode & 0x80u) != 0u && (dot == 0xeu || dot == 0xfu) ){ return 1;} \n"
+"  return 0; \n"
+"} \n"
 
 "uint Vdp2SetSpecialPriority(uint dot) {\n"
 "  uint prio = priority;\n"
@@ -2574,7 +2541,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
-
+      else {
 				if (rbg->info.isbitmap) {
 					switch (rbg->info.colornumber) {
 					case 0: {
@@ -2710,6 +2677,7 @@ DEBUGWIP("Init\n");
 					}
 				}
 			}
+			}
 
 	}
 
@@ -2726,7 +2694,7 @@ DEBUGWIP("Init\n");
     error = glGetError();
 
     if (rbg->info.idScreen == RBG0) updateRBG0(rbg, varVdp2Regs);
-               else updateRBG1(rbg, varVdp2Regs);
+    else updateRBG1(rbg, varVdp2Regs);
 
        ErrorHandle("glUseProgram");
 
@@ -2772,8 +2740,8 @@ DEBUGWIP("Init\n");
        ErrorHandle("glBufferSubData");
        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, ssbo_paraA_);
 
-       uniform.vres_scale = (float)1.0f/_Ygl->heightRatio;
-       uniform.hres_scale = (float)1.0f/_Ygl->widthRatio;
+       uniform.vres_scale = 1.0f/(float)_Ygl->heightRatio;
+       uniform.hres_scale = 1.0f/(float)_Ygl->widthRatio;
        uniform.cellw = rbg->info.cellw;
        uniform.cellh = rbg->info.cellh;
        uniform.paladdr_ = rbg->info.paladdr;
@@ -2813,12 +2781,12 @@ DEBUGWIP("Init\n");
   glBindBufferBase(GL_UNIFORM_BUFFER, 3, scene_uniform);
 
        if (rbg->rgb_type == 0x04  ) {
-               DEBUGWIP("Draw RBG1\n");
+               DEBUGWIP("Draw RBG1 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_1, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 1");
         }
        else {
-               DEBUGWIP("Draw RBG0\n");
+               DEBUGWIP("Draw RBG0 [%d -> %d]\n", uniform.startLine, uniform.endLine);
                glBindImageTexture(0, tex_surface_, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
                ErrorHandle("glBindImageTexture 0");
        }

@@ -858,7 +858,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTL = quotient;
                context->onchip.DVDNTH = remainder;
             }
-
+            context->onchip.DVDNT = context->onchip.DVDNTL;
             context->onchip.DVDNTUL = context->onchip.DVDNTL;
             context->onchip.DVDNTUH = context->onchip.DVDNTH;
          }
@@ -931,7 +931,7 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
                context->onchip.DVDNTL = quotient;
                context->onchip.DVDNTH = remainder;
             }
-
+            context->onchip.DVDNT = context->onchip.DVDNTL;
             context->onchip.DVDNTUL = context->onchip.DVDNTL;
             context->onchip.DVDNTUH = context->onchip.DVDNTH;
          }
@@ -1056,14 +1056,21 @@ static void UpdateLRU(SH2_struct *context, u8 line, u8 way) {
 
 static u8 getLRU(SH2_struct *context, u8 line) {
 //Table 8.3 SH7604_Hardware_Manual.pdf
-  u8 way = 3;
-  if ((context->cacheLRU[line] & 0x20) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x10) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x08) != 0) way=0;
-  if ((context->cacheLRU[line] & 0x04) != 0) way=1;
-  if ((context->cacheLRU[line] & 0x02) != 0) way=1;
-  if ((context->cacheLRU[line] & 0x01) != 0) way=2;
-  context->cacheLRU[line] = 0;
+  u8 way = 0;
+  if (context->onchip.CCR & (1 << 3))//2-way mode
+  {
+    if ((context->cacheLRU[line] & 1) == 1)
+      return 2;
+    else
+      return 3;
+  }
+  else
+  {
+    if ((context->cacheLRU[line] & 0x38) == 0x38) way=0;
+    else if ((context->cacheLRU[line] & 0x26) == 0x6) way=1;
+    else if ((context->cacheLRU[line] & 0x15) == 0x1) way=2;
+    else if ((context->cacheLRU[line] & 0x0B) == 0x0) way=3;
+  }
   return way;
 }
 

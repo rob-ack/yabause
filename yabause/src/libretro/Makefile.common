@@ -67,8 +67,6 @@ SOURCES_C := $(SOURCE_DIR)/osdcore.c \
 	$(SOURCE_DIR)/vdp2.c \
 	$(SOURCE_DIR)/common_glshader.c \
 	$(SOURCE_DIR)/vidshared.c \
-	$(SOURCE_DIR)/vidsoft.c \
-	$(SOURCE_DIR)/titan/titan.c \
 	$(SOURCE_DIR)/yabause.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_posix_string.c \
 	$(LIBRETRO_COMM_DIR)/compat/compat_strl.c \
@@ -136,13 +134,18 @@ else
 	$(SOURCE_DIR)/m68kc68k.c
 endif
 
-ifeq ($(ARCH_IS_LINUX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c
-else ifeq ($(ARCH_IS_MACOSX), 1)
-	SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
-	$(SOURCE_DIR)/pthread_barrier.c
+ifeq ($(USE_RTHREADS), 1)
+	SOURCES_C += $(SOURCE_DIR)/thr-rthreads.c \
+		$(LIBRETRO_COMM_DIR)/rthreads/rthreads.c
 else
-	SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	ifeq ($(ARCH_IS_LINUX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c
+	else ifeq ($(ARCH_IS_MACOSX), 1)
+		SOURCES_C += $(SOURCE_DIR)/thr-linux.c \
+			$(SOURCE_DIR)/pthread_barrier.c
+	else
+		SOURCES_C += $(SOURCE_DIR)/thr-windows.c
+	endif
 endif
 
 M68KMAKE_EXE = m68kmake$(EXE_EXT)

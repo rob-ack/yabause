@@ -972,8 +972,8 @@ static u32 Vdp2ColorRamGetColor(u32 colorindex, int alpha)
     u32 tmp1, tmp2;
     colorindex <<= 2;
     colorindex &= 0xFFF;
-    tmp1 = T2ReadWord(Vdp2ColorRam, colorindex);
-    tmp2 = T2ReadWord(Vdp2ColorRam, colorindex + 2);
+    tmp1 = T2ReadWord(Vdp2ColorRam, colorindex & 0xFFF);
+    tmp2 = T2ReadWord(Vdp2ColorRam, (colorindex + 2) & 0xFFF);
     return SAT2YAB2(alpha, tmp1, tmp2);
   }
   default: break;
@@ -1007,12 +1007,14 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     LineWinAddr = (u32)((((varVdp2Regs->LWTA0.part.U & 0x07) << 15) | (varVdp2Regs->LWTA0.part.L >> 1)) << 2);
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
-        short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
-        short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
-        u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        val = temp;
+        short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
+        short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
+        if ((HEnd < 0) || (HStart < 0)) val = 0x000000FF; //END < START
+        else {
+          val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
+        }
       } else {
-        val = 0x000000FF; //END > START
+        val = 0x000000FF; //END < START
       }
       if (val != _Ygl->win[0][v]) {
         _Ygl->win[0][v] = val;
@@ -1024,8 +1026,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
-        u32 temp = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
-        val = temp;
+        if (((short)varVdp2Regs->WPSY0 < 0) || ((short)varVdp2Regs->WPEY0 < 0)) val = 0x000000FF; //END < START
+        else {
+          val = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
+        }
       } else {
         val = 0x000000FF; //END > START
       }
@@ -1042,12 +1046,14 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
     LineWinAddr = (u32)((((varVdp2Regs->LWTA1.part.U & 0x07) << 15) | (varVdp2Regs->LWTA1.part.L >> 1)) << 2);
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
-        short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2));
-        short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2);
-        u32 temp = (HStart>>HShift) | ((HEnd>>HShift) << 16);
-        val = temp;
+        short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
+        short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
+        if ((HEnd < 0) || (HStart < 0)) val = 0x000000FF; //END < START
+        else {
+          val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
+        }
       } else {
-        val = 0x000000FF; //END > START
+        val = 0x000000FF; //END < START
       }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
@@ -1059,11 +1065,12 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
-        u32 temp = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
-        if (varVdp2Regs->WPSX1 > varVdp2Regs->WPEX1) val = 0x0;
-        else val = temp;
+        if (((short)varVdp2Regs->WPSY1 < 0) || ((short)varVdp2Regs->WPEY1 < 0)) val = 0x000000FF; //END < START
+        else {
+          val = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
+        }
       } else {
-        val = 0x000000FF; //END > START
+        val = 0x000000FF; //END < START
       }
       if (val != _Ygl->win[1][v]) {
         _Ygl->win[1][v] = val;
@@ -2719,7 +2726,7 @@ static INLINE int vdp2rGetKValue(vdp2rotationparameter_struct * parameter, int i
     if (parameter->k_mem_type == 0) { // vram
       kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (h << 2)) & 0x7FFFF);
     } else { // cram
-      kdata = Vdp2ColorRamReadLong(NULL, Vdp2Ram, ((parameter->coeftbladdr + (int)(h << 2)) & 0x7FF) + 0x800 );
+      kdata = Vdp2ColorRamReadLong(NULL, Vdp2Ram, (parameter->coeftbladdr + (int)(h << 2)) );
     }
     parameter->lineaddr = (kdata >> 24) & 0x7F;
     if (kdata & 0x80000000) { return 0; }
@@ -4907,8 +4914,8 @@ void VIDOGLVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->userclipX1 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xC);
   Vdp1Regs->userclipY1 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0xE);
-  Vdp1Regs->userclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14);
-  Vdp1Regs->userclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16);
+  Vdp1Regs->userclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14)+1;
+  Vdp1Regs->userclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16)+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4917,8 +4924,8 @@ void VIDOGLVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   Vdp1Regs->systemclipX1 = 0;
   Vdp1Regs->systemclipY1 = 0;
-  Vdp1Regs->systemclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14);
-  Vdp1Regs->systemclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16);
+  Vdp1Regs->systemclipX2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x14)+1;
+  Vdp1Regs->systemclipY2 = Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x16)+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5221,6 +5228,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     if ((info->isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
+      rgb->use_cs = 0;
 
       ReadBitmapSize(info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info->cellh *= 2;
@@ -6345,6 +6353,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   if ((info->isbitmap = varVdp2Regs->CHCTLB & 0x200) != 0)
   {
+    rgb->use_cs = 0;
     // Bitmap Mode
     ReadBitmapSize(info, varVdp2Regs->CHCTLB >> 10, 0x1);
 
@@ -6708,7 +6717,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue2W(vdp2rotationparameter_s
     kdata = Vdp2RamReadLong(NULL, Vdp2Ram, (param->coeftbladdr + (index << 2)));
   }
   else { // cram
-    kdata = T2ReadLong((Vdp2ColorRam + 0x800), (param->coeftbladdr + (index << 2)) & 0xFFF);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 2)));
   }
   param->lineaddr = (kdata >> 24) & 0x7F;
 
@@ -6741,7 +6750,7 @@ vdp2rotationparameter_struct * FASTCALL vdp2rGetKValue1W(vdp2rotationparameter_s
     kdata = Vdp2RamReadWord(NULL, Vdp2Ram, (param->coeftbladdr + (index << 1)));
   }
   else { // cram
-    kdata = T2ReadWord((Vdp2ColorRam + 0x800), (param->coeftbladdr + (index << 1)) & 0xFFF);
+    kdata = Vdp2ColorRamReadWord(NULL,Vdp2ColorRam, (param->coeftbladdr + (index << 1)));
   }
 
   if (kdata & 0x8000) return NULL;

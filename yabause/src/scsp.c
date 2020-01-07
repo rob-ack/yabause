@@ -327,7 +327,7 @@ struct Scsp
    struct Slot slots[32];
 
    int debug_mode;
-}new_scsp;
+}new_scsp = {0};
 
 //samples per step through a 256 entry lfo table
 const int lfo_step_table[0x20] = {
@@ -617,9 +617,9 @@ void op3(struct Slot * slot)
       return;
 
    if (!slot->regs.pcm8b)
-     slot->state.wave = T2ReadWord(SoundRam, addr); //SoundRamReadWord(addr);
+     slot->state.wave = SoundRamReadWord(NULL, SoundRam, addr); //SoundRamReadWord(addr);
    else
-     slot->state.wave = T2ReadByte(SoundRam, addr) << 8; //SoundRamReadByte(addr) << 8;
+     slot->state.wave = SoundRamReadByte(NULL, SoundRam, addr) << 8; //SoundRamReadByte(addr) << 8;
 
    slot->state.output = slot->state.wave;
 }
@@ -1464,15 +1464,15 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
          s16 disdl_applied = (s->slots[last_step].state.output >> disdl);
 
-         s16 mixs_input = s->slots[last_step].state.output >> 
+         s16 mixs_input = s->slots[last_step].state.output >>
             get_sdl_shift(s->slots[last_step].regs.imxl);
 
          int pan_val_l = 0, pan_val_r = 0;
 
          get_panning(s->slots[last_step].regs.dipan, &pan_val_l, &pan_val_r);
 
-         outl32 = outl32 + ((disdl_applied >> pan_val_l) >> 1);
-         outr32 = outr32 + ((disdl_applied >> pan_val_r) >> 1);
+         outl32 = outl32 + ((disdl_applied >> pan_val_l));
+         outr32 = outr32 + ((disdl_applied >> pan_val_r));
          scsp_dsp.mixs[s->slots[last_step].regs.isel] += mixs_input << 4;
       }
    }
@@ -1522,14 +1522,14 @@ void generate_sample(struct Scsp * s, int rbp, int rbl, s16 * out_l, s16* out_r,
 
       get_panning(s->slots[i].regs.efpan, &pan_val_l, &pan_val_r);
 
-      panned_l = (efsdl_applied >> pan_val_l)>>1;
-      panned_r = (efsdl_applied >> pan_val_r)>>1;
+      panned_l = (efsdl_applied >> pan_val_l);
+      panned_r = (efsdl_applied >> pan_val_r);
 
       outl32 = outl32 + panned_l;
       outr32 = outr32 + panned_r;
    }
-
    mvol_shift = 0xf - mvol;
+
 
    outl32 = outl32 >> mvol_shift;
    *out_l = min(SHRT_MAX, max(SHRT_MIN, outl32));
@@ -1940,7 +1940,7 @@ scsp_dma (void)
       for (int i = 0; i < cnt; i++) {
         u16 val = scsp_r_w(NULL, NULL, from);
         //if (scsp.dmfl & 0x40) val = 0;
-        T2WriteWord(SoundRam, to & 0x7FFFF, val);
+        SoundRamWriteWord(NULL, SoundRam, to, val);
         from += 2;
         to += 2;
       }
@@ -1955,7 +1955,7 @@ scsp_dma (void)
       u32 to = scsp.drga;
       u32 cnt = scsp.dmlen>>1;
       for (int i = 0; i < cnt; i++) {
-        u16 val = T2ReadWord(SoundRam, from & 0x7FFFF); 
+        u16 val = SoundRamReadWord(NULL, SoundRam, from);
         //if (scsp.dmfl & 0x40) val = 0;
         scsp_w_w(NULL, NULL, to,val);
         from += 2;
@@ -4704,7 +4704,7 @@ c68k_byte_read (const u32 adr)
   u32 rtn = 0;
   if (adr < 0x100000) {
     if (adr < 0x80000) {
-      rtn = T2ReadByte(SoundRam, adr & 0x7FFFF);
+      rtn = SoundRamReadByte(NULL, SoundRam, adr);
     }
   }
   else
@@ -4718,12 +4718,7 @@ static void FASTCALL
 c68k_byte_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-    //if ((adr & 0xFFF) == 0x790){
-    //  SCSPLOG("c68k_word_write %08X:%02X\n", adr, data);
-    //}
-    if (adr < 0x80000) {
-      T2WriteByte(SoundRam, adr & 0x7FFFF, data);
-    }
+    SoundRamWriteByte(NULL, SoundRam, adr, data);
   }
   else{
     scsp_w_b(NULL, NULL, adr, data);
@@ -4738,9 +4733,7 @@ c68k_word_read (const u32 adr)
 {
   u32 rtn = 0;
   if (adr < 0x100000) {
-    if (adr < 0x80000) {
-      rtn = T2ReadWord(SoundRam, adr);
-    }
+    rtn = SoundRamReadWord(NULL, SoundRam, adr);
   }
   else
     rtn = scsp_r_w(NULL, NULL, adr);
@@ -4753,12 +4746,7 @@ static void FASTCALL
 c68k_word_write (const u32 adr, u32 data)
 {
   if (adr < 0x100000){
-//    if ((adr & 0x7FFF0) == 0x3c20){
-//      SCSPLOG("c68k_word_write %08X:%04X @ %d\n", adr, data, (m68kcycle >> CLOCK_SYNC_SHIFT) );
-//    }
-    if (adr < 0x80000) {
-      T2WriteWord(SoundRam, adr, data);
-    }
+    SoundRamWriteWord(NULL, SoundRam, adr, data);
   }
   else{
     scsp_w_w(NULL, NULL, adr, data);
@@ -4788,16 +4776,17 @@ scu_interrupt_handler (void)
 u8 FASTCALL
 SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
   u8 val = 0;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    val = 0xFF;
-
-  val = T2ReadByte(mem, addr);
+    addr &= 0x1FFFF;
+  else
+    // if (addr > 0x7FFFF)
+    //   val = 0xFF;
+    // else
+      val = T2ReadByte(mem, addr);
   //SCSPLOG("SoundRamReadByte %08X:%02X",addr,val);
   return val;
 }
@@ -4807,13 +4796,13 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    return;
+    addr &= 0x1FFFF;
+  // else if (addr > 0x7FFFF)
+  //   return;
 
   //SCSPLOG("SoundRamWriteByte %08X:%02X", addr, val);
   T2WriteByte (mem, addr, val);
@@ -4825,7 +4814,7 @@ SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 // From CPU
 int sh2_read_req = 0;
 static int mem_access_counter = 0;
-void SyncSh2And68k(){
+void SyncSh2And68k(SH2_struct *context){
   if (IsM68KRunning) {
     /*
     #if defined(ARCH_IS_LINUX)
@@ -4838,8 +4827,7 @@ void SyncSh2And68k(){
     */
     // Memory Access cycle = 128 times per 44.1Khz
     // 28437500 / 4410 / 128 = 50
-    SH2Core->AddCycle(MSH2, 50);
-    SH2Core->AddCycle(SSH2, 50);
+    SH2Core->AddCycle(context, 50);
 
     if (mem_access_counter++ >= 128) {
 #if defined(ARCH_IS_LINUX)
@@ -4858,16 +4846,16 @@ void SyncSh2And68k(){
 u16 FASTCALL
 SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
   u16 val = 0;
 
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    return 0xFFFF;
+    addr &= 0x1FFFF;
+  // else if (addr > 0x7FFFF)
+  //   return 0xFFFF;
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d", addr, val, MSH2->cycles);
-  SyncSh2And68k();
+  if (context != NULL) SyncSh2And68k(context);
 
   val = T2ReadWord (mem, addr);
 
@@ -4880,13 +4868,13 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    return;
+    addr &= 0x1FFFF;
+  // else if (addr > 0x7FFFF)
+  //   return;
 
   //SCSPLOG("SoundRamWriteWord %08X:%04X", addr, val);
   T2WriteWord (mem, addr, val);
@@ -4898,21 +4886,21 @@ SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 u32 FASTCALL
 SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
   u32 val;
   u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF) {
-    val = 0xFFFFFFFF;
-    SyncSh2And68k();
-    return val;
-  }
+    addr &= 0x1FFFF;
+  // else if (addr > 0x7FFFF) {
+  //   val = 0xFFFFFFFF;
+  //   if (context != NULL) SyncSh2And68k(context);
+  //   return val;
+  // }
 
   //SCSPLOG("SoundRamReadLong %08X:%08X time=%d PC=%08X", addr, val, MSH2->cycles, MSH2->regs.PC);
-  SyncSh2And68k();
+  if (context != NULL) SyncSh2And68k(context);
 
   val = T2ReadLong(mem, addr);
 
@@ -4925,14 +4913,14 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
-  addr &= 0xFFFFF;
+  addr &= 0x7FFFF;
   //u32 pre_cycle = m68kcycle;
 
   // If mem4b is set, mirror ram every 256k
   if (scsp.mem4b == 0)
-    addr &= 0x3FFFF;
-  else if (addr > 0x7FFFF)
-    return;
+    addr &= 0x1FFFF;
+  // else if (addr > 0x7FFFF)
+  //   return;
 
   //SCSPLOG("SoundRamWriteLong %08X:%08X", addr, val);
   T2WriteLong (mem, addr, val);

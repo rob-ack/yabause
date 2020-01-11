@@ -116,7 +116,7 @@ int Ygl_uniformVdp1CommonParam(void * p, YglTextureManager *tm, Vdp2 *varVdp2Reg
     glUniform1i(prg->ids->fbo, 1);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp1FrameBuff[_Ygl->drawframe]);
-    #if !defined(_OGLES3_)
+    #if defined(_OGL3_)
         if (glTextureBarrier) glTextureBarrier();
         else if (glTextureBarrierNV) glTextureBarrierNV();
     #else
@@ -256,7 +256,9 @@ SHADER_VERSION
 "  ivec2 addr = ivec2(int(v_texcoord.x),int(v_texcoord.y));\n"
 "  vec4 txindex = texelFetch( s_texture, addr ,0 );\n"
 "  if(txindex.a == 0.0) { discard; }\n"
-"  vec4 txcol = texelFetch( s_color,  ivec2( int(txindex.g*255.0)<<8 | int(txindex.r*255.0) , linepos.x/u_hratio )  , 0 );\n"
+"  int tx = int(txindex.g*255.0)<<8 | int(txindex.r*255.0);\n"
+"  int ty = int(float(linepos.x)/u_hratio);\n"
+"  vec4 txcol = texelFetch( s_color,  ivec2( tx , ty )  , 0 );\n"
 "  int msb = int(txindex.b * 255.0)&0x1; \n"
 "  if (is_perline == 1) {\n"
 "    vec4 perline = texelFetch( s_perline, linepos,0 ); \n"
@@ -1627,7 +1629,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
 
   int gltext[16] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15};
 
-
+#ifdef _OGL3_
 #ifdef DEBUG_BLIT
     glBindFragDataLocation(vdp2blit_prg, 1, "topColor");
     glBindFragDataLocation(vdp2blit_prg, 2, "secondColor");
@@ -1635,7 +1637,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
     glBindFragDataLocation(vdp2blit_prg, 4, "fourthColor");
 #endif
     glBindFragDataLocation(vdp2blit_prg, 0, "finalColor");
-
+#endif
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
@@ -1647,7 +1649,7 @@ int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* 
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win1"), 15);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_height"),(float)_Ygl->rheight / (float)_Ygl->height);
-  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),_Ygl->vdp1wratio);
+  glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp1_width"),_Ygl->vdp1width/512.0f);
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1expandW, _Ygl->vdp1expandH);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));

@@ -184,12 +184,13 @@ render(struct graphics_context *context)
 static int SetupOpenGL() {
   if (!platform_SetupOpenGL(800,600,0))
     exit(EXIT_FAILURE);
-
+#if defined(_USEGLEW_)
   glewExperimental=GL_TRUE;
   if (glewInit() != 0) {
     printf("Glew can not init\n");
     exit(EXIT_FAILURE);
   }
+#endif
 }
 
 void YuiMsg(const char *format, ...) {
@@ -223,7 +224,7 @@ int main(int argc, char *argv[]) {
   SetupOpenGL();
 
   const GLchar *vert_shader =
-        "#version 330\n"
+        SHADER_VERSION
         "layout(location = 0) in vec2 point;\n"
         "void main() {\n"
         "    mat2 rotate = mat2(0.5, -0.5,\n"
@@ -231,7 +232,10 @@ int main(int argc, char *argv[]) {
         "    gl_Position = vec4(0.75 * rotate * point, 0.0, 1.0);\n"
         "}\n";
     const GLchar *frag_shader =
-        "#version 330\n"
+        SHADER_VERSION
+        "#ifdef GL_ES\n"
+        "precision highp float;\n"
+        "#endif\n"
         "out vec4 color;\n"
         "void main() {\n"
         "    color = vec4(1, 0.15, 0.15, 0);\n"
@@ -262,9 +266,9 @@ int main(int argc, char *argv[]) {
     /* Start main loop */
     context.lastframe = glfwGetTime();
     context.framecount = 0;
-   
+
     render(&context);
-    sleep(10); 
+    sleep(10);
 
     fprintf(stdout, "Exiting ...\n");
 

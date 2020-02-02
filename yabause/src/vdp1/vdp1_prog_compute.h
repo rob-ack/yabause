@@ -21,6 +21,8 @@
 #define LOCAL_SIZE_X 4
 #define LOCAL_SIZE_Y 4
 
+#define QUEUE_SIZE 512
+
 //#define SHOW_QUAD
 
 static const char vdp1_write_f[] =
@@ -269,9 +271,10 @@ SHADER_VERSION_COMPUTE
 "  return 0u;\n"
 "}\n"
 
-"int getCmd(inout vec2 P, uint id, uint start, uint end, out uint zone)\n"
+"int getCmd(inout vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip)\n"
 "{\n"
 "  for(uint i=id+start; i<id+end; i++) {\n"
+"     if (wait_sysclip && (cmd[i].type != "Stringify(SYSTEM_CLIPPING)")) continue;"
 "     zone = pixIsInside(P, i);\n"
 "     if (zone != 0u) {\n"
 "       return int(i);\n"
@@ -521,32 +524,37 @@ SHADER_VERSION_COMPUTE
 "  ivec2 syslimit = sysClip;\n"
 "  ivec4 userlimit = usrClip;\n"
 "  uint lindex = index.y*"Stringify(NB_COARSE_RAST_X)"+ index.x;\n"
-"  uint cmdIndex = lindex * 2000u;\n"
+"  uint cmdIndex = lindex * "Stringify(QUEUE_SIZE)"u;\n"
 
 "  if (nbCmd[lindex] == 0u) return;\n"
 "  uint idCmd = 0;\n"
 "  uint zone = 0;\n"
 "  int cmdindex = 0;\n"
 "  bool useGouraud = false;\n"
+"  bool waitSysClip = false;\n"
 "  vec2 OriginTexel = texel;\n"
 "  while ((cmdindex != -1) && (idCmd<nbCmd[lindex]) ) {\n"
 "    discarded = false;\n"
 "    newColor = vec4(0.0);\n"
 "    outColor = vec4(0.0);\n"
 "    texel = OriginTexel;\n"
-"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone);\n"
+"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone, waitSysClip);\n"
 "    if (cmdindex == -1) continue;\n"
 "    idCmd = cmdindex + 1 - cmdIndex;\n"
 "    pixcmd = cmd[cmdindex];\n"
 "    if (pixcmd.type == "Stringify(SYSTEM_CLIPPING)") {\n"
 "      syslimit = ivec2(pixcmd.CMDXC+1,pixcmd.CMDYC+1);\n"
+"      waitSysClip = false;\n"
 "      continue;\n"
 "    }\n"
 "    if (pixcmd.type == "Stringify(USER_CLIPPING)") {\n"
 "      userlimit = ivec4(pixcmd.CMDXA,pixcmd.CMDYA,pixcmd.CMDXC+1,pixcmd.CMDYC+1);\n"
 "      continue;\n"
 "    }\n"
-"    if (any(greaterThan(pos,syslimit*upscale))) continue;\n"
+"    if (any(greaterThan(pos,syslimit*upscale))) { \n"
+"      waitSysClip = true;\n"
+"      continue;\n"
+"    }"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
 //Draw inside
 "      if (any(lessThan(pos,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"

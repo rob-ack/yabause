@@ -1027,7 +1027,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
-        if ((HEnd < 0) || (HStart < 0)) val = 0x000000FF; //END < START
+        if ((HEnd < HStart) || (HEnd < 0)) val = 0x000000FF; //END < START
         else {
           val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
         }
@@ -1044,7 +1044,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY0 && v <= varVdp2Regs->WPEY0) {
-        if (((short)varVdp2Regs->WPSY0 < 0) || ((short)varVdp2Regs->WPEY0 < 0)) val = 0x000000FF; //END < START
+        if (((short)varVdp2Regs->WPEY0 < (short)varVdp2Regs->WPSY0)  || ((short)varVdp2Regs->WPEY0 < 0)) val = 0x000000FF; //END < START
         else {
           val = (varVdp2Regs->WPSX0 >>HShift) | ((varVdp2Regs->WPEX0>>HShift) << 16);
         }
@@ -1066,7 +1066,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
         short HStart = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2)) & 0xFFFF;
         short HEnd = Vdp2RamReadWord(NULL, Vdp2Ram, LineWinAddr + (v << 2) + 2) & 0xFFFF;
-        if ((HEnd < 0) || (HStart < 0)) val = 0x000000FF; //END < START
+        if ((HEnd < HStart) || (HEnd < 0)) val = 0x000000FF; //END < START
         else {
           val = (HStart>>HShift) | ((HEnd>>HShift) << 16);
         }
@@ -1083,7 +1083,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   else {
     for (v = 0; v < _Ygl->rheight; v++) {
       if (v >= varVdp2Regs->WPSY1 && v <= varVdp2Regs->WPEY1) {
-        if (((short)varVdp2Regs->WPSY1 < 0) || ((short)varVdp2Regs->WPEY1 < 0)) val = 0x000000FF; //END < START
+        if (((short)varVdp2Regs->WPEY1 < (short)varVdp2Regs->WPSY1) || ((short)varVdp2Regs->WPEY1 < 0)) val = 0x000000FF; //END < START
         else {
           val = (varVdp2Regs->WPSX1 >>HShift) | ((varVdp2Regs->WPEX1>>HShift) << 16);
         }
@@ -2436,7 +2436,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       //mapy   = (v+sy) / (512 * info->planeh);
       mapy = (targetv) >> planeh_shift;
       //int dot_on_planey = (v + sy) - mapy*(512 * info->planeh);
-      dot_on_planey = (targetv)-(mapy << planeh_shift);
+      dot_on_planey = (targetv)-(mapy * (1 << planeh_shift));
       mapy = mapy & 0x01;
       //planey = dot_on_planey / 512;
       planey = dot_on_planey >> plane_shift;
@@ -2479,7 +2479,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       //mapx = (h + sx) / (512 * info->planew);
       mapx = (h + sx) >> planew_shift;
       //int dot_on_planex = (h + sx) - mapx*(512 * info->planew);
-      dot_on_planex = (h + sx) - (mapx << planew_shift);
+      dot_on_planex = (h + sx) - (mapx * (1<<planew_shift));
       mapx = mapx & 0x01;
       //planex = dot_on_planex / 512;
       planex = dot_on_planex >> plane_shift;
@@ -3343,7 +3343,7 @@ void VIDOGLVdp1Draw()
   int maxpri;
   int minpri;
   int line = 0;
-  Vdp2 *varVdp2Regs = &Vdp2Lines[Vdp1External.plot_trigger_line];
+  Vdp2 *varVdp2Regs = &Vdp2Lines[yabsys.LineCount];
   _Ygl->vpd1_running = 1;
 
 
@@ -3409,8 +3409,8 @@ void VIDOGLVdp1Draw()
       u8 *cclist = (u8 *)&lVdp2Regs->CCRSA;
       u8 *prilist = (u8 *)&lVdp2Regs->PRISA;
       for (i = 0; i < 8; i++) {
-        linebuf[line + _Ygl->rheight * (1 + i)] = (prilist[i] & 0x7) << 24;
-        linebuf[line + _Ygl->rheight * (1 + 8 + i)] = (0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) << 24;
+        linebuf[line + _Ygl->rheight * (1 + i)] = (u32)(prilist[i] & 0x7) << 24;
+        linebuf[line + _Ygl->rheight * (1 + 8 + i)] = (u32)(0xFF - (((cclist[i] & 0x1F) << 3) & 0xF8)) << 24;
       }
 
       if (lVdp2Regs->CLOFEN & 0x40) {
@@ -5164,19 +5164,19 @@ void Vdp2GeneratePerLineColorCalcuration(vdp2draw_struct * info, int id, Vdp2 *v
 
          switch (id) {
           case NBG0:
-            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F)<<3) << 24;
+            linebuf[line] = (u32)((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F)<<3) << 24;
             break;
           case NBG1:
-            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) << 24;
+            linebuf[line] = (u32)((~Vdp2Lines[line >> line_shift].CCRNA & 0x1F00) >> 5) << 24;
             break;
           case NBG2:
-            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F)<<3) << 24;
+            linebuf[line] = (u32)((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F)<<3) << 24;
             break;
           case NBG3:
-            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) << 24;
+            linebuf[line] = (u32)((~Vdp2Lines[line >> line_shift].CCRNB & 0x1F00) >> 5) << 24;
             break;
           case RBG0:
-            linebuf[line] = ((~Vdp2Lines[line >> line_shift].CCRR & 0x1F)<<3) << 24;
+            linebuf[line] = (u32)((~Vdp2Lines[line >> line_shift].CCRR & 0x1F)<<3) << 24;
             break;
           }
 

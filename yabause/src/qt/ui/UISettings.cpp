@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QList>
 #include <QDesktopWidget>
+#include <QStorageInfo>
 
 extern "C" {
 extern M68K_struct* M68KCoreList[];
@@ -187,13 +188,22 @@ void UISettings::requestFolder( const QString& c, QLineEdit* e )
 	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
 	if ( !s.isNull() ) {
 		e->setText( s );
-        }
-        int nbGames=STVGetRomList(s.toStdString().c_str(), 1);
-        cbSTVGame->clear();
-        for(i = 0; i< nbGames; i++){
-		cbSTVGame->addItem(getSTVGameName(i),i);
-        }
-        cbSTVGame->model()->sort(0);
+  }
+}
+
+void UISettings::requestSTVFolder( const QString& c, QLineEdit* e )
+{
+  int i;
+	const QString s = CommonDialogs::getExistingDirectory( e->text(), c );
+	if ( !s.isNull() ) {
+		e->setText( s );
+  }
+  int nbGames=STVGetRomList(s.toStdString().c_str(), 1);
+  cbSTVGame->clear();
+  for(i = 0; i< nbGames; i++){
+	  cbSTVGame->addItem(getSTVGameName(i),i);
+  }
+  cbSTVGame->model()->sort(0);
 }
 
 QStringList getCdDriveList()
@@ -201,11 +211,11 @@ QStringList getCdDriveList()
 	QStringList list;
 
 #if defined Q_OS_WIN
-	foreach( QFileInfo drive, QDir::drives () )
-	{
+	foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+		QFileInfo drive(storage.rootPath());
 		LPCWSTR driveString = (LPCWSTR)drive.filePath().utf16();
 		if (GetDriveTypeW(driveString) == DRIVE_CDROM)
-			list.append(drive.filePath());
+			list.append(storage.rootPath());
 	}
 #elif defined Q_OS_LINUX
 	FILE * f = fopen("/proc/sys/dev/cdrom/info", "r");
@@ -267,7 +277,7 @@ void UISettings::tbBrowse_clicked()
 	else if ( tb == tbCartridge )
 	{
 		if (mCartridgeTypes[cbCartridge->currentIndex()].pathFlag) {
-                  requestFolder( QtYabause::translate( "Choose a cartridge folder" ), leCartridge );
+                  requestSTVFolder( QtYabause::translate( "Choose a cartridge folder" ), leCartridge );
                 } else {
 		  if (mCartridgeTypes[cbCartridge->currentIndex()].saveFlag)
 			requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge );

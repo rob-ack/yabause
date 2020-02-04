@@ -388,6 +388,7 @@ int YabauseInit(yabauseinit_struct *init)
 
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
+  setM68kCounter(0);
 
 #ifdef SPRITE_CACHE
    yabsys.useVdp1cache = init->useVdp1cache;
@@ -915,7 +916,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60)));
+            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60))<< SCSP_FRACTIONAL_BITS);
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
@@ -1062,7 +1063,6 @@ void YabauseStartSlave(void) {
 
       SSH2->regs.SR.part.I = 0;
       SH2SetRegisters(SSH2, &SSH2->regs);
-SH2HandleInterrupts(SSH2);
    }
    else {
      SH2PowerOn(SSH2);

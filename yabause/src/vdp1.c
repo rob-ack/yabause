@@ -378,7 +378,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = -1;
       Vdp1External.plot_trigger_done = 0;
-      if ((val == 1)){
+      if (val == 1){
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1External.plot_trigger_line = yabsys.LineCount;
         needVdp1draw = 1;
@@ -1430,7 +1430,7 @@ void VIDDummyDeInit(void);
 void VIDDummyResize(int, int, unsigned int, unsigned int, int);
 int VIDDummyIsFullscreen(void);
 int VIDDummyVdp1Reset(void);
-void VIDDummyVdp1Draw(void);
+void VIDDummyVdp1Draw();
 void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -1516,7 +1516,7 @@ int VIDDummyVdp1Reset(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1Draw(void)
+void VIDDummyVdp1Draw()
 {
 }
 

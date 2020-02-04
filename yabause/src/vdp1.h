@@ -22,6 +22,7 @@
 #define VDP1_H
 
 #include "memory.h"
+#include "vdp2.h"
 //#define USE_VDP1_TEX
 
 #define VIDCORE_DEFAULT         -1
@@ -70,7 +71,7 @@ typedef struct
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
-   void (*Vdp1Draw)(void);
+   void (*Vdp1Draw)();
    void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
@@ -92,7 +93,7 @@ typedef struct
    void(*Sync)();
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
-   void (*composeFB)(void *regs);
+   void (*composeFB)(Vdp2 *regs);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;

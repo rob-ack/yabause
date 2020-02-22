@@ -348,7 +348,7 @@ void updateFBMode() {
     Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
     Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
-  // Vdp1External.manualerase |= Vdp1External.manualchange;
+  Vdp1External.manualerase |= Vdp1External.manualchange;
 }
 
 static void Vdp1TryDraw(void) {
@@ -813,6 +813,15 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    }
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+
+   if ((cmd.CMDCTRL & 0x000F) < 4) {
+     int w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
+     int h = cmd.CMDSIZE & 0xFF;
+     if ((w == 0 )|| (h == 0)) {
+       AddString(outstring, "CMD size is null, skipped\r\n");
+       return;
+     }
+   }
 
    if ((cmd.CMDYA & 0x400)) cmd.CMDYA |= 0xFC00; else cmd.CMDYA &= ~(0xFC00);
    if ((cmd.CMDYC & 0x400)) cmd.CMDYC |= 0xFC00; else cmd.CMDYC &= ~(0xFC00);

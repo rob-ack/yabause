@@ -110,7 +110,8 @@ const Items mResolutionMode = Items()
 
 const Items mAspectRatio = Items()
 	<< Item("0", "Original aspect ratio")
-	<< Item("1", "Stretch to window");
+	<< Item("1", "Stretch to window")
+	<< Item("2", "Integer scaling");
 
 const Items mScanLine = Items()
 	<< Item("0", "Scanline off")
@@ -119,6 +120,10 @@ const Items mScanLine = Items()
 const Items mMeshMode = Items()
 	<< Item("0", "Original")
 	<< Item("1", "Improved");
+
+const Items mWireframe = Items()
+	<< Item("0", "Off")
+	<< Item("1", "On");
 
 UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	: QDialog( p )
@@ -343,6 +348,11 @@ void UISettings::changeScanLine(int id)
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, (mScanLine.at(id).id).toInt());
 }
 
+void UISettings::changeWireframe(int id)
+{
+    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, (mWireframe.at(id).id).toInt());
+}
+
 void UISettings::changeMeshMode(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, (mMeshMode.at(id).id).toInt());
@@ -432,10 +442,10 @@ void UISettings::loadCores()
 
 		// Compute shader Mode
 		foreach(const Item& it, mCSMode){
-			cbComputeShader->addItem(QtYabause::translate(it.Name), it.id);
+			cbGPURBG->addItem(QtYabause::translate(it.Name), it.id);
 		}
 
-		connect(cbComputeShader, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCSMode(int)));
+		connect(cbGPURBG, SIGNAL(currentIndexChanged(int)), this, SLOT(changeCSMode(int)));
 
 	// Resolution
   foreach(const Item& it, mResolutionMode)
@@ -452,6 +462,11 @@ void UISettings::loadCores()
     cbScanlineFilter->addItem(QtYabause::translate(it.Name), it.id);
 
   connect(cbScanlineFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeScanLine(int)));
+
+	foreach(const Item& it, mWireframe)
+    cbWireframeFilter->addItem(QtYabause::translate(it.Name), it.id);
+
+  connect(cbWireframeFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeWireframe(int)));
 
 	foreach(const Item& it, mMeshMode)
 		cbMeshModeFilter->addItem(QtYabause::translate(it.Name), it.id);
@@ -584,10 +599,11 @@ void UISettings::loadSettings()
 	cbFilterMode->setCurrentIndex(cbFilterMode->findData(s->value("Video/filter_type", mVideoFilterMode.at(0).id).toInt()));
         cbUpscaleMode->setCurrentIndex(cbUpscaleMode->findData(s->value("Video/upscale_type", mUpscaleFilterMode.at(0).id).toInt()));
 	cbPolygonGeneration->setCurrentIndex(cbPolygonGeneration->findData(s->value("Video/polygon_generation_mode", mPolygonGenerationMode.at(0).id).toInt()));
-  cbComputeShader->setCurrentIndex(cbComputeShader->findData(s->value("Video/compute_shader_mode", mCSMode.at(0).id).toInt()));
+  cbGPURBG->setCurrentIndex(cbGPURBG->findData(s->value("Video/compute_shader_mode", mCSMode.at(0).id).toInt()));
 	cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
   cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
+	cbWireframeFilter->setCurrentIndex(cbWireframeFilter->findData(s->value("Video/Wireframe", mWireframe.at(0).id).toInt()));
 	cbMeshModeFilter->setCurrentIndex(cbMeshModeFilter->findData(s->value("Video/MeshMode", mMeshMode.at(0).id).toInt()));
 
 	// sound
@@ -661,13 +677,14 @@ void UISettings::saveSettings()
 	// Save new version of keys
         s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
         s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
+				s->setValue("Video/Wireframe", cbWireframeFilter->itemData(cbWireframeFilter->currentIndex()).toInt());
 				s->setValue("Video/MeshMode", cbMeshModeFilter->itemData(cbMeshModeFilter->currentIndex()).toInt());
 
 	s->setValue( "Video/Fullscreen", cbFullscreen->isChecked() );
 	s->setValue( "Video/filter_type", cbFilterMode->itemData(cbFilterMode->currentIndex()).toInt());
 	s->setValue( "Video/upscale_type", cbUpscaleMode->itemData(cbUpscaleMode->currentIndex()).toInt());
 	s->setValue( "Video/polygon_generation_mode", cbPolygonGeneration->itemData(cbPolygonGeneration->currentIndex()).toInt());
-	s->setValue( "Video/compute_shader_mode", cbComputeShader->itemData(cbComputeShader->currentIndex()).toInt());
+	s->setValue( "Video/compute_shader_mode", cbGPURBG->itemData(cbGPURBG->currentIndex()).toInt());
 	s->setValue("Video/resolution_mode", cbResolution->itemData(cbResolution->currentIndex()).toInt());
 
 	s->setValue( "General/ClockSync", cbClockSync->isChecked() );

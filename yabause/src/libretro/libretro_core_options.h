@@ -43,11 +43,12 @@ struct retro_core_option_definition option_defs_us[] = {
       "Video format",
       "Select a video format for output. Requires a restart.",
       {
+         { "auto", NULL },
          { "NTSC", NULL },
          { "PAL", NULL },
          { NULL, NULL},
       },
-      "NTSC"
+      "auto"
    },
    {
       "kronos_skipframe",
@@ -144,7 +145,7 @@ struct retro_core_option_definition option_defs_us[] = {
    {
       "kronos_multitap_port2",
       "6Player Adaptor on Port 2",
-      "Enable multitap in port 2",
+      "Enable multitap in port 2 (it is known for causing issues)",
       {
          { "disabled", NULL },
          { "enabled", NULL },
@@ -191,8 +192,19 @@ struct retro_core_option_definition option_defs_us[] = {
    },
    {
       "kronos_use_cs",
-      "Compute shaders",
-      "Use compute shaders, requires OpenGL 4.3+, OpenGL CS renderer doesn't need this (it always use compute shaders).",
+      "RBG Compute shaders",
+      "Use compute shaders for upscaling RBG, requires OpenGL 4.3+.",
+      {
+         { "disabled", NULL },
+         { "enabled", NULL },
+         { NULL, NULL},
+      },
+      "disabled"
+   },
+   {
+      "kronos_wireframe_mode",
+      "Wireframe mode",
+      "Wireframe mode, requires OpenGL CS renderer.",
       {
          { "disabled", NULL },
          { "enabled", NULL },
@@ -204,42 +216,6 @@ struct retro_core_option_definition option_defs_us[] = {
       "kronos_service_enabled",
       "ST-V Service/Test Buttons",
       "Enable Service/Test for ST-V, to enter cabinet settings.",
-      {
-         { "disabled", NULL },
-         { "enabled", NULL },
-         { NULL, NULL},
-      },
-      "disabled"
-   },
-   {
-      "kronos_filter_mode",
-      "Filter Mode",
-      "It is recommended to use libretro shaders instead.",
-      {
-         { "none", NULL },
-         { "bilinear", NULL },
-         { "bicubic", NULL },
-         { NULL, NULL},
-      },
-      "none"
-   },
-   {
-      "kronos_upscale_mode",
-      "Upscale Mode",
-      "It is recommended to use libretro shaders instead.",
-      {
-         { "none", NULL },
-         { "hq4x", NULL },
-         { "4xbrz", NULL },
-         { "2xbrz", NULL },
-         { NULL, NULL},
-      },
-      "none"
-   },
-   {
-      "kronos_scanlines",
-      "Scanlines",
-      "It is recommended to use libretro shaders instead.",
       {
          { "disabled", NULL },
          { "enabled", NULL },

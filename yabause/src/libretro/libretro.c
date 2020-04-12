@@ -54,15 +54,12 @@ static int game_width  = 320;
 static int game_height = 240;
 static int game_interlace;
 
-static int current_width;
-static int current_height;
+static int window_width;
+static int window_height;
 
 static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
-static int filter_mode = AA_NONE;
-static int upscale_mode = UP_NONE;
 static int mesh_mode = ORIGINAL_MESH;
-static int scanlines = 0;
 #if !defined(_OGLES3_)
 static int opengl_version = 330;
 #endif
@@ -70,7 +67,7 @@ static int opengl_version = 330;
 static int g_vidcoretype = VIDCORE_OGL;
 static int g_sh2coretype = 8;
 static int g_skipframe = 0;
-static int g_videoformattype = VIDEOFORMATTYPE_NTSC;
+static int g_videoformattype = -1;
 static int resolution_mode = 1;
 static int polygon_mode = PERSPECTIVE_CORRECTION;
 static int initial_resolution_mode = 0;
@@ -78,14 +75,15 @@ static int numthreads = 4;
 static int use_beetle_saves = 0;
 static int auto_select_cart = 0;
 static int use_cs = COMPUTE_RBG_OFF;
+static int wireframe_mode = 0;
 static bool service_enabled = false;
 static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
 static bool one_frame_rendered = false;
-static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
-static int pad_type[12] = {1,1,1,1,1,1,1,1,1,1,1,1};
+static int16_t libretro_input_bitmask[12] = {-1,};
+static int pad_type[12] = {RETRO_DEVICE_NONE,};
 static int multitap[2] = {0,0};
 static unsigned players = 7;
 
@@ -734,32 +732,9 @@ void retro_set_resolution()
       log_cb(RETRO_LOG_INFO, "Restart the core for the new resolution\n", resolution_mode);
       resolution_mode = initial_resolution_mode;
    }
-   switch(resolution_mode)
-   {
-      case RES_ORIGINAL:
-         current_width = game_width;
-         current_height = game_height;
-         break;
-      case RES_480p:
-         current_width = 640;
-         current_height = 480;
-         break;
-      case RES_720p:
-         current_width = 1280;
-         current_height = 720;
-         break;
-      case RES_1080p:
-         current_width = 1920;
-         current_height = 1080;
-         break;
-      case RES_NATIVE:
-         current_width = 3840;
-         current_height = 2160;
-         break;
-   }
-   VIDCore->Resize(0, 0, current_width, current_height, 0);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, resolution_mode);
+   VIDCore->Resize(0, 0, window_width, window_height, 0);
 }
 
 void YuiSwapBuffers(void)
@@ -770,7 +745,7 @@ void YuiSwapBuffers(void)
    if ((prev_game_width != game_width) || (prev_game_height != game_height))
       retro_set_resolution();
    audio_size = soundlen;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, current_width, current_height, 0);
+   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
    one_frame_rendered = true;
 }
 
@@ -784,14 +759,15 @@ static void context_reset(void)
    {
       first_ctx_reset = 0;
       YabauseInit(&yinit);
-      YabauseSetVideoFormat(g_videoformattype);
+      if (g_videoformattype != -1)
+         YabauseSetVideoFormat(g_videoformattype);
       retro_set_resolution();
       OSDChangeCore(OSDCORE_DUMMY);
    }
    else
    {
-      VIDCore->Init();
-      retro_set_resolution();
+      VIDCore->DeInit();
+      // retro_set_resolution();
    }
 }
 
@@ -921,6 +897,8 @@ void check_variables(void)
          g_videoformattype = VIDEOFORMATTYPE_NTSC;
       else if (strcmp(var.value, "PAL") == 0)
          g_videoformattype = VIDEOFORMATTYPE_PAL;
+      else
+         g_videoformattype = -1;
    }
 
    var.key = "kronos_skipframe";
@@ -1031,32 +1009,6 @@ void check_variables(void)
          multitap[1] = 1;
    }
 
-   var.key = "kronos_filter_mode";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "none") == 0 && filter_mode != AA_NONE)
-         filter_mode = AA_NONE;
-      else if (strcmp(var.value, "bilinear") == 0 && filter_mode != AA_BILINEAR_FILTER)
-         filter_mode = AA_BILINEAR_FILTER;
-      else if (strcmp(var.value, "bicubic") == 0 && filter_mode != AA_BICUBIC_FILTER)
-         filter_mode = AA_BICUBIC_FILTER;
-   }
-
-   var.key = "kronos_upscale_mode";
-   var.value = NULL;
-   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
-   {
-      if (strcmp(var.value, "none") == 0 && upscale_mode != UP_NONE)
-         upscale_mode = UP_NONE;
-      else if (strcmp(var.value, "hq4x") == 0 && upscale_mode != UP_HQ4X)
-         upscale_mode = UP_HQ4X;
-      else if (strcmp(var.value, "4xbrz") == 0 && upscale_mode != UP_4XBRZ)
-         upscale_mode = UP_4XBRZ;
-      else if (strcmp(var.value, "2xbrz") == 0 && upscale_mode != UP_2XBRZ)
-         upscale_mode = UP_2XBRZ;
-   }
-
    var.key = "kronos_resolution_mode";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1105,14 +1057,14 @@ void check_variables(void)
          use_cs = COMPUTE_RBG_ON;
    }
 
-   var.key = "kronos_scanlines";
+   var.key = "kronos_wireframe_mode";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "disabled") == 0 && scanlines != 0)
-         scanlines = 0;
-      else if (strcmp(var.value, "enabled") == 0 && scanlines != 1)
-         scanlines = 1;
+      if (strcmp(var.value, "disabled") == 0)
+         wireframe_mode = 0;
+      else if (strcmp(var.value, "enabled") == 0)
+         wireframe_mode = 1;
    }
 
    var.key = "kronos_service_enabled";
@@ -1186,8 +1138,6 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
-   int max_width, max_height;
-
    if(initial_resolution_mode == 0)
    {
       // Get the initial resolution mode at start
@@ -1197,35 +1147,31 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       switch(resolution_mode)
       {
          case RES_ORIGINAL:
-            max_width = 704;
-            max_height = 512;
-            break;
          case RES_480p:
-            max_width = 640;
-            max_height = 480;
+            window_width = 704;
+            window_height = 512;
             break;
          case RES_720p:
-            max_width = 1280;
-            max_height = 720;
+            window_width = 1280;
+            window_height = 720;
             break;
          case RES_1080p:
-            max_width = 1920;
-            max_height = 1080;
+            window_width = 1920;
+            window_height = 1080;
             break;
          case RES_NATIVE:
-            max_width = 3840;
-            max_height = 2160;
+            window_width = 3840;
+            window_height = 2160;
             break;
       }
    }
 
-   info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC) ? 60.0f : 50.0f;
+   info->timing.fps            = (retro_get_region() == RETRO_REGION_NTSC ? 60.0f : 50.0f);
    info->timing.sample_rate    = SAMPLERATE;
-   info->geometry.base_width   = game_width;
-   info->geometry.base_height  = game_height;
-   // No need to go above 8x what is needed by Hi-Res games, we disallow 16x for Hi-Res games
-   info->geometry.max_width    = max_width;
-   info->geometry.max_height   = max_height;
+   info->geometry.base_width   = (_Ygl != NULL ? _Ygl->width : game_width);
+   info->geometry.base_height  = (_Ygl != NULL ? _Ygl->height : game_height);
+   info->geometry.max_width    = window_width;
+   info->geometry.max_height   = window_height;
    info->geometry.aspect_ratio = (retro_get_region() == RETRO_REGION_NTSC) ? 4.0 / 3.0 : 5.0 / 4.0;
    if(yabsys.isRotated == 1)
    {
@@ -1284,7 +1230,7 @@ bool retro_unserialize(const void *data, size_t size)
    if (!rendering_started)
       return true;
    int error = YabLoadStateBuffer(data, size);
-   VIDCore->Resize(0, 0, current_width, current_height, 0);
+   VIDCore->Resize(0, 0, window_width, window_height, 0);
 
    return !error;
 }
@@ -1420,15 +1366,13 @@ bool retro_load_game_common()
 #endif
    yinit.usecache                = 0;
    yinit.skip_load               = 0;
-   yinit.video_filter_type       = filter_mode;
-   yinit.video_upscale_type      = upscale_mode;
    yinit.polygon_generation_mode = polygon_mode;
-   yinit.scanline                = scanlines;
-   yinit.stretch                 = 1;
+   yinit.stretch                 = 2; //Always ask Kronos core to return a integer scaling
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
    yinit.use_cs                  = use_cs;
+   yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
 
    return true;
@@ -1600,23 +1544,23 @@ void retro_run(void)
          retro_set_resolution();
       if(PERCore && (prev_multitap[0] != multitap[0] || prev_multitap[1] != multitap[1]))
          PERCore->Init();
-      VIDCore->SetSettingValue(VDP_SETTING_FILTERMODE, filter_mode);
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_UPSCALMODE, upscale_mode);
-      VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, scanlines);
       VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
-      YabauseSetVideoFormat(g_videoformattype);
+      VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, wireframe_mode);
+      // changing video format on the fly is causing issues
+      //if (g_videoformattype != -1)
+      //   YabauseSetVideoFormat(g_videoformattype);
       YabauseSetSkipframe(g_skipframe);
    }
-
+   VIDCore->Init();
    // It appears polling can happen outside of HandleEvents
    update_inputs();
    YabauseExec();
 
    // If no frame rendered, dupe
    if(!one_frame_rendered)
-      video_cb(NULL, current_width, current_height, 0);
+      video_cb(NULL, _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID

@@ -67,7 +67,7 @@ static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
 int fount = 0;
-FILE *ppfp = NULL;
+FILE *ppfp = NULL;YglGenFrameBuffer
 #endif
 
 #define YGL_THREAD_DEBUG
@@ -98,6 +98,8 @@ extern int VIDOGLIsFullscreen(void);
 extern int VIDOGLVdp1Reset(void);
 extern void VIDOGLVdp1Draw();
 
+extern vdp2rotationparameter_struct  Vdp1ParaA;
+
 void VIDCSVdp1Draw();
 void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -107,7 +109,9 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs);
 void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void YglCSRender(Vdp2 *varVdp2Regs);
+extern void YglCSRender(Vdp2 *varVdp2Regs);
+extern void YglCSRenderVDP1(void);
+extern void YglCSFinsihDraw(void);
 
 extern void VIDOGLVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
 extern int VIDOGLVdp2Reset(void);
@@ -121,6 +125,7 @@ extern void VIDOGLSetSettingValueMode(int type, int value);
 extern void VIDOGLSync();
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void VIDOGLVdp2DispOff(void);
+extern int YglGenFrameBuffer(int force);
 
 extern u32 FASTCALL Vdp1ReadPolygonColor(vdp1cmd_struct *cmd, Vdp2* varVdp2Regs);
 
@@ -153,15 +158,59 @@ VIDOGLSetSettingValueMode,
 VIDOGLSync,
 VIDOGLGetNativeResolution,
 VIDOGLVdp2DispOff,
-YglCSRender
+YglCSRender,
+YglCSRenderVDP1,
+YglGenFrameBuffer,
+YglCSFinsihDraw
 };
+
+void addCSCommands(vdp1cmd_struct* cmd, int type)
+{
+  //Test game: Sega rally : The aileron at the start
+  int Ax = (cmd->CMDXD - cmd->CMDXA);
+  int Ay = (cmd->CMDYD - cmd->CMDYA);
+  int Bx = (cmd->CMDXC - cmd->CMDXB);
+  int By = (cmd->CMDYC - cmd->CMDYB);
+  int nbStep = 0;
+  unsigned int lA;
+  unsigned int lB;
+
+  lA = ceil(sqrt(Ax*Ax+Ay*Ay));
+  lB = ceil(sqrt(Bx*Bx+By*By));
+
+  cmd->uAstepx = 0.0;
+  cmd->uAstepy = 0.0;
+  cmd->uBstepx = 0.0;
+  cmd->uBstepy = 0.0;
+  cmd->nbStep = 1;
+  cmd->type = type;
+
+  nbStep = lA;
+  if (lB >= lA)
+    nbStep = lB;
+
+  if(nbStep != 0) {
+    cmd->nbStep = nbStep + 1;
+    cmd->uAstepx = (float)Ax/(float)nbStep;
+    cmd->uAstepy = (float)Ay/(float)nbStep;
+    cmd->uBstepx = (float)Bx/(float)nbStep;
+    cmd->uBstepy = (float)By/(float)nbStep;
+  }
+#ifdef DEBUG_VDP1_CMD
+  printf("%d %f [%d %d][%d %d][%d %d][%d %d]\n", cmd->nbStep, (float)cmd->h / (float)cmd->nbStep,
+    cmd->CMDXA, cmd->CMDYA,
+    cmd->CMDXB, cmd->CMDYB,
+    cmd->CMDXC, cmd->CMDYC,
+    cmd->CMDXD, cmd->CMDYD
+  );
+#endif
+  vdp1_add(cmd,0);
+}
 
 //////////////////////////////////////////////////////////////////////////////
 void VIDCSVdp1Draw()
 {
   VIDOGLVdp1Draw();
-  vdp1_setup();
-
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -174,7 +223,7 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   YglTexture texture;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
   if ((cmd.CMDSIZE & 0x8000)) {
     regs->EDSR |= 2;
     return; // BAD Command
@@ -182,17 +231,14 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
 
-  cmd.CMDXA += Vdp1Regs->localX;
-  cmd.CMDYA += Vdp1Regs->localY;
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
 
   if (cmd.w == 0 || cmd.h == 0) {
     return; //bad command
@@ -215,7 +261,7 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   if ((cmd.CMDPMOD & 4))
   {
     for (int i = 0; i < 4; i++){
-      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
       cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
       cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
       cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
@@ -223,7 +269,7 @@ void VIDCSVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = NORMAL;
+  cmd.type = QUAD;
 
   vdp1_add(&cmd,0);
 
@@ -240,16 +286,13 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   s16 x, y;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
     return; // BAD Command
   }
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -320,14 +363,14 @@ void VIDCSVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   default: break;
   }
 
-  cmd.CMDXA = x + Vdp1Regs->localX;
-  cmd.CMDYA = y + Vdp1Regs->localY;
-  cmd.CMDXB = x + rw  + Vdp1Regs->localX;
-  cmd.CMDYB = y + Vdp1Regs->localY;
-  cmd.CMDXC = x + rw  + Vdp1Regs->localX;
-  cmd.CMDYC = y + rh + Vdp1Regs->localY;
-  cmd.CMDXD = x + Vdp1Regs->localX;
-  cmd.CMDYD = y + rh + Vdp1Regs->localY;
+  cmd.CMDXA = x + regs->localX;
+  cmd.CMDYA = y + regs->localY;
+  cmd.CMDXB = x + rw  + regs->localX;
+  cmd.CMDYB = y + regs->localY;
+  cmd.CMDXC = x + rw  + regs->localX;
+  cmd.CMDYC = y + rh + regs->localY;
+  cmd.CMDXD = x + regs->localX;
+  cmd.CMDYD = y + rh + regs->localY;
 
   if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
@@ -340,7 +383,7 @@ memset(cmd.G, 0, sizeof(float)*16);
 if ((cmd.CMDPMOD & 4))
 {
   for (int i = 0; i < 4; i++){
-    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
     cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
@@ -348,36 +391,23 @@ if ((cmd.CMDPMOD & 4))
 }
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = SCALED;
+  cmd.type = QUAD;
   vdp1_add(&cmd,0);
 
   LOG_CMD("%d\n", __LINE__);
 }
-
 int getBestMode(vdp1cmd_struct* cmd) {
   int ret = DISTORTED;
   if (
-    ((cmd->CMDXB - cmd->CMDXA) == (cmd->w-1)) &&
-    ((cmd->CMDXC - cmd->CMDXD) == (cmd->w-1)) &&
-    ((cmd->CMDYC - cmd->CMDYA) == (cmd->h-1)) &&
-    ((cmd->CMDYD - cmd->CMDYB) == (cmd->h-1)) &&
-    (cmd->CMDXA == cmd->CMDXD) &&
-    (cmd->CMDYA == cmd->CMDYB)
+    ((cmd->CMDXA - cmd->CMDXD) == 0) &&
+    ((cmd->CMDYA - cmd->CMDYB) == 0) &&
+    ((cmd->CMDXB - cmd->CMDXC) == 0) &&
+    ((cmd->CMDYC - cmd->CMDYD) == 0)
   ) {
-    ret = NORMAL;
-  } else {
-    if (
-      (abs(cmd->CMDYB - cmd->CMDYA) <= 1) &&
-      (abs(cmd->CMDYC - cmd->CMDYD) <= 1) &&
-      (abs(cmd->CMDXC - cmd->CMDXB) <= 1) &&
-      (abs(cmd->CMDXD - cmd->CMDXA) <= 1)
-    ) {
-      ret = SCALED;
-    }
+    ret = QUAD;
   }
   return ret;
 }
-
 void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG_CMD("%d\n", __LINE__);
@@ -386,16 +416,13 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   YglTexture texture;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
   if (cmd.CMDSIZE == 0) {
     return; // BAD Command
   }
 
   cmd.w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
   cmd.h = cmd.CMDSIZE & 0xFF;
-  cmd.cor = 0;
-  cmd.cog = 0;
-  cmd.cob = 0;
 
   cmd.flip = (cmd.CMDCTRL & 0x30) >> 4;
 
@@ -408,36 +435,41 @@ void VIDCSVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA += Vdp1Regs->localX;
-  cmd.CMDYA += Vdp1Regs->localY;
-  cmd.CMDXB += Vdp1Regs->localX;
-  cmd.CMDYB += Vdp1Regs->localY;
-  cmd.CMDXC += Vdp1Regs->localX;
-  cmd.CMDYC += Vdp1Regs->localY;
-  cmd.CMDXD += Vdp1Regs->localX;
-  cmd.CMDYD += Vdp1Regs->localY;
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
+  cmd.CMDXB += regs->localX;
+  cmd.CMDYB += regs->localY;
+  cmd.CMDXC += regs->localX;
+  cmd.CMDYC += regs->localY;
+  cmd.CMDXD += regs->localX;
+  cmd.CMDYD += regs->localY;
 
   if (((cmd.CMDPMOD >> 3) & 0x7u) == 5) {
     // hard/vdp2/hon/p09_20.htm#no9_21
     u32 *cclist = (u32 *)&varVdp2Regs->CCRSA;
     cclist[0] &= 0x1Fu;
   }
-
-//gouraud
-memset(cmd.G, 0, sizeof(float)*16);
-if ((cmd.CMDPMOD & 4))
-{
-  for (int i = 0; i < 4; i++){
-    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
-    cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
-    cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+  //gouraud
+  memset(cmd.G, 0, sizeof(float)*16);
+  if ((cmd.CMDPMOD & 4))
+  {
+    for (int i = 0; i < 4; i++){
+      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
+      cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
+      cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
+    }
   }
-}
   cmd.priority = 0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = getBestMode(&cmd);
-  vdp1_add(&cmd,0);
+
+  if (getBestMode(&cmd) == DISTORTED) {
+    addCSCommands(&cmd,DISTORTED);
+  } else {
+    cmd.type = QUAD;
+    vdp1_add(&cmd,0);
+  }
+
   return;
 }
 
@@ -446,7 +478,7 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vdp1cmd_struct cmd;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
@@ -457,21 +489,21 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA += Vdp1Regs->localX;
-  cmd.CMDYA += Vdp1Regs->localY;
-  cmd.CMDXB += Vdp1Regs->localX;
-  cmd.CMDYB += Vdp1Regs->localY;
-  cmd.CMDXC += Vdp1Regs->localX;
-  cmd.CMDYC += Vdp1Regs->localY;
-  cmd.CMDXD += Vdp1Regs->localX;
-  cmd.CMDYD += Vdp1Regs->localY;
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
+  cmd.CMDXB += regs->localX;
+  cmd.CMDYB += regs->localY;
+  cmd.CMDXC += regs->localX;
+  cmd.CMDYC += regs->localY;
+  cmd.CMDXD += regs->localX;
+  cmd.CMDYD += regs->localY;
 
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
   {
     for (int i = 0; i < 4; i++){
-      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+      u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
       cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
       cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
       cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
@@ -481,14 +513,16 @@ void VIDCSVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
-  cmd.type = POLYGON;
+  // cmd.type = POLYGON;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
-
-  vdp1_add(&cmd,0);
+  if (getBestMode(&cmd) == DISTORTED) {
+    addCSCommands(&cmd,POLYGON);
+  } else {
+    cmd.type = QUAD_POLY;
+    vdp1_add(&cmd,0);
+  }
+  return;
 }
 
 void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
@@ -498,7 +532,7 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vdp1cmd_struct cmd;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
@@ -509,21 +543,21 @@ void VIDCSVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA += Vdp1Regs->localX;
-  cmd.CMDYA += Vdp1Regs->localY;
-  cmd.CMDXB += Vdp1Regs->localX;
-  cmd.CMDYB += Vdp1Regs->localY;
-  cmd.CMDXC += Vdp1Regs->localX;
-  cmd.CMDYC += Vdp1Regs->localY;
-  cmd.CMDXD += Vdp1Regs->localX;
-  cmd.CMDYD += Vdp1Regs->localY;
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
+  cmd.CMDXB += regs->localX;
+  cmd.CMDYB += regs->localY;
+  cmd.CMDXC += regs->localX;
+  cmd.CMDYC += regs->localY;
+  cmd.CMDXD += regs->localX;
+  cmd.CMDYD += regs->localY;
 
 //gouraud
 memset(cmd.G, 0, sizeof(float)*16);
 if ((cmd.CMDPMOD & 4))
 {
   for (int i = 0; i < 4; i++){
-    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
     cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
@@ -533,9 +567,6 @@ if ((cmd.CMDPMOD & 4))
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = POLYLINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
@@ -552,7 +583,7 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   vdp1cmd_struct cmd;
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
 
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
 
   CONVERTCMD(cmd.CMDXA);
   CONVERTCMD(cmd.CMDYA);
@@ -563,21 +594,21 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   CONVERTCMD(cmd.CMDXD);
   CONVERTCMD(cmd.CMDYD);
 
-  cmd.CMDXA += Vdp1Regs->localX;
-  cmd.CMDYA += Vdp1Regs->localY;
-  cmd.CMDXB += Vdp1Regs->localX;
-  cmd.CMDYB += Vdp1Regs->localY;
-  cmd.CMDXC += Vdp1Regs->localX;
-  cmd.CMDYC += Vdp1Regs->localY;
-  cmd.CMDXD += Vdp1Regs->localX;
-  cmd.CMDYD += Vdp1Regs->localY;
+  cmd.CMDXA += regs->localX;
+  cmd.CMDYA += regs->localY;
+  cmd.CMDXB += regs->localX;
+  cmd.CMDYB += regs->localY;
+  cmd.CMDXC += regs->localX;
+  cmd.CMDYC += regs->localY;
+  cmd.CMDXD += regs->localX;
+  cmd.CMDYD += regs->localY;
 
   //gouraud
   memset(cmd.G, 0, sizeof(float)*16);
   if ((cmd.CMDPMOD & 4))
   {
   for (int i = 0; i < 4; i++){
-    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, Vdp1Regs->addr + 0x1C) << 3) + (i << 1));
+    u16 color2 = Vdp1RamReadWord(NULL, Vdp1Ram, (Vdp1RamReadWord(NULL, Vdp1Ram, regs->addr + 0x1C) << 3) + (i << 1));
     cmd.G[(i << 2) + 0] = (float)((color2 & 0x001F)) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 1] = (float)((color2 & 0x03E0) >> 5) / (float)(0x1F) - 0.5f;
     cmd.G[(i << 2) + 2] = (float)((color2 & 0x7C00) >> 10) / (float)(0x1F) - 0.5f;
@@ -587,9 +618,6 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   cmd.w = 1;
   cmd.h = 1;
   cmd.flip = 0;
-  cmd.cor = 0x0;
-  cmd.cog = 0x0;
-  cmd.cob = 0x0;
   cmd.SPCTL = varVdp2Regs->SPCTL;
   cmd.type = LINE;
   cmd.COLOR[0] = Vdp1ReadPolygonColor(&cmd,varVdp2Regs);
@@ -602,20 +630,20 @@ void VIDCSVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
+  Vdp1ReadCommand(&cmd, regs->addr, ram);
   if (
-    (Vdp1Regs->userclipX1 == cmd.CMDXA) &&
-    (Vdp1Regs->userclipY1 == cmd.CMDYA) &&
-    (Vdp1Regs->userclipX2 == cmd.CMDXC) &&
-    (Vdp1Regs->userclipY2 == cmd.CMDYC)
+    (regs->userclipX1 == cmd.CMDXA) &&
+    (regs->userclipY1 == cmd.CMDYA) &&
+    (regs->userclipX2 == cmd.CMDXC) &&
+    (regs->userclipY2 == cmd.CMDYC)
   ) return;
 
   cmd.type = USER_CLIPPING;
   vdp1_add(&cmd,1);
-  Vdp1Regs->userclipX1 = cmd.CMDXA;
-  Vdp1Regs->userclipY1 = cmd.CMDYA;
-  Vdp1Regs->userclipX2 = cmd.CMDXC+1;
-  Vdp1Regs->userclipY2 = cmd.CMDYC+1;
+  regs->userclipX1 = cmd.CMDXA;
+  regs->userclipY1 = cmd.CMDYA;
+  regs->userclipX2 = cmd.CMDXC+1;
+  regs->userclipY2 = cmd.CMDYC+1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -623,12 +651,14 @@ void VIDCSVdp1UserClipping(u8 * ram, Vdp1 * regs)
 void VIDCSVdp1SystemClipping(u8 * ram, Vdp1 * regs)
 {
   vdp1cmd_struct cmd;
-  Vdp1ReadCommand(&cmd, Vdp1Regs->addr, Vdp1Ram);
-  if (((cmd.CMDXC+1) == Vdp1Regs->systemclipX2) && (Vdp1Regs->systemclipY2 == (cmd.CMDYC+1))) return;
+  Vdp1ReadCommand(&cmd, regs->addr, ram);
+
+
+  if (((cmd.CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd.CMDYC+1))) return;
   cmd.type = SYSTEM_CLIPPING;
   vdp1_add(&cmd,1);
-  Vdp1Regs->systemclipX2 = cmd.CMDXC+1;
-  Vdp1Regs->systemclipY2 = cmd.CMDYC+1;
+  regs->systemclipX2 = cmd.CMDXC+1;
+  regs->systemclipY2 = cmd.CMDYC+1;
 }
 
 #endif

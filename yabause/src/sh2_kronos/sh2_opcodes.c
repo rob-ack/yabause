@@ -33,6 +33,8 @@
 #include "sh2int_kronos.h"
 #include "opcode_functions_define.h"
 
+extern void SH2HandleInterrupts(SH2_struct *context);
+
 //////////////////////////////////////////////////////////////////////////////
 
 static void SH2delay(SH2_struct * sh, u32 addr)
@@ -64,7 +66,7 @@ void SH2undecoded(SH2_struct * sh)
          return;
    }
 
-   YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);      
+   YabSetError(YAB_ERR_SH2INVALIDOPCODE, sh);
 
    // Save regs.SR on stack
    sh->regs.R[15]-=4;
@@ -80,6 +82,7 @@ void SH2undecoded(SH2_struct * sh)
 
    // Jump to Exception service routine
    sh->regs.PC = SH2MappedMemoryReadLong(sh, sh->regs.VBR+(vectnum<<2));
+   sh->isInIt = 0;
    sh->cycles++;
 }
 
@@ -795,6 +798,7 @@ static void SH2ldcsr(SH2_struct * sh, u32 m)
    sh->regs.PC += 2;
    sh->cycles++;
    SH2next(sh);
+   SH2HandleInterrupts(sh);
 }
 
 
@@ -1638,6 +1642,7 @@ static void SH2rte(SH2_struct * sh)
    sh->regs.R[15] += 4;
    sh->cycles += 4;
    SH2delay(sh, temp + 2);
+   sh->isInIt = 0;
 }
 
 

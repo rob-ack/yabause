@@ -230,14 +230,13 @@ typedef struct {
 	int flip;
 	int priority;
 	int dst;
-    int uclipmode;
-    int blendmode;
-    s32 cor;
-    s32 cog;
-    s32 cob;
-    int linescreen;
-    int idScreen;
-    int idReg;
+  int uclipmode;
+  int blendmode;
+  s32 cor;
+  s32 cog;
+  s32 cob;
+  int linescreen;
+  int idScreen;
 } YglSprite;
 
 typedef struct {
@@ -266,8 +265,8 @@ typedef struct {
 	unsigned int width;
 	unsigned int height;
         YabMutex *mtx;
-	YglCacheHash *HashTable[HASHSIZE];
-	YglCacheHash CashLink[HASHSIZE * 2];
+	YglCacheHash *HashTable[HASHSIZE+1];
+	YglCacheHash CashLink[HASHSIZE * 2+1];
 	u32 CashLink_index;
 	GLuint textureID;
 	GLuint pixelBufferID;
@@ -277,7 +276,7 @@ extern YglTextureManager * YglTM_vdp1[2];
 extern YglTextureManager * YglTM_vdp2;
 
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
-void YglTMDeInit(YglTextureManager * tm );
+void YglTMDeInit(YglTextureManager ** tm );
 void YglTMReset( YglTextureManager * tm );
 void YglTMReserve(YglTextureManager * tm, unsigned int w, unsigned int h);
 void YglTMAllocate(YglTextureManager * tm, YglTexture *, unsigned int, unsigned int, unsigned int *, unsigned int *);
@@ -334,6 +333,7 @@ typedef struct {
     GLint  texsize;
     GLuint mtxModelView;
     GLuint sysclip;
+    GLuint expand;
     GLuint tex0;
     GLint vaid;
     GLint vertexp;
@@ -381,14 +381,12 @@ typedef struct {
    GLuint color_offset;
    GLuint tex0;
    GLuint tex1;
-   float color_offset_val[4];
    int var1, var2, var3, var4, var5;
    int (*setupUniform)(void *, YglTextureManager *tm, Vdp2* regs, int id);
    int (*cleanupUniform)(void *, YglTextureManager *tm);
    YglVdp1CommonParam * ids;
    GLfloat* matrix;
    int mosaic[2];
-   u32 lineTexture;
    int id;
    int colornumber;
    float emu_height;
@@ -472,7 +470,8 @@ typedef enum {
     VDP_SETTING_ASPECT_RATIO,
     VDP_SETTING_SCANLINE,
     VDP_SETTING_MESH_MODE,
-    VDP_SETTING_COMPUTE_SHADER
+    VDP_SETTING_COMPUTE_SHADER,
+    VDP_SETTING_WIREFRAME
 } enSettings;
 
 
@@ -524,13 +523,6 @@ typedef enum {
 } SpriteMode;
 
 typedef struct {
-	u32 lincolor_tex;
-	u32 linecolor_pbo;
-	u32 * lincolor_buf;
-  u32 depth;
-} YglPerLineInfo;
-
-typedef struct {
    //GLuint texture;
    //GLuint pixelBufferID;
    int st;
@@ -538,22 +530,14 @@ typedef struct {
    int originy;
    unsigned int width;
    unsigned int height;
-   unsigned int depth;
 
    float clear[4];
-
-   // VDP1 Info
-   int vdp1_maxpri;
-   int vdp1_minpri;
-   u32 vdp1_lineTexture;
 
    // VDP1 Framebuffer
    int rwidth;
    int rheight;
    int vdp1width;
    int vdp1height;
-   float vdp1expandW;
-   float vdp1expandH;
    float widthRatio;
    float heightRatio;
    int density;
@@ -561,10 +545,8 @@ typedef struct {
    int readframe;
    int vdp1On[2];
    GLuint rboid_depth;
-   GLuint rboid_depth_win;
    GLuint vdp1fbo;
-   GLuint vdp1fbowin;
-   GLuint vdp1FrameBuff[3];
+   GLuint vdp1FrameBuff[2];
    GLuint smallfbo;
    GLuint smallfbotex;
    GLuint vdp1pixelBufferID;
@@ -629,10 +611,17 @@ typedef struct {
    // Thread
    YabMutex * mutex;
 
-   u32 lincolor_tex;
-   u32 linecolor_pbo;
-   u32 * lincolor_buf;
-   int perLine[enBGMAX];
+   u32 linecolorscreen_tex;
+   u32 linecolorscreen_pbo;
+   u32* linecolorscreen_buf;
+
+   u32 linecolorcoef_tex[2];
+   u32 linecolorcoef_pbo[2];
+   u32* linecolorcoef_buf[2];
+
+   u32 coloroffset_tex;
+   u32 coloroffset_pbo;
+   u32* coloroffset_buf;
 
    u32 vdp2reg_tex;
    u32 vdp2reg_pbo;
@@ -648,13 +637,13 @@ typedef struct {
    POLYGONMODE polygonmode;
    MESHMODE meshmode;
    int scanline;
+   int wireframe_mode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;
    COMPUTESHADERMODE use_cs;
    GLsync sync;
    GLsync syncVdp1[2];
    GLuint default_fbo;
-   YglPerLineInfo bg[enBGMAX];
    int vpd1_running;
    int needVdp1Render;
    GLint m_viewport[4];
@@ -690,6 +679,7 @@ typedef struct {
 
    int rbg_use_compute_shader;
    int vdp2_use_compute_shader;
+   int useLineColorOffset[2];
 
    float vdp1wratio;
    float vdp1hratio;
@@ -715,8 +705,6 @@ typedef struct {
   int pagesize;
   int patternshift;
   u32 LineColorRamAdress;
-  vdp2draw_struct line_info;
-  YglTexture line_texture;
   YglCache c;
   YglCache cline;
   int vres;
@@ -759,14 +747,14 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);
 
-u32 * YglGetPerlineBuf(YglPerLineInfo * perline, int linecount,int depth );
-void YglSetPerlineBuf(YglPerLineInfo * perline, u32 * pbuf, int linecount, int depth);
+u32 * YglGetPerlineBuf(void);
+void YglSetPerlineBuf(u32 * pbuf);
 
 // 0.. no belnd, 1.. Alpha, 2.. Add
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op,  Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
@@ -797,8 +785,11 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
 int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh);
 
 void YglRenderVDP1(void);
-u32 * YglGetLineColorPointer();
-void YglSetLineColor(u32 * pbuf, int size);
+u32 * YglGetLineColorScreenPointer();
+void YglSetLineColorScreen(u32 * pbuf, int size);
+
+u32 * YglGetLineColorOffsetPointer(int id, int start, int size);
+void YglSetLineColorOffset(u32 * pbuf, int start, int size, int id);
 
 u32* YglGetBackColorPointer();
 void YglSetBackColor(int size);
@@ -811,26 +802,24 @@ int YglProgramInit();
 int YglProgramChange( YglLevel * level, int prgid );
 int Ygl_cleanupNormal(void * p, YglTextureManager *tm);
 
-int YglGenerateOriginalBuffer();
-int YglGenerateComputeBuffer();
-
 int YglSetupWindow(YglProgram * prg);
 int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs);
 
-void YglEraseWriteVDP1();
+void YglEraseWriteVDP1(int id);
 void YglFrameChangeVDP1();
 
-void YglEraseWriteCSVDP1();
+void YglEraseWriteCSVDP1(int id);
 void YglFrameChangeCSVDP1();
 
 extern void RBGGenerator_init(int width, int height);
 extern void RBGGenerator_resize(int width, int height);
 extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
+extern GLuint RBGGenerator_getLnclTexture( int id );
 extern void RBGGenerator_onFinish();
 
 extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, YglPerLineInfo *bg, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
+extern void VDP2Generator_update(int tex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
 extern void VDP2Generator_resize(int width, int height);
 
 

@@ -115,7 +115,6 @@ typedef struct
    s32 cob;
    int linescreen;
    int idScreen;
-   int idReg;
 
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
@@ -162,7 +161,6 @@ typedef struct
    int mosaicymask;
    int islinescroll;
    u32 linescrolltbl;
-   u32 lineTexture;
    u32 lineinc;
    vdp2Lineinfo * lineinfo;
    int wctl;
@@ -179,7 +177,6 @@ typedef struct
    vdp2rotationparameter_struct * FASTCALL (*GetKValueA)(vdp2rotationparameter_struct*,int);
    vdp2rotationparameter_struct * FASTCALL (*GetKValueB)(vdp2rotationparameter_struct*,int);
    Vdp2GetRParam_func GetRParam;
-   u32 LineColorBase;
 
    void (*LoadLineParams)(void *, void *, int line, Vdp2* lines);
 

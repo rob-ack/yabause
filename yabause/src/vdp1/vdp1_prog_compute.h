@@ -6,12 +6,17 @@
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
+
+// To do: In order to know if a pixel has to be considered for a command,
+// each command has o be expressed a set of lines (dx,dy) on AD segment, (dx2,dy2) on BC Segment
+// if a pixel is on a line, it has to be considered as part of command => it shall simulate the per line rasterizer of the real VDP1
+
 #define POLYGON 0
-#define DISTORTED 1
-#define NORMAL 2
-#define SCALED 3
-#define POLYLINE 4
-#define LINE 5
+#define QUAD_POLY 1
+#define POLYLINE 2
+#define LINE 3
+#define DISTORTED 4
+#define QUAD 5
 #define SYSTEM_CLIPPING 6
 #define USER_CLIPPING 7
 
@@ -39,7 +44,9 @@ SHADER_VERSION_COMPUTE
 "  ivec2 size = imageSize(outSurface);\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
+"  float x = float(texel.x) * upscale.x;\n"
+"  float y = float(size.y - 1 - texel.y) * upscale.y;\n"
+"  int idx = int(x) + int(y)*512;\n"
 "  float g = float((Vdp1FB[idx] >> 24) & 0xFFu)/255.0;\n"
 "  float r = float((Vdp1FB[idx] >> 16) & 0xFFu)/255.0;\n"
 "  imageStore(outSurface,texel,vec4(g, r, 0.0, 0.0));\n"
@@ -59,7 +66,9 @@ SHADER_VERSION_COMPUTE
 "  ivec2 size = imageSize(s_texture);\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  int idx = int(texel.x * upscale.x) + int((size.y - 1.0 - texel.y)*512 * upscale.y);\n"
+"  float x = float(texel.x) * upscale.x;\n"
+"  float y = float(size.y - 1 - texel.y) * upscale.y;\n"
+"  int idx = int(x) + int(y)*512;\n"
 "  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
 "  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16);\n"
 "  Vdp1FB[idx] = val;\n"
@@ -145,16 +154,7 @@ SHADER_VERSION_COMPUTE
 "  uint priority;\n"
 "  uint w;\n"
 "  uint h;\n"
-#ifdef USE_VDP1_TEX
-"  uint texX;\n"
-"  uint texY;\n"
-"  uint texW;\n"
-"  uint texH;\n"
-#endif
 "  uint flip;\n"
-"  uint cor;\n"
-"  uint cob;\n"
-"  uint cog;\n"
 "  uint type;\n"
 "  uint CMDCTRL;\n"
 "  uint CMDLINK;\n"
@@ -170,18 +170,20 @@ SHADER_VERSION_COMPUTE
 "  int CMDYC;\n"
 "  int CMDXD;\n"
 "  int CMDYD;\n"
-"  int P[8];\n"
 "  uint B[4];\n"
 "  int COLOR[4];\n"
 "  uint CMDGRDA;\n"
 "  uint SPCTL;\n"
+"  uint nbStep;\n"
+"  float uAstepx;\n"
+"  float uAstepy;\n"
+"  float uBstepx;\n"
+"  float uBstepy;\n"
+"  int pad[2];\n"
 "};\n"
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-#ifdef USE_VDP1_TEX
-"layout(location = 2) uniform sampler2D texSurface;\n"
-#endif
 "layout(std430, binding = 3) readonly buffer VDP1RAM { uint Vdp1Ram[]; };\n"
 "layout(std430, binding = 4) readonly buffer NB_CMD { uint nbCmd[]; };\n"
 "layout(std430, binding = 5) readonly buffer CMD { \n"
@@ -191,43 +193,8 @@ SHADER_VERSION_COMPUTE
 "layout(location = 7) uniform ivec2 sysClip;\n"
 "layout(location = 8) uniform ivec4 usrClip;\n"
 "layout(location = 9) uniform mat4 rot;\n"
-// from here http://geomalgorithms.com/a03-_inclusion.html
-// a Point is defined by its coordinates {int x, y;}
 //===================================================================
-// isLeft(): tests if a point is Left|On|Right of an infinite line.
-//    Input:  three points P0, P1, and P2
-//    Return: >0 for P2 left of the line through P0 and P1
-//            =0 for P2  on the line
-//            <0 for P2  right of the line
-//    See: Algorithm 1 "Area of Triangles and Polygons"
-"float isLeft( vec2 P0, vec2 P1, vec2 P2 ){\n"
-//This can be used to detect an exact edge
-"    return ( (P1.x - P0.x) * (P2.y - P0.y) - (P2.x -  P0.x) * (P1.y - P0.y) );\n"
-"}\n"
-// wn_PnPoly(): winding number test for a point in a polygon
-//      Input:   P = a point,
-//               V[] = vertex points of a polygon V[n+1] with V[n]=V[0]
-//      Return:  wn = the winding number (=0 only when P is outside)
-"uint wn_PnPoly( vec2 P, vec2 V[5]){\n"
-"  uint wn = 0;\n"    // the  winding number counter
-   // loop through all edges of the polygon
-"  for (int i=0; i<4; i++) {\n"   // edge from V[i] to  V[i+1]
-"    if (V[i].y <= P.y) {\n"          // start y <= P.y
-"      if (V[i+1].y > P.y) \n"      // an upward crossing
-"        if (isLeft( V[i], V[i+1], P) > 0)\n"  // P left of  edge
-"          ++wn;\n"            // have  a valid up intersect
-"    }\n"
-"    else {\n"                        // start y > P.y (no test needed)
-"      if (V[i+1].y <= P.y)\n"     // a downward crossing
-"        if (isLeft( V[i], V[i+1], P) < 0)\n"  // P right of  edge
-"          --wn;\n"            // have  a valid down intersect
-"    }\n"
-"  }\n"
-"  return wn;\n"
-"}\n"
-//===================================================================
-
-"vec2 dist( vec2 P,  vec2 P0, vec2 P1 )\n"
+"vec3 antiAliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
 // dist_Point_to_Segment(): get the distance of a point to a segment
 //     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
 //     Return: the x,y distance from P to S
@@ -235,120 +202,126 @@ SHADER_VERSION_COMPUTE
 "  vec2 v = P1 - P0;\n"
 "  vec2 w = P - P0;\n"
 "  float c1 = dot(w,v);\n"
-"  if ( c1 <= 0 )\n"
-"    return abs(P-P0);\n"
+"  if ( c1 <= 0.0 )\n"
+"    return vec3(P0,0.0);\n"
 "  float c2 = dot(v,v);\n"
 "  if ( c2 <= c1 )\n"
-"    return abs(P-P1);\n"
+"    return vec3(P1,1.0);\n"
 "  float b = c1 / c2;\n"
 "  vec2 Pb = P0 + b * v;\n"
-"  return abs(P-Pb);\n"
+"  return vec3(Pb,b);\n"
 "}\n"
 
-"uint pixIsInside (vec2 Pin, uint idx){\n"
-"  vec2 Quad[5];\n"
-"  vec2 P;\n"
-"  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
-"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
-"  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA);\n"
-"  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB);\n"
-"  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC);\n"
-"  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD);\n"
-"  Quad[4] = Quad[0];\n"
-"  P = vec2(Pin)/upscale;\n"
-
-"  if (cmd[idx].type < "Stringify(POLYLINE)") {\n"
-"    if (wn_PnPoly(P, Quad) != 0u) return 1u;\n"
-"  }"
-// "  if (cmd[idx].type != "Stringify(NORMAL)") {\n"
-"    if (all(lessThanEqual(dist(P, Quad[0], Quad[1]), vec2(0.5)))) {return 2u;}\n"
-"    if (cmd[idx].type < "Stringify(LINE)") {\n"
-"      if (all(lessThanEqual(dist(P, Quad[1], Quad[2]), vec2(0.5)))) {return 3u;}\n"
-"      if (all(lessThanEqual(dist(P, Quad[2], Quad[3]), vec2(0.5)))) {return 4u;}\n"
-"      if (all(lessThanEqual(dist(P, Quad[3], Quad[0]), vec2(0.5)))) {return 5u;}\n"
+"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
+"  vec2 A = V0 + vec2(0.5);\n"
+"  vec2 B = V1 + vec2(0.5);\n"
+"  for (uint i=0; i<step; i++) {\n"
+//A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
+//This represent the behavior of antialiasing as displayed in vdp1 spec.
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"    if (distance(d.xy, P+(vec2(0.5)*upscale)) <= (0.7072*length(upscale))) {\n" //Test the distance between the projection on line and the center of the pixel
+"      float ux= d.z;\n" //u is the relative distance from first point to projected position
+"      float uy= (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
+"      uv = vec2(ux,uy);\n"
+"      return 1u;\n"
 "    }\n"
-// "  }\n"
+"    A += sA;\n"
+"    B += sB;\n"
+"  }\n"
 "  return 0u;\n"
 "}\n"
 
-"int getCmd(inout vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip)\n"
+"vec3 aliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
+// dist_Point_to_Segment(): get the distance of a point to a segment
+//     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
+//     Return: the x,y distance from P to S
+"{\n"
+"  if (all(equal(P0,P1))) return vec3(P0, 0.0);\n"
+"  float r = 0.0;\n"
+"  if (abs(P1.y-P0.y) > abs(P1.x-P0.x)) {\n"
+"    if(P1.y != P0.y) r = (P.y-P0.y)/(P1.y-P0.y);\n"
+"    else r = (P.x-P0.x)/(P1.x-P0.x);\n"
+"  } else {\n"
+"    if(P1.x != P0.x) r = (P.x-P0.x)/(P1.x-P0.x);\n"
+"    else r = (P.y-P0.y)/(P1.y-P0.y);\n"
+"  }"
+"  if (r >= 1.0) return vec3(P1, 1.0);\n"
+"  else if (r <= 0.0) return vec3(P0, 0.0);\n"
+"  else return vec3(P0 + ((P1-P0) * r), r);\n"
+"}\n"
+
+"uint isOnALine( vec2 P, vec2 V0, vec2 V1, out vec2 uv){\n"
+//A pixel shall be considered as part of an aliased line if all coordinates of the pixel center to the line is shorter than 0.5, which is the horizontal or vertical half-size of the pixel
+//This represent the behavior of aliasing as displayed in vdp1 spec.
+"  vec2 A = V0+vec2(0.5);\n" //Get the center of the first point
+"  vec2 B = V1+vec2(0.5);\n" //Get the center of the last point
+"  vec3 d = aliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
+"  if (all(lessThanEqual(abs(floor(d.xy)-floor(P+vec2(0.5))), vec2(0.5*upscale)))) {\n" //If the line is passing through the same pixel as the point P
+"    float ux= d.z;\n" //u is the relative distance from first point to projected position
+"    float uy= 0.5;\n" //v is the ratio between the current line and the total number of lines
+"    uv = vec2(ux,uy);\n"
+"    return 1u;\n"
+"  }\n"
+"  return 0u;\n"
+"}\n"
+
+"uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
+"  uint step = uint(abs(V1.y-V0.y)+1);\n"
+"  float way = sign(V1.y - V0.y);\n"
+"  vec2 A = V0+vec2(0.5);\n"
+"  vec2 B = vec2(V1.x, V0.y)+vec2(0.5);\n"
+"  for (uint i=0; i<step; i++) {\n"
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
+"    if (distance(d.xy, P+(vec2(0.5)*upscale)) <= (0.7072*length(upscale))) {\n"
+"      float ux= d.z;\n"
+"      float uy= float(i)/float(step+1);\n"
+"      uv = vec2(ux,uy);\n"
+"      return 1u;\n"
+"    }\n"
+"    A.y += way;\n"
+"    B.y += way;\n"
+"  }\n"
+"  return 0u;\n"
+"}\n"
+
+"uint pixIsInside (vec2 Pin, uint idx, out vec2 uv){\n"
+"  vec2 Quad[4];\n"
+"  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
+//Bounding box test
+"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
+"  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA)*upscale;\n"
+"  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB)*upscale;\n"
+"  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC)*upscale;\n"
+"  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD)*upscale;\n"
+
+"  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
+"    return isOnAQuadLine(Pin, Quad[0], Quad[1], vec2(cmd[idx].uAstepx, cmd[idx].uAstepy)*upscale, vec2(cmd[idx].uBstepx, cmd[idx].uBstepy)*upscale, uint(float(cmd[idx].nbStep)), uv);\n"
+"  } else {\n"
+"    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
+"     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"
+"    } else if (cmd[idx].type == "Stringify(POLYLINE)") {\n"
+"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[1], Quad[2], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[2], Quad[3], uv) != 0u) return 1u;\n"
+"      if (isOnALine(Pin, Quad[3], Quad[0], uv) != 0u) return 1u;\n"
+"      return 0u;\n"
+"    } else if (cmd[idx].type == "Stringify(LINE)") {\n"
+"      if (isOnALine(Pin, Quad[0], Quad[1], uv) != 0u) return 1u;\n"
+"    }\n"
+"  }\n"
+"  return 0u;\n"
+"}\n"
+
+"int getCmd(vec2 P, uint id, uint start, uint end, out uint zone, bool wait_sysclip, out vec2 uv)\n"
 "{\n"
 "  for(uint i=id+start; i<id+end; i++) {\n"
 "     if (wait_sysclip && (cmd[i].type != "Stringify(SYSTEM_CLIPPING)")) continue;"
-"     zone = pixIsInside(P, i);\n"
+"     zone = pixIsInside(P, i, uv);\n"
 "     if (zone != 0u) {\n"
 "       return int(i);\n"
 "     }\n"
 "  }\n"
 "  return -1;\n"
-"}\n"
-
-"float cross( in vec2 a, in vec2 b ) { return a.x*b.y - a.y*b.x; }\n"
-
-"vec2 bary(ivec2 p, vec2 a, vec2 b, vec2 c, vec2 auv, vec2 buv, vec2 cuv) {\n"
-"  vec2 v0 = b - a;\n"
-"  vec2 v1 = c - a;\n"
-"  vec2 v2 = p - a;\n"
-"  float den = v0.x * v1.y - v1.x * v0.y;\n"
-"  float v = (v2.x * v1.y - v1.x * v2.y) / den;\n"
-"  float w = (v0.x * v2.y - v2.x * v0.y) / den;\n"
-"  float u = 1.0f - v - w;\n"
-"  return (u*auv+v*buv+w*cuv);\n"
-"}\n"
-
-"vec2 getTexCoord(vec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
-"  if (all(lessThanEqual(abs(a-b),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(b-c),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(c-d),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(d-a),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  vec2 p = vec2(texel)/upscale;\n"
-"  vec2 e = b-a;\n"
-"  vec2 f = d-a;\n"
-"  vec2 h = p-a;\n"
-"  vec2 g = a-b+c-d;\n"
-"  if (e.x == 0.0) e.x = 1.0;\n"
-"  float u = 0.0;\n"
-"  float v = 0.0;\n"
-"  float k1 = cross( e, f ) + cross( h, g );\n"
-"  float k0 = cross( h, e );\n"
-"  v = clamp(-k0/k1, 0.0, 1.0);\n"
-"  u = clamp((h.x*k1+f.x*k0) / (e.x*k1-g.x*k0), 0.0, 1.0);\n"
-"  return vec2( u, v );\n"
-"}\n"
-
-"vec2 getTexCoordDistorted(vec2 texel, vec2 a, vec2 b, vec2 c, vec2 d) {\n"
-//http://iquilezles.org/www/articles/ibilinear/ibilinear.htm
-"  if (all(lessThanEqual(abs(a-b),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(b-c),vec2(1.0)))) return bary(ivec2(texel/upscale),a,c,d,vec2(0,0),vec2(1,1),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(c-d),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  if (all(lessThanEqual(abs(d-a),vec2(1.0)))) return bary(ivec2(texel/upscale),a,b,c,vec2(0,0),vec2(1,0),vec2(0,1));\n"
-"  vec2 p = vec2(texel)/upscale;\n"
-"  vec2 e = b-a;\n"
-"  vec2 f = d-a;\n"
-"  vec2 h = p-a;\n"
-"  vec2 g = a-b+c-d;\n"
-"  if (e.x == 0.0) e.x = 1.0;\n"
-"  float u = 0.0;\n"
-"  float v = 0.0;\n"
-"  float k2 = cross( g, f );\n"
-"  float k1 = cross( e, f ) + cross( h, g );\n"
-"  float k0 = cross( h, e );\n"
-"  if (abs(k2) >= 0.00001) {\n"
-"    float w = k1*k1 - 4.0*k0*k2;\n"
-"    if( w>=0.0 ) {\n"
-"      w = sqrt( w );\n"
-"      float ik2 = 0.5/k2;\n"
-"      v = (-k1 - w)*ik2; \n"
-"      if( v<0.0 || v>1.0 ) v = (-k1 + w)*ik2;\n"
-"      v = clamp(v, 0.0, 1.0);\n"
-"      u = (h.x - f.x*v)/(e.x + g.x*v);\n"
-"      u = clamp(u, 0.0, 1.0);\n"
-"    }\n"
-"  } else { \n"
-"    v = clamp(-k0/k1, 0.0, 1.0);\n"
-"    u = clamp((h.x*k1+f.x*k0) / (e.x*k1-g.x*k0), 0.0, 1.0);\n"
-"  }\n"
-"  return vec2( u, v );\n"
 "}\n"
 
 "uint Vdp1RamReadByte(uint addr) {\n"
@@ -372,9 +345,9 @@ SHADER_VERSION_COMPUTE
 "  vec4 color = vec4(0.0);\n"
 "      if(uv.x==1.0) uv.x = 0.99;\n"
 "      if(uv.y==1.0) uv.y = 0.99;\n"
-"  uint x = uint(uv.x*pixcmd.w);\n"
-"  uint pos = (uint(pixcmd.h*uv.y)*pixcmd.w+x);\n"
-"  uint charAddr = pixcmd.CMDSRCA * 8 + pos;\n"
+"  uint x = clamp(uint(uv.x*pixcmd.w), 0u, uint(pixcmd.w));\n"
+"  uint pos = (uint(clamp(ceil(pixcmd.h*uv.y), 0u, uint(pixcmd.h-1)))*pixcmd.w+x);\n"
+"  uint charAddr = ((pixcmd.CMDSRCA * 8)& 0x7FFFFu) + pos;\n"
 "  uint dot;\n"
 "  bool SPD = ((pixcmd.CMDPMOD & 0x40u) != 0);\n"
 "  bool END = ((pixcmd.CMDPMOD & 0x80u) != 0);\n"
@@ -491,15 +464,6 @@ SHADER_VERSION_COMPUTE
 "  return color;\n"
 "}\n"
 
-#ifdef USE_VDP1_TEX
-"vec4 ReadTexColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel){\n"
-"  int x = int(uv.x*pixcmd.w - 0.5) + int(pixcmd.texX);\n"
-"  int y = int(uv.y*pixcmd.h - 0.5) + int(pixcmd.texY);\n"
-"  ivec2 size = textureSize(texSurface,0);\n"
-"  return texelFetch(texSurface,ivec2(x, y), 0);\n"
-"}\n"
-#endif
-
 "vec4 extractPolygonColor(cmdparameter_struct pixcmd){\n"
 "  uint color = pixcmd.COLOR[0];\n"
 "  return VDP1COLOR(color);\n"
@@ -513,14 +477,16 @@ SHADER_VERSION_COMPUTE
 "  vec2 tag = vec2(0.0);\n"
 "  cmdparameter_struct pixcmd;\n"
 "  bool discarded = false;\n"
-"  bool noFinal = true;\n"
+"  bool drawn = false;\n"
 "  vec2 texcoord = vec2(0);\n"
 "  vec2 gouraudcoord = vec2(0.0);\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
 "  if (pos.x >= size.x || pos.y >= size.y ) return;\n"
-"  vec2 texel = vec2((vec4(float(pos.x)+0.5,float(pos.y)+0.5, 1.0, 1.0) * inverse(rot)).xy);\n"
-"  ivec2 index = ivec2((int(texel.x)*"Stringify(NB_COARSE_RAST_X)")/size.x, (int(texel.y)*"Stringify(NB_COARSE_RAST_Y)")/size.y);\n"
+"  vec2 texel = (vec4(float(pos.x),float(-pos.y), 1.0, 1.0) *rot).xy;\n"
+"  vec2 scaleRot = vec2(1.0/length(rot[0].xy), 1.0/length(rot[1].xy));\n"
+"  texel.y = -texel.y;\n"
+"  ivec2 index = ivec2((texel.x*"Stringify(NB_COARSE_RAST_X)")/size.x, (texel.y*"Stringify(NB_COARSE_RAST_Y)")/size.y);\n"
 "  ivec2 syslimit = sysClip;\n"
 "  ivec4 userlimit = usrClip;\n"
 "  uint lindex = index.y*"Stringify(NB_COARSE_RAST_X)"+ index.x;\n"
@@ -535,10 +501,11 @@ SHADER_VERSION_COMPUTE
 "  vec2 OriginTexel = texel;\n"
 "  while ((cmdindex != -1) && (idCmd<nbCmd[lindex]) ) {\n"
 "    discarded = false;\n"
+"    vec2 uv = vec2(0.0);\n"
 "    newColor = vec4(0.0);\n"
 "    outColor = vec4(0.0);\n"
 "    texel = OriginTexel;\n"
-"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone, waitSysClip);\n"
+"    cmdindex = getCmd(texel, cmdIndex, idCmd, nbCmd[lindex], zone, waitSysClip, uv);\n"
 "    if (cmdindex == -1) continue;\n"
 "    idCmd = cmdindex + 1 - cmdIndex;\n"
 "    pixcmd = cmd[cmdindex];\n"
@@ -551,81 +518,30 @@ SHADER_VERSION_COMPUTE
 "      userlimit = ivec4(pixcmd.CMDXA,pixcmd.CMDYA,pixcmd.CMDXC+1,pixcmd.CMDYC+1);\n"
 "      continue;\n"
 "    }\n"
-"    if (any(greaterThan(pos,syslimit*upscale))) { \n"
+"    if (any(greaterThan(pos,syslimit*scaleRot*upscale))) { \n"
 "      waitSysClip = true;\n"
 "      continue;\n"
 "    }"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
 //Draw inside
-"      if (any(lessThan(pos,userlimit.xy*upscale)) || any(greaterThan(texel,userlimit.zw*upscale))) continue;\n"
+"      if (any(lessThan(pos,userlimit.xy*scaleRot*upscale)) || any(greaterThan(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
 "    }\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
 //Draw outside
-"      if (all(greaterThanEqual(texel,userlimit.xy*upscale)) && all(lessThanEqual(texel,userlimit.zw*upscale))) continue;\n"
+"      if (all(greaterThanEqual(pos,userlimit.xy*scaleRot*upscale)) && all(lessThanEqual(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
 "    }\n"
 "    useGouraud = ((pixcmd.CMDPMOD & 0x4u) == 0x4u);\n"
-"    if (pixcmd.type == "Stringify(POLYGON)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(POLYLINE)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(LINE)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-"        newColor = extractPolygonColor(pixcmd);\n"
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(DISTORTED)") {\n"
-"      texcoord = getTexCoordDistorted(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2],pixcmd.P[3])/2.0, vec2(pixcmd.P[4],pixcmd.P[5])/2.0, vec2(pixcmd.P[6],pixcmd.P[7])/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((texcoord.x == -1.0) && (texcoord.y == -1.0)) continue;\n"
-"      else {\n"
-"        if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"        if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"        newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
-"      }\n"
-"    } else if (pixcmd.type == "Stringify(SCALED)") {\n"
-"      texcoord = getTexCoord(texel, vec2(pixcmd.P[0],pixcmd.P[1])/2.0, vec2(pixcmd.P[2]+1,pixcmd.P[3])/2.0, vec2(pixcmd.P[4]+1,pixcmd.P[5]+1)/2.0, vec2(pixcmd.P[6],pixcmd.P[7]+1)/2.0);\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
-"    } else if (pixcmd.type == "Stringify(NORMAL)") {\n"
-"      texcoord = vec2(float(texel.x/upscale.x-pixcmd.CMDXA)/float(pixcmd.w), float(texel.y/upscale.y-pixcmd.CMDYA)/float(pixcmd.h));\n"
-"      gouraudcoord = texcoord;\n"
-"      if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"      if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
-#ifdef USE_VDP1_TEX
-"      newColor = ReadTexColor(pixcmd, texcoord, texel);\n"
-#else
-"        newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
-#endif
+"    texcoord = uv;\n"
+"    gouraudcoord = texcoord;\n"
+"    if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
+"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
+"    if (pixcmd.type <= "Stringify(LINE)") {\n"
+"      newColor = extractPolygonColor(pixcmd);\n"
+"    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"
+"      newColor = ReadSpriteColor(pixcmd, texcoord, texel, discarded);\n"
 "    }\n"
 "    if (discarded) continue;\n"
+"    else drawn = true;\n"
 "    texel = OriginTexel;\n"
      COLINDEX(finalColor)
      COLINDEX(newColor)
@@ -707,15 +623,14 @@ static const char vdp1_improved_mesh_f[] =
 "  }\n";
 
 static const char vdp1_continue_f[] =
-"    if (!discarded) {"
+"    if (drawn) {"
 "      finalColor.ba = tag;\n"
 "      finalColor.rg = outColor.rg;\n"
-"      noFinal = false;\n"
 "    }\n";
 
 static const char vdp1_end_f[] =
 "  }\n"
-"  if (discarded && noFinal) return;\n"
+"  if (!drawn) return;\n"
 "  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "}\n";
 #endif //VDP1_PROG_COMPUTE_H

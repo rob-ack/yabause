@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include <string.h>
 #include "vdp1.h"
 #include "yui.h"
@@ -31,20 +32,24 @@ static int work_groups_y;
 
 static vdp1cmd_struct* cmdVdp1;
 static int* nbCmd;
+static int* hasDrawingCmd;
 
-static int cmdRam_update_start = 0x0;
-static int cmdRam_update_end = 0x80000;
-
-static int* clear;
+static int cmdRam_update_start[2] = {0x0};
+static int cmdRam_update_end[2] = {0x80000};
 
 static int generateComputeBuffer(int w, int h);
 
 static GLuint compute_tex[2] = {0};
 static GLuint ssbo_cmd_ = 0;
-static GLuint ssbo_vdp1ram_ = 0;
+static GLuint ssbo_vdp1ram_[2] = {0};
 static GLuint ssbo_nbcmd_ = 0;
 static GLuint ssbo_vdp1access_ = 0;
 static GLuint prg_vdp1[NB_PRG] = {0};
+
+#ifdef VDP1RAM_CS_ASYNC
+static YabEventQueue *cmdq[2] = {NULL};
+static int vdp1_generate_run = 0;
+#endif
 
 static u32 write_fb[512*256];
 
@@ -163,12 +168,14 @@ static int generateComputeBuffer(int w, int h) {
   if (compute_tex[0] != 0) {
     glDeleteTextures(2,&compute_tex[0]);
   }
-	if (ssbo_vdp1ram_ != 0) {
-    glDeleteBuffers(1, &ssbo_vdp1ram_);
+	if (ssbo_vdp1ram_[0] != 0) {
+    glDeleteBuffers(2, &ssbo_vdp1ram_[0]);
 	}
 
-	glGenBuffers(1, &ssbo_vdp1ram_);
-	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_);
+	glGenBuffers(2, &ssbo_vdp1ram_[0]);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[0]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, 0x80000, NULL, GL_DYNAMIC_DRAW);
 
   if (ssbo_cmd_ != 0) {
@@ -210,21 +217,20 @@ static int generateComputeBuffer(int w, int h) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-	if (clear != NULL) free(clear);
-	clear = (int*)malloc(w*h * sizeof(int));
-	memset(clear, 0, w*h * sizeof(int));
-
   return 0;
 }
 
-u8* cmdBuffer;
+u8 cmdBuffer[2][0x80000];
 
-void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
+vdp1cmd_struct cmdBufferToProcess[2000];
+int nbCmdToProcess = 0;
+
+void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	int endcnt;
 	u32 dot;
 	int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
-	u8* buf = &cmdBuffer[0];
+	u8* buf = &cmdBuffer[id][0];
 	switch ((cmd->CMDPMOD >> 3) & 0x7) {
     case 0:
     case 1:
@@ -232,7 +238,10 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 				endcnt = 0;
 				for(int w=0; w < cmd->w/2; w++)
 				{
+					u32 addr1, addr2;
 					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
+					addr1 = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
+					addr2 = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
 					if (!END && (endcnt >= 2)) {
           	dot |= 0xF0;
 					}
@@ -241,11 +250,10 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
         	} else {
 						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
 							//ColorLut
-							u32 addr = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
-							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
-							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
-							T1WriteWord(buf, addr, val);
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
+							if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
+							if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
+							T1WriteWord(buf, addr1, val);
 						}
 					}
 					if (!END && (endcnt >= 2)) {
@@ -256,15 +264,14 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 					} else {
 						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
 							//ColorLut
-							u32 addr = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
-							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr);
-							if (cmdRam_update_start > addr) cmdRam_update_start = addr;
-							if (cmdRam_update_end < (addr + 2)) cmdRam_update_end = addr + 2;
-							T1WriteWord(buf, addr, val);
+							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr2);
+							if (cmdRam_update_start[id] > addr2) cmdRam_update_start[id] = addr2;
+							if (cmdRam_update_end[id] < (addr2 + 2)) cmdRam_update_end[id] = addr2 + 2;
+							T1WriteWord(buf, addr2, val);
 						}
         	}
-					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-					if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
 					T1WriteByte(buf, pos, dot);
 					pos += 1;
 	    	}
@@ -284,8 +291,8 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 						else if ((dot == 0xFF) && !END) {
 							endcnt++;
 						}
-						if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-						if (cmdRam_update_end < (pos + 1)) cmdRam_update_end = pos + 1;
+						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+						if (cmdRam_update_end[id] < (pos + 1)) cmdRam_update_end[id] = pos + 1;
 						T1WriteByte(buf, pos, dot);
 						pos += 1;
 		    	}
@@ -303,14 +310,50 @@ void vdp1GenerateBuffer(vdp1cmd_struct* cmd) {
 					else if ((dot == 0x7FFF) && !END) {
 						endcnt++;
 					}
-					if (cmdRam_update_start > pos) cmdRam_update_start = pos;
-					if (cmdRam_update_end < (pos + 2)) cmdRam_update_end = pos + 2;
+					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
+					if (cmdRam_update_end[id] < (pos + 2)) cmdRam_update_end[id] = pos + 2;
 					T1WriteWord(buf, pos, dot);
 					pos += 2;
 	    	}
 			}
 	    break;
 	  }
+}
+#ifdef VDP1RAM_CS_ASYNC
+void vdp1GenerateBuffer_async_0(void *p){
+	while(vdp1_generate_run != 0){
+		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[0]);
+		if (cmd != NULL){
+			vdp1GenerateBuffer_sync(cmd, 0);
+			free(cmd);
+		}
+	}
+}
+void vdp1GenerateBuffer_async_1(void *p){
+	while(vdp1_generate_run != 0){
+		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[1]);
+		if (cmd != NULL){
+			vdp1GenerateBuffer_sync(cmd, 1);
+			free(cmd);
+		}
+	}
+}
+
+void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
+	vdp1cmd_struct* cmdToSent = malloc(sizeof(vdp1cmd_struct));
+	memcpy(cmdToSent, cmd, sizeof(vdp1cmd_struct));
+	YabAddEventQueue(cmdq[_Ygl->drawframe], cmdToSent);
+}
+#else
+void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
+	vdp1GenerateBuffer_sync(cmd, _Ygl->drawframe);
+}
+#endif
+
+void regenerateVdp1Buffer(void) {
+	for (int i = 0; i < nbCmdToProcess; i++) {
+		vdp1GenerateBuffer(&cmdBufferToProcess[i]);
+	}
 }
 
 int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
@@ -319,61 +362,56 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	int maxx = 0;
 	int maxy = 0;
 
+	int intersectX = -1;
+	int intersectY = -1;
+	int requireCompute = 0;
+
+	if (_Ygl->wireframe_mode != 0) {
+		int pos = (cmd->CMDSRCA * 8) & 0x7FFFF;
+		switch(cmd->type ) {
+			case DISTORTED:
+			//By default use the central pixel code
+			switch ((cmd->CMDPMOD >> 3) & 0x7) {
+				case 0:
+				case 1:
+				  pos += (cmd->h/2) * cmd->w/2 + cmd->w/4;
+					break;
+				case 2:
+				case 3:
+				case 4:
+					pos += (cmd->h/2) * cmd->w + cmd->w/2;
+					break;
+				case 5:
+					pos += (cmd->h/2) * cmd->w*2 + cmd->w;
+					break;
+			}
+			cmd->COLOR[0] = cmdBuffer[_Ygl->drawframe][pos];
+			cmd->type = POLYLINE;
+			break;
+			case POLYGON:
+				cmd->type = POLYLINE;
+			break;
+			case QUAD:
+			case QUAD_POLY:
+				if ((abs(cmd->CMDXA - cmd->CMDXB) <= ((2*_Ygl->rwidth)/3)) && (abs(cmd->CMDYA - cmd->CMDYD) <= ((_Ygl->rheight)/2)))
+					cmd->type = POLYLINE;
+			break;
+			default:
+				break;
+		}
+	}
 	if (clipcmd == 0) {
+		memcpy(&cmdBufferToProcess[nbCmdToProcess++], cmd, sizeof(vdp1cmd_struct));
 		vdp1GenerateBuffer(cmd);
-    int border = 0;
-		if (cmd->type == NORMAL) border = 0;
-		memcpy(cmd->P,&cmd->CMDXA,8*sizeof(int));
 
-		for (int i = 0; i<8; i++) cmd->P[i] = cmd->P[i] * 2;
-
-		int right = 0;
-		int rightindex = -1;
-		for (int i = 0; i<4; i++) {
-			if (cmd->P[i*2] >= right) {
-				right = cmd->P[i*2];
-				rightindex = i;
-			}
-		}
-		right = 0;
-		int rightindexsec = -1;
-		for (int i = 0; i<4; i++) {
-			if ((cmd->P[i*2] >= right) && (i!=rightindex)) {
-				right = cmd->P[i*2];
-				rightindexsec = i;
-			}
-		}
-		cmd->P[rightindex*2] += 2*border;
-		cmd->P[rightindexsec*2] += 2*border;
-
-		int top = 0;
-		int topindex = -1;
-		for (int i = 0; i<4; i++) {
-			if (cmd->P[i*2+1] >= top) {
-				top = cmd->P[i*2+1];
-				topindex = i;
-			}
-		}
-		top = 0;
-		int topindexsec = -1;
-		for (int i = 0; i<4; i++) {
-			if ((cmd->P[i*2+1] >= top) && (i!=topindex)) {
-				top = cmd->P[i*2+1];
-				topindexsec = i;
-			}
-		}
-
-    cmd->P[topindex*2+1] += 2*border;
-		cmd->P[topindexsec*2+1] += 2*border;
-
-	  float Ax = cmd->P[0]/2.0;
-		float Ay = cmd->P[1]/2.0;
-		float Bx = cmd->P[2]/2.0;
-		float By = cmd->P[3]/2.0;
-		float Cx = cmd->P[4]/2.0;
-		float Cy = cmd->P[5]/2.0;
-		float Dx = cmd->P[6]/2.0;
-		float Dy = cmd->P[7]/2.0;
+	  float Ax = cmd->CMDXA;
+		float Ay = cmd->CMDYA;
+		float Bx = cmd->CMDXB;
+		float By = cmd->CMDYB;
+		float Cx = cmd->CMDXC;
+		float Cy = cmd->CMDYC;
+		float Dx = cmd->CMDXD;
+		float Dy = cmd->CMDYD ;
 
 	  minx = (Ax < Bx)?Ax:Bx;
 	  miny = (Ay < By)?Ay:By;
@@ -391,14 +429,11 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 
 	//Add a bounding box
 	  cmd->B[0] = minx*tex_ratiow;
-	  cmd->B[1] = (maxx+1)*tex_ratiow;
+	  cmd->B[1] = (maxx + 1)*tex_ratiow;
 	  cmd->B[2] = miny*tex_ratioh;
-	  cmd->B[3] = (maxy+1)*tex_ratioh;
+	  cmd->B[3] = (maxy + 1)*tex_ratioh;
 
 	}
-  int intersectX = -1;
-  int intersectY = -1;
-	int requireCompute = 0;
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
     int blkx = i * (tex_width/NB_COARSE_RAST_X);
     for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
@@ -410,6 +445,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 			  || (clipcmd!=0)) {
 					memcpy(&cmdVdp1[(i+j*NB_COARSE_RAST_X)*QUEUE_SIZE + nbCmd[i+j*NB_COARSE_RAST_X]], cmd, sizeof(vdp1cmd_struct));
           nbCmd[i+j*NB_COARSE_RAST_X]++;
+					if (clipcmd == 0) hasDrawingCmd[i+j*NB_COARSE_RAST_X] = 1;
 					if (nbCmd[i+j*NB_COARSE_RAST_X] == QUEUE_SIZE) {
 						requireCompute = 1;
 					}
@@ -417,7 +453,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
     }
   }
 	if (requireCompute != 0){
-		YuiMsg("This game is processing a lot of graphic commands on the same frame. It might introduce graphical artifacts\n");
 		vdp1_compute();
   }
   return 0;
@@ -443,8 +478,7 @@ void vdp1_write() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_);
-	// glUniform2f(2, 512.0f/(float)(tex_width*tex_ratiow), 256.0f/(float)(tex_height*tex_ratioh));
-	glUniform2f(2, 1.0f, 1.0f);
+	glUniform2f(2, 1.0f/_Ygl->vdp1wratio, 1.0/_Ygl->vdp1hratio);
 
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 }
@@ -457,9 +491,7 @@ u32* vdp1_read() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_);
-
-//	glUniform2f(2, (float)(tex_width*tex_ratiow)/512.0f, (float)(tex_height*tex_ratioh)/256.0f);
-  glUniform2f(2, 1.0f, 1.0f);
+	glUniform2f(2, 1.0f/_Ygl->vdp1wratio, 1.0/_Ygl->vdp1hratio);
 
 	//waitVdp1End
 	{
@@ -499,16 +531,27 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   if (am != 0) {
     struct_size += 16 - am;
   }
+#ifdef VDP1RAM_CS_ASYNC
+	if (vdp1_generate_run == 0) {
+		vdp1_generate_run = 1;
+		cmdq[0] = YabThreadCreateQueue(512);
+		cmdq[1] = YabThreadCreateQueue(512);
+		YabThreadStart(YAB_THREAD_CS_CMD_0, vdp1GenerateBuffer_async_0, 0);
+		YabThreadStart(YAB_THREAD_CS_CMD_1, vdp1GenerateBuffer_async_1, 0);
+	}
+#endif
   work_groups_x = _Ygl->vdp1width / local_size_x;
   work_groups_y = _Ygl->vdp1height / local_size_y;
   generateComputeBuffer(_Ygl->vdp1width, _Ygl->vdp1height);
 	if (nbCmd == NULL)
   	nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
+	if (hasDrawingCmd == NULL)
+		hasDrawingCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
   if (cmdVdp1 == NULL)
 		cmdVdp1 = (vdp1cmd_struct*)malloc(NB_COARSE_RAST*QUEUE_SIZE*sizeof(vdp1cmd_struct));
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
+	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
 	memset(cmdVdp1, 0, NB_COARSE_RAST*QUEUE_SIZE*sizeof(vdp1cmd_struct*));
-	cmdBuffer = (u8*)malloc(0x80000);
 	return;
 }
 
@@ -522,14 +565,23 @@ void vdp1_set_directFB() {
 		_Ygl->vdp1IsNotEmpty = 0;
 	}
 }
+void vdp1_wait_regenerate(void) {
+	#ifdef VDP1RAM_CS_ASYNC
+	while (YaGetQueueSize(cmdq[_Ygl->drawframe])!=0)
+	{
+		YabThreadYield();
+	}
+	#endif
+}
 
 void vdp1_setup(void) {
-	if (ssbo_vdp1ram_ == 0) return;
-	if (cmdRam_update_start < cmdRam_update_end) {
-		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_);
-		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start, (cmdRam_update_end - cmdRam_update_start), (void*)(&cmdBuffer[cmdRam_update_start]));
-		cmdRam_update_start = 0x80000;
-		cmdRam_update_end = 0x0;
+	if (ssbo_vdp1ram_[_Ygl->drawframe] == 0) return;
+	vdp1_wait_regenerate();
+	if (cmdRam_update_start[_Ygl->drawframe] < cmdRam_update_end[_Ygl->drawframe]) {
+		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vdp1ram_[_Ygl->drawframe]);
+		glBufferSubData(GL_SHADER_STORAGE_BUFFER, cmdRam_update_start[_Ygl->drawframe], (cmdRam_update_end[_Ygl->drawframe] - cmdRam_update_start[_Ygl->drawframe]), (void*)(&(cmdBuffer[_Ygl->drawframe])[cmdRam_update_start[_Ygl->drawframe]]));
+		cmdRam_update_start[_Ygl->drawframe] = 0x80000;
+		cmdRam_update_end[_Ygl->drawframe] = 0x0;
 	}
 }
 
@@ -541,25 +593,37 @@ void vdp1_compute() {
   GLuint error;
 	int progId = getProgramId();
 	int needRender = _Ygl->vdp1IsNotEmpty;
+
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
 
 	VDP1CPRINT("Draw VDP1\n");
 
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
   for (int i = 0; i < NB_COARSE_RAST; i++) {
+    if (hasDrawingCmd[i] == 0) nbCmd[i] = 0;
     if (nbCmd[i] != 0) {
-			// printf("%d\n", nbCmd[i]);
-    	glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
 			needRender = 1;
 		}
   }
-
   if (needRender == 0) {
 		return;
 	}
-
+	if ((Vdp1External.updateVdp1Ram == 1)&&(Vdp1External.checkEDSR == 0)) {
+		//The game source code has modified the content of vdp1Ram since the drawcommands order without checking the EDSR register
+		//Let's assume the game was taking care of vdp1 drawing delay to update the vdp1Ram
+		//So update the texture just to be sure all texture are the latest one
+		regenerateVdp1Buffer();
+		Vdp1External.updateVdp1Ram = 0;
+	}
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
+	for (int i = 0; i < NB_COARSE_RAST; i++) {
+		if (nbCmd[i] != 0) {
+			// printf("%d\n", nbCmd[i]);
+			glBufferSubData(GL_SHADER_STORAGE_BUFFER, struct_size*i*QUEUE_SIZE, nbCmd[i]*sizeof(vdp1cmd_struct), (void*)&cmdVdp1[QUEUE_SIZE*i]);
+		}
+	}
+	nbCmdToProcess = 0;
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
@@ -567,12 +631,7 @@ void vdp1_compute() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
-#ifdef USE_VDP1_TEX
-	glUniform1i(2, 0);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, YglTM_vdp1[id]->textureID);
-#endif
-	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_[_Ygl->drawframe]);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cmd_);
 	glUniform2f(6, tex_ratiow, tex_ratioh);
@@ -580,28 +639,31 @@ void vdp1_compute() {
 	glUniform4i(8, Vdp1Regs->userclipX1, Vdp1Regs->userclipY1, Vdp1Regs->userclipX2, Vdp1Regs->userclipY2);
 	YglMatrix m, mat;
 	YglLoadIdentity(&m);
-	if (Vdp1Regs->TVMR & 0x02) {
+  if (Vdp1Regs->TVMR & 0x02) {
     YglMatrix rotate, scale;
-    int x = (_Ygl->rwidth - Vdp1Regs->systemclipX2)/2 * (_Ygl->width/_Ygl->rwidth);
-    int y = ( Vdp1Regs->systemclipY2 - _Ygl->rheight)/2 * (_Ygl->height/_Ygl->rheight);
     YglLoadIdentity(&rotate);
-		VDP1CPRINT("%f %f %f %f %f %f\n", Vdp1ParaA.deltaX,Vdp1ParaA.deltaY,Vdp1ParaA.deltaXst,Vdp1ParaA.deltaYst,Vdp1ParaA.Xst,Vdp1ParaA.Yst);
     rotate.m[0][0] = Vdp1ParaA.deltaX;
     rotate.m[0][1] = Vdp1ParaA.deltaY;
     rotate.m[1][0] = Vdp1ParaA.deltaXst;
     rotate.m[1][1] = Vdp1ParaA.deltaYst;
-    YglTranslatef(&rotate, -Vdp1ParaA.Xst, -Vdp1ParaA.Yst, 0.0f);
+		rotate.m[0][3] = Vdp1ParaA.Xst;
+		rotate.m[1][3] = -Vdp1ParaA.Yst;
+
     YglMatrixMultiply(&mat, &m, &rotate);
     YglLoadIdentity(&scale);
-    scale.m[0][0] = 1.0;
-    scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
-    scale.m[0][3] = 0.0;
-    scale.m[1][3] = 1.0 - scale.m[1][1];
+    // scale.m[0][0] = 1.0;
+    // scale.m[1][1] = 1.0 / (1.0 + Vdp1ParaA.deltaY);
+    // scale.m[0][3] = 0.0;
+    // scale.m[1][3] = 1.0 - scale.m[1][1];
+
     YglMatrixMultiply(&m, &scale, &mat);
-	}
+
+  }
   glUniformMatrix4fv(9, 1, 0, (GLfloat*)m.m);
 
 	vdp1_set_directFB();
+	vdp1_setup();
+
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	if (_Ygl->syncVdp1[_Ygl->drawframe] != 0) {
 		glDeleteSync(_Ygl->syncVdp1[_Ygl->drawframe]);
@@ -613,8 +675,17 @@ void vdp1_compute() {
 
 	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BI
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
+	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-
   return;
+}
+
+void vdp1_compute_reset(void) {
+	for(int i = 0; i<NB_PRG; i++) {
+		if(prg_vdp1[i] != 0) {
+			glDeleteProgram(prg_vdp1[i]);
+			prg_vdp1[i] = 0;
+		}
+	}
 }

@@ -227,6 +227,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.vsyncon = init->vsyncon;
+   yabsys.wireframe_mode = init->wireframe_mode;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
@@ -382,6 +383,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.NumThreads = init->numthreads;
    yabsys.usecache = init->usecache;
    yabsys.vsyncon = init->vsyncon;
+   yabsys.wireframe_mode = init->wireframe_mode;
    yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
@@ -487,6 +489,7 @@ int YabauseInit(yabauseinit_struct *init)
    VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, init->resolution_mode);
    VideoSetSetting(VDP_SETTING_ASPECT_RATIO, init->stretch);
    VideoSetSetting(VDP_SETTING_SCANLINE, init->scanline);
+   VideoSetSetting(VDP_SETTING_WIREFRAME, init->wireframe_mode);
    VideoSetSetting(VDP_SETTING_MESH_MODE, init->meshmode);
    VideoSetSetting(VDP_SETTING_COMPUTE_SHADER, init->use_cs);
 #endif
@@ -859,7 +862,7 @@ int YabauseEmulate(void) {
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");
-
+      VIDCore->setupFrame(0);
 #ifdef YAB_STATICS
 		 u64 current_cpu_clock = YabauseGetTicks();
 #endif
@@ -1227,6 +1230,7 @@ void YabauseSpeedySetup(void)
    ScuRegs->D1AD = ScuRegs->D2AD = 0;
    ScuRegs->D0EN = 0x101;
    ScuRegs->IST = 0x2006;
+   ScuRegs->ITEdge = 0x2006;
    ScuRegs->AIACK = 0x1;
    ScuRegs->ASR0 = ScuRegs->ASR1 = 0x1FF01FF0;
    ScuRegs->AREF = 0x1F;

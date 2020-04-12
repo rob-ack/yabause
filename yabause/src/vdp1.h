@@ -23,7 +23,6 @@
 
 #include "memory.h"
 #include "vdp2.h"
-//#define USE_VDP1_TEX
 
 #define VIDCORE_DEFAULT         -1
 #define VIDCORE_DUMMY           0
@@ -59,6 +58,8 @@ typedef struct {
    u16 userclipY1;
    u16 userclipX2;
    u16 userclipY2;
+
+
 } Vdp1;
 
 typedef struct
@@ -83,7 +84,7 @@ typedef struct
    void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
-   void(*Vdp1EraseWrite)(void);
+   void(*Vdp1EraseWrite)(int id);
    void(*Vdp1FrameChange)(void);
    // VDP2 specific
    int (*Vdp2Reset)(void);
@@ -94,6 +95,9 @@ typedef struct
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
    void (*composeFB)(Vdp2 *regs);
+   void (*composeVDP1)(void);
+   int (*setupFrame)(int);
+   void (*FinsihDraw)(void);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
@@ -127,12 +131,14 @@ typedef struct {
    int disptoggle;
    int manualerase;
    int manualchange;
-   int vblank_erase;
    int onecyclemode;
+   int useVBlankErase;
    int swap_frame_buffer;
    int plot_trigger_line;
    int plot_trigger_done;
    int current_frame;
+   int updateVdp1Ram;
+   int checkEDSR;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
@@ -144,9 +150,6 @@ typedef struct
   u32 w;
   u32 h;
   u32 flip;
-  u32 cor;
-  u32 cog;
-  u32 cob;
   u32 type;
   u32 CMDCTRL;
   u32 CMDLINK;
@@ -162,11 +165,16 @@ typedef struct
   s32 CMDYC;
   s32 CMDXD;
   s32 CMDYD;
-  s32 P[8];
   s32 B[4];
   u32 COLOR[4];
   u32 CMDGRDA;
   u32 SPCTL;
+  u32 nbStep;
+  float uAstepx;
+  float uAstepy;
+  float uBstepx;
+  float uBstepy;
+  u32 pad[2];
 } vdp1cmd_struct;
 
 int Vdp1Init(void);

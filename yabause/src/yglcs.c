@@ -36,14 +36,12 @@ extern int GlHeight;
 extern int GlWidth;
 
 extern int rebuild_frame_buffer;
-extern int rebuild_windows;
 extern void vdp1_wait_regenerate(void);
 
 extern int DrawVDP2Screen(Vdp2 *varVdp2Regs, int id);
 
 extern int YglGenFrameBuffer(int force);
 extern void YglUpdateVdp2Reg();
-extern void YglSetVdp2Window(Vdp2 *varVdp2Regs);
 extern SpriteMode setupBlend(Vdp2 *varVdp2Regs, int layer);
 extern int setupColorMode(Vdp2 *varVdp2Regs, int layer);
 extern int setupShadow(Vdp2 *varVdp2Regs, int layer);
@@ -253,7 +251,11 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
    YglUpdateVdp2Reg();
-   YglSetVdp2Window(varVdp2Regs);
+   if (_Ygl->needWinUpdate) {
+     YglSetWindow(0);
+     YglSetWindow(1);
+     _Ygl->needWinUpdate = 0;
+   }
    cprg = -1;
 
    glActiveTexture(GL_TEXTURE0);

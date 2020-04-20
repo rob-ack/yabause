@@ -2518,7 +2518,7 @@ endClose:
     return gameid;
 }
 
-int loadBios(){
+int loadBios(int id){
   FILE *fp;
   JZEndRecord endRecord;
   JZFile *zip;
@@ -2526,7 +2526,7 @@ int loadBios(){
   u8 isBiosFound = 0;
   rominfo info;
   info.filename = biosLink.path;
-  info.gameId = 0;
+  info.gameId = id;
   info.bios = 1;
   memset(fileFound, 0x0, NB_STV_GAMES*MAX_GAME_FILES);
   if(!(fp = fopen(biosLink.path, "rb"))) {
@@ -2567,7 +2567,7 @@ int loadGame(int gameId){
   info.filename = availableGames[gameId].path;
   info.gameId = gameId;
   info.bios = 0;
-  hasBios = loadBios();
+  hasBios = loadBios(gameId);
   biosloaded = 0xFF;
 
   LOGSTV("Loading game[%d] %s from %s\n", gameId, availableGames[gameId].entry->name, availableGames[gameId].path);
@@ -2778,7 +2778,7 @@ int STVSingleInit(const char *gamepath, const char *biospath, const char *eeprom
   return -1;
 }
 
-int STVInit(int id, const char *path){
+int STVInit(int id, const char *path, const char *eepromdir){
   cryptoReset();
   if (CartridgeArea->carttype != CART_ROMSTV) return 0;
 #ifndef __LIBRETRO__
@@ -2787,6 +2787,9 @@ int STVInit(int id, const char *path){
   if (nbGames <= id) return -1;
 #endif
   if (loadGame(id) == 0) {
+    char eeprom_path[4096];
+    snprintf(eeprom_path, sizeof(eeprom_path), "%s%s.nv", eepromdir, availableGames[id].entry->romset);
+    eeprom_init(eeprom_path);
     yabsys.isSTV = 1;
     return 0;
   }

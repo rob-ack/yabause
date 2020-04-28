@@ -62,70 +62,6 @@ typedef struct {
 
 } Vdp1;
 
-typedef struct
-{
-   int id;
-   const char *Name;
-   int (*Init)(void);
-   void (*DeInit)(void);
-   void (*Resize)(int,int,unsigned int, unsigned int, int);
-   int (*IsFullscreen)(void);
-   // VDP1 specific
-   int (*Vdp1Reset)(void);
-   void (*Vdp1Draw)();
-   void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1PolylineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1LineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
-   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
-   void(*Vdp1EraseWrite)(int id);
-   void(*Vdp1FrameChange)(void);
-   // VDP2 specific
-   int (*Vdp2Reset)(void);
-   void (*Vdp2Draw)(void);
-   void (*GetGlSize)(int *width, int *height);
-   void (*SetSettingValue)(int type, int value);
-   void(*Sync)();
-   void (*GetNativeResolution)(int *width, int *height, int * interlace);
-   void(*Vdp2DispOff)(void);
-   void (*composeFB)(Vdp2 *regs);
-   void (*composeVDP1)(void);
-   int (*setupFrame)(int);
-   void (*FinsihDraw)(void);
-} VideoInterface_struct;
-
-extern VideoInterface_struct *VIDCore;
-extern VideoInterface_struct VIDDummy;
-
-extern u8 * Vdp1Ram;
-extern int vdp1Ram_update_start;
-extern int vdp1Ram_update_end;
-
-
-u8 FASTCALL	Vdp1RamReadByte(SH2_struct *context, u8*, u32);
-u16 FASTCALL	Vdp1RamReadWord(SH2_struct *context, u8*, u32);
-u32 FASTCALL	Vdp1RamReadLong(SH2_struct *context, u8*, u32);
-void FASTCALL	Vdp1RamWriteByte(SH2_struct *context, u8*, u32, u8);
-void FASTCALL	Vdp1RamWriteWord(SH2_struct *context, u8*, u32, u16);
-void FASTCALL	Vdp1RamWriteLong(SH2_struct *context, u8*, u32, u32);
-u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *context, u8*, u32);
-u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8*, u32);
-u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8*, u32);
-void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8*, u32, u8);
-void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8*, u32, u16);
-void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8*, u32, u32);
-
-void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
-
-extern Vdp1 * Vdp1Regs;
-
 // struct for Vdp1 part that shouldn't be saved
 typedef struct {
    int disptoggle;
@@ -176,6 +112,83 @@ typedef struct
   float uBstepy;
   u32 pad[2];
 } vdp1cmd_struct;
+
+typedef struct{
+  vdp1cmd_struct cmd;
+  int ignitionLine;
+  int completionLine;
+  int start_addr;
+  int end_addr;
+  int dirty;
+} vdp1cmdctrl_struct;
+
+typedef struct
+{
+   int id;
+   const char *Name;
+   int (*Init)(void);
+   void (*DeInit)(void);
+   void (*Resize)(int,int,unsigned int, unsigned int, int);
+   int (*IsFullscreen)(void);
+   // VDP1 specific
+   int (*Vdp1Reset)(void);
+   void (*Vdp1Draw)();
+   void(*Vdp1NormalSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+   void(*Vdp1ScaledSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1DistortedSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolygonDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolylineDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1LineDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
+   void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
+   void(*Vdp1EraseWrite)(int id);
+   void(*Vdp1FrameChange)(void);
+   void(*Vdp1RegenerateCmd)(vdp1cmd_struct* cmd);
+   // VDP2 specific
+   int (*Vdp2Reset)(void);
+   void (*Vdp2Draw)(void);
+   void (*GetGlSize)(int *width, int *height);
+   void (*SetSettingValue)(int type, int value);
+   void(*Sync)();
+   void (*GetNativeResolution)(int *width, int *height, int * interlace);
+   void(*Vdp2DispOff)(void);
+   void (*composeFB)(Vdp2 *regs);
+   void (*composeVDP1)(void);
+   int (*setupFrame)(int);
+   void (*FinsihDraw)(void);
+} VideoInterface_struct;
+
+extern VideoInterface_struct *VIDCore;
+extern VideoInterface_struct VIDDummy;
+
+extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
+extern int nbCmdToProcess;
+
+extern u8 * Vdp1Ram;
+extern int vdp1Ram_update_start;
+extern int vdp1Ram_update_end;
+
+
+u8 FASTCALL	Vdp1RamReadByte(SH2_struct *context, u8*, u32);
+u16 FASTCALL	Vdp1RamReadWord(SH2_struct *context, u8*, u32);
+u32 FASTCALL	Vdp1RamReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL	Vdp1RamWriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL	Vdp1RamWriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL	Vdp1RamWriteLong(SH2_struct *context, u8*, u32, u32);
+u8 FASTCALL Vdp1FrameBufferReadByte(SH2_struct *context, u8*, u32);
+u16 FASTCALL Vdp1FrameBufferReadWord(SH2_struct *context, u8*, u32);
+u32 FASTCALL Vdp1FrameBufferReadLong(SH2_struct *context, u8*, u32);
+void FASTCALL Vdp1FrameBufferWriteByte(SH2_struct *context, u8*, u32, u8);
+void FASTCALL Vdp1FrameBufferWriteWord(SH2_struct *context, u8*, u32, u16);
+void FASTCALL Vdp1FrameBufferWriteLong(SH2_struct *context, u8*, u32, u32);
+
+void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
+void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs);
+
+extern Vdp1 * Vdp1Regs;
 
 int Vdp1Init(void);
 void Vdp1DeInit(void);

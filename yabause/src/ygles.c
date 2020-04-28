@@ -106,6 +106,26 @@ static void MessageCallback( GLenum source,
 }
 #endif
 
+static int GLCapabilities = -1;
+static int getCSUsage() {
+  if (GLCapabilities == -1) {
+    int min, maj;
+    glGetIntegerv(GL_MAJOR_VERSION, &maj);
+    glGetIntegerv(GL_MINOR_VERSION, &min);
+
+    #if defined(_OGLES3_)
+      if ((maj >=2) && (min >=0)) GLCapabilities = 0;
+      if ((maj >=3) && (min >=0)) GLCapabilities = 1;
+      if ((maj >=3) && (min >=1)) GLCapabilities = 2;
+    #else
+      if ((maj >=3) && (min >=3)) GLCapabilities = 0;
+      if ((maj >=4) && (min >=2)) GLCapabilities = 1;
+      if ((maj >=4) && (min >=3)) GLCapabilities = 2;
+    #endif
+  }
+  return GLCapabilities;
+}
+
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz)
 {
     result->m[0][0] *= sx;
@@ -864,7 +884,7 @@ void YglGenerate() {
 
   warning = 0;
   YglDestroy();
-  vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  if (getCSUsage() == 2) vdp1_compute_init( _Ygl->vdp1width, _Ygl->vdp1height, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   glGenTextures(2, _Ygl->vdp1FrameBuff);
@@ -1268,20 +1288,7 @@ void initLevels(YglLevel** levels, int size) {
     }
   }
 }
-static int getVdp2CSUsage() {
-#ifndef VDP2_BLIT_CS
-  return 0;
-#endif
-  int min, maj;
-  glGetIntegerv(GL_MAJOR_VERSION, &maj);
-  glGetIntegerv(GL_MINOR_VERSION, &min);
-  #if defined(_OGLES3_)
-      if ((maj >=3) && (min >=1)) return 1;
-  #else
-      if ((maj >=4) && (min >=3))  return 1;
-  #endif
-  return 0;
-}
+
 //////////////////////////////////////////////////////////////////////////////
 int YglInit(int width, int height, unsigned int depth) {
   unsigned int i,j;
@@ -1333,10 +1340,12 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->vdp1height = 256;
   _Ygl->widthRatio = 1.0f;
   _Ygl->heightRatio = 1.0f;
-  _Ygl->density = 1;
   _Ygl->resolution_mode = RES_ORIGINAL;
   _Ygl->rbg_use_compute_shader = 0;
-  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && (getCSUsage() == 2);
+#ifndef VDP2_BLIT_CS
+  _Ygl->vdp2_use_compute_shader = 0;
+#endif
 
   initLevels(&_Ygl->vdp2levels, SPRITE);
   initLevels(&_Ygl->vdp1levels, 2);
@@ -1418,7 +1427,7 @@ int YglInit(int width, int height, unsigned int depth) {
   YglTM_vdp1[1] = YglTMInit(1024, 1024);
   YglTM_vdp2 = YglTMInit(1024, 1024);
 
-  vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
+  if (getCSUsage() == 2) vdp1_compute_init(512.0f, 256.0f, _Ygl->vdp1wratio,_Ygl->vdp1hratio);
 
   _Ygl->vdp2buf = (u8*)malloc(512 * sizeof(int)* NB_VDP2_REG);
 
@@ -2558,11 +2567,14 @@ static void waitVdp1End(int id) {
   }
 }
 
+
 void executeTMVDP1(int in, int out) {
   YglUpdateVDP1FB();
+  int switchTM = 0;
   if (_Ygl->needVdp1Render != 0){
-    _Ygl->needVdp1Render = 0;
+    switchTM = 1;
     YglTmPush(YglTM_vdp1[in]);
+    _Ygl->needVdp1Render = 0;
     //YuiUseOGLOnThisThread();
     YglRenderVDP1();
     //YuiRevokeOGLOnThisThread();
@@ -2570,8 +2582,15 @@ void executeTMVDP1(int in, int out) {
     YglReset(_Ygl->vdp1levels[out]);
     YglTmPull(YglTM_vdp1[out], 0);
   }
+  if ((in != out) && (switchTM==0)) {
+    YglTmPush(YglTM_vdp1[in]);
+    YglTmPull(YglTM_vdp1[out], 0);
+  }
 }
 
+void YglComposeVdp1(void) {
+  executeTMVDP1(_Ygl->drawframe, _Ygl->drawframe);
+}
 //////////////////////////////////////////////////////////////////////////////
 void YglFrameChangeVDP1(){
   u32 current_drawframe = 0;
@@ -2771,7 +2790,7 @@ if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NB_VDP2_REG * 512, 1, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, NB_VDP2_REG, 512, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -2793,7 +2812,7 @@ void YglSetVDP2Reg(u8 * pbuf, int start, int size){
     glBindTexture(GL_TEXTURE_2D, _Ygl->vdp2reg_tex);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, _Ygl->vdp2reg_pbo);
     glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-    glTexSubImage2D(GL_TEXTURE_2D, 0, NB_VDP2_REG * start, 0, NB_VDP2_REG * size, 1, GL_RED, GL_UNSIGNED_BYTE, 0);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, NB_VDP2_REG * start, 0, NB_VDP2_REG, size, GL_RED, GL_UNSIGNED_BYTE, 0);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     _Ygl->vdp2reg_buf = NULL;
     glBindTexture(GL_TEXTURE_2D, 0 );
@@ -3703,13 +3722,15 @@ void setupMaxSize() {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglChangeResolution(int w, int h) {
-  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && getVdp2CSUsage();
+  _Ygl->vdp2_use_compute_shader = _Ygl->rbg_use_compute_shader && (getCSUsage() == 2);
+#ifndef VDP2_BLIT_CS
+  _Ygl->vdp2_use_compute_shader = 0;
+#endif
   YglLoadIdentity(&_Ygl->mtxModelView);
   YglLoadIdentity(&_Ygl->rbgModelView);
   float ratio = (float)w/(float)h;
   int par = w/h;
   releaseVDP1FB();
-       YGLDEBUG("YglChangeResolution %d,%d\n",w,h);
        if (_Ygl->smallfbo != 0) {
          glDeleteFramebuffers(1, &_Ygl->smallfbo);
          _Ygl->smallfbo = 0;
@@ -3738,29 +3759,43 @@ void YglChangeResolution(int w, int h) {
        _Ygl->upfbotex = 0;
      }
      int scale = 1;
+     int upHeight = 4096;
+     int uh = h;
+     int uw = w;
+     if (_Ygl->vdp2wdensity / _Ygl->vdp2hdensity != 1.0) {
+       uh = h * _Ygl->vdp2wdensity; //uniformize density
+       uw = w * _Ygl->vdp2hdensity; //uniformize density
+     }
+     int maxRes = GlHeight;
      switch (_Ygl->resolution_mode) {
        case RES_480p: //480p
-        scale = floor(480.0/(float)h);
+          scale = floor(480.0/(float)uh);
        break;
        case RES_720p: //720p
-        scale = floor(720.0/(float)h);
+        scale = floor(720.0/(float)uh);
        break;
        case RES_1080p: //1080p
-        scale = floor(1080.0/(float)h);
+        scale = floor(1080.0/(float)uh);
        break;
        case RES_NATIVE: //Native
-        scale = floor(GlHeight/(float)h);
+        if ((GlHeight * uw) > (GlWidth * uh)) {
+          maxRes = GlWidth * uh / uw;
+        }
+        scale = floor(maxRes/(float)uh);
        break;
        case RES_ORIGINAL: //Original
        default:
         scale = 1;
      }
-     if (scale == 0) scale = 1;
+     if (scale == 0){
+       scale = 1;
+     };
      _Ygl->rwidth = w;
      _Ygl->rheight = h;
-     _Ygl->height = h * scale *_Ygl->vdp2wdensity/_Ygl->vdp2hdensity;
-     _Ygl->width = w * scale;
+     _Ygl->height = uh * scale;
+     _Ygl->width = uw * scale;
 
+     YGLDEBUG("YglChangeResolution %dx%d => %d => %dx%d (%.1f,%.1f) (%d %d)\n",w,h, scale, _Ygl->width, _Ygl->height,_Ygl->vdp2wdensity,_Ygl->vdp2hdensity, uw, uh);
 
   // Texture size for vdp1
   _Ygl->vdp1width = 512*scale*_Ygl->vdp1wdensity;
@@ -3781,10 +3816,6 @@ void YglChangeResolution(int w, int h) {
   if (_Ygl->rwidth >= 640) _Ygl->widthRatio *= 2.0f;
 
   YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
-}
-
-void YglSetDensity(int d) {
-  _Ygl->density = d;
 }
 
 void VIDOGLSync(){

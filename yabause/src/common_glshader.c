@@ -407,35 +407,29 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
  Color calculation option
   hard/vdp2/hon/p09_21.htm
 */
-static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
+static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " tmpColor.a = float(alpha|0x1)/255.0;\n";
 
-static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > u_cctl ){ fbmode = 2;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != u_cctl ){ fbmode = 2;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < u_cctl ){ fbmode = 2;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "//No Color calculation\n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-" if (fbmode == 1) vdp1mode = 2; \n";
+" tmpColor.a = float(alpha|0x2)/255.0; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-" if (fbmode == 1) vdp1mode = 3; \n";
+" tmpColor.a = float(alpha|0x3)/255.0; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-" if (fbmode == 1) vdp1mode = 4; \n";
+" tmpColor.a = float(alpha|0x4)/255.0; \n";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
-"   if (fbmode == 2) vdp1mode = 5; \n"
-" }\n"
-" tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " ret.color = tmpColor;\n"
 " ret.prio = depth;\n"
 " return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_common_start[] =
-
-"int fbmode = 1;\n"
-"int vdp1mode = 1;\n"
 
 "vec4 FBColor = vec4(0.0);\n"
 "vec4 vdp2col0 = vec4(0.0);\n"
@@ -519,6 +513,11 @@ static const GLchar Yglprg_vdp2_common_start[] =
 " ret.b = float(((colindex & 0x7C00) >> 10) & 0x1F)/31.0;\n"
 " return ret;\n"
 "}\n"
+
+"vec4 getColoredPixel(int idx){ \n"
+"  return texelFetch( s_color,  ivec2( idx ,0 )  , 0 );"
+"}\n"
+
 "vec2 getVec2(int colindex) {\n"
 " vec2 ret;\n"
 " ret.x = float(colindex & 0xFF)/255.0;\n"
@@ -531,9 +530,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
 "  if (fbon != 1) return ret;\n"
-"  int u_color_ram_offset = getVDP2Reg(23+line)<<8;\n"
-"  fbmode = 1;\n"
-"  vdp1mode = 1;\n"
+"  int u_color_ram_offset = getVDP2Reg(23, line)<<8;\n"
+"  if (ram_mode != 1) u_color_ram_offset = u_color_ram_offset & 0x300;\n"
 "  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
 "  fbCoord = ivec2(getFBCoord(vec2(fbCoord)));\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
@@ -542,11 +540,11 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  mesh = getVDP1PixelCode(col.ba);"
 "  if (mesh.valid != 0) { \n"
 "    vec4 meshcol=vec4(0.0,0.0,0.0,1.0);\n"
-"    int meshdepth = getVDP2Reg(mesh.prio+8+line);\n"
+"    int meshdepth = getVDP2Reg(mesh.prio+8, line);\n"
 "    if( mesh.isRGB == 0 ){ \n"// index color?
 "      if( mesh.code != 0 || meshdepth != 0){\n"
 "        mesh.code = mesh.code + u_color_ram_offset; \n"
-"        meshcol = texelFetch( s_color,  ivec2( mesh.code ,0 )  , 0 );\n"
+"        meshcol = getColoredPixel(mesh.code); \n"
 "      } else { \n"
 "        meshcol = vec4(0.0);\n"
 "      }\n"
@@ -559,9 +557,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  };\n"
 "  if(ret.valid == 0){ return ret;} // show? \n"
 "  vec4 tmpColor = vec4(0.0);\n"
-"  int u_cctl = getVDP2Reg(16+line);\n"
-"  int depth = getVDP2Reg(ret.prio+8+line);\n"
-"  int alpha = getVDP2Reg(ret.cc+line)<<3; \n"
+"  int depth = getVDP2Reg(ret.prio+8, line);\n"
+"  int alpha = getVDP2Reg(ret.cc,line)<<3; \n"
 "  int opaque = 0xF8;\n"
 "  int tmpmesh = 0;\n"
 "  int msb = 0;\n" //RGB will have msb set
@@ -569,7 +566,7 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  if( ret.isRGB == 0 ){  // index color? \n"
 "    if( ret.code != 0 || depth != 0){\n"
 "      ret.code = ret.code + u_color_ram_offset; \n"
-"      txcol = texelFetch( s_color,  ivec2( ret.code ,0 )  , 0 );\n"
+"      txcol = getColoredPixel(ret.code); \n"
 "      tmpColor = txcol;\n"
 "      if (txcol.a != 0.0) msb = 1;\n"
 "      else msb = 0;\n"
@@ -581,9 +578,8 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    tmpColor = ret.color;\n"
 "    msb = 1;\n"
 "  } \n"
-"  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]),0 ).rgb;\n"
-"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n"
-"  if (fbmode != 0) {\n";
+"  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]), 0 ).rgb;\n"
+"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n";
 
 static const GLchar Yglprg_vdp2_common_end[] =
 "ivec2 startW0 = ivec2(0);\n"
@@ -678,7 +674,7 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  int alpha; \n"
 "  if ((fbon == 1) && (prio == FBPrio) && inWindow(6)) {\n"
 "    ret.mode = int(FBColor.a*255.0)&0x7; \n"
-"    ret.lncl = u_lncl[6];\n"
+"    ret.lncl = (u_lncl>>6)&0x1;\n"
 "    ret.Color = FBColor; \n"
 "    ret.offset_color = offcolFB;\n"
 "    remPrio = remPrio - 1;\n"
@@ -697,11 +693,11 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  priority = int(tmpColor.a*255.0)&0x7; \n"
 "  if ((priority == prio) && inWindow(0)) {\n"
 "    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[0];\n"
+"    ret.lncl=(u_lncl>>0)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[0];\n"
 "    ret.Color = tmpColor; \n"
-"    ret.isRGB = isRGB[0];\n"
-"    ret.normalShadow = (isShadow[0] != 0);\n"
+"    ret.isRGB = (isRGB>>0)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>0)&0x1)!= 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[0]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -714,10 +710,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  priority = int(tmpColor.a*255.0)&0x7; \n"
 "  if ((priority == prio) && inWindow(1)) {\n"
 "    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[1];\n"
+"    ret.lncl=(u_lncl>>1)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[1];\n"
-"    ret.isRGB = isRGB[1];\n"
-"    ret.normalShadow = (isShadow[1] != 0);\n"
+"    ret.isRGB = (isRGB>>1)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>1)&0x1)!= 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[1]; \n"
@@ -731,10 +727,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  priority = int(tmpColor.a*255.0)&0x7; \n"
 "  if ((priority == prio) && inWindow(2)) {\n"
 "    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[2];\n"
+"    ret.lncl=(u_lncl>>2)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[2];\n"
-"    ret.isRGB = isRGB[2];\n"
-"    ret.normalShadow = (isShadow[2] != 0);\n"
+"    ret.isRGB = (isRGB>>2)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>2)&0x1)!= 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[2]; \n"
@@ -748,10 +744,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  priority = int(tmpColor.a*255.0)&0x7; \n"
 "  if ((priority == prio) && inWindow(3)) {\n"
 "    remPrio = remPrio - 1;\n"
-"    ret.lncl=u_lncl[3];\n"
+"    ret.lncl=(u_lncl>>3)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[3];\n"
-"    ret.isRGB = isRGB[3];\n"
-"    ret.normalShadow = (isShadow[3] != 0);\n"
+"    ret.isRGB = (isRGB>>3)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>3)&0x1)!= 0);\n"
 "    ret.Color = tmpColor; \n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[3]; \n"
@@ -766,10 +762,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  if ((priority == prio) && inWindow(4)) {\n"
 "    remPrio = remPrio - 1;\n"
 "    ret.Color = tmpColor; \n"
-"    ret.lncl=u_lncl[4];\n"
+"    ret.lncl=(u_lncl>>4)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[4];\n"
-"    ret.isRGB = isRGB[4];\n"
-"    ret.normalShadow = (isShadow[4] != 0);\n"
+"    ret.isRGB = (isRGB>>4)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>4)&0x1)!= 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[4]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -783,10 +779,10 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  if ((priority == prio) && inWindow(5)) {\n"
 "    remPrio = remPrio - 1;\n"
 "    ret.Color = tmpColor; \n"
-"    ret.lncl=u_lncl[5];\n"
+"    ret.lncl=(u_lncl>>5)&0x1;\n"
 "    ret.lncl_off = is_lncl_off[5];\n"
-"    ret.isRGB = isRGB[5];\n"
-"    ret.normalShadow = (isShadow[5] != 0);\n"
+"    ret.isRGB = (isRGB>>5)&0x1;\n"
+"    ret.normalShadow = (((isShadow>>5)&0x1)!= 0);\n"
 "    alpha = int(ret.Color.a*255.0)&0xF8; \n"
 "    ret.mode = mode[5]; \n"
 "    ret.Color.a = float(alpha>>3)/31.0; \n"
@@ -870,7 +866,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
 "  colorback = texelFetch( s_back, addr,0 ); \n"
 "  ivec2 linepos = ivec2(int( (u_vheight-PosY) * u_emu_height), 0); \n "
-"  linepos.y = is_perline[7]; \n "
+"  linepos.y = is_perline[7];\n"
 "  offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n"
 "  offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n"
 "  addr = ivec2(tvSize * vdp1Ratio * v_texcoord.st); \n"
@@ -895,7 +891,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[0] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[0] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col0 = getPixel( s_texture0, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[0]; \n "
+"    linepos.y = is_perline[0];\n"
 "    offcol0 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol0 == vec4(0.0)) vdp2col0 = vec4(0.0);\n"
 "    else { \n"
@@ -907,7 +903,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[1] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[1] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col1 = getPixel( s_texture1, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[1]; \n "
+"    linepos.y = is_perline[1];\n"
 "    offcol1 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol1 == vec4(0.0)) vdp2col1 = vec4(0.0);\n"
 "    else { \n"
@@ -919,7 +915,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[2] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[2] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col2 = getPixel( s_texture2, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[2]; \n "
+"    linepos.y = is_perline[2];\n"
 "    offcol2 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol2 == vec4(0.0)) vdp2col2 = vec4(0.0);\n"
 "    else { \n"
@@ -932,7 +928,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[3] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[3] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col3 = getPixel( s_texture3, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[3]; \n "
+"    linepos.y = is_perline[3];\n"
 "    offcol3 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol3 == vec4(0.0)) vdp2col3 = vec4(0.0);\n"
 "    else { \n"
@@ -944,7 +940,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[4] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[4] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col4 = getPixel( s_texture4, v_texcoord.st, 0 , 0); \n"
-"    linepos.y = is_perline[4]; \n "
+"    linepos.y = is_perline[4];\n"
 "    offcol4 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol4 == vec4(0.0)) vdp2col4 = vec4(0.0);\n"
 "    else { \n"
@@ -956,7 +952,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "    if (is_lncl_off[5] == 1) needColorOffRBG0 = true;\n"
 "    if (is_lncl_off[5] == 2) needColorOffRBG1 = true;\n"
 "    vdp2col5 = getPixel( s_texture5, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[5]; \n "
+"    linepos.y = is_perline[5];\n"
 "    offcol5 = texelFetch( s_perline, linepos,0 );\n"
 "    if (offcol5 == vec4(0.0)) vdp2col5 = vec4(0.0);\n"
 "    else { \n"
@@ -1034,7 +1030,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "            alphatop = prio.Color.a; \n"
 "            offset_color = prio.offset_color;\n"
 "            foundColor1 = 1; \n"
-"            if (isBlur[prio.layer] != 0) { \n"
+"            if (((isBlur>>prio.layer)&0x1) != 0) { \n"
 "              Col blur = getBlur(addr, prio, v_texcoord.st);"
 "              modesecond = blur.mode&0x7; \n"
 "              colorsecond = blur.Color; \n"
@@ -1064,7 +1060,7 @@ static const GLchar Yglprg_vdp2_common_final[]=
 "            alphasecond = prio.Color.a; \n"
 "            isRGBsecond = prio.isRGB; \n"
 "            foundColor2 = 1; \n"
-"            if (isBlur[prio.layer] != 0) { \n"
+"            if (((isBlur>>prio.layer)&0x1) != 0) { \n"
 "              Col blur = getBlur(addr, prio, v_texcoord.st);"
 "              modesecond = blur.mode&0x7; \n"
 "              colorsecond = blur.Color; \n"

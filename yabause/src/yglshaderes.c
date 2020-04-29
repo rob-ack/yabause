@@ -35,9 +35,6 @@
 
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
 
-#define QuoteIdent(ident) #ident
-#define Stringify(macro) QuoteIdent(macro)
-
 static int saveFB;
 static void Ygl_useTmpBuffer();
 static void Ygl_releaseTmpBuffer(void);
@@ -933,7 +930,7 @@ typedef struct  {
   int idcram;
 } DrawFrameBufferUniform;
 
-#define MAX_FRAME_BUFFER_UNIFORM (128*5)
+#define MAX_FRAME_BUFFER_UNIFORM (BLIT_TEXTURE_NB_PROG)
 
 DrawFrameBufferUniform g_draw_framebuffer_uniforms[MAX_FRAME_BUFFER_UNIFORM];
 
@@ -963,70 +960,181 @@ refrence:
   hard/vdp2/hon/p12_14.htm#CCCTL_
 
 */
+#define COMMON_START "\
+in vec2 v_texcoord; \n \
+out vec4 finalColor; \n \
+uniform sampler2D s_back;  \n \
+uniform sampler2D s_lncl;  \n \
+uniform sampler2D s_lncl_off_rgb0;  \n \
+uniform sampler2D s_lncl_off_rgb1;  \n \
+uniform sampler2D s_vdp1FrameBuffer;\n \
+uniform sampler2D s_win0;  \n \
+uniform sampler2D s_win1;  \n \
+uniform sampler2D s_color; \n \
+uniform sampler2D s_vdp2reg; \n \
+uniform sampler2D s_perline; \n \
+uniform float u_emu_height;\n \
+uniform float u_emu_vdp1_width;\n \
+uniform float u_emu_vdp2_width;\n \
+uniform float u_vheight; \n \
+uniform vec2 vdp1Ratio; \n \
+uniform int ram_mode; \n \
+uniform int extended_cc; \n \
+uniform int u_lncl;  \n \
+uniform int isRGB; \n \
+uniform int isBlur; \n \
+uniform int isShadow; \n \
+uniform int is_perline[8];\n \
+uniform int mode[7];  \n \
+uniform int is_lncl_off[6]; \n \
+uniform int use_sp_win; \n \
+uniform int use_trans_shadow; \n \
+uniform ivec2 tvSize;\n \
+uniform int win_s; \n \
+uniform int win_s_mode; \n \
+uniform int win0; \n \
+uniform int win0_mode; \n \
+uniform int win1; \n \
+uniform int win1_mode; \n \
+uniform int win_op; \n \
+int PosY = int(gl_FragCoord.y)+1;\n \
+int PosX = int(gl_FragCoord.x);\n \
+vec2 getFBCoord(vec2 pos) {\n \
+ return pos;\n \
+"
 
+#define SAMPLER_TEX(ID) "\
+uniform sampler2D s_texture"Stringify(ID)";\n \
+"
 //--------------------------------------------------------------------------------------------------------------
-static const char vdp2blit_gl_start_f[] =
+static const char vdp2blit_gl_start_f_6[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
 "precision highp float; \n"
 "#endif\n"
-"in vec2 v_texcoord; \n"
-"out vec4 finalColor; \n"
-"uniform sampler2D s_texture0;  \n"
-"uniform sampler2D s_texture1;  \n"
-"uniform sampler2D s_texture2;  \n"
-"uniform sampler2D s_texture3;  \n"
-"uniform sampler2D s_texture4;  \n"
-"uniform sampler2D s_texture5;  \n"
-"uniform sampler2D s_back;  \n"
-"uniform sampler2D s_lncl;  \n"
-"uniform sampler2D s_lncl_off_rgb0;  \n"
-"uniform sampler2D s_lncl_off_rgb1;  \n"
-"uniform sampler2D s_vdp1FrameBuffer;\n"
-"uniform sampler2D s_win0;  \n"
-"uniform sampler2D s_win1;  \n"
-"uniform sampler2D s_color; \n"
-"uniform sampler2D s_vdp2reg; \n"
-"uniform sampler2D s_perline; \n"
-"uniform float u_emu_height;\n"
-"uniform float u_emu_vdp1_width;\n"
-"uniform float u_emu_vdp2_width;\n"
-"uniform float u_vheight; \n"
-"uniform vec2 vdp1Ratio; \n"
-"uniform int fbon; \n"
-"uniform int screen_nb; \n"
-"uniform int ram_mode; \n"
-"uniform int extended_cc; \n"
-"uniform int u_lncl;  \n"
-"uniform int isRGB; \n"
-"uniform int isBlur; \n"
-"uniform int isShadow; \n"
-"uniform int is_perline[8];\n"
-"uniform int mode[7];  \n"
-"uniform int is_lncl_off[6]; \n"
-"uniform int use_sp_win; \n"
-"uniform int use_trans_shadow; \n"
-"uniform ivec2 tvSize;\n"
-"uniform int win_s[8]; \n"
-"uniform int win_s_mode[8]; \n"
-"uniform int win0[8]; \n"
-"uniform int win0_mode[8]; \n"
-"uniform int win1[8]; \n"
-"uniform int win1_mode[8]; \n"
-"uniform int win_op[8]; \n"
 #ifdef DEBUG_BLIT
 "out vec4 topColor; \n"
 "out vec4 secondColor; \n"
 "out vec4 thirdColor; \n"
 "out vec4 fourthColor; \n"
 #endif
-"int PosY = int(gl_FragCoord.y)+1;\n"
-"int PosX = int(gl_FragCoord.x);\n"
-
-"vec2 getFBCoord(vec2 pos) {\n"
-" return pos;\n"
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+SAMPLER_TEX(4)
+SAMPLER_TEX(5)
+COMMON_START
 "}\n";
-;
+
+static const char vdp2blit_gl_start_f_5[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+SAMPLER_TEX(4)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_4[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+SAMPLER_TEX(3)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_3[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+SAMPLER_TEX(2)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_2[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+SAMPLER_TEX(1)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_1[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+SAMPLER_TEX(0)
+COMMON_START
+"}\n";
+
+static const char vdp2blit_gl_start_f_0[] =
+SHADER_VERSION
+"#ifdef GL_ES\n"
+"precision highp float; \n"
+"#endif\n"
+#ifdef DEBUG_BLIT
+"out vec4 topColor; \n"
+"out vec4 secondColor; \n"
+"out vec4 thirdColor; \n"
+"out vec4 fourthColor; \n"
+#endif
+COMMON_START
+"}\n";
+
+const GLchar * vdp2blit_gl_start_f[7]= {
+  vdp2blit_gl_start_f_0,
+  vdp2blit_gl_start_f_1,
+  vdp2blit_gl_start_f_2,
+  vdp2blit_gl_start_f_3,
+  vdp2blit_gl_start_f_4,
+  vdp2blit_gl_start_f_5,
+  vdp2blit_gl_start_f_6
+};
 
 const GLchar Yglprg_vdp2_drawfb_gl_cram_f[] =
 "int getVDP2Reg(int id, int line) {\n"
@@ -1181,11 +1289,11 @@ int YglInitDrawFrameBufferShaders(int id, int CS) {
 *  VDP2 Draw Frame buffer Operation( Shadow drawing for ADD color mode )
 * ----------------------------------------------------------------------------------*/
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs)
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, int nb_screen, Vdp2* varVdp2Regs)
 {
    int arrayid;
 
-   int pgid = setupVDP2Prog(varVdp2Regs, 0);
+   int pgid = setupVDP2Prog(varVdp2Regs, nb_screen, 0);
 
   arrayid = pgid - PG_VDP2_DRAWFRAMEBUFF_NONE;
 
@@ -1552,7 +1660,7 @@ void YglUpdateLineColorOffset(int id){
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int Win_s, int Win_s_mode, int Win0, int Win0_mode, int Win1, int Win1_mode, int Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -1582,7 +1690,14 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 
     glBindVertexArray(_Ygl->vao);
 
-    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, varVdp2Regs );
+    int id = 0;
+    for (int i=0; i<nbScreen; i++) {
+      if (prioscreens[i] != 0) {
+        id++;
+      }
+    }
+
+    vdp2blit_prg = Ygl_uniformVDP2DrawFramebuffer(offsetcol, id, varVdp2Regs );
 
 
   int gltext[19] = {GL_TEXTURE0, GL_TEXTURE1, GL_TEXTURE2, GL_TEXTURE3, GL_TEXTURE4, GL_TEXTURE5, GL_TEXTURE6, GL_TEXTURE7, GL_TEXTURE8, GL_TEXTURE9, GL_TEXTURE10, GL_TEXTURE11, GL_TEXTURE12, GL_TEXTURE13, GL_TEXTURE14, GL_TEXTURE15, GL_TEXTURE16, GL_TEXTURE17, GL_TEXTURE18};
@@ -1620,12 +1735,22 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
 #endif
     glBindFragDataLocation(vdp2blit_prg, 0, "finalColor");
 #endif
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture3"), 3);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture4"), 4);
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
+  switch(id){
+    case 6:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture5"), 5);
+    case 5:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture4"), 4);
+    case 4:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture3"), 3);
+    case 3:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture2"), 2);
+    case 2:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture1"), 1);
+    case 1:
+      glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_texture0"), 0);
+    default:
+      break;
+  }
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_back"), 7);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_lncl"), 8);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "s_win0"), 14);
@@ -1638,7 +1763,6 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_emu_vdp2_width"),(float)(_Ygl->width) / (float)(_Ygl->rwidth));
   glUniform1f(glGetUniformLocation(vdp2blit_prg, "u_vheight"), (float)_Ygl->height);
   glUniform2f(glGetUniformLocation(vdp2blit_prg, "vdp1Ratio"), _Ygl->vdp1wratio, _Ygl->vdp1hratio);//((float)_Ygl->rwidth*(float)_Ygl->vdp1wratio * (float)_Ygl->vdp1wdensity)/((float)_Ygl->vdp1width*(float)_Ygl->vdp2wdensity), ((float)_Ygl->rheight*(float)_Ygl->vdp1hratio * (float)_Ygl->vdp1hdensity)/((float)_Ygl->vdp1height * (float)_Ygl->vdp2hdensity));
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "fbon"), (_Ygl->vdp1On[_Ygl->readframe] != 0));
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "ram_mode"), Vdp2Internal.ColorMode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "extended_cc"), ((varVdp2Regs->CCCTL & 0x8400) == 0x400) );
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "u_lncl"),lncl_val); //_Ygl->prioVa
@@ -1659,13 +1783,13 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   // };
   // glUniformMatrix3fv(glGetUniformLocation(vdp2blit_prg, "MatRot"), 1, GL_FALSE, rotMat);
   // glUniform3f(glGetUniformLocation(vdp2blit_prg, "C"), Vdp1ParaA.Cx, Vdp1ParaA.Cy, Vdp1ParaA.Cz);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s"), enBGMAX+1, Win_s);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), enBGMAX+1, Win_s_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0"), enBGMAX+1, Win0);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win0_mode"), enBGMAX+1, Win0_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1"), enBGMAX+1, Win1);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win1_mode"), enBGMAX+1, Win1_mode);
-  glUniform1iv(glGetUniformLocation(vdp2blit_prg, "win_op"), enBGMAX+1, Win_op);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_s"), Win_s);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_s_mode"), Win_s_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win0"), Win0);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win0_mode"), Win0_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1"), Win1);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1_mode"), Win1_mode);
+  glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_op"), Win_op);
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -1688,15 +1812,12 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glActiveTexture(GL_TEXTURE16);
   glBindTexture(GL_TEXTURE_2D, _Ygl->coloroffset_tex);
 
-  int id = 0;
   for (int i=0; i<nbScreen; i++) {
     if (prioscreens[i] != 0) {
       glActiveTexture(gltext[i]);
       glBindTexture(GL_TEXTURE_2D, prioscreens[i]);
-      id++;
     }
   }
-  glUniform1i(glGetUniformLocation(vdp2blit_prg, "screen_nb"), id);
 
   glActiveTexture(gltext[7]);
   glBindTexture(GL_TEXTURE_2D, _Ygl->back_fbotex[0]);

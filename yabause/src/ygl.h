@@ -275,6 +275,8 @@ typedef struct {
 extern YglTextureManager * YglTM_vdp1[2];
 extern YglTextureManager * YglTM_vdp2;
 
+extern int getCSUsage();
+
 YglTextureManager * YglTMInit(unsigned int, unsigned int);
 void YglTMDeInit(YglTextureManager ** tm );
 void YglTMReset( YglTextureManager * tm );
@@ -294,6 +296,8 @@ void setupMaxSize();
 void YglCheckFBSwitch(int sync);
 
 #define VDP2_CC_NONE 0x00
+
+#define BLIT_TEXTURE_NB_PROG (16*2*4*14*5)
 
 enum
 {
@@ -315,12 +319,12 @@ enum
 
 
    PG_VDP2_DRAWFRAMEBUFF_NONE=512,
-   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128),
-   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*2),
-   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*3),
-   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+128*4),
+   PG_VDP2_DRAWFRAMEBUFF_LESS_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+1),
+   PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+2),
+   PG_VDP2_DRAWFRAMEBUFF_MORE_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+3),
+   PG_VDP2_DRAWFRAMEBUFF_MSB_NONE=(PG_VDP2_DRAWFRAMEBUFF_NONE+4),
 
-   PG_MAX = (PG_VDP2_DRAWFRAMEBUFF_NONE+128*5)
+   PG_MAX = (PG_VDP2_DRAWFRAMEBUFF_NONE+BLIT_TEXTURE_NB_PROG)
 };
 
 
@@ -559,8 +563,6 @@ typedef struct {
    GLuint original_fbo;
    GLuint original_fbotex[NB_RENDER_LAYER];
 
-   GLuint compute_tex;
-
    GLuint back_fbo;
    GLuint back_fbotex[2];
 
@@ -679,7 +681,6 @@ typedef struct {
    int vdp1_stencil_mode;
 
    int rbg_use_compute_shader;
-   int vdp2_use_compute_shader;
    int useLineColorOffset[2];
 
    float vdp1wratio;
@@ -754,13 +755,13 @@ void YglSetPerlineBuf(u32 * pbuf);
 int YglSetLevelBlendmode( int pri, int mode );
 
 extern int YglBlitSimple(int texture, int blend);
-extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int* win_s, int* win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs);
+extern int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int win_s, int win_s_mode, int Win0, int Win0_mode, int Win1, int Win1_mode, int Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs);
 extern SpriteMode getSpriteRenderMode(Vdp2* varVdp2Regs);
 extern void executeTMVDP1(int in, int out);
 
 extern u8 * YglGetVDP2RegPointer();
 
-int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, Vdp2* varVdp2Regs);
+int Ygl_uniformVDP2DrawFramebuffer(float * offsetcol, int nb_screen, Vdp2* varVdp2Regs);
 
 void YglScalef(YglMatrix *result, GLfloat sx, GLfloat sy, GLfloat sz);
 void YglTranslatef(YglMatrix *result, GLfloat tx, GLfloat ty, GLfloat tz);
@@ -817,11 +818,6 @@ extern void RBGGenerator_update(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs );
 extern GLuint RBGGenerator_getTexture( int id );
 extern GLuint RBGGenerator_getLnclTexture( int id );
 extern void RBGGenerator_onFinish();
-
-extern void VDP2Generator_init(int width, int height);
-extern void VDP2Generator_update(int tex, int* prioscreens, int* modescreens, int* isRGB, int* isShadow, int * isBlur, int* lncl, GLuint* vdp1fb,  int* Win_s, int* Win_s_mode, int* Win0, int* Win0_mode, int* Win1, int* Win1_mode, int* Win_op, Vdp2 *varVdp2Regs);
-extern void VDP2Generator_resize(int width, int height);
-
 
 // Keep a way to switch to gles shaders for embedded devices
 #if defined(_OGLES3_) || defined(_OGLES31_)

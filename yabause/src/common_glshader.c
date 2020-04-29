@@ -1,6 +1,8 @@
 #include "common_glshader.h"
 #include "yui.h"
 
+#define LOG_SHADER
+
 extern int YglInitDrawFrameBufferShaders(int id, int CS);
 
 GLuint _prgid[PG_MAX] = { 0 };
@@ -407,29 +409,35 @@ static const GLchar Yglprg_vdp2_sprite_type_F[] =
  Color calculation option
   hard/vdp2/hon/p09_21.htm
 */
-static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " tmpColor.a = float(alpha|0x1)/255.0;\n";
+static const GLchar Yglprg_vdp2_drawfb_cram_no_color_col_f[]    = " fbmode = 0; \n";
 
-static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < getVDP2Reg(16, line) ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
-static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ tmpColor.a = float(alpha|0x5)/255.0;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_less_color_col_f[]  = " if( depth > getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_equal_color_col_f[] = " if( depth != getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_more_color_col_f[]  = " if( depth < getVDP2Reg(16, line) ){ fbmode = 2;} \n ";
+static const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_f[]   = " if( msb == 0 ){ fbmode = 2;} \n ";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_none_f[] =
 "//No Color calculation\n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_as_is_f[] =
-" tmpColor.a = float(alpha|0x2)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 2; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_src_alpha_f[] =
-" tmpColor.a = float(alpha|0x3)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 3; \n";
 static const GLchar Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f[] =
-" tmpColor.a = float(alpha|0x4)/255.0; \n";
+" if (fbmode == 1) vdp1mode = 4; \n";
 
 static const GLchar Yglprg_vdp2_drawfb_cram_eiploge_f[] =
+"   if (fbmode == 2) vdp1mode = 5; \n"
+" }\n"
+" tmpColor.a = float(alpha|vdp1mode)/255.0; \n"
 " ret.color = tmpColor;\n"
 " ret.prio = depth;\n"
 " return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_common_start[] =
+
+"int fbmode = 1;\n"
+"int vdp1mode = 1;\n"
 
 "vec4 FBColor = vec4(0.0);\n"
 "vec4 vdp2col0 = vec4(0.0);\n"
@@ -529,9 +537,10 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 //GetFB()
 "  FBCol ret = zeroFBCol();\n"
 "  FBCol mesh = zeroFBCol();\n"
-"  if (fbon != 1) return ret;\n"
 "  int u_color_ram_offset = getVDP2Reg(23, line)<<8;\n"
 "  if (ram_mode != 1) u_color_ram_offset = u_color_ram_offset & 0x300;\n"
+"  fbmode = 1;\n"
+"  vdp1mode = 1;\n"
 "  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
 "  fbCoord = ivec2(getFBCoord(vec2(fbCoord)));\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
@@ -579,9 +588,10 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "    msb = 1;\n"
 "  } \n"
 "  ret.offset_color = texelFetch( s_perline, ivec2(int( (u_vheight-PosY) * u_emu_height), is_perline[6]), 0 ).rgb;\n"
-"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n";
+"  ret.offset_color = (ret.offset_color - vec3(0.5))*2.0;\n"
+"  if (fbmode != 0) {\n";
 
-static const GLchar Yglprg_vdp2_common_end[] =
+static const GLchar Yglprg_vdp2_common_part[] =
 "ivec2 startW0 = ivec2(0);\n"
 "ivec2 startW1 = ivec2(0);\n"
 "ivec2 endW0 = ivec2(0.0);\n"
@@ -606,7 +616,7 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  int sW0 = startW0.x;\n"
 "  int eW0 = endW0.x;\n"
 "  if (id == 6) { sW0 = startW0.y; eW0 = endW0.y;}\n"
-"  if (win0_mode[id] != 0) { \n"
+"  if (((win0_mode>>id)&0x1) != 0) { \n"
 "    if (sW0 > eW0) valid = false;\n"
 "    if ((sW0 < eW0) && ((pos < sW0) || (pos > eW0))) valid = false;\n"
 "  } else { \n"
@@ -619,7 +629,7 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  int sW1 = startW1.x;\n"
 "  int eW1 = endW1.x;\n"
 "  if (id == 6) { sW1 = startW1.y; eW1 = endW1.y;}\n"
-"  if (win1_mode[id] != 0) { \n"
+"  if (((win0_mode>>id)&0x1) != 0) { \n"
 "    if (sW1 > eW1) valid = false;\n"
 "    if ((sW1 < eW1) && ((pos < sW1) || (pos > eW1))) valid = false;\n"
 "  } else { \n"
@@ -628,545 +638,1053 @@ static const GLchar Yglprg_vdp2_common_end[] =
 "  return valid;\n"
 "}\n"
 "bool inSpriteWindow(int id) {\n"
-" if (win_s_mode[id] == 0) return FBSPwin;\n"
+" if (((win_s_mode>>id)&0x1) == 0) return FBSPwin;\n"
 " else return !FBSPwin;\n"
 "}\n"
 "bool inWindow(int id) {\n"
 "  int pos = int(PosX);\n"
 "  bool valid = true;\n"
-"  if (win_op[id] != 0) {\n"
+"  if (((win_op>>id)&0x1) != 0) {\n"
     //And
-"    if (win0[id] != 0) valid = valid && inNormalWindow0(id,pos);\n"
-"    if (win1[id] != 0) valid = valid && inNormalWindow1(id,pos);\n"
-"    if ((win_s[id] != 0)&&(use_sp_win != 0)) valid = valid && inSpriteWindow(id);\n"
+"    if (((win0>>id)&0x1) != 0) valid = valid && inNormalWindow0(id,pos);\n"
+"    if (((win1>>id)&0x1) != 0) valid = valid && inNormalWindow1(id,pos);\n"
+"    if ((((win_s_mode>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid && inSpriteWindow(id);\n"
 "  } else {\n"
     //Or
-"    if ((win1[id] != 0) || (win0[id] != 0) || ((win_s[id] != 0)&&(use_sp_win != 0))) valid = false;\n"
-"    if (win0[id] != 0) valid = valid || inNormalWindow0(id,pos);\n"
-"    if (win1[id] != 0) valid = valid || inNormalWindow1(id,pos);\n"
-"    if ((win_s[id] != 0)&&(use_sp_win != 0)) valid = valid || inSpriteWindow(id);\n"
+"    if ((((win1>>id)&0x1) != 0) || (((win0>>id)&0x1) != 0) || ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0))) valid = false;\n"
+"    if (((win0>>id)&0x1) != 0) valid = valid || inNormalWindow0(id,pos);\n"
+"    if (((win1>>id)&0x1) != 0) valid = valid || inNormalWindow1(id,pos);\n"
+"    if ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid || inSpriteWindow(id);\n"
 "  }\n"
 "  return valid;\n"
 "}\n"
 "bool inCCWindow() {\n"
-"  if ((win1[7] != 0) || (win0[7] != 0) || (win_s[7] != 0)) {\n"
+"  if ((((win1>>7)&0x1) != 0) || (((win0>>7)&0x1) != 0) || (((win_s>>7)&0x1)!= 0)) {\n"
 "    return inWindow(7);\n"
 "  } else {return false;}\n"
-"}\n"
+"}\n";
 
+//Thios can be still optimized. Sprite related variables are doubled
+#define VDP2_SPRITE_SCREN_SETUP "\
+if ((prio == FBPrio) && inWindow(6)) {\n \
+  ret.Color = FBColor; \n \
+  ret.mode = int(FBColor.a*255.0)&0x7; \n \
+  ret.normalShadow = FBNormalShadow;\n \
+  ret.lncl = (u_lncl>>6)&0x1;\n \
+  ret.offset_color = offcolFB;\n \
+  remPrio = remPrio - 1;\n \
+  ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
+  ret.isRGB = FBRgb;\n  \
+  ret.isSprite = 1;\n \
+  ret.layer = 6;\n \
+  if (remPrio == 0) return ret;\n \
+}\n \
+ret.isSprite = 0;\n \
+ret.meshColor = vec4(0.0);\n \
+ret.mesh = 0;\n \
+"
+
+#define VDP2_SCREEN_SETUP(ID) "\
+ret.offset_color = offcol"Stringify(ID)".rgb;\n \
+if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && inWindow("Stringify(ID)")) {\n \
+remPrio = remPrio - 1;\n \
+ret.Color = vdp2col"Stringify(ID)"; \n \
+ret.mode = mode["Stringify(ID)"]; \n \
+ret.normalShadow = (((isShadow>>"Stringify(ID)")&0x1)!= 0);\n \
+ret.lncl=(u_lncl>>"Stringify(ID)")&0x1;\n \
+ret.lncl_off = is_lncl_off["Stringify(ID)"];\n \
+ret.layer = "Stringify(ID)";\n \
+ret.isRGB = (isRGB>>"Stringify(ID)")&0x1;\n \
+ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
+if (remPrio == 0) return ret;\n \
+}\n"
+
+#define VDP2_RETURN_PRIO_EMPTY "\
+ret.Color = vec4(0.0);\n \
+ret.mode = 0;\n \
+ret.normalShadow = false;\n \
+ret.lncl = 0;\n \
+ret.lncl_off = 0;\n \
+ret.isSprite = 0;\n \
+ret.layer = -1;\n \
+return ret; \
+\n"
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_6[] =
 "Col getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
-"  Col ret, empty; \n"
-"  vec4 tmpColor;\n"
+"  Col ret; \n"
 "  int remPrio = nbPrio;\n"
-"  empty.Color = vec4(0.0);\n"
-"  empty.mode = 0;\n"
-"  empty.lncl = 0;\n"
-"  empty.lncl_off = 0;\n"
-"  empty.isSprite = 0;\n"
-"  empty.layer = -1;\n"
-"  empty.meshColor = vec4(0.0);\n"
-"  empty.mesh = 0;\n"
-"  empty.normalShadow = false;\n"
-"  ret = empty;\n"
-"  int priority; \n"
-"  ret.normalShadow = false;\n"
-"  int alpha; \n"
-"  if ((fbon == 1) && (prio == FBPrio) && inWindow(6)) {\n"
-"    ret.mode = int(FBColor.a*255.0)&0x7; \n"
-"    ret.lncl = (u_lncl>>6)&0x1;\n"
-"    ret.Color = FBColor; \n"
-"    ret.offset_color = offcolFB;\n"
-"    remPrio = remPrio - 1;\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.isRGB = FBRgb;\n" //Shall not be the case always... Need to get RGB format per pixel
-"    ret.isSprite = 1;\n"
-"    ret.layer = 6;\n"
-"    ret.normalShadow = FBNormalShadow;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 0) return empty;\n"
-"  ret.isSprite = 0;\n"
-"  tmpColor = vdp2col0; \n"
-"  ret.offset_color = offcol0.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(0)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>0)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[0];\n"
-"    ret.Color = tmpColor; \n"
-"    ret.isRGB = (isRGB>>0)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>0)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[0]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 0;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 1) return empty;\n"
-"  tmpColor = vdp2col1; \n"
-"  ret.offset_color = offcol1.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(1)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>1)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[1];\n"
-"    ret.isRGB = (isRGB>>1)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>1)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[1]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 1;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 2) return empty;\n"
-"  tmpColor = vdp2col2; \n"
-"  ret.offset_color = offcol2.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(2)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>2)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[2];\n"
-"    ret.isRGB = (isRGB>>2)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>2)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[2]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 2;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 3) return empty;\n"
-"  tmpColor = vdp2col3; \n"
-"  ret.offset_color = offcol3.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(3)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.lncl=(u_lncl>>3)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[3];\n"
-"    ret.isRGB = (isRGB>>3)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>3)&0x1)!= 0);\n"
-"    ret.Color = tmpColor; \n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[3]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 3;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 4) return empty;\n"
-"  tmpColor = vdp2col4; \n"
-"  ret.offset_color = offcol4.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(4)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=(u_lncl>>4)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[4];\n"
-"    ret.isRGB = (isRGB>>4)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>4)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[4]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 4;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  if (screen_nb == 5) return empty;\n"
-"  tmpColor = vdp2col5; \n"
-"  ret.offset_color = offcol5.rgb;\n"
-"  priority = int(tmpColor.a*255.0)&0x7; \n"
-"  if ((priority == prio) && inWindow(5)) {\n"
-"    remPrio = remPrio - 1;\n"
-"    ret.Color = tmpColor; \n"
-"    ret.lncl=(u_lncl>>5)&0x1;\n"
-"    ret.lncl_off = is_lncl_off[5];\n"
-"    ret.isRGB = (isRGB>>5)&0x1;\n"
-"    ret.normalShadow = (((isShadow>>5)&0x1)!= 0);\n"
-"    alpha = int(ret.Color.a*255.0)&0xF8; \n"
-"    ret.mode = mode[5]; \n"
-"    ret.Color.a = float(alpha>>3)/31.0; \n"
-"    ret.layer = 5;\n"
-"    if (remPrio == 0) return ret;\n"
-"  }\n"
-"  return empty;\n"
-"}  \n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_SCREEN_SETUP(5)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
 
+static const GLchar Yglprg_vdp2_prio_part_fb_on_5[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_4[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_3[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_2[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_1[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_SCREEN_SETUP(0)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_on_0[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SPRITE_SCREN_SETUP
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_6[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_SCREEN_SETUP(5)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_5[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_SCREEN_SETUP(4)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_4[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_SCREEN_SETUP(3)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_3[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_SCREEN_SETUP(2)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_2[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_SCREEN_SETUP(1)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_1[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_SCREEN_SETUP(0)
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+static const GLchar Yglprg_vdp2_prio_part_fb_off_0[] =
+"Col getPriorityColor(int prio, int nbPrio)   \n"
+"{  \n"
+"  Col ret; \n"
+"  int remPrio = nbPrio;\n"
+  VDP2_RETURN_PRIO_EMPTY
+"}  \n";
+
+
+#define BLUR_SETUP(ID) "\
+if (pix.layer == "Stringify(ID)") { \n \
+  txcoll = getPixel( s_texture"Stringify(ID)", texCoord, -1, 0 );\n \
+  txcolll = getPixel( s_texture"Stringify(ID)", texCoord, -2, 0 );\n \
+}\n"
+
+#define BLUR_SETUP_SPRITE "\
+if (pix.layer == 6) { \n \
+  txcoll = getFB(-1, addr).color;\n \
+  txcolll = getFB(-2, addr).color;\n \
+}\n"
+
+#define BLUR_COMPUTE "\
+  ret.Color.rgb = pix.Color.rgb/2.0 + txcoll.rgb/4.0 + txcolll.rgb/4.0; \n"
+
+static const GLchar Yglprg_vdp2_common_end_fbon_6[] =
 "Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
 "  vec4 txcolll;\n"
-"  vec4 txcol = pix.Color;\n"
-"  if (pix.layer == 6) { \n"
-"    txcoll = getFB(-1, addr).color;\n"
-"    txcolll = getFB(-2, addr).color;\n"
-"  }\n"
-"  if (pix.layer == 0) { \n"
-"    txcoll = getPixel( s_texture0, texCoord, -1, 0 );      \n"
-"    txcolll = getPixel( s_texture0, texCoord, -2, 0 );      \n"
-"  }\n"
-"  if (pix.layer == 1) { \n"
-"    txcoll = getPixel( s_texture1, texCoord, -1, 0 );      \n"
-"    txcolll = getPixel( s_texture1, texCoord, -2, 0 );      \n"
-"  }\n"
-"  if (pix.layer == 2) { \n"
-"    txcoll = getPixel( s_texture2, texCoord, -1, 0 );      \n"
-"    txcolll = getPixel( s_texture2, texCoord, -2, 0 );      \n"
-"  }\n"
-"  if (pix.layer == 3) { \n"
-"    txcoll = getPixel( s_texture3, texCoord, -1, 0 );      \n"
-"    txcolll = getPixel( s_texture3, texCoord, -2, 0 );      \n"
-"  }\n"
-"  if (pix.layer == 4) { \n"
-"    txcoll = getPixel( s_texture4, texCoord, -1, 0 );      \n"
-"    txcolll = getPixel( s_texture4, texCoord, -2, 0 );      \n"
-"  }\n"
-"  if (pix.layer == 5) { \n"
-"    txcoll = getPixel( s_texture5, texCoord, -1, 0);      \n"
-"    txcolll = getPixel( s_texture5, texCoord, -2, 0 );      \n"
-"  }\n"
-"  ret.Color.rgb = txcol.rgb/2.0 + txcoll.rgb/4.0 + txcolll.rgb/4.0; \n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_SETUP(4)
+BLUR_SETUP(5)
+BLUR_COMPUTE
 "  return ret; \n"
 "}  \n"
-
 "void main()   \n"
 "{  \n";
 
-static const GLchar Yglprg_vdp2_common_final[]=
-"  vec4 topImage = vec4(0.0); \n"
-"  vec4 secondImage = vec4(0.0); \n"
-"  vec4 colortop = vec4(0.0);  \n"
-"  vec4 colorsecond = vec4(0.0); \n"
-"  vec4 colorthird = vec4(0.0); \n"
-"  vec4 colorfourth = vec4(0.0); \n"
-"  vec4 colorback = vec4(0.0); \n"
-"  int foundColor1 = 0; \n"
-"  int foundColor2 = 0; \n"
-"  int foundColor3 = 0; \n"
-"  int modetop = 1; \n"
-"  int modesecond = 1; \n"
-"  int modethird = 1; \n"
-"  int isRGBtop = 0;\n"
-"  int isRGBsecond = 0;\n"
-"  int isRGBthird = 0;\n"
-"  int isRGBfourth = 0;\n"
-"  int use_lncl = 0; \n"
-"  int mesh = 0;\n"
-"  vec3 meshCol = vec3(0.0);\n"
-"  vec3 offset_color = vec3(0.0);\n"
-"  float alphatop = 1.0; \n"
-"  float alphasecond = 1.0; \n"
-"  float alphathird = 1.0; \n"
-"  float alphafourth = 1.0; \n"
-"  bool needColorOffRBG0 = false;\n"
-"  bool needColorOffRBG1 = false;\n"
-"  vec4 cl_off_rbg0 = vec4(0.0);\n"
-"  vec4 cl_off_rbg1 = vec4(0.0);"
-"  ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st); \n"
-"  colorback = texelFetch( s_back, addr,0 ); \n"
-"  ivec2 linepos = ivec2(int( (u_vheight-PosY) * u_emu_height), 0); \n "
-"  linepos.y = is_perline[7];\n"
-"  offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n"
-"  offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n"
-"  addr = ivec2(tvSize * vdp1Ratio * v_texcoord.st); \n"
-"  addr.y += textureSize(s_vdp1FrameBuffer, 0).y - int(tvSize.y*vdp1Ratio.y);\n"
-"  initLineWindow();\n"
-"  colortop = colorback; \n"
-"  isRGBtop = 1; \n"
-"  alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n"
-"  FBCol tmp = getFB(0, addr); \n"
-"  FBColor = tmp.color;\n"
-"  offcolFB = tmp.offset_color;\n"
-"  FBPrio = tmp.prio;\n"
-"  FBSPwin = tmp.spwin;\n"
-"  FBRgb = tmp.isRGB;\n"
-"  bool processShadow = false;\n"
-"  FBNormalShadow = tmp.normalShadow;\n"
-"  FBMSBShadow = tmp.MSBshadow;\n"
-"  FBShadow = tmp.meshColor;\n"
-"  FBMeshPrio = tmp.meshPrio;\n"
-"  FBMesh = tmp.mesh;\n"
-"  if (screen_nb > 0) {\n"
-"    if (is_lncl_off[0] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[0] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col0 = getPixel( s_texture0, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[0];\n"
-"    offcol0 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol0 == vec4(0.0)) vdp2col0 = vec4(0.0);\n"
-"    else { \n"
-"      offcol0.rgb = (offcol0.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol0.a > 0.0) vdp2col0.a = float(int(offcol0.a * 255.0) | (int(vdp2col0.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
-"  }\n"
-"  if (screen_nb > 1) {\n"
-"    if (is_lncl_off[1] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[1] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col1 = getPixel( s_texture1, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[1];\n"
-"    offcol1 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol1 == vec4(0.0)) vdp2col1 = vec4(0.0);\n"
-"    else { \n"
-"      offcol1.rgb = (offcol1.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol1.a > 0.0) vdp2col1.a = float(int(offcol1.a * 255.0) | (int(vdp2col1.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
-"  }\n"
-"  if (screen_nb > 2) {\n"
-"    if (is_lncl_off[2] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[2] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col2 = getPixel( s_texture2, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[2];\n"
-"    offcol2 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol2 == vec4(0.0)) vdp2col2 = vec4(0.0);\n"
-"    else { \n"
-"      offcol2.rgb = (offcol2.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol2.a > 0.0) vdp2col2.a = float(int(offcol2.a * 255.0) | (int(vdp2col2.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
+static const GLchar Yglprg_vdp2_common_end_fbon_5[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_SETUP(4)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
 
-"  }\n"
-"  if (screen_nb > 3) {\n"
-"    if (is_lncl_off[3] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[3] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col3 = getPixel( s_texture3, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[3];\n"
-"    offcol3 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol3 == vec4(0.0)) vdp2col3 = vec4(0.0);\n"
-"    else { \n"
-"      offcol3.rgb = (offcol3.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol3.a > 0.0) vdp2col3.a = float(int(offcol3.a * 255.0) | (int(vdp2col3.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
-"  }\n"
-"  if (screen_nb > 4) {\n"
-"    if (is_lncl_off[4] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[4] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col4 = getPixel( s_texture4, v_texcoord.st, 0 , 0); \n"
-"    linepos.y = is_perline[4];\n"
-"    offcol4 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol4 == vec4(0.0)) vdp2col4 = vec4(0.0);\n"
-"    else { \n"
-"      offcol4.rgb = (offcol4.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol4.a > 0.0) vdp2col4.a = float(int(offcol4.a * 255.0) | (int(vdp2col4.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
-"  }\n"
-"  if (screen_nb > 5) {\n"
-"    if (is_lncl_off[5] == 1) needColorOffRBG0 = true;\n"
-"    if (is_lncl_off[5] == 2) needColorOffRBG1 = true;\n"
-"    vdp2col5 = getPixel( s_texture5, v_texcoord.st, 0, 0 ); \n"
-"    linepos.y = is_perline[5];\n"
-"    offcol5 = texelFetch( s_perline, linepos,0 );\n"
-"    if (offcol5 == vec4(0.0)) vdp2col5 = vec4(0.0);\n"
-"    else { \n"
-"      offcol5.rgb = (offcol5.rgb - vec3(0.5))*2.0;\n"
-"      if (offcol5.a > 0.0) vdp2col5.a = float(int(offcol5.a * 255.0) | (int(vdp2col5.a * 255.0) & 0x7))/255.0;\n"
-"    }\n"
-"  }\n"
-"  if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n"
-"  if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n"
-"  for (int i = 7; i>0; i--) { \n"
-"    if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n"
-"      int hasColor = 1;\n"
-"      while (hasColor != 0) {\n"
-"        Col prio = getPriorityColor(i, hasColor);\n"
-"        hasColor = hasColor+1;\n"
-"        if (prio.mode != 0) { \n"
-"          if (foundColor1 == 0) { \n"
-"            prio.mode = (prio.mode & 0x7); \n"
-"            if (prio.isSprite == 0) {\n"
-"              if ((FBMesh == 1) && (fbon == 1) && (i <= FBMeshPrio)) {\n"
-"                mesh = 1;\n"
-"                meshCol = FBShadow.rgb;\n"
-"              }\n"
-"              if ((int(prio.Color.b*255.0)&0x1) == 0) {\n"
-                 //Special color calulation mode => CC is off on this pixel
-                 //Get from VDP2COLOR
-"                prio.mode = 1;\n"
-"                prio.Color.a = 1.0;\n"
-"              }\n"
-"            } else {\n"
-"              if ((FBMesh == 1) && (fbon == 1)) {\n"
-"                mesh = 1;\n"
-"                meshCol = FBShadow.rgb;\n"
-"              }\n"
-"              if (FBNormalShadow) {\n"
-//Normal shadow is always a transparent shadow. It does not have to be processed
-//As a top image. But the shadow process shall be processed
-"                processShadow = true;\n"
-"                continue;\n"
-"              }\n"
-"              if (FBMSBShadow) {\n"
-//The MSB shadow is only effetive when the sprite window is not used
-"                processShadow = true;\n"
-//The shadow process shall be processed for any of color code
-"                if (tmp.code == 0) {\n"
-//In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image
-"                    processShadow = (use_trans_shadow != 0);\n"
-"                    continue;\n"
-"                  }\n"
-"              }\n"
-"            }\n"
-"            if (prio.lncl == 0) { \n"
-"              colorsecond = colortop;\n"
-"              alphasecond = alphatop;\n"
-"              modesecond = modetop;\n"
-"              isRGBsecond = isRGBtop;\n"
-"            } else { \n"
-"              colorthird = colortop;\n"
-"              alphathird = alphatop;\n"
-"              modethird = modetop;\n"
-"              isRGBthird = isRGBtop;\n"
-"              linepos.y = 0; \n "
-"              if (prio.lncl_off == 1) colorsecond = cl_off_rbg0;\n"
-"              else if (prio.lncl_off == 2) colorsecond = cl_off_rbg1;\n"
-"              else colorsecond = texelFetch( s_lncl, linepos ,0 );\n"
-"              modesecond = mode[6];\n"
-"              alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n"
-"              isRGBsecond = 1;\n"
-"              use_lncl = 1;\n"
-"              foundColor2 = 1; \n"
-"            }\n"
-"            colortop = prio.Color; \n"
-"            modetop = prio.mode&0x7; \n"
-"            isRGBtop = prio.isRGB; \n"
-"            alphatop = prio.Color.a; \n"
-"            offset_color = prio.offset_color;\n"
-"            foundColor1 = 1; \n"
-"            if (((isBlur>>prio.layer)&0x1) != 0) { \n"
-"              Col blur = getBlur(addr, prio, v_texcoord.st);"
-"              modesecond = blur.mode&0x7; \n"
-"              colorsecond = blur.Color; \n"
-"              alphasecond = blur.Color.a; \n"
-"              isRGBsecond = blur.isRGB; \n"
-"              foundColor2 = 1; \n" //semble corriger steep slope
-//le mesh mode deconne dans steep slope
-"            }\n"
-"          } else if (foundColor2 == 0) { \n" // A revoir du coup
-"            if (prio.isSprite == 1) {\n"
-"              if (FBNormalShadow) {\n"
-                 //shadow are transparent and not computed when on lower priority
-"                continue;\n"
-"              }\n"
-"              if (FBMSBShadow) {\n"
-"                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
-"                  continue;\n"
-"                }"
-"              }\n"
-"            }\n"
-"            colorthird = colorsecond;\n"
-"            alphathird = alphasecond;\n"
-"            modethird = modesecond;\n"
-"            isRGBthird = isRGBsecond;\n"
-"            modesecond = prio.mode&0x7; \n"
-"            colorsecond = prio.Color; \n"
-"            alphasecond = prio.Color.a; \n"
-"            isRGBsecond = prio.isRGB; \n"
-"            foundColor2 = 1; \n"
-"            if (((isBlur>>prio.layer)&0x1) != 0) { \n"
-"              Col blur = getBlur(addr, prio, v_texcoord.st);"
-"              modesecond = blur.mode&0x7; \n"
-"              colorsecond = blur.Color; \n"
-"              alphasecond = blur.Color.a; \n"
-"              isRGBsecond = blur.isRGB; \n"
-"              foundColor2 = 1; \n"
-"            }\n"
-"          } else if (foundColor3 == 0) { \n"
-"            if (prio.isSprite == 1) {\n"
-"              if (FBNormalShadow) {\n"
-                 //shadow are transparent and not computed when on lower priority
-"                continue;\n"
-"              }\n"
-"              if (FBMSBShadow) {\n"
-"                if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n"
-"                  continue;\n"
-"                }"
-"              }\n"
-"            }\n"
+static const GLchar Yglprg_vdp2_common_end_fbon_4[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
 
-"            colorfourth = colorthird;\n"
-"            alphafourth = alphathird;\n"
-"            isRGBfourth = isRGBthird; \n"
-"            modethird= prio.mode&0x7; \n"
-"            colorthird = prio.Color; \n"
-"            alphathird = prio.Color.a; \n"
-"            isRGBthird = prio.isRGB; \n"
-"            foundColor3 = 1; \n"
-"          } \n"
-"        } \n"
-"        if (((prio.mode&0x7) == 0) || ((foundColor1 == 1)&&(foundColor2 == 1)&&(foundColor3 == 1))) { \n"
-"          hasColor = 0; \n"
-"        } \n"
-"      }\n"
-"    } \n"
-"  } \n"
-"  if ((FBMesh == 1) && (fbon == 1) && (foundColor1 == 0)) {\n"
-"    mesh = 1;\n"
-"    meshCol = FBShadow.rgb;\n"
-"  }\n"
-//Take care  of the extended coloration mode
-"  if (!inCCWindow()) {\n"
-"    if (extended_cc != 0) { \n"
-"      if (ram_mode == 0) { \n"
-"        if (use_lncl == 0) { \n"
-"          if (modesecond == 1) \n"
-"            secondImage.rgb = vec3(colorsecond.rgb); \n"
-"          else \n"
-"            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"        } else {\n"
-"          if (modesecond == 1) \n"
-"            secondImage.rgb = vec3(colorsecond.rgb); \n"
-"          else {\n"
-"            if (modethird == 1) \n"
-"              secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"            else \n"
-"              secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n"
-"          }\n"
-"        }\n"
-"      } else {\n"
-"        if (use_lncl == 0) { \n"
-"          if (isRGBthird == 0) { \n"
-"            secondImage.rgb = vec3(colorsecond.rgb); \n"
-"          } else { \n"
-"            if (modesecond == 1) { \n"
-"              secondImage.rgb = vec3(colorsecond.rgb); \n"
-"            } else {\n"
-"              secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n"
-"            } \n"
-"          }\n"
-"        } else {\n"
-"          if (isRGBthird == 0) { \n"
-"            secondImage.rgb = vec3(colorsecond.rgb); \n"
-"          } else { \n"
-"            if (isRGBfourth == 0) {\n"
-"              if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"              else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"            } else { \n"
-"              if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n"
-"              else { \n"
-"                if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n"
-"                else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n"
-"              }\n"
-"            }\n"
-"          }\n"
-"        }\n"
-"      } \n"
-"    } else { \n"
-"      secondImage.rgb = vec3(colorsecond.rgb); \n"
-"    } \n"
-"    if ((mesh == 0) && (FBMesh == 1) && (fbon == 1)) {\n"
-"       meshCol = FBShadow.rgb;\n"
-"       secondImage.rgb = secondImage.rgb * 0.5 + meshCol.rgb * 0.5;\n"
-"    }\n"
-"    if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n"
-"    if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n"
-"    if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n"
-"    if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n"
-"    if (modetop == 5) topImage = vec4(colortop.rgb, 1.0); \n"
-"    finalColor = clamp(vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0), vec4(0.0), vec4(1.0)); \n"
-"  } else {\n"
-"    finalColor = vec4(colortop.rgb, 1.0);\n"
-"  }\n"
-"  if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n"
-"  finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n"
-"  if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n";
+static const GLchar Yglprg_vdp2_common_end_fbon_3[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fbon_2[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fbon_1[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_SETUP(0)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fbon_0[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP_SPRITE
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_6[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_SETUP(4)
+BLUR_SETUP(5)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_5[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_SETUP(4)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_4[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_SETUP(3)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_3[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_SETUP(2)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_2[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_SETUP(1)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_1[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_SETUP(0)
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+static const GLchar Yglprg_vdp2_common_end_fboff_0[] =
+"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"{  \n"
+"  Col ret = pix;\n"
+"  vec4 txcoll;\n"
+"  vec4 txcolll;\n"
+BLUR_COMPUTE
+"  return ret; \n"
+"}  \n"
+"void main()   \n"
+"{  \n";
+
+
+static const GLchar* Yglprg_vdp2_common_end[14] = {
+  Yglprg_vdp2_common_end_fboff_0,
+  Yglprg_vdp2_common_end_fboff_1,
+  Yglprg_vdp2_common_end_fboff_2,
+  Yglprg_vdp2_common_end_fboff_3,
+  Yglprg_vdp2_common_end_fboff_4,
+  Yglprg_vdp2_common_end_fboff_5,
+  Yglprg_vdp2_common_end_fboff_6,
+  Yglprg_vdp2_common_end_fbon_0,
+  Yglprg_vdp2_common_end_fbon_1,
+  Yglprg_vdp2_common_end_fbon_2,
+  Yglprg_vdp2_common_end_fbon_3,
+  Yglprg_vdp2_common_end_fbon_4,
+  Yglprg_vdp2_common_end_fbon_5,
+  Yglprg_vdp2_common_end_fbon_6,
+};
+
+
+#define COMMON_FINAL_START "\
+vec4 topImage = vec4(0.0);\n \
+vec4 secondImage = vec4(0.0);\n \
+vec4 colortop = vec4(0.0);\n \
+vec4 colorsecond = vec4(0.0);\n \
+vec4 colorthird = vec4(0.0);\n \
+vec4 colorfourth = vec4(0.0);\n \
+vec4 colorback = vec4(0.0);\n \
+int foundColor1 = 0;\n \
+int foundColor2 = 0;\n \
+int foundColor3 = 0;\n \
+int modetop = 1;\n \
+int modesecond = 1;\n \
+int modethird = 1;\n \
+int isRGBtop = 0;\n \
+int isRGBsecond = 0;\n \
+int isRGBthird = 0;\n \
+int isRGBfourth = 0;\n \
+int use_lncl = 0;\n \
+int mesh = 0;\n \
+vec3 meshCol = vec3(0.0);\n \
+vec3 offset_color = vec3(0.0);\n \
+float alphatop = 1.0;\n \
+float alphasecond = 1.0;\n \
+float alphathird = 1.0;\n \
+float alphafourth = 1.0;\n \
+bool needColorOffRBG0 = false;\n \
+bool needColorOffRBG1 = false;\n \
+vec4 cl_off_rbg0 = vec4(0.0);\n \
+vec4 cl_off_rbg1 = vec4(0.0);\n \
+ivec2 addr = ivec2(textureSize(s_back, 0) * v_texcoord.st);\n \
+colorback = texelFetch( s_back, addr,0 );\n \
+ivec2 linepos = ivec2(int( (u_vheight-PosY) * u_emu_height), 0);\n \
+linepos.y = is_perline[7];\n \
+offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n \
+offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n \
+addr = ivec2(tvSize * vdp1Ratio * v_texcoord.st);\n \
+addr.y += textureSize(s_vdp1FrameBuffer, 0).y - int(tvSize.y*vdp1Ratio.y);\n \
+initLineWindow();\n \
+colortop = colorback;\n \
+isRGBtop = 1;\n \
+alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n \
+"
+
+#define COMMON_FINAL_FB "\
+FBCol tmp = getFB(0, addr); \n \
+FBColor = tmp.color;\n \
+offcolFB = tmp.offset_color;\n \
+FBPrio = tmp.prio;\n \
+FBSPwin = tmp.spwin;\n \
+FBRgb = tmp.isRGB;\n \
+bool processShadow = false;\n \
+FBNormalShadow = tmp.normalShadow;\n \
+FBMSBShadow = tmp.MSBshadow;\n \
+FBShadow = tmp.meshColor;\n \
+FBMeshPrio = tmp.meshPrio;\n \
+FBMesh = tmp.mesh;\n \
+"
+
+#define COMMON_FINAL_SCREEN(ID) "\
+if (is_lncl_off["Stringify(ID)"] == 1) needColorOffRBG0 = true;\n \
+if (is_lncl_off["Stringify(ID)"] == 2) needColorOffRBG1 = true;\n \
+vdp2col"Stringify(ID)" = getPixel( s_texture"Stringify(ID)", v_texcoord.st, 0, 0 ); \n \
+linepos.y = is_perline["Stringify(ID)"];\n \
+offcol"Stringify(ID)" = texelFetch( s_perline, linepos,0 );\n \
+if (offcol"Stringify(ID)" == vec4(0.0)) vdp2col"Stringify(ID)" = vec4(0.0);\n \
+else {\n \
+  offcol"Stringify(ID)".rgb = (offcol"Stringify(ID)".rgb - vec3(0.5))*2.0;\n \
+  if (offcol"Stringify(ID)".a > 0.0) vdp2col"Stringify(ID)".a = float(int(offcol"Stringify(ID)".a * 255.0) | (int(vdp2col"Stringify(ID)".a * 255.0) & 0x7))/255.0;\n \
+}\n \
+"
+
+#define COMMON_GET_PRIORITY_SCREEN_FB "\
+if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+for (int i = 7; i>0; i--) { \n \
+  if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
+    int hasColor = 1;\n \
+    while (hasColor != 0) {\n \
+      Col prio = getPriorityColor(i, hasColor);\n \
+      hasColor = hasColor+1;\n \
+      if (prio.mode != 0) { \n \
+        if (foundColor1 == 0) { \n \
+          prio.mode = (prio.mode & 0x7); \n \
+          if (prio.isSprite == 0) {\n \
+            if ((FBMesh == 1) && (i <= FBMeshPrio)) {\n \
+              mesh = 1;\n \
+              meshCol = FBShadow.rgb;\n \
+            }\n \
+            if ((int(prio.Color.b*255.0)&0x1) == 0) {\n \
+                 //Special color calulation mode => CC is off on this pixel \n \
+                 //Get from VDP2COLOR \n \
+              prio.mode = 1;\n \
+              prio.Color.a = 1.0;\n \
+            }\n \
+          } else {\n \
+            if (FBMesh == 1) {\n \
+              mesh = 1;\n \
+              meshCol = FBShadow.rgb;\n \
+            }\n \
+            if (FBNormalShadow) {\n \
+//Normal shadow is always a transparent shadow. It does not have to be processed \n \
+//As a top image. But the shadow process shall be processed \n \
+              processShadow = true;\n \
+              continue;\n \
+            }\n \
+            if (FBMSBShadow) {\n \
+//The MSB shadow is only effetive when the sprite window is not used \n \
+              processShadow = true;\n \
+//The shadow process shall be processed for any of color code \n \
+              if (tmp.code == 0) {\n \
+//In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image \n \
+                  processShadow = (use_trans_shadow != 0);\n \
+                  continue;\n \
+                }\n \
+            }\n \
+          }\n \
+          if (prio.lncl == 0) { \n \
+            colorsecond = colortop;\n \
+            alphasecond = alphatop;\n \
+            modesecond = modetop;\n \
+            isRGBsecond = isRGBtop;\n \
+          } else { \n \
+            colorthird = colortop;\n \
+            alphathird = alphatop;\n \
+            modethird = modetop;\n \
+            isRGBthird = isRGBtop;\n \
+            linepos.y = 0;\n \
+            if (prio.lncl_off == 1) colorsecond = cl_off_rbg0;\n \
+            else if (prio.lncl_off == 2) colorsecond = cl_off_rbg1;\n \
+            else colorsecond = texelFetch( s_lncl, linepos ,0 );\n \
+            modesecond = mode[6];\n \
+            alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n \
+            isRGBsecond = 1;\n \
+            use_lncl = 1;\n \
+            foundColor2 = 1; \n \
+          }\n \
+          colortop = prio.Color; \n \
+          modetop = prio.mode&0x7; \n \
+          isRGBtop = prio.isRGB; \n \
+          alphatop = prio.Color.a; \n \
+          offset_color = prio.offset_color;\n \
+          foundColor1 = 1; \n \
+          if (((isBlur>>prio.layer)&0x1) != 0) { \n \
+            Col blur = getBlur(addr, prio, v_texcoord.st);\n \
+            modesecond = blur.mode&0x7; \n \
+            colorsecond = blur.Color; \n \
+            alphasecond = blur.Color.a; \n \
+            isRGBsecond = blur.isRGB; \n \
+            foundColor2 = 1; \n \
+            //semble corriger steep slope \n \
+            //le mesh mode deconne dans steep slope \n \
+          }\n \
+        } else if (foundColor2 == 0) { \n \
+          // A revoir du coup \n \
+          if (prio.isSprite == 1) {\n \
+            if (FBNormalShadow) {\n \
+                 //shadow are transparent and not computed when on lower priority \n \
+              continue;\n \
+            }\n \
+            if (FBMSBShadow) {\n \
+              if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n \
+                continue;\n \
+              }\n \
+            }\n \
+          }\n \
+          colorthird = colorsecond;\n \
+          alphathird = alphasecond;\n \
+          modethird = modesecond;\n \
+          isRGBthird = isRGBsecond;\n \
+          modesecond = prio.mode&0x7; \n \
+          colorsecond = prio.Color; \n \
+          alphasecond = prio.Color.a; \n \
+          isRGBsecond = prio.isRGB; \n \
+          foundColor2 = 1; \n \
+          if (((isBlur>>prio.layer)&0x1) != 0) { \n \
+            Col blur = getBlur(addr, prio, v_texcoord.st);\n \
+            modesecond = blur.mode&0x7; \n \
+            colorsecond = blur.Color; \n \
+            alphasecond = blur.Color.a; \n \
+            isRGBsecond = blur.isRGB; \n \
+            foundColor2 = 1; \n \
+          }\n \
+        } else if (foundColor3 == 0) { \n \
+          if (prio.isSprite == 1) {\n \
+            if (FBNormalShadow) {\n \
+                 //shadow are transparent and not computed when on lower priority \n \
+              continue;\n \
+            }\n \
+            if (FBMSBShadow) {\n \
+              if ((tmp.code == 0) && (use_trans_shadow == 1)) { \n \
+                continue;\n \
+              }\n \
+            }\n \
+          }\n \
+          colorfourth = colorthird;\n \
+          alphafourth = alphathird;\n \
+          isRGBfourth = isRGBthird;\n \
+          modethird= prio.mode&0x7;\n \
+          colorthird = prio.Color;\n \
+          alphathird = prio.Color.a;\n \
+          isRGBthird = prio.isRGB;\n \
+          foundColor3 = 1;\n \
+        } \n \
+      } \n \
+      if (((prio.mode&0x7) == 0) || ((foundColor1 == 1)&&(foundColor2 == 1)&&(foundColor3 == 1))) { \n \
+        hasColor = 0; \n \
+      } \n \
+    }\n \
+  }\n \
+}\n \
+"
+
+#define COMMON_GET_PRIORITY_SCREEN_NO_FB "\
+if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+for (int i = 7; i>0; i--) { \n \
+  if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
+    int hasColor = 1;\n \
+    while (hasColor != 0) {\n \
+      Col prio = getPriorityColor(i, hasColor);\n \
+      hasColor = hasColor+1;\n \
+      if (prio.mode != 0) { \n \
+        if (foundColor1 == 0) { \n \
+          prio.mode = (prio.mode & 0x7); \n \
+          if ((int(prio.Color.b*255.0)&0x1) == 0) {\n \
+            //Special color calulation mode => CC is off on this pixel \n \
+            //Get from VDP2COLOR \n \
+            prio.mode = 1;\n \
+            prio.Color.a = 1.0;\n \
+          }\n \
+          if (prio.lncl == 0) { \n \
+            colorsecond = colortop;\n \
+            alphasecond = alphatop;\n \
+            modesecond = modetop;\n \
+            isRGBsecond = isRGBtop;\n \
+          } else { \n \
+            colorthird = colortop;\n \
+            alphathird = alphatop;\n \
+            modethird = modetop;\n \
+            isRGBthird = isRGBtop;\n \
+            linepos.y = 0;\n \
+            if (prio.lncl_off == 1) colorsecond = cl_off_rbg0;\n \
+            else if (prio.lncl_off == 2) colorsecond = cl_off_rbg1;\n \
+            else colorsecond = texelFetch( s_lncl, linepos ,0 );\n \
+            modesecond = mode[6];\n \
+            alphasecond = float((int(colorsecond.a * 255.0)&0xF8)>>3)/31.0;\n \
+            isRGBsecond = 1;\n \
+            use_lncl = 1;\n \
+            foundColor2 = 1; \n \
+          }\n \
+          colortop = prio.Color; \n \
+          modetop = prio.mode&0x7; \n \
+          isRGBtop = prio.isRGB; \n \
+          alphatop = prio.Color.a; \n \
+          offset_color = prio.offset_color;\n \
+          foundColor1 = 1; \n \
+          if (((isBlur>>prio.layer)&0x1) != 0) { \n \
+            Col blur = getBlur(addr, prio, v_texcoord.st);\n \
+            modesecond = blur.mode&0x7; \n \
+            colorsecond = blur.Color; \n \
+            alphasecond = blur.Color.a; \n \
+            isRGBsecond = blur.isRGB; \n \
+            foundColor2 = 1; \n \
+            //semble corriger steep slope \n \
+            //le mesh mode deconne dans steep slope \n \
+          }\n \
+        } else if (foundColor2 == 0) { \n \
+          // A revoir du coup \n \
+          colorthird = colorsecond;\n \
+          alphathird = alphasecond;\n \
+          modethird = modesecond;\n \
+          isRGBthird = isRGBsecond;\n \
+          modesecond = prio.mode&0x7; \n \
+          colorsecond = prio.Color; \n \
+          alphasecond = prio.Color.a; \n \
+          isRGBsecond = prio.isRGB; \n \
+          foundColor2 = 1; \n \
+          if (((isBlur>>prio.layer)&0x1) != 0) { \n \
+            Col blur = getBlur(addr, prio, v_texcoord.st);\n \
+            modesecond = blur.mode&0x7; \n \
+            colorsecond = blur.Color; \n \
+            alphasecond = blur.Color.a; \n \
+            isRGBsecond = blur.isRGB; \n \
+            foundColor2 = 1; \n \
+          }\n \
+        } else if (foundColor3 == 0) { \n \
+          colorfourth = colorthird;\n \
+          alphafourth = alphathird;\n \
+          isRGBfourth = isRGBthird;\n \
+          modethird= prio.mode&0x7;\n \
+          colorthird = prio.Color;\n \
+          alphathird = prio.Color.a;\n \
+          isRGBthird = prio.isRGB;\n \
+          foundColor3 = 1;\n \
+        } \n \
+      } \n \
+      if (((prio.mode&0x7) == 0) || ((foundColor1 == 1)&&(foundColor2 == 1)&&(foundColor3 == 1))) { \n \
+        hasColor = 0; \n \
+      } \n \
+    }\n \
+  }\n \
+}\n \
+"
+
+#define FB_MESH "\
+if ((FBMesh == 1) && (foundColor1 == 0)) {\n \
+  mesh = 1;\n \
+  meshCol = FBShadow.rgb;\n \
+}\n \
+"
+#define FB_COMPUTE_MESH "\
+if ((mesh == 0) && (FBMesh == 1)) {\n \
+  meshCol = FBShadow.rgb;\n \
+  secondImage.rgb = secondImage.rgb * 0.5 + meshCol.rgb * 0.5;\n \
+}\n \
+"
+
+#define COMMON_COMPUTE_SCREENS "\
+//Take care  of the extended coloration mode \n \
+if (!inCCWindow()) {\n \
+  if (extended_cc != 0) { \n \
+    if (ram_mode == 0) { \n \
+      if (use_lncl == 0) { \n \
+        if (modesecond == 1) \n \
+          secondImage.rgb = vec3(colorsecond.rgb); \n \
+        else \n \
+          secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
+      } else {\n \
+        if (modesecond == 1) \n \
+          secondImage.rgb = vec3(colorsecond.rgb); \n \
+        else {\n \
+          if (modethird == 1) \n \
+            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
+          else \n \
+            secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n \
+        }\n \
+      }\n \
+    } else {\n \
+      if (use_lncl == 0) { \n \
+        if (isRGBthird == 0) { \n \
+          secondImage.rgb = vec3(colorsecond.rgb); \n \
+        } else { \n \
+          if (modesecond == 1) { \n \
+            secondImage.rgb = vec3(colorsecond.rgb); \n \
+          } else {\n \
+            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
+          } \n \
+        }\n \
+      } else {\n \
+        if (isRGBthird == 0) { \n \
+          secondImage.rgb = vec3(colorsecond.rgb); \n \
+        } else { \n \
+          if (isRGBfourth == 0) {\n \
+            if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n \
+            else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n \
+          } else { \n \
+            if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n \
+            else { \n \
+              if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n \
+              else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n \
+            }\n \
+          }\n \
+        }\n \
+      }\n \
+    } \n \
+  } else { \n \
+    secondImage.rgb = vec3(colorsecond.rgb); \n \
+  } \n \
+"
+
+#define COMPUTE_IMAGES "\
+  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n \
+  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n \
+  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n \
+  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n \
+  if (modetop == 5) topImage = vec4(colortop.rgb, 1.0); \n \
+  finalColor = clamp(vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0), vec4(0.0), vec4(1.0)); \n \
+} else {\n \
+  finalColor = vec4(colortop.rgb, 1.0);\n \
+}\n \
+if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n \
+finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n \
+"
+#define COMPUTE_SHADOW "\
+if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n \
+"
+static const GLchar Yglprg_vdp2_common_final_fbon_6[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN(4)
+COMMON_FINAL_SCREEN(5)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+
+static const GLchar Yglprg_vdp2_common_final_fbon_5[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN(4)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+static const GLchar Yglprg_vdp2_common_final_fbon_4[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+static const GLchar Yglprg_vdp2_common_final_fbon_3[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+static const GLchar Yglprg_vdp2_common_final_fbon_2[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+static const GLchar Yglprg_vdp2_common_final_fbon_1[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_FINAL_SCREEN(0)
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+static const GLchar Yglprg_vdp2_common_final_fbon_0[]=
+COMMON_FINAL_START
+COMMON_FINAL_FB
+COMMON_GET_PRIORITY_SCREEN_FB
+FB_MESH
+COMMON_COMPUTE_SCREENS
+FB_COMPUTE_MESH
+COMPUTE_IMAGES
+COMPUTE_SHADOW
+;
+
+static const GLchar Yglprg_vdp2_common_final_fboff_0[]=
+COMMON_FINAL_START
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+
+static const GLchar Yglprg_vdp2_common_final_fboff_1[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+static const GLchar Yglprg_vdp2_common_final_fboff_2[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+static const GLchar Yglprg_vdp2_common_final_fboff_3[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+static const GLchar Yglprg_vdp2_common_final_fboff_4[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+static const GLchar Yglprg_vdp2_common_final_fboff_5[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN(4)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+static const GLchar Yglprg_vdp2_common_final_fboff_6[]=
+COMMON_FINAL_START
+COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN(4)
+COMMON_FINAL_SCREEN(5)
+COMMON_GET_PRIORITY_SCREEN_NO_FB
+COMMON_COMPUTE_SCREENS
+COMPUTE_IMAGES
+;
+
+static const GLchar* Yglprg_vdp2_common_final[14] = {
+  Yglprg_vdp2_common_final_fboff_0,
+  Yglprg_vdp2_common_final_fboff_1,
+  Yglprg_vdp2_common_final_fboff_2,
+  Yglprg_vdp2_common_final_fboff_3,
+  Yglprg_vdp2_common_final_fboff_4,
+  Yglprg_vdp2_common_final_fboff_5,
+  Yglprg_vdp2_common_final_fboff_6,
+  Yglprg_vdp2_common_final_fbon_0,
+  Yglprg_vdp2_common_final_fbon_1,
+  Yglprg_vdp2_common_final_fbon_2,
+  Yglprg_vdp2_common_final_fbon_3,
+  Yglprg_vdp2_common_final_fbon_4,
+  Yglprg_vdp2_common_final_fbon_5,
+  Yglprg_vdp2_common_final_fbon_6,
+};
 
 static const GLchar vdp2blit_filter_f[] =
 "vec4 getPixel(sampler2D tex, vec2 st, int deltax, int deltay) {\n"
@@ -1212,34 +1730,63 @@ const GLchar * Yglprg_color_mode_f[4] = {
   Yglprg_vdp2_drawfb_cram_epiloge_dst_alpha_f,
 };
 
-const GLchar * pYglprg_vdp2_blit_f[128*5][16];
+const GLchar * Yglprg_vdp2_common_part_screen[14] = {
+  Yglprg_vdp2_prio_part_fb_off_0,
+  Yglprg_vdp2_prio_part_fb_off_1,
+  Yglprg_vdp2_prio_part_fb_off_2,
+  Yglprg_vdp2_prio_part_fb_off_3,
+  Yglprg_vdp2_prio_part_fb_off_4,
+  Yglprg_vdp2_prio_part_fb_off_5,
+  Yglprg_vdp2_prio_part_fb_off_6,
+  Yglprg_vdp2_prio_part_fb_on_0,
+  Yglprg_vdp2_prio_part_fb_on_1,
+  Yglprg_vdp2_prio_part_fb_on_2,
+  Yglprg_vdp2_prio_part_fb_on_3,
+  Yglprg_vdp2_prio_part_fb_on_4,
+  Yglprg_vdp2_prio_part_fb_on_5,
+  Yglprg_vdp2_prio_part_fb_on_6,
+};
 
-void initVDP2DrawCode(const GLchar* start, const GLchar* draw, const GLchar* end, const GLchar* final) {
+const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
+
+void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
+  int m_start = 0;
   //VDP2 programs
-  for (int i = 0; i<5; i++) {
-     // Sprite color calculation condition are separated by 128
     for (int j = 0; j<4; j++) {
      // 4 Sprite color calculation mode
       for (int k = 0; k<2; k++) {
         // Palette only mode or palette/RGB mode
         for (int l = 0; l<16; l++) {
           //16 sprite typed
-          int index = 16*(2*(4*i+j)+k)+l;
-          pYglprg_vdp2_blit_f[index][0] = start;
-          pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
-          pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
-          pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
-          pYglprg_vdp2_blit_f[index][4] = draw;
-          pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
-          pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
-          pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
-          pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
-          pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
-          pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_end;
-          pYglprg_vdp2_blit_f[index][11] = end;
-          pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_final;
-          pYglprg_vdp2_blit_f[index][13] = final;
-          pYglprg_vdp2_blit_f[index][14] =  NULL;
+          for (int m = 0; m<14; m++) {
+            //14 screens configuration
+            for (int i = 0; i<5; i++) {
+              // Sprite color calculation condition are separated by 1
+            int index = 5*(14*(16*(2*j+k)+l)+m)+i;
+
+            LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
+            #ifndef FORCE_VDP2_DIVERSITY
+            if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
+            else
+            #endif
+            pYglprg_vdp2_blit_f[index][0] = start[m%7];
+            pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
+            pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
+            pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
+            pYglprg_vdp2_blit_f[index][4] = draw;
+            pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
+            pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
+            pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
+            pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
+            pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
+            pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_part;
+            pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part_screen[m];
+            pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_end[m];
+            pYglprg_vdp2_blit_f[index][13] = end;
+            pYglprg_vdp2_blit_f[index][14] = Yglprg_vdp2_common_final[m];
+            pYglprg_vdp2_blit_f[index][15] = final;
+            pYglprg_vdp2_blit_f[index][16] =  NULL;
+          }
         }
       }
     }
@@ -1365,36 +1912,30 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     return 0;
 }
 
-int setupVDP2Prog(Vdp2* varVdp2Regs, int CS) {
+int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
-  int mode = getSpriteRenderMode(varVdp2Regs);
+  int condition = 0;
+  int mode = getSpriteRenderMode(varVdp2Regs) - NONE; // 4x
   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
   const int CCMD = ((varVdp2Regs->CCCTL >> 8) & 0x01);  // hard/vdp2/hon/p12_14.htm#CCMD_
   const int SPLCEN = (varVdp2Regs->LNCLEN & 0x20); // hard/vdp2/hon/p11_30.htm#NxLCEN_
 
+  //Consider x5
   if ( SPCCN ) {
-    const int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-    switch (SPCCCS)
-    {
-      case 0:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_NONE;
-        break;
-      case 1:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_NONE;
-        break;
-      case 2:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_NONE;
-        break;
-      case 3:
-        pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_NONE;
-        break;
-   }
+    condition += (varVdp2Regs->SPCTL >> 12) & 0x3; //5x
   }
-  int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0;
-  int spritetype =  (varVdp2Regs->SPCTL & 0xF);
+  int colormode =  (varVdp2Regs->SPCTL & 0x20) != 0; // 2x
+  int spritetype =  (varVdp2Regs->SPCTL & 0xF); // 16x
 
-  pgid += (mode-NONE)*16*2 + colormode*16 + spritetype;
+  int screen_nb = nb_screen; //14x
+  if (_Ygl->vdp1On[_Ygl->readframe] != 0) {
+    screen_nb += 7;
+  }
+
+  pgid += 5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition;
+
+  LOG_SHADER("get = %d (%d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition);
 
   if (_prgid[pgid] == 0) {
    if (YglInitDrawFrameBufferShaders(pgid, CS) != 0) {
@@ -1438,10 +1979,11 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
 
 void compileVDP2Prog(int id, const GLchar **v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
+  LOG_SHADER("%d %d %d\n", id, PG_VDP2_DRAWFRAMEBUFF_NONE, id-PG_VDP2_DRAWFRAMEBUFF_NONE);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 14, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 16, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   } else {
-    if (createCSProgram(id, 14, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 16, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
 }

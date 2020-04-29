@@ -150,13 +150,13 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    int img[6] = {0};
    int lncl[7] = {0};
    int lncl_draw[7] = {0};
-   int winS_draw[enBGMAX+1] = {0};
-   int winS_mode_draw[enBGMAX+1] = {0};
-   int win0_draw[enBGMAX+1] = {0};
-   int win0_mode_draw[enBGMAX+1] = {0};
-   int win1_draw[enBGMAX+1] = {0};
-   int win1_mode_draw[enBGMAX+1] = {0};
-   int win_op_draw[enBGMAX+1] = {0};
+   int winS_draw = 0;
+   int winS_mode_draw= 0;
+   int win0_draw = 0;
+   int win0_mode_draw = 0;
+   int win1_draw = 0;
+   int win1_mode_draw= 0;
+   int win_op_draw = 0;
    int drawScreen[enBGMAX];
    SpriteMode mode;
    GLenum DrawBuffers[8]= {GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1,GL_COLOR_ATTACHMENT2,GL_COLOR_ATTACHMENT3,GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5,GL_COLOR_ATTACHMENT6,GL_COLOR_ATTACHMENT7};
@@ -188,9 +188,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    glDepthMask(GL_FALSE);
    glDisable(GL_DEPTH_TEST);
    glDisable(GL_BLEND);
-
-  if (_Ygl->vdp2_use_compute_shader != 0)
-    VDP2Generator_init(_Ygl->width, _Ygl->height);
 
    glBindVertexArray(_Ygl->vao);
 
@@ -226,7 +223,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    YglGenFrameBuffer(0);
 
-  if (_Ygl->vdp2_use_compute_shader == 0) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
     glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
     //glClearBufferfv(GL_COLOR, 0, col);
@@ -236,7 +232,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     //glClearBufferfv(GL_COLOR, 3, col);
     //glClearBufferfv(GL_COLOR, 4, col);
 #endif
-  }
+
    glDepthMask(GL_FALSE);
    glViewport(0, 0, _Ygl->width, _Ygl->height);
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
@@ -324,13 +320,13 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
       isPerline[id] = vdp2screens[j];
       isShadow[id] = setupShadow(varVdp2Regs, vdp2screens[j]);
       lncl_draw[id] = lncl[vdp2screens[j]];
-      winS_draw[id] = WinS[vdp2screens[j]];
-      winS_mode_draw[id] = WinS_mode[vdp2screens[j]];
-      win0_draw[id] = _Ygl->Win0[vdp2screens[j]];
-      win0_mode_draw[id] = _Ygl->Win0_mode[vdp2screens[j]];
-      win1_draw[id] = _Ygl->Win1[vdp2screens[j]];
-      win1_mode_draw[id] = _Ygl->Win1_mode[vdp2screens[j]];
-      win_op_draw[id] = _Ygl->Win_op[vdp2screens[j]];
+      winS_draw |= (WinS[vdp2screens[j]]<<id);
+      winS_mode_draw |= (WinS_mode[vdp2screens[j]]<<id);
+      win0_draw |= (_Ygl->Win0[vdp2screens[j]]<<id);
+      win0_mode_draw |= (_Ygl->Win0_mode[vdp2screens[j]]<<id);
+      win1_draw |= (_Ygl->Win1[vdp2screens[j]]<<id);
+      win1_mode_draw |= (_Ygl->Win1_mode[vdp2screens[j]]<<id);
+      win_op_draw |= (_Ygl->Win_op[vdp2screens[j]]<<id);
       id++;
     }
   }
@@ -341,13 +337,13 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
   for (int i = 6; i < 8; i++) {
     //Update dedicated sprite window and Color calculation window
-    winS_draw[i] = WinS[i];
-    winS_mode_draw[i] = WinS_mode[i];
-    win0_draw[i] = _Ygl->Win0[i];
-    win0_mode_draw[i] = _Ygl->Win0_mode[i];
-    win1_draw[i] = _Ygl->Win1[i];
-    win1_mode_draw[i] = _Ygl->Win1_mode[i];
-    win_op_draw[i] = _Ygl->Win_op[i];
+    winS_draw |= WinS[i]<<i;
+    winS_mode_draw |= WinS_mode[i]<<i;
+    win0_draw |= _Ygl->Win0[i]<<i;
+    win0_mode_draw |= _Ygl->Win0_mode[i]<<i;
+    win1_draw |= _Ygl->Win1[i]<<i;
+    win1_mode_draw |= _Ygl->Win1_mode[i]<<i;
+    win_op_draw |= _Ygl->Win_op[i]<<i;
   }
 
   isShadow[6] = setupShadow(varVdp2Regs, SPRITE); //Use sprite index for background suuport
@@ -367,21 +363,15 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   }
 
   VDP1fb = get_vdp1_tex();
-
-  if (_Ygl->vdp2_use_compute_shader == 0) {
 #ifdef __LIBRETRO__
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 #else
-    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->original_fbo);
 #endif
-    glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
-    glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-    YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
-    srcTexture = _Ygl->original_fbotex[0];
-  } else {
-    VDP2Generator_update(_Ygl->compute_tex, prioscreens, modescreens, isRGB, isBlur, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, varVdp2Regs);
-    srcTexture = _Ygl->compute_tex;
-  }
+  glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
+  glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
+  YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
+  srcTexture = _Ygl->original_fbotex[0];
 #ifndef __LIBRETRO__
    glViewport(x, y, w, h);
    glScissor(x, y, w, h);

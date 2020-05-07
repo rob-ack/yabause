@@ -61,6 +61,7 @@ static int window_height;
 static bool hle_bios_force = false;
 static int addon_cart_type = CART_NONE;
 static int mesh_mode = ORIGINAL_MESH;
+static int banding_mode = ORIGINAL_BANDING;
 #if !defined(_OGLES3_)
 static int opengl_version = 330;
 #endif
@@ -83,6 +84,7 @@ static bool stv_mode = false;
 static bool all_devices_ready = false;
 static bool libretro_supports_bitmasks = false;
 static bool rendering_started = false;
+static bool buffer_swapped = false;
 static bool resolution_need_update = false;
 static int16_t libretro_input_bitmask[12] = {-1,};
 static int pad_type[12] = {RETRO_DEVICE_NONE,};
@@ -673,11 +675,7 @@ SoundInterface_struct SNDLIBRETRO = {
 
 M68K_struct *M68KCoreList[] = {
     &M68KDummy,
-#ifdef HAVE_MUSASHI
     &M68KMusashi,
-#else
-    &M68KC68K,
-#endif
     NULL
 };
 
@@ -766,12 +764,7 @@ void YuiSwapBuffers(void)
    if (resolution_need_update || (prev_game_width != game_width) || (prev_game_height != game_height))
       retro_reinit_av_info();
    audio_size = soundlen;
-   video_cb(RETRO_HW_FRAME_BUFFER_VALID, _Ygl->width, _Ygl->height, 0);
-}
-
-void YuiFrameDropped(void)
-{
-   video_cb(NULL, _Ygl->width, _Ygl->height, 0);
+   buffer_swapped = true;
 }
 
 static void context_reset(void)
@@ -900,6 +893,37 @@ void retro_get_system_info(struct retro_system_info *info)
    info->need_fullpath    = true;
    info->block_extract    = true;
    info->valid_extensions = "cue|iso|mds|ccd|zip|chd";
+}
+
+static void set_variable_visibility(void)
+{
+   struct retro_core_option_display option_display;
+
+   // Hide settings specific to OpenGL
+   option_display.visible = (g_vidcoretype == VIDCORE_OGL);
+   option_display.key = "kronos_polygon_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to OpenGL CS
+   option_display.visible = (g_vidcoretype == VIDCORE_CS);
+   option_display.key = "kronos_bandingmode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_wireframe_mode";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to ST-V
+   option_display.visible = stv_mode;
+   option_display.key = "kronos_service_enabled";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_stv_favorite_region";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+
+   // Hide settings specific to compute shaders
+   option_display.visible = (getCSUsage() == 2);
+   option_display.key = "kronos_videocoretype";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
+   option_display.key = "kronos_use_cs";
+   environ_cb(RETRO_ENVIRONMENT_SET_CORE_OPTIONS_DISPLAY, &option_display);
 }
 
 void check_variables(void)
@@ -1074,6 +1098,16 @@ void check_variables(void)
          mesh_mode = IMPROVED_MESH;
    }
 
+   var.key = "kronos_bandingmode";
+   var.value = NULL;
+   if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
+   {
+      if (strcmp(var.value, "disabled") == 0)
+         banding_mode = ORIGINAL_BANDING;
+      else if (strcmp(var.value, "enabled") == 0)
+         banding_mode = IMPROVED_BANDING;
+   }
+
    var.key = "kronos_use_cs";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
@@ -1117,6 +1151,7 @@ void check_variables(void)
       else if (strcmp(var.value, "TW") == 0)
          stv_favorite_region = STV_REGION_TW;
    }
+   set_variable_visibility();
 }
 
 static void set_descriptors(void)
@@ -1181,11 +1216,12 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
 {
    memset(info, 0, sizeof(*info));
 
+   check_variables();
+
    if(initial_resolution_mode == 0)
    {
       // Get the initial resolution mode at start
       // It will be the resolution_mode limit until the core is restarted
-      check_variables();
       initial_resolution_mode = resolution_mode;
       switch(resolution_mode)
       {
@@ -1393,11 +1429,7 @@ bool retro_load_game_common()
    yinit.percoretype             = PERCORE_LIBRETRO;
    yinit.sh2coretype             = g_sh2coretype;
    yinit.sndcoretype             = SNDCORE_LIBRETRO;
-#ifdef HAVE_MUSASHI
    yinit.m68kcoretype            = M68KCORE_MUSASHI;
-#else
-   yinit.m68kcoretype            = M68KCORE_C68K;
-#endif
    yinit.regionid                = REGION_AUTODETECT;
    yinit.mpegpath                = NULL;
    yinit.vsyncon                 = 0;
@@ -1405,9 +1437,6 @@ bool retro_load_game_common()
    yinit.basetime                = 0;
    yinit.usethreads              = 1;
    yinit.numthreads              = numthreads;
-#ifdef SPRITE_CACHE
-   yinit.useVdp1cache            = 0;
-#endif
    yinit.usecache                = 0;
    yinit.skip_load               = 0;
    yinit.polygon_generation_mode = polygon_mode;
@@ -1415,6 +1444,7 @@ bool retro_load_game_common()
    yinit.extend_backup           = 0;
    yinit.buppath                 = bup_path;
    yinit.meshmode                = mesh_mode;
+   yinit.bandingmode             = banding_mode;
    yinit.use_cs                  = use_cs;
    yinit.wireframe_mode          = wireframe_mode;
    yinit.skipframe               = g_skipframe;
@@ -1577,6 +1607,7 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
+   buffer_swapped = false;
    if (!all_devices_ready)
    {
       // Running first frame, so we can assume all devices id were set
@@ -1603,6 +1634,7 @@ void retro_run(void)
          PERCore->Init();
       VIDCore->SetSettingValue(VDP_SETTING_POLYGON_MODE, polygon_mode);
       VIDCore->SetSettingValue(VDP_SETTING_MESH_MODE, mesh_mode);
+      VIDCore->SetSettingValue(VDP_SETTING_BANDING_MODE, banding_mode);
       VIDCore->SetSettingValue(VDP_SETTING_COMPUTE_SHADER, use_cs);
       VIDCore->SetSettingValue(VDP_SETTING_WIREFRAME, wireframe_mode);
       // changing video format on the fly is causing issues
@@ -1614,6 +1646,8 @@ void retro_run(void)
    update_inputs();
    if (rendering_started)
       YabauseExec();
+   // Libretro likes having 1 frame rendered at each retro_run iteration, so let's give up on real saturn's behavior
+   video_cb((buffer_swapped ? RETRO_HW_FRAME_BUFFER_VALID : NULL), _Ygl->width, _Ygl->height, 0);
 }
 
 #ifdef ANDROID

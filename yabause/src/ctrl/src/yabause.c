@@ -137,6 +137,7 @@ static void syncVideoMode(void) {
   unsigned long sleep = 0;
   unsigned long now = YabauseGetTicks();
   unsigned long delay = 0;
+  YuiEndOfFrame();
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
   if(nextFrameTime > now) {
     sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
@@ -313,6 +314,8 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #endif
    return 0;
 }
+
+static u64 fpsticks = 0;
 
 int YabauseInit(yabauseinit_struct *init)
 {
@@ -546,6 +549,7 @@ int YabauseInit(yabauseinit_struct *init)
       VIDSoftSetNumPriorityThreads(0);
    }
 #endif
+   fpsticks = YabauseGetTicks();
    return 0;
 }
 
@@ -692,16 +696,17 @@ u32 YabauseGetCpuTime(){
 
 //////////////////////////////////////////////////////////////////////////////
 static int fpsframecount = 0;
-static u64 fpsticks = 0;
 static int fps = 0;
 static void FPSDisplay(void)
 {
   fpsframecount++;
-  if (YabauseGetTicks() >= fpsticks + yabsys.tickfreq)
+  u64 now = YabauseGetTicks();
+  if (now >= fpsticks + yabsys.tickfreq)
   {
+    u64 delta = now - (fpsticks + yabsys.tickfreq);
     fps = fpsframecount;
     fpsframecount = 0;
-    fpsticks = YabauseGetTicks();
+    fpsticks = YabauseGetTicks() - delta;
   }
   if (isAutoFrameSkip() == 0) {
     OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);

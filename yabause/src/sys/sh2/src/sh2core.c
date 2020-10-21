@@ -382,7 +382,7 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
       case 0x068:
          return context->onchip.VCRD >> 8;
       case 0x080:
-         return context->onchip.WTCSR & 0x18;
+         return context->onchip.WTCSR; // & 0x18;
       case 0x081:
          return context->onchip.WTCNT;
       case 0x092:
@@ -1586,7 +1586,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
       switch (size = ((*CHCR & 0x0C00) >> 10)) {
          case 0:
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteByte(context, *DAR, DMAMappedMemoryReadByte(context, *SAR));
+				DMAMappedMemoryWriteByte(context, *DAR, DMAMappedMemoryReadByte(context, *SAR, NULL), NULL);
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -1598,7 +1598,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
             srcInc *= 2;
 
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteWord(context, *DAR, DMAMappedMemoryReadWord(context, *SAR));
+				DMAMappedMemoryWriteWord(context, *DAR, DMAMappedMemoryReadWord(context, *SAR, NULL), NULL);
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -1610,7 +1610,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
             srcInc *= 4;
 
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteLong(context, *DAR, DMAMappedMemoryReadLong(context, *SAR));
+				DMAMappedMemoryWriteLong(context, *DAR, DMAMappedMemoryReadLong(context, *SAR, NULL), NULL);
                *DAR += destInc;
                *SAR += srcInc;
             }
@@ -1711,10 +1711,10 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
    // Write header
    if (context->isslave == 0)
-      offset = StateWriteHeader(fp, "MSH2", 1);
+      offset = StateWriteHeader(fp, "MSH2", 2);
    else
    {
-      offset = StateWriteHeader(fp, "SSH2", 1);
+      offset = StateWriteHeader(fp, "SSH2", 2);
       ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
    }
 
@@ -1767,7 +1767,11 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
    SH2SetRegisters(context, &regs);
 
    // Read onchip registers
-   yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   if (version < 2) {
+      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*WTCSRM*/, 1, fp);
+   }else {
+     yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
+   }
 
    // Read internal variables
    yread(&check, (void *)&context->frc, sizeof(context->frc), 1, fp);

@@ -59,6 +59,73 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
+INLINE int getVramCycle(u32 addr) {
+  if (yabsys.LineCount >= yabsys.VBlankLineCount) {
+    return 2;
+  }
+  if ((addr & 0x000F0000) < 0x00040000) {
+   return Vdp2External.cpu_cycle_a;
+	return 0;
+  }
+  else {
+   return Vdp2External.cpu_cycle_b;
+	return 0;
+  }
+  return 2;
+}
+
+// gcc 4.9 bug
+#define GET_MEM_CYCLE_W \
+  switch (addr & 0xDFF00000) { \
+  case 0x00200000: /* Low */ \
+    *cycle = 7; \
+    break; \
+  case 0x05A00000: /* SOUND */ \
+    *cycle = 7; \
+    break; \
+  case 0x05C00000: /* VDP1 */ \
+    *cycle = 2; \
+    break; \
+  case 0x05e00000: /* VDP2 */ \
+    *cycle = getVramCycle(addr);  \
+    break; \
+  case 0x06000000: /* High */ \
+    *cycle = 2; \
+    break; \
+  default: \
+    *cycle = 0; \
+    break; \
+  } \
+
+#define GET_MEM_CYCLE_R \
+  switch (addr & 0xDFF00000) { \
+  case 0x00000000: /* ROM */ \
+  case 0x00100000: /* Backup */ \
+    *cycle = 16; \
+    break; \
+  case 0x00200000: /* Low */ \
+    *cycle = 12; \
+    break; \
+  case 0x02000000: /* CS0 */ \
+  case 0x05800000: /* CS2 */ \
+    *cycle = 24; \
+    break; \
+  case 0x05A00000: /* SOUND RAM */ \
+  case 0x05B00000: /* SOUND REG */ \
+  case 0x05C00000: /* VDP1 RAM */ \
+    *cycle = 50; \
+    break; \
+  case 0x05E00000: /* VDP2 RAM */ \
+    *cycle = getVramCycle(addr); \
+    break; \
+  case 0x06000000: /* High */ \
+    *cycle = 0; \
+    break; \
+  default: \
+    *cycle = 0; \
+    break; \
+  } \
+
 //////////////////////////////////////////////////////////////////////////////
 
 u8** MemoryBuffer[0x1000];
@@ -712,11 +779,16 @@ void MappedMemoryInit()
      &BupRam);
 }
 
-u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr) {
+u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr, u32 * cycle) {
   u8 ret;
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
+    GET_MEM_CYCLE_R
+  }
   ret = MappedMemoryReadByte(context, addr);
 return ret;
 }
+
 //////////////////////////////////////////////////////////////////////////////
 u8 FASTCALL MappedMemoryReadByte(SH2_struct *context, u32 addr)
 {
@@ -803,7 +875,11 @@ LOG("Hunandled Byte R %x\n", addr);
 }
 
 
-u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr) {
+u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr, u32 *cycle) {
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
+    GET_MEM_CYCLE_R
+  }
   return MappedMemoryReadWord(context, addr);
 }
 
@@ -898,8 +974,12 @@ LOG("Hunandled Word R %x\n", addr);
    return 0;
 }
 
-u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr)
+u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr, u32 *cycle)
 {
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr);
+    GET_MEM_CYCLE_R
+  }
   return MappedMemoryReadLong(context, addr);
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -995,8 +1075,12 @@ LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
    return 0;
 }
 
-void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
+void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val, u32 *cycle)
 {
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr); ]
+    GET_MEM_CYCLE_W
+  }
    MappedMemoryWriteByte(context, addr, val);
 }
 
@@ -1101,8 +1185,12 @@ LOG("Hunandled Byte W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
+void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val, u32 *cycle)
 {
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr); ]
+    GET_MEM_CYCLE_W
+  }
    MappedMemoryWriteWord(context, addr, val);
 }
 
@@ -1209,8 +1297,12 @@ LOG("Hunandled Word W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
+void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val, u32 *cycle)
 {
+  if (cycle != NULL) {
+    //*cycle = getMemCycle(addr); ]
+    GET_MEM_CYCLE_W
+  }
    MappedMemoryWriteLong(context, addr, val);
 }
 
@@ -1828,6 +1920,7 @@ int YabLoadStateStream(FILE *fp)
 
    if (strncmp(id, "YSS", 3) != 0)
    {
+      YuiMsg("Save file is not a YSS\n");
       return -2;
    }
 
@@ -1850,6 +1943,7 @@ int YabLoadStateStream(FILE *fp)
       default:
          /* we're trying to open a save state using a future version
           * of the YSS format, that won't work, sorry :) */
+        YuiMsg("Save file is not supported. Might be a future version.\n");
          return -3;
          break;
    }
@@ -1883,6 +1977,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "CART", version);
       return -3;
    }
    CartLoadState(fp, version, chunksize);
@@ -1891,6 +1986,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "CS2", version);
       return -3;
    }
    Cs2LoadState(fp, version, chunksize);
@@ -1899,6 +1995,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "MSH2", version);
       return -3;
    }
    SH2LoadState(MSH2, fp, version, chunksize);
@@ -1907,6 +2004,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SSH2", version);
       return -3;
    }
    SH2LoadState(SSH2, fp, version, chunksize);
@@ -1915,6 +2013,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SCSP", version);
       return -3;
    }
    SoundLoadState(fp, version, chunksize);
@@ -1923,6 +2022,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SCU", version);
       return -3;
    }
    ScuLoadState(fp, version, chunksize);
@@ -1931,6 +2031,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "SMPC", version);
       return -3;
    }
    SmpcLoadState(fp, version, chunksize);
@@ -1939,6 +2040,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "VDP1", version);
       return -3;
    }
    Vdp1LoadState(fp, version, chunksize);
@@ -1947,6 +2049,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "VDP2", version);
       return -3;
    }
    Vdp2LoadState(fp, version, chunksize);
@@ -1955,6 +2058,7 @@ int YabLoadStateStream(FILE *fp)
    {
       // Revert back to old state here
       ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+      YuiMsg("Can not load %s (Ver %d)\n", "OTHR", version);
       return -3;
    }
    // Other data

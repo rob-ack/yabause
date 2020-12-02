@@ -834,6 +834,7 @@ const GLchar msb[] = {
   "  vec4 currentColor = texelFetch(u_fbo,ivec2(gl_FragCoord.xy),0);\n"
   "  currentColor.g = float(int(currentColor.g * 255.0)|0x80)/255.0;\n"
   "  fragColor = currentColor;\n"
+  "  fragMesh.rg = vec2(0.0);\n"
   "  return;\n"
 };
 
@@ -1794,7 +1795,7 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     if (isBlur[i] != 0) isBlur_val |= 1<<i;
   }
 
-  for(int i=0; i<6; i++) {
+  for(int i=0; i<7; i++) {
     if (isRGB[i] != 0) isRGB_val |= 1<<i;
     if (isShadow[i] != 0) isShadow_val |= 1<<i;
   }

@@ -111,6 +111,14 @@ static const GLchar * a_prg_vdp1[NB_PRG][5] = {
 		NULL,
 		NULL
   },
+	//CLEAR_MESH
+	{
+		vdp1_clear_mesh_f,
+		NULL,
+		NULL,
+		NULL,
+		NULL
+	},
 };
 
 static int getProgramId() {
@@ -214,6 +222,18 @@ static int regenerateMeshTex(int w, int h) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+static void vdp1_clear_mesh() {
+	int progId = CLEAR_MESH;
+	if (prg_vdp1[progId] == 0)
+    prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
+  glUseProgram(prg_vdp1[progId]);
+	glBindImageTexture(0, mesh_tex[0], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
+	glBindImageTexture(1, mesh_tex[1], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
+	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
+	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(1, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
 }
 
 static int generateComputeBuffer(int w, int h) {
@@ -519,6 +539,9 @@ void vdp1_clear(int id, float *col) {
 
 void vdp1_write() {
 	int progId = WRITE;
+	float wratio = 1.0f/_Ygl->vdp1wratio;
+	float hratio = 1.0f/_Ygl->vdp1hratio;
+
 	if (prg_vdp1[progId] == 0) {
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
 	}
@@ -526,7 +549,7 @@ void vdp1_write() {
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_);
-	glUniform2f(2, 1.0f/_Ygl->vdp1wratio, 1.0/_Ygl->vdp1hratio);
+	glUniform2f(2, wratio, hratio);
 
 	glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
 	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -534,13 +557,15 @@ void vdp1_write() {
 
 u32* vdp1_read() {
 	int progId = READ;
+	float wratio = 1.0f/_Ygl->vdp1wratio;
+	float hratio = 1.0f/_Ygl->vdp1hratio;
 	if (prg_vdp1[progId] == 0)
     prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
   glUseProgram(prg_vdp1[progId]);
 
 	glBindImageTexture(0, compute_tex[_Ygl->drawframe], 0, GL_FALSE, 0, GL_READ_ONLY, GL_RGBA8);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vdp1access_);
-	glUniform2f(2, 1.0f/_Ygl->vdp1wratio, 1.0/_Ygl->vdp1hratio);
+	glUniform2f(2, wratio, hratio);
 
 	//waitVdp1End
 	{
@@ -649,17 +674,6 @@ void vdp1_compute() {
 	int progId = getProgramId();
 	int needRender = _Ygl->vdp1IsNotEmpty;
 
-	if (prg_vdp1[progId] == 0)
-    prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
-  glUseProgram(prg_vdp1[progId]);
-
-	VDP1CPRINT("Draw VDP1\n");
-	if ((oldProg != -1) && (oldProg != progId)) {
-		//CleanUp texture
-		regenerateMeshTex(_Ygl->vdp1width, _Ygl->vdp1height);
-	}
-	oldProg = progId;
-
   for (int i = 0; i < NB_COARSE_RAST; i++) {
     if (hasDrawingCmd[i] == 0) nbCmd[i] = 0;
     if (nbCmd[i] != 0) {
@@ -669,6 +683,18 @@ void vdp1_compute() {
   if (needRender == 0) {
 		return;
 	}
+
+	if (prg_vdp1[progId] == 0)
+	prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
+	glUseProgram(prg_vdp1[progId]);
+
+	VDP1CPRINT("Draw VDP1\n");
+	if ((oldProg != -1) && (oldProg != progId)) {
+		//CleanUp mesh texture
+		vdp1_clear_mesh();
+	}
+	oldProg = progId;
+
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_);
 	for (int i = 0; i < NB_COARSE_RAST; i++) {
 		if (nbCmd[i] != 0) {
@@ -733,6 +759,12 @@ void vdp1_compute() {
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+#ifdef TEST_FB_RW
+	  vdp1_read();
+	  vdp1_write();
+#endif
+
   return;
 }
 

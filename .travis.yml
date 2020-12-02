@@ -3,55 +3,24 @@ matrix:
 
     # linux gcc
     - os: linux
-      dist: bionic
+      dist: focal
       sudo: required
       compiler: gcc
       env:
        - QT_BASE=511
       addons:
        apt:
+         update: true
          packages:
             - cmake
-            - libqt5multimedia
-     
-    # mingw-w64 windows cross compile, libyabause only
-    # needs qt and other deps built
-    - compiler: gcc
-      env: testenv="mingw-w64 windows cross compile, libyabause only"
-      addons:
-        apt:
-          packages:
-            - gcc-mingw-w64-x86-64
-            - g++-mingw-w64-x86-64
-            - binutils-mingw-w64-x86-64
-            - mingw-w64-dev
-      script:
-        # create toolchain file so we can cross compile
-        - echo 'SET(CMAKE_SYSTEM_NAME Windows)' > toolchain.cmake
-        - echo 'SET(CMAKE_C_COMPILER   x86_64-w64-mingw32-gcc)' >> toolchain.cmake
-        - echo 'SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
-        - echo 'SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
-        - cmake -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DYAB_PORTS= ..
-        - make
-      after_success:
-        #- cpack -G ZIP -D CPACK_PACKAGE_FILE_NAME=yabause-${GIT_HASH}-win64
-        #- curl --ftp-create-dirs -T yabause-${GIT_HASH}-win64.zip -u $YABUSR:$YABPAS ftp://ftp.tuxfamily.org/yabause/yabause-repository/releases/travis-ci/yabause-${GIT_HASH}-win64.zip
-
-#addons:
-#  coverity_scan:
-#    project:
-#      name: "Yabause/yabause"
-#      description: "Build submitted via Travis CI"
-#    notification_email: guillaume.duhamel@gmail.com
-#    build_command_prepend: "cmake ..;"
-#    build_command: "make"
-#    branch_pattern: coverity_scan
+            - qt5-default
+            - libqt5multimedia5
+            - libqt5opengl5-dev
+            - libsdl2-dev
 
 env:
   global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    # via the "travis encrypt" command using the project repo's public key
-#    - secure: "sopS90ts/MzipWazyLIeLtDkSWZyV9HeMfR8mIglxWuo76T/mOCT0m4fFPRQeJ1OHO3hWMbpYzKt357B/gwcpbq1/MTm6l+mhkxTKGBmrLpT9bz3GfQcQG3UgtOBp5bgUFc0xB2geN5BYrNCiKExmuMqTFByMKvIjiRWzwiCJflc74iNHTzS4j3y/wfRypnhJ8HIyU9YSwB43QzvtvmwgHRNcQ8Z7Hsto4qs4anEM4fnKWD5yyD+sFFnZIaCtDLXcKAi8HY0ILf2jxO5SLxzv0R9tyBkbXLaaSVfHWR3NOFMJtT4vq1v+XzcD2p1c9PxsxmIsOK2TLpYEx7sCmddO5zSs884turwu1ZDT/1pUQODSaxVpCRlE+NVDoUl6tqa3DGW1rIxzp/NjRzo4WEP2+fAvPVQSKG8l7GuHhgY1m8D0lHesaNXFr6D6hiKDEmMc1/nVKW8ohMPQxC1/g7tfM61zCkDcwc5CEtB6lNxEr3Db1M1u7X0pOCbPTgt0mNJcpGlNNDRnjh4gb+gXmFMAsJKTSy4/i4ExhMvTQqUp9LA7Bu0SdCT74rH5wS2oPw65aiijFDdaItk1ZapASphwzVV4IoKMQ7/6ZWEHccLZQ63a4hSSFD0upn5qcAhGlZwdUc4wYRFayUo5pzxYbui9Zlv/XxYEC5K8vI4EunmcBw="
+    - MAKEFLAGS="-j 16"
 
 language: cpp
 
@@ -59,12 +28,29 @@ sudo: false
 
 before_install:
   # only build the first port if running a coverity scan. otherwise coverity will attempt to analyze all the builds
-  - if ([[ "${TRAVIS_JOB_NUMBER##*.}" != "1" ]] && [[ "${TRAVIS_BRANCH}" == "coverity_scan" ]]); then false ; fi
   - cd yabause
   - mkdir build
   - cd build
-  - export GIT_HASH=$(git rev-parse --short HEAD)
 
 script:
-  - cmake  ..
+  - cmake ..
   - make
+  - make DESTDIR=../install install
+
+before_deploy:
+  # Set up git user name and tag this commit
+  - cd ../install/
+  - zip -r ../kronos_ubuntu.zip .
+  - cd ..
+  - git config --local user.name "Francois CARON"
+  - git config --local user.email "francois.caron.perso@gmail.com"
+
+deploy:
+  provider: releases
+  api_key: 
+    secure: "fd1OmbeotEF8vNRR9/87boQg6Zlj1AWhxIVhEPCHYSfo+82JMQQUIi1KY9JyyN1zbB2LMTW2vK7phy/i87tMoaF2y8Wt5R6Aa5CBr3ahNvpSCUsnJwEEujTKctn6ZwulVYNalPUUVpfiuJnr3Y2MIYV+h/sKqcPsgKkxUyNJ+2qtiKQwgmKRmJpfXTyhEqGDDvy2ji/V+b5mIPRXVh+JmMDw8q35/An+mJY36S6acBjfdt302T1Zd5hGmjXS//JpdpdsD7pocyqSxv/IBrUu0N4R+xRb3/3O5r12t8nlbV2FNNr/LzC2j8pCm2FvjLr8ECD9c2Ue8RCRWH2fjQttMwbe3eNMb3Fu5VclpZLb+i5Xfk5nXD17qfVBUFxyUnHXGl0YehftNpwppSRPPkZLtVjeYeLm2yCA1ztAYPVqbivygxOj5PFJzOwfPcpDTJ67KfkzeiTeD19A8rQGbkBVk7jKXgA7TegAzuSzHeL0noI5fks4wG8TJrq3GdExwdek0fau9KVgB0ZVfmoz/VEhpdJMVf0awmKbh82oZ3wTOwUtqpVLBcV7QaKuKcnTa3SLB8RCz6aW+VWAXAJzHoHu7pNFpxkY1Z/JBY2vERKE9sIA6/FpqY+ZJ7cs6nYhioYAyrdLlIGa+QJ5zALW0cPLqSZBpCbrm2PmXhwIEY2yymc="
+  file: "kronos_ubuntu.zip"
+  skip_cleanup: true
+  on:
+    tags: true
+

@@ -74,10 +74,16 @@ void YglEraseWriteCSVDP1(int id) {
 
   color = Vdp1Regs->EWDR;
 
-  if (color != 0x0) _Ygl->vdp1On[id] = 1;
-
   col[0] = (color & 0xFF) / 255.0f;
   col[1] = ((color >> 8) & 0xFF) / 255.0f;
+
+  if (color != 0x0) {
+    _Ygl->vdp1On[id] = 1;
+    if (((Vdp1Regs->TVMR & 0x1) == 1) && (col[0] != col[1])){
+      YuiMsg("Unsupported clear process\n\tin 8 bits upper part of EWDR is for even coordinates and lower part for odd coordinates\n");
+    }
+  }
+
 
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   vdp1_clear(id, col);
@@ -96,12 +102,6 @@ void YglCSFinsihDraw(void) {
 void YglCSRenderVDP1(void) {
   FRAMELOG("YglCSRenderVDP1: drawframe =%d %d\n", _Ygl->drawframe, yabsys.LineCount);
   vdp1_compute();
-
-#ifdef TEST_FB_RW
-  vdp1_read();
-  vdp1_write();
-#endif
-
 }
 
 void YglFrameChangeCSVDP1(){
@@ -284,7 +284,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
   int prioscreens[6] = {0};
   int modescreens[7] = {0};
   int useLineColorOffset[6] = {0};
-  int isRGB[6] = {0};
+  int isRGB[7] = {0};
   int isBlur[7] = {0};
   int isPerline[8] = {0};
   int isShadow[7] = {0};

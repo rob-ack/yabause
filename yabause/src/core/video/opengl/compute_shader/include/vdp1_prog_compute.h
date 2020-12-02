@@ -43,10 +43,10 @@ SHADER_VERSION_COMPUTE
 "{\n"
 "  ivec2 size = imageSize(outSurface);\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
-"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  float x = float(texel.x) * upscale.x;\n"
-"  float y = float(size.y - 1 - texel.y) * upscale.y;\n"
-"  int idx = int(x) + int(y)*512;\n"
+"  int x = int(texel.x * upscale.x);\n"
+"  int y = int(texel.y * upscale.y);\n"
+"  if (x >= 512 || y >= 256 ) return;\n"
+"  int idx = int(x) + int(255 - y)*512;\n"
 "  float g = float((Vdp1FB[idx] >> 24) & 0xFFu)/255.0;\n"
 "  float r = float((Vdp1FB[idx] >> 16) & 0xFFu)/255.0;\n"
 "  imageStore(outSurface,texel,vec4(g, r, 0.0, 0.0));\n"
@@ -65,11 +65,11 @@ SHADER_VERSION_COMPUTE
 "{\n"
 "  ivec2 size = imageSize(s_texture);\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
-"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
-"  float x = float(texel.x) * upscale.x;\n"
-"  float y = float(size.y - 1 - texel.y) * upscale.y;\n"
-"  int idx = int(x) + int(y)*512;\n"
-"  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)*upscale));\n"
+"  int x = int(texel.x * upscale.x);\n"
+"  int y = int(texel.y * upscale.y);\n"
+"  if (x >= 512 || y >= 256 ) return;\n"
+"  int idx = int(x) + int(255 - y)*512;\n"
+"  vec4 pix = imageLoad(s_texture, ivec2(vec2(texel.x,texel.y)));\n"
 "  uint val = (uint(pix.r*255.0)<<24) | (uint(pix.g*255.0)<<16);\n"
 "  Vdp1FB[idx] = val;\n"
 "}\n";
@@ -90,6 +90,23 @@ SHADER_VERSION_COMPUTE
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  imageStore(outSurface,texel,col);\n"
 "  imageStore(outMesh, texel, vec4(0.0));\n"
+"}\n";
+
+static const char vdp1_clear_mesh_f[] =
+SHADER_VERSION_COMPUTE
+"#ifdef GL_ES\n"
+"precision highp float;\n"
+"#endif\n"
+"layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
+"layout(rg8, binding = 0) writeonly uniform image2D outMesh0;\n"
+"layout(rg8, binding = 1) writeonly uniform image2D outMesh1;\n"
+"void main()\n"
+"{\n"
+"  ivec2 size = imageSize(outMesh0);\n"
+"  ivec2 texel = ivec2(gl_GlobalInvocationID.x, gl_GlobalInvocationID.y);\n"
+"  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
+"  imageStore(outMesh0, texel, vec4(0.0));\n"
+"  imageStore(outMesh1, texel, vec4(0.0));\n"
 "}\n";
 
 #define COLINDEX(A) \
@@ -563,7 +580,7 @@ SHADER_VERSION_COMPUTE
 "    texcoord = uv;\n"
 "    gouraudcoord = texcoord;\n"
 "    if ((pixcmd.flip & 0x1u) == 0x1u) texcoord.x = 1.0 - texcoord.x;\n" //invert horizontally
-"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y;\n" //invert vertically
+"    if ((pixcmd.flip & 0x2u) == 0x2u) texcoord.y = 1.0 - texcoord.y - 1.0f/float(pixcmd.h);\n" //invert vertically
 "    if (pixcmd.type <= "Stringify(LINE)") {\n"
 "      newColor = extractPolygonColor(pixcmd);\n"
 "    } else if (pixcmd.type <= "Stringify(QUAD)") {\n"

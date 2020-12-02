@@ -1233,7 +1233,7 @@ void ScuExec(u32 timing) {
      //}
    }
 #else
-  ScuDmaProc(ScuRegs, (int)timing<<4);
+  ScuDmaProc(ScuRegs, (int)timing<<4+0xF);
 #endif
 
    // is dsp executing?
@@ -1789,7 +1789,7 @@ void ScuExec(u32 timing) {
                      break;
                   case 0x0F: // End Commands
                      ScuDsp->ProgControlPort.part.EX = 0;
-
+                     while (ScuDsp->dsp_dma_wait > 0) step_dsp_dma(ScuDsp);
                      if (instruction & 0x8000000) {
                         // End with Interrupt
                         ScuDsp->ProgControlPort.part.E = 1;

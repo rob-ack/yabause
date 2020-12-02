@@ -17,12 +17,37 @@ static const GLchar Yglprg_vdp2_sprite_palette_rgb[] =
 " return ((index & 0x8000)!=0);\n"
 "}\n";
 
+static const GLchar Yglprg_vdp2_sprite_getCode_16[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 16 bit - FB 16bit\n"
+" return (int(col.x*255.0) | (int(col.y*255.0) << 8));\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_8[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 8 bit - FB 8bit\n"
+" return int(col.x*255.0);\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_16_8[] =
+"int getCode(vec2 col) {\n"
+"//Sprite Type 16 bit - FB 8 bit\n"
+" return (int(col.x*255.0) | 0xFF00);\n"
+"}\n";
+
+static const GLchar Yglprg_vdp2_sprite_getCode_8_16[] =
+"int getCode(vec2 col) {\n"
+"//Srite Type 8 bit - FB 16bit\n"
+" return int(col.x*255.0);\n"
+"}\n";
+
+
 static const GLchar Yglprg_vdp2_sprite_type_0[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -44,7 +69,7 @@ static const GLchar Yglprg_vdp2_sprite_type_1[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -66,7 +91,7 @@ static const GLchar Yglprg_vdp2_sprite_type_2[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -95,7 +120,7 @@ static const GLchar Yglprg_vdp2_sprite_type_3[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -124,7 +149,7 @@ static const GLchar Yglprg_vdp2_sprite_type_4[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -153,7 +178,7 @@ static const GLchar Yglprg_vdp2_sprite_type_5[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -182,7 +207,7 @@ static const GLchar Yglprg_vdp2_sprite_type_6[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -211,7 +236,7 @@ static const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
+"  ret.code = getCode(col);\n"
 "  if (isRGBCode(ret.code)) {\n"
 "    ret.prio = 0;\n"
 "    ret.isRGB = 1;\n"
@@ -235,173 +260,120 @@ static const GLchar Yglprg_vdp2_sprite_type_7[] =
 "  return ret;\n"
 "}\n";
 
+
+//Kunoichi Torimonochou is clearing with VDP1 clear code 0x8000 with FB in 8bits mode, so palette Only
+// Then the color code has to be considered as transparent color
 static const GLchar Yglprg_vdp2_sprite_type_8[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 7) & 0x1;\n"
-"    ret.code = ret.code & 0x7F;\n"
-"    ret.normalShadow = (ret.code == 0x7E);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 7) & 0x1;\n"
+"  ret.code = ret.code & 0x7F;\n"
+"  ret.normalShadow = (ret.code == 0x7E);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_9[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 7) & 0x1;\n"
-"    ret.cc = (ret.code >> 6) & 0x1;\n"
-"    ret.code = ret.code & 0x3F;\n"
-"    ret.normalShadow = (ret.code == 0x3E);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 7) & 0x1;\n"
+"  ret.cc = (ret.code >> 6) & 0x1;\n"
+"  ret.code = ret.code & 0x3F;\n"
+"  ret.normalShadow = (ret.code == 0x3E);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_A[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 6) & 0x3;\n"
-"    ret.code = ret.code & 0x3F;\n"
-"    ret.normalShadow = (ret.code == 0x3E);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 6) & 0x3;\n"
+"  ret.code = ret.code & 0x3F;\n"
+"  ret.normalShadow = (ret.code == 0x3E);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_B[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.cc = (ret.code >> 6) & 0x3;\n"
-"    ret.code = ret.code & 0x3F;\n"
-"    ret.normalShadow = (ret.code == 0x3E);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.cc = (ret.code >> 6) & 0x3;\n"
+"  ret.code = ret.code & 0x3F;\n"
+"  ret.normalShadow = (ret.code == 0x3E);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_C[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 7) & 0x1;\n"
-"    ret.code = ret.code & 0xFF;\n"
-"    ret.normalShadow = (ret.code == 0xFE);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 7) & 0x1;\n"
+"  ret.code = ret.code & 0xFF;\n"
+"  ret.normalShadow = (ret.code == 0xFE);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_D[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 7) & 0x1;\n"
-"    ret.cc = (ret.code >> 6) & 0x1;\n"
-"    ret.code = ret.code & 0xFF;\n"
-"    ret.normalShadow = (ret.code == 0xFE);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 7) & 0x1;\n"
+"  ret.cc = (ret.code >> 6) & 0x1;\n"
+"  ret.code = ret.code & 0xFF;\n"
+"  ret.normalShadow = (ret.code == 0xFE);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_E[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.prio = (ret.code >> 6) & 0x3;\n"
-"    ret.code = ret.code & 0xFF;\n"
-"    ret.normalShadow = (ret.code == 0xFE);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.prio = (ret.code >> 6) & 0x3;\n"
+"  ret.code = ret.code & 0xFF;\n"
+"  ret.normalShadow = (ret.code == 0xFE);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_F[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
-"  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
+"  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
-"  ret.code = int(col.x*255.0) | (int(col.y*255.0) << 8);\n"
-"  if (isRGBCode(ret.code)) {\n"
-"    ret.prio = 0;\n"
-"    ret.isRGB = 1;\n"
-"    ret.cc = 0;\n"
-"    ret.color.rgb = getRGB(ret.code).rgb;\n"
-"  } else {\n"
-"    ret.cc = (ret.code >> 6) & 0x3;\n"
-"    ret.code = ret.code & 0xFF;\n"
-"    ret.normalShadow = (ret.code == 0xFE);\n"
-"    ret.color.rg = getVec2(ret.code).xy;\n"
-"    ret.color.b = 0.0;\n"
-"  }\n"
+"  ret.code = getCode(col);\n"
+"  ret.cc = (ret.code >> 6) & 0x3;\n"
+"  ret.code = ret.code & 0xFF;\n"
+"  ret.normalShadow = (ret.code == 0xFE);\n"
+"  ret.color.rg = getVec2(ret.code).xy;\n"
+"  ret.color.b = 0.0;\n"
 "  return ret;\n"
 "}\n";
 
@@ -520,8 +492,6 @@ static const GLchar Yglprg_vdp2_common_start[] =
 " ret.g = float((((colindex & 0x3E0) >> 5) & 0x1F)<<3)/255.0;\n"
 " ret.b = float((((colindex & 0x7C00) >> 10) & 0x1F)<<3)/255.0;\n"
  " return ret;\n"
-
-" return ret;\n"
 "}\n"
 
 "vec4 getColoredPixel(int idx){ \n"
@@ -1211,12 +1181,14 @@ for (int i = 7; i>0; i--) { \n \
   if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
     int hasColor = 1;\n \
     while (hasColor != 0) {\n \
+      float alpha = 1.0; \n \
       Col prio = getPriorityColor(i, hasColor);\n \
       hasColor = hasColor+1;\n \
       if (prio.mode != 0) { \n \
         if (foundColor1 == 0) { \n \
           prio.mode = (prio.mode & 0x7); \n \
           if (prio.isSprite == 0) {\n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
             if ((FBMesh == 1) && (i <= FBMeshPrio)) {\n \
               mesh = 1;\n \
               meshCol = FBShadow.rgb;\n \
@@ -1236,6 +1208,7 @@ for (int i = 7; i>0; i--) { \n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \
 //As a top image. But the shadow process shall be processed \n \
               processShadow = true;\n \
+              if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
               continue;\n \
             }\n \
             if (FBMSBShadow) {\n \
@@ -1245,8 +1218,11 @@ for (int i = 7; i>0; i--) { \n \
               if (tmp.code == 0) {\n \
 //In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image \n \
                   processShadow = (use_trans_shadow != 0);\n \
+                  if (processShadow && (((isShadow>>6)&0x1)!= 0)) colorback.rgb *= 0.5; \n \
                   continue;\n \
                 }\n \
+                if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
+                prio.Color.rgb *= 0.5; \n \
             }\n \
           }\n \
           if (prio.lncl == 0) { \n \
@@ -1270,6 +1246,7 @@ for (int i = 7; i>0; i--) { \n \
             foundColor2 = 1; \n \
           }\n \
           colortop = prio.Color; \n \
+          colortop.rgb *= alpha; \n \
           modetop = prio.mode&0x7; \n \
           isRGBtop = prio.isRGB; \n \
           alphatop = prio.Color.a; \n \
@@ -1286,7 +1263,6 @@ for (int i = 7; i>0; i--) { \n \
             //le mesh mode deconne dans steep slope \n \
           }\n \
         } else if (foundColor2 == 0) { \n \
-          // A revoir du coup \n \
           if (prio.isSprite == 1) {\n \
             if (FBNormalShadow) {\n \
                  //shadow are transparent and not computed when on lower priority \n \
@@ -1297,13 +1273,16 @@ for (int i = 7; i>0; i--) { \n \
                 continue;\n \
               }\n \
             }\n \
-          }\n \
+          } else { \n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
+          } \n \
           colorthird = colorsecond;\n \
           alphathird = alphasecond;\n \
           modethird = modesecond;\n \
           isRGBthird = isRGBsecond;\n \
           modesecond = prio.mode&0x7; \n \
           colorsecond = prio.Color; \n \
+          colorsecond.rgb *= alpha; \n \
           alphasecond = prio.Color.a; \n \
           isRGBsecond = prio.isRGB; \n \
           foundColor2 = 1; \n \
@@ -1326,12 +1305,15 @@ for (int i = 7; i>0; i--) { \n \
                 continue;\n \
               }\n \
             }\n \
-          }\n \
+          } else { \n \
+            if (processShadow && prio.normalShadow) alpha = 0.5; \n \
+          } \n \
           colorfourth = colorthird;\n \
           alphafourth = alphathird;\n \
           isRGBfourth = isRGBthird;\n \
           modethird= prio.mode&0x7;\n \
           colorthird = prio.Color;\n \
+          colorthird.rgb *= alpha; \n \
           alphathird = prio.Color.a;\n \
           isRGBthird = prio.isRGB;\n \
           foundColor3 = 1;\n \
@@ -1499,7 +1481,14 @@ if (!inCCWindow()) {\n \
       }\n \
     } \n \
   } else { \n \
-    secondImage.rgb = vec3(colorsecond.rgb); \n \
+    // To be uncommented when we will have a CC issue in RAM_Mode 1 \n \
+    // //Table 12.1 p 236 Color calculation function when in the high resolution mode or special monitor mode \n \
+    // // when the TV screen mode is the high resolution mode or Exclusive monitor mode, the color RAM mode and second image color format hav limitations. \n \
+    // if ((ram_mode == 0) || (isRGBsecond == 1)){ \n \
+      secondImage.rgb = vec3(colorsecond.rgb); \n \
+    // } else { \n \
+    //   modetop = 1; \n \
+    // } \n \
   } \n \
 "
 
@@ -1516,9 +1505,6 @@ if (!inCCWindow()) {\n \
 if (mesh == 1) finalColor.rgb = finalColor.rgb * 0.5 + meshCol.rgb * 0.5;\n \
 finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n \
 "
-#define COMPUTE_SHADOW "\
-if (processShadow) finalColor.rgb = finalColor.rgb * 0.5;\n \
-"
 static const GLchar Yglprg_vdp2_common_final_fbon_6[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
@@ -1533,7 +1519,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 
 static const GLchar Yglprg_vdp2_common_final_fbon_5[]=
@@ -1549,7 +1534,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_4[]=
 COMMON_FINAL_START
@@ -1563,7 +1547,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_3[]=
 COMMON_FINAL_START
@@ -1576,7 +1559,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_2[]=
 COMMON_FINAL_START
@@ -1588,7 +1570,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_1[]=
 COMMON_FINAL_START
@@ -1599,7 +1580,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 static const GLchar Yglprg_vdp2_common_final_fbon_0[]=
 COMMON_FINAL_START
@@ -1609,7 +1589,6 @@ FB_MESH
 COMMON_COMPUTE_SCREENS
 FB_COMPUTE_MESH
 COMPUTE_IMAGES
-COMPUTE_SHADOW
 ;
 
 static const GLchar Yglprg_vdp2_common_final_fboff_0[]=
@@ -1706,6 +1685,14 @@ const GLchar * vdp2blit_palette_mode_f[2]= {
   Yglprg_vdp2_sprite_palette_only,
   Yglprg_vdp2_sprite_palette_rgb
 };
+
+const GLchar * vdp2blit_sprite_code_f[4] = {
+  Yglprg_vdp2_sprite_getCode_16,
+  Yglprg_vdp2_sprite_getCode_16_8,
+  Yglprg_vdp2_sprite_getCode_8_16,
+  Yglprg_vdp2_sprite_getCode_8,
+};
+
 const GLchar * vdp2blit_srite_type_f[16] = {
   Yglprg_vdp2_sprite_type_0,
   Yglprg_vdp2_sprite_type_1,
@@ -1755,7 +1742,7 @@ const GLchar * Yglprg_vdp2_common_part_screen[14] = {
   Yglprg_vdp2_prio_part_fb_on_6,
 };
 
-const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][17];
+const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][18];
 
 void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
   int m_start = 0;
@@ -1770,30 +1757,34 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
             //14 screens configuration
             for (int i = 0; i<5; i++) {
               // Sprite color calculation condition are separated by 1
-            int index = 5*(14*(16*(2*j+k)+l)+m)+i;
+              for (int n = 0; n<4; n++) {
+                //4 possibilities betwwen vdp2 and vdp1 FB width mode
+              int index = 4*(5*(14*(16*(2*j+k)+l)+m)+i)+n;
 
-            LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
-            #ifndef FORCE_VDP2_DIVERSITY
-            if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
-            else
-            #endif
-            pYglprg_vdp2_blit_f[index][0] = start[m%7];
-            pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
-            pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
-            pYglprg_vdp2_blit_f[index][3] = vdp2blit_srite_type_f[l];
-            pYglprg_vdp2_blit_f[index][4] = draw;
-            pYglprg_vdp2_blit_f[index][5] = Yglprg_vdp2_common_draw;
-            pYglprg_vdp2_blit_f[index][6] = Yglprg_color_condition_f[i];
-            pYglprg_vdp2_blit_f[index][7] = Yglprg_color_mode_f[j];
-            pYglprg_vdp2_blit_f[index][8] = Yglprg_vdp2_drawfb_cram_eiploge_f;
-            pYglprg_vdp2_blit_f[index][9] = vdp2blit_filter_f;
-            pYglprg_vdp2_blit_f[index][10] = Yglprg_vdp2_common_part;
-            pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part_screen[m];
-            pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_end[m];
-            pYglprg_vdp2_blit_f[index][13] = end;
-            pYglprg_vdp2_blit_f[index][14] = Yglprg_vdp2_common_final[m];
-            pYglprg_vdp2_blit_f[index][15] = final;
-            pYglprg_vdp2_blit_f[index][16] =  NULL;
+              LOG_SHADER("index = %d (%d %d %d %d %d)\n", index, j, k, l, m, i);
+              #ifndef FORCE_VDP2_DIVERSITY
+              if (getCSUsage() == 0) pYglprg_vdp2_blit_f[index][0] = start[6];
+              else
+              #endif
+              pYglprg_vdp2_blit_f[index][0] = start[m%7];
+              pYglprg_vdp2_blit_f[index][1] = Yglprg_vdp2_common_start;
+              pYglprg_vdp2_blit_f[index][2] = vdp2blit_palette_mode_f[k];
+              pYglprg_vdp2_blit_f[index][3] = vdp2blit_sprite_code_f[n];
+              pYglprg_vdp2_blit_f[index][4] = vdp2blit_srite_type_f[l];
+              pYglprg_vdp2_blit_f[index][5] = draw;
+              pYglprg_vdp2_blit_f[index][6] = Yglprg_vdp2_common_draw;
+              pYglprg_vdp2_blit_f[index][7] = Yglprg_color_condition_f[i];
+              pYglprg_vdp2_blit_f[index][8] = Yglprg_color_mode_f[j];
+              pYglprg_vdp2_blit_f[index][9] = Yglprg_vdp2_drawfb_cram_eiploge_f;
+              pYglprg_vdp2_blit_f[index][10] = vdp2blit_filter_f;
+              pYglprg_vdp2_blit_f[index][11] = Yglprg_vdp2_common_part;
+              pYglprg_vdp2_blit_f[index][12] = Yglprg_vdp2_common_part_screen[m];
+              pYglprg_vdp2_blit_f[index][13] = Yglprg_vdp2_common_end[m];
+              pYglprg_vdp2_blit_f[index][14] = end;
+              pYglprg_vdp2_blit_f[index][15] = Yglprg_vdp2_common_final[m];
+              pYglprg_vdp2_blit_f[index][16] = final;
+              pYglprg_vdp2_blit_f[index][17] =  NULL;
+            }
           }
         }
       }
@@ -1923,6 +1914,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
 int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
   int pgid = PG_VDP2_DRAWFRAMEBUFF_NONE;
   int condition = 0;
+  int fb_mode = 0;
   int mode = getSpriteRenderMode(varVdp2Regs) - NONE; // 4x
   const int SPCCN = ((varVdp2Regs->CCCTL >> 6) & 0x01); // hard/vdp2/hon/p12_14.htm#NxCCEN_
   const int CCRTMD = ((varVdp2Regs->CCCTL >> 9) & 0x01); // hard/vdp2/hon/p12_14.htm#CCRTMD_
@@ -1941,9 +1933,18 @@ int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS) {
     screen_nb += 7;
   }
 
-  pgid += 5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition;
+  if (spritetype > 0x7) {
+    //VDP2 use FB as 8 bits
+    fb_mode +=2;
+  }
+  if ((Vdp1Regs->TVMR & 0x1) == 1) {
+    //VDP1 use FB as 8 bits
+    fb_mode +=1;
+  }
 
-  LOG_SHADER("get = %d (%d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition);
+  pgid += 4*(5*(14*(16*(2*mode+colormode)+spritetype)+screen_nb)+condition)+fb_mode;
+
+  LOG_SHADER("get = %d (%d %d %d %d %d %d)\n", pgid-PG_VDP2_DRAWFRAMEBUFF_NONE, mode, colormode, spritetype, screen_nb, condition, fb_mode);
 
   if (_prgid[pgid] == 0) {
    if (YglInitDrawFrameBufferShaders(pgid, CS) != 0) {
@@ -1989,9 +1990,9 @@ void compileVDP2Prog(int id, const GLchar **v, int CS){
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
   LOG_SHADER("%d %d %d\n", id, PG_VDP2_DRAWFRAMEBUFF_NONE, id-PG_VDP2_DRAWFRAMEBUFF_NONE);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 16, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 17, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   } else {
-    if (createCSProgram(id, 16, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 17, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
 }

@@ -4301,10 +4301,17 @@ void VIDOGLVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fra
 
 void VIDOGLVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
+  if (  (cmd->CMDXC+1 > regs->systemclipX2)
+    && (cmd->CMDYC+1 > regs->systemclipY2)
+  ) {
+    regs->localX = 0;
+    regs->localY = 0;
+  }
   regs->userclipX1 = cmd->CMDXA;
   regs->userclipY1 = cmd->CMDYA;
   regs->userclipX2 = cmd->CMDXC+1;
   regs->userclipY2 = cmd->CMDYC+1;
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5611,13 +5618,11 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   case 0:
     // Parameter A
     info->rotatenum = 0;
-    info->rotatemode = 0;
     info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
     break;
   case 1:
     // Parameter B
     info->rotatenum = 1;
-    info->rotatemode = 0;
     info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
     break;
   case 2:
@@ -5628,7 +5633,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     // Parameter A+B switched via rotation parameter window
     // FIX ME(need to figure out which Parameter is being used)
     info->rotatenum = 0;
-    info->rotatemode = 1 + (varVdp2Regs->RPMD & 0x1);
     info->PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
     break;
   }

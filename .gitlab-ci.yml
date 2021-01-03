@@ -5,7 +5,6 @@
     CORENAME: kronos
 
 include:
-  - template: Jobs/Code-Quality.gitlab-ci.yml
   - project: 'libretro-infrastructure/ci-templates'
     file: '/linux-x64.yml'
   - project: 'libretro-infrastructure/ci-templates'
@@ -15,15 +14,14 @@ stages:
   - build-prepare
   - build-shared
   - build-static
-  - test
 
 #Desktop
-libretro-build-linux-x64:
-  extends:
-    - .libretro-linux-x64-make-default
-    - .core-defs
-
 libretro-build-windows-x64:
   extends:
     - .libretro-windows-x64-mingw-make-default
+    - .core-defs
+    
+libretro-build-linux-x64:
+  extends:
+    - .libretro-linux-x64-make-default
     - .core-defs

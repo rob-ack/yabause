@@ -26,16 +26,9 @@ endif ()
 
 try_compile(HAVE_WCS_POINTERS ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR}/src/tools/mini18n/cmake/check_wcs_functions.c)
 
-add_library(mini18n-shared SHARED ${mini18n_SOURCES})
-set_target_properties(mini18n-shared PROPERTIES OUTPUT_NAME mini18n SOVERSION 1 VERSION 1.0.1)
 add_library(mini18n-static STATIC ${mini18n_SOURCES})
 if (MSVC)
     set_target_properties(mini18n-static PROPERTIES OUTPUT_NAME mini18n-static)
 else()
     set_target_properties(mini18n-static PROPERTIES OUTPUT_NAME mini18n)
 endif()
-
-install(TARGETS mini18n-shared DESTINATION "lib")
-install(TARGETS mini18n-static DESTINATION "lib")
-install(FILES mini18n.h DESTINATION "include")
-install(FILES mini18n-multi.h DESTINATION "include")

@@ -2270,7 +2270,16 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   }
 }
 
-
+static int getPriority(int id, Vdp2 *a) {
+  switch (id) {
+  case NBG0:
+      return (a->PRINA & 0x7);
+  case NBG1:
+    return ((a->PRINA >> 8) & 0x7);
+  default:
+    return 0;
+  }
+}
 //////////////////////////////////////////////////////////////////////////////
 
 static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs) {
@@ -2420,6 +2429,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
+      info->priority = getPriority(info->idScreen, &Vdp2Lines[v]); //MapPerLine is called only for NBG0 and NBG1
       int priority = info->priority;
       if (info->specialprimode == 1) {
         info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
@@ -4661,7 +4671,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 {
   if ((a->BGON & 0x1010) != (b->BGON & 0x1010)) return 0;
-//  if ((a->PRIR & 0x7) != (b->PRIR & 0x7)) return 0;
+  if ((a->PRIR & 0x7) != (b->PRIR & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF10) != (b->CCCTL & 0xFF10)) return 0;
 //  if ((a->SFPRMD & 0x300) != (b->SFPRMD & 0x300)) return 0;
 //  if ((a->CHCTLB & 0x7700) != (b->CHCTLB & 0x7700)) return 0;
@@ -4698,7 +4708,7 @@ int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 {
 
   if ((a->BGON & 0x130) != (b->BGON & 0x130)) return 0;
-//  if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
+  if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
 //  if ((a->BMPNA & 0x7) != (b->BMPNA & 0x7)) return 0;
 //  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;

@@ -1370,8 +1370,8 @@ int YabauseQuickLoadGame(void)
       Vdp2ColorRamWriteWord(MSH2, Vdp2ColorRam, 0xFF, 0x0000);
 
       //Workaround for Radiant silergun boot in Emulated bios
-      for (int i = 0; i < 0x80000; i += 2) {
-        T1WriteWord(Vdp1Ram, i, 0x8000);
+      for (int i = 0; i < 0x80000; i += 0x20) {
+        Vdp1RamWriteWord(NULL, Vdp1Ram, i, 0x8000);
       }
 
    }

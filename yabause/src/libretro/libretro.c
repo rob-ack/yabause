@@ -862,6 +862,23 @@ void YuiEndOfFrame(void)
    }
 }
 
+static void init_cheevos(void)
+{
+   bool cheevos_supported                  = true;
+   struct retro_memory_map mmaps           = {0};
+   struct retro_memory_descriptor descs[2] =
+   {
+      { RETRO_MEMDESC_SYSTEM_RAM, LowWram,  0, 0x0200000, 0, 0, 0x100000, "LowWram"  },
+      { RETRO_MEMDESC_SYSTEM_RAM, HighWram, 0, 0x6000000, 0, 0, 0x100000, "HighWram" },
+   };
+
+   mmaps.descriptors     = descs;
+   mmaps.num_descriptors = sizeof(descs) / sizeof(*descs);
+
+   environ_cb(RETRO_ENVIRONMENT_SET_MEMORY_MAPS, &mmaps);
+   environ_cb(RETRO_ENVIRONMENT_SET_SUPPORT_ACHIEVEMENTS, &cheevos_supported);
+}
+
 static void context_reset(void)
 {
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_RESET, NULL);
@@ -870,6 +887,7 @@ static void context_reset(void)
    {
       first_ctx_reset = 0;
       YabauseInit(&yinit);
+      init_cheevos();
       if (g_videoformattype != -1)
          YabauseSetVideoFormat(g_videoformattype);
       OSDChangeCore(OSDCORE_DUMMY);

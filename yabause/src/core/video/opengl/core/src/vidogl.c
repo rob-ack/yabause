@@ -2309,14 +2309,13 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
   int prepagey = -1;
   int mapid = 0;
   int premapid = -1;
+  int scaleh = 0;
 
   info->patternpixelwh = 8 * info->patternwh;
   info->draww = _Ygl->rwidth;
 
   if (_Ygl->rheight >= 448)
-    info->drawh = (_Ygl->rheight >> 1);
-  else
-    info->drawh = _Ygl->rheight;
+    scaleh = 1;
 
   const int incv = 1.0 / info->coordincy*256.0;
   const int res_shift = 0;
@@ -2429,7 +2428,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
-      info->priority = getPriority(info->idScreen, &Vdp2Lines[v]); //MapPerLine is called only for NBG0 and NBG1
+      info->priority = getPriority(info->idScreen, &Vdp2Lines[v>>scaleh]); //MapPerLine is called only for NBG0 and NBG1
       int priority = info->priority;
       if (info->specialprimode == 1) {
         info->priority = (info->priority & 0xFFFFFFFE) | info->specialfunction;
@@ -4643,6 +4642,8 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   info->linecheck_mask = 0x01;
   info->priority = varVdp2Regs->PRINA & 0x7;
 
+  LOG_AREA("RGB1 prio = %d\n", info->priority);
+
   if (((Vdp2External.disptoggle & 0x20)==0) || (info->priority == 0)) {
     free(rgb);
     return;
@@ -4706,7 +4707,6 @@ int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 
 int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 {
-
   if ((a->BGON & 0x130) != (b->BGON & 0x130)) return 0;
   if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
@@ -4719,7 +4719,8 @@ int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
 //  if ((a->SFPRMD & 0x3) != (b->SFPRMD & 0x3)) return 0;
 //  if ((a->CHCTLA & 0x7F) != (b->CHCTLA & 0x7F)) return 0;
 //  if ((a->MZCTL & 0xFF01) != (b->MZCTL & 0xFF01)) return 0;
-//  if ((a->SFCCMD &0x3) != (b->SFCCMD &0x3)) return 0;
+ if ((a->CCRNA &0x1F) != (b->CCRNA &0x1F)) return 0;
+ if ((a->SFCCMD &0x3) != (b->SFCCMD &0x3)) return 0;
 //  if ((a->SFSEL & 0x1) != (b->SFSEL & 0x1)) return 0;
 //  if ((a->SFCODE & 0xFFFF) != (b->SFCODE & 0xFFFF)) return 0;
 //  if ((a->LNCLEN & 0x1) != (b->LNCLEN & 0x1)) return 0;
@@ -5473,6 +5474,9 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
   info->priority = varVdp2Regs->PRIR & 0x7;
+
+  LOG_AREA("RGB0 prio = %d\n", info->priority);
+
   if (((Vdp2External.disptoggle & 0x10)==0) || (info->priority == 0)) {
     free(rgb);
     return;

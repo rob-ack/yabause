@@ -1971,7 +1971,7 @@ int YabLoadStateStream(FILE *fp)
 
    // Verify version here
 
-   ScspMuteAudio(SCSP_MUTE_SYSTEM);
+   // ScspMuteAudio(SCSP_MUTE_SYSTEM);
 
    if (StateCheckRetrieveHeader(fp, "CART", &version, &chunksize) != 0)
    {
@@ -2113,7 +2113,7 @@ int YabLoadStateStream(FILE *fp)
    MovieReadState(fp);
    }
 
-   ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
+   // ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
 
    OSDPushMessage(OSDMSG_STATUS, 150, "STATE LOADED");
    return 0;

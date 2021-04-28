@@ -728,7 +728,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   if (emptyCmd(cmd)) {
     // damaged data
     yabsys.vdp1cycles += 70;
-    return -1;
+    return 0;
   }
 
   cmd->w = ((cmd->CMDSIZE >> 8) & 0x3F) * 8;
@@ -801,7 +801,7 @@ static int Vdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_
 
   int w = (sqrt((cmd->CMDXA - cmd->CMDXB)*(cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC)*(cmd->CMDXD - cmd->CMDXC)))/2;
   int h = (sqrt((cmd->CMDYA - cmd->CMDYD)*(cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC)*(cmd->CMDYB - cmd->CMDYC)))/2;
-  yabsys.vdp1cycles += 16 + (w * h) + (w * 2);
+  yabsys.vdp1cycles += MIN(1000, 16 + (w * h) + (w * 2));
 
   //gouraud
   memset(cmd->G, 0, sizeof(float)*16);
@@ -1022,7 +1022,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   int cylesPerLine  = getVdp1CyclesPerLine();
 
-  if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
+  // if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
 
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
     returnAddr = 0xffffffff;
@@ -1183,26 +1183,12 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          break;
       case 1: // ASSIGN, jump to CMDLINK
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
-         // Badd adress. it causes infinity loop
-         if (regs->addr == 0) {
-           Vdp1External.status = VDP1_STATUS_IDLE;
-           CmdListDrawn = 1;
-           CmdListLimit = (regs->addr & 0x7FFFF);
-           return;
-         }
          break;
       case 2: // CALL, call a subroutine
          if (returnAddr == 0xFFFFFFFF)
             returnAddr = regs->addr + 0x20;
 
          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
-         // Badd adress. it causes infinity loop
-         if (regs->addr == 0) {
-           Vdp1External.status = VDP1_STATUS_IDLE;
-           CmdListDrawn = 1;
-           CmdListLimit = (regs->addr & 0x7FFFF);
-           return;
-         }
          break;
       case 3: // RETURN, return from subroutine
          if (returnAddr != 0xFFFFFFFF) {
@@ -1211,13 +1197,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          }
          else
             regs->addr += 0x20;
-         // Badd adress. it causes infinity loop
-         if (regs->addr == 0) {
-           Vdp1External.status = VDP1_STATUS_IDLE;
-           CmdListDrawn = 1;
-           CmdListLimit = (regs->addr & 0x7FFFF);
-           return;
-         }
          break;
       }
 

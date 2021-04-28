@@ -135,7 +135,6 @@ void FASTCALL Vdp2NBG3PlaneAddr(vdp2draw_struct *info, int i, Vdp2* regs)
 
 //////////////////////////////////////////////////////////////////////////////
 int Vdp2GetBank(Vdp2* regs, u32 addr){
-	
 	// 4Mbit mode
 	if ( (regs->VRSIZE&0x8000) == 0){
 
@@ -143,19 +142,19 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x20000 && addr < 0x40000){
-			if (regs->RAMCTL & 0x10){
+			if (regs->RAMCTL & 0x100){
 				return VDP2_VRAM_A1;
 			}
 			else{
 				return VDP2_VRAM_A0;
 			}
-			
+
 		}
 		else if (addr >= 0x40000 && addr < 0x60000){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0x60000 && addr < 0x80000){
-			if (regs->RAMCTL & 0x20){
+			if (regs->RAMCTL & 0x200){
 				return VDP2_VRAM_B1;
 			}
 			else{
@@ -170,7 +169,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_A0;
 		}
 		else if (addr >= 0x40000 && addr < 0x80000){
-			if (regs->RAMCTL & 0x10){
+			if (regs->RAMCTL & 0x100){
 				return VDP2_VRAM_A1;
 			}
 			else{
@@ -181,7 +180,7 @@ int Vdp2GetBank(Vdp2* regs, u32 addr){
 			return VDP2_VRAM_B0;
 		}
 		else if (addr >= 0xc0000 && addr < 0x100000){
-			if (regs->RAMCTL & 0x20){
+			if (regs->RAMCTL & 0x200){
 				return VDP2_VRAM_B1;
 			}
 			else{
@@ -242,19 +241,49 @@ int PixelIsSpecialPriority(int specialcode, int dot)
    return 0;
 }
 
+void setupPerdot(vdp2rotationparameter_struct *parameter, u32 addr, Vdp2* regs, u8* ram) {
+  // hard/vdp2/hon/p06_20.htm#no6_21
+  int perdot = 0;
+
+  //Use the effective adress of the coeficien table to determine if it is per dot.
+  int bank = Vdp2GetBank(regs, parameter->coeftbladdr);
+  switch (bank)
+  {
+  case VDP2_VRAM_A0:
+    perdot = (regs->RAMCTL & 0x03);
+    break;
+  case VDP2_VRAM_A1:
+    perdot = ((regs->RAMCTL >> 2) & 0x03);
+    break;
+  case VDP2_VRAM_B0:
+    perdot = ((regs->RAMCTL >> 4) & 0x03);
+    break;
+  case VDP2_VRAM_B1:
+    perdot = ((regs->RAMCTL >> 6) & 0x03);
+    break;
+  }
+  if (perdot == 1){
+    // Use perdot if RAMCTL is 1 or if RAMCTL is 3 and RPMD is 2.
+    int i = Vdp2RamReadLong(NULL, ram, addr);
+    float ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
+    parameter->deltaKAx = ftmp;
+  } else {
+    parameter->deltaKAx = 0.0f;
+  }
+}
+
 void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, Vdp2* regs, u8* ram)
 {
    s32 i;
    u32 addr;
-   int bank;
 
    addr = regs->RPTA.all << 1;
-   bank = Vdp2GetBank(regs, addr);
 
    if (which == 0)
    {
       // Rotation Parameter A
       addr &= 0x000FFF7C;
+
       parameter->linecoefenab = regs->KTCTL & 0x10;
       parameter->coefenab = regs->KTCTL & 0x1;
       parameter->screenover = (regs->PLSZ >> 10) & 0x3;
@@ -263,10 +292,12 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
    {
       // Rotation Parameter B
       addr = (addr & 0x000FFFFC) | 0x00000080;
+
       parameter->coefenab = regs->KTCTL & 0x100;
       parameter->linecoefenab = regs->KTCTL & 0x1000;
       parameter->screenover = (regs->PLSZ >> 14) & 0x3;
    }
+
 
    i = Vdp2RamReadLong(NULL, ram, addr);
    parameter->Xst = (float) (signed) ((i & 0x1FFFFFC0) | (i & 0x10000000 ? 0xF0000000 : 0x00000000)) / 65536;
@@ -362,7 +393,6 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
 
    if (parameter->coefenab)
    {
-	    int perdot = 0;
       float ftmp;
       u32 tmp;
 
@@ -386,39 +416,11 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
       }
       else{
         parameter->k_mem_type = 0; // use vram
-        // hard/vdp2/hon/p06_20.htm#no6_21
-        switch (bank)
-        {
-        case VDP2_VRAM_A0:
-          perdot = (regs->RAMCTL & 0x03);
-          break;
-        case VDP2_VRAM_A1:
-          perdot = ((regs->RAMCTL >> 2) & 0x03);
-          break;
-        case VDP2_VRAM_B0:
-          perdot = ((regs->RAMCTL >> 4) & 0x03);
-          break;
-        case VDP2_VRAM_B1:
-          perdot = ((regs->RAMCTL >> 6) & 0x03);
-          break;
-        }
-
-        if (perdot == 0){
-          parameter->deltaKAx = 0.0f;
-        }
-        else{
-          i = Vdp2RamReadLong(NULL, ram, addr);
-          ftmp = (float)(signed)((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000)) / 65536;
-          parameter->deltaKAx = ftmp;
-
-        }
       }
-
 
 	  addr += 4;
 
     if (which == 0) {
-
       tmp = (regs->KTCTL & 0x2 ? 2 : 4);
       parameter->coefdatasize = tmp;
 
@@ -431,27 +433,30 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
       tmp = (regs->KTCTL >> 4) & 0x01;
       parameter->use_coef_for_linecolor = tmp;
 
-    }else{
+      if (parameter->k_mem_type == 0) {
+        setupPerdot(parameter, addr-4, regs, ram);
+      }
 
+    }else{
       tmp = (regs->KTCTL & 0x200 ? 2 : 4);
       parameter->coefdatasize = tmp;
-      
 
       tmp = (((regs->KTAOF >> 8) & 0x7) * 0x10000 + (int)(parameter->KAst)) * parameter->coefdatasize;
       parameter->coeftbladdr = tmp;
-      
+
       tmp = (regs->KTCTL >> 10) & 0x3;
       parameter->coefmode = tmp;
-      
 
       tmp = (regs->KTCTL >> 12) & 0x01;
       parameter->use_coef_for_linecolor = tmp;
 
       if (regs->RPMD == 0x02){
         parameter->deltaKAx = 0.0f; // hard/vdp2/hon/p06_35.htm#RPMD_
+      } else if (parameter->k_mem_type == 0) {
+          setupPerdot(parameter, addr-4, regs, ram);
       }
     }
-      
+
 
     if (parameter->k_mem_type == 0) {
 
@@ -470,7 +475,7 @@ void Vdp2ReadRotationTable(int which, vdp2rotationparameter_struct *parameter, V
   else{
     parameter->use_coef_for_linecolor = 0;
   }
-   
+
   VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n", parameter->Xst, parameter->Yst, parameter->Zst, parameter->deltaXst,
     parameter->deltaYst, parameter->deltaX);
   VDP2LOG("deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n", parameter->deltaY,
@@ -606,7 +611,7 @@ void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *paramete
 
       i = T1ReadLong(ram, addr);
       parameter->deltaKAst = (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000));
-      addr += 4;     
+      addr += 4;
 
       i = T1ReadLong(ram, addr);
       parameter->deltaKAx = (signed) ((i & 0x03FFFFC0) | (i & 0x02000000 ? 0xFE000000 : 0x00000000));
@@ -629,7 +634,7 @@ void Vdp2ReadRotationTableFP(int which, vdp2rotationparameterfp_struct *paramete
    VDP2LOG("Xst: %f, Yst: %f, Zst: %f, deltaXst: %f deltaYst: %f deltaX: %f\n"
        "deltaY: %f A: %f B: %f C: %f D: %f E: %f F: %f Px: %f Py: %f Pz: %f\n"
        "Cx: %f Cy: %f Cz: %f Mx: %f My: %f kx: %f ky: %f KAst: %f\n"
-       "deltaKAst: %f deltaKAx: %f\n", 
+       "deltaKAst: %f deltaKAx: %f\n",
        tofloat(parameter->Xst), tofloat(parameter->Yst),
        tofloat(parameter->Zst), tofloat(parameter->deltaXst),
        tofloat(parameter->deltaYst), tofloat(parameter->deltaX),

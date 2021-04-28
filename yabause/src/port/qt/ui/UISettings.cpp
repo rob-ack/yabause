@@ -87,7 +87,11 @@ const Items mCartridgeTypes = Items()
 const Items mVideoFilterMode = Items()
 	<< Item("0", "None")
         << Item("1", "Bilinear")
-	<< Item("2", "BiCubic");
+	<< Item("2", "BiCubic")
+	<< Item("3", "Deinterlacing Bob")
+	<< Item("4", "Deinterlacing Debug Bob")
+	<< Item("5", "Deinterlacing OSSC Bob")
+	<< Item("6", "Deinterlacing OSSC Debug Bob");
 
 const Items mUpscaleFilterMode = Items()
 	<< Item("0", "None")
@@ -539,7 +543,7 @@ void UISettings::loadCores()
 	// System Language
 	foreach ( const Item& it, mSysLanguageID  )
 		cbSysLanguageID ->addItem( QtYabause::translate( it.Name ), it.id );
-	
+
 	// SH2 Interpreters
 	for ( int i = 0; SH2CoreList[i] != NULL; i++ )
 		cbSH2Interpreter->addItem( QtYabause::translate( SH2CoreList[i]->Name ), SH2CoreList[i]->id );

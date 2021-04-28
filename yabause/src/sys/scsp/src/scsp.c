@@ -165,7 +165,7 @@ u64 getM68KCounter();
 
 enum EnvelopeStates
 {
-   ATTACK,
+   ATTACK = 1,
    DECAY1,
    DECAY2,
    RELEASE
@@ -545,9 +545,10 @@ void op2(struct Slot * slot, struct Scsp * s)
    if (slot->regs.lpctl == 0)//no loop
    {
       slot->state.sample_offset += sample_delta;
-
       if (slot->state.sample_offset >= slot->regs.lea)
+      {
          slot->state.attenuation = 0x3ff;
+      }
    }
    else if (slot->regs.lpctl == 1)//normal loop
    {
@@ -613,7 +614,7 @@ void op2(struct Slot * slot, struct Scsp * s)
 //waveform dram read
 void op3(struct Slot * slot)
 {
-   u32 addr = (slot->state.address_pointer) & 0x7FFFF;
+   u32 addr = (slot->state.address_pointer);
 
    if (slot->state.attenuation >= 0x3bf)
       return;
@@ -628,8 +629,10 @@ void op3(struct Slot * slot)
 
 void change_envelope_state(struct Slot * slot, enum EnvelopeStates new_state)
 {
+  if (slot->state.envelope != new_state) {
    slot->state.envelope = new_state;
    slot->state.step_count = 0;
+  }
 }
 
 int need_envelope_step(int effective_rate, u32 sample_counter, struct Slot* slot)
@@ -709,8 +712,9 @@ void do_decay(struct Slot * slot, int rate_in)
 
    if (need_envelope_step(rate, slot->state.sample_counter, slot))
    {
-      if (slot->state.attenuation < 0x3bf)
+      if (slot->state.attenuation < 0x3bf) {
          slot->state.attenuation += decay_rate;
+      }
    }
 }
 
@@ -736,7 +740,6 @@ void op4(struct Slot * slot)
             attack_rate = attack_rate_table[0][sample_mod_4];
          else
             attack_rate = attack_rate_table[rate - 0x30][sample_mod_4];
-
          slot->state.attenuation -= ((slot->state.attenuation >> attack_rate)) + 1;
 
          if (slot->state.attenuation == 0)
@@ -746,14 +749,14 @@ void op4(struct Slot * slot)
    else if (slot->state.envelope == DECAY1)
    {
       do_decay(slot,slot->regs.d1r);
-
-      if ((slot->state.attenuation >> 5) >= slot->regs.dl)
+      if ((slot->state.attenuation >> 5) >= slot->regs.dl){
          change_envelope_state(slot, DECAY2);
+       }
    }
-   else if (slot->state.envelope == DECAY2)
-      do_decay(slot, slot->regs.d2r);
-   else if (slot->state.envelope == RELEASE)
-      do_decay(slot, slot->regs.rr);
+   else if (slot->state.envelope == DECAY2){
+      do_decay(slot, slot->regs.d2r);}
+   else if (slot->state.envelope == RELEASE){
+      do_decay(slot, slot->regs.rr);}
 }
 
 s16 apply_volume(u16 tl, u16 slot_att, const s16 s)
@@ -916,10 +919,9 @@ void keyon(struct Slot * slot)
 {
    if (slot->state.envelope == RELEASE )
    {
-     slot->state.envelope = ATTACK;
+     change_envelope_state(slot, ATTACK);
       slot->state.attenuation = 0x280;
       slot->state.sample_counter = 0;
-      slot->state.step_count = 0;
       slot->state.sample_offset = 0;
       slot->state.envelope_steps_taken = 0;
 
@@ -1019,7 +1021,6 @@ void scsp_slot_write_byte(struct Scsp *s, u32 addr, u8 data)
       slot->regs.kb = (data >> 3) & 1;//has to be done first
 
       if ((data >> 4) & 1) { //keyonex
-        //SCSPLOG("KEY ON %d:1", slot_num);
         keyonex(s);
       }
 
@@ -1254,7 +1255,6 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.kb = (data >> 11) & 1;//has to be done before keyonex
 
       if (data & (1 << 12)){
-        //SCSPLOG("KEY ON %d:2", slot_num);
         keyonex(s);
       }
 
@@ -5814,13 +5814,14 @@ SoundSaveState (FILE *fp)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-  offset = StateWriteHeader (fp, "SCSP", 3);
+  offset = StateWriteHeader (fp, "SCSP", 4);
 
   // Save 68k registers first
   ywrite (&check, (void *)&IsM68KRunning, 1, 1, fp);
-  ywrite(&check, (void *)&savedcycles, sizeof(u32), 1, fp );
+  ywrite(&check, (void *)&savedcycles, sizeof(s32), 1, fp );
 
 #ifdef IMPROVED_SAVESTATES
+
   M68K->SaveState(fp);
 #else
   for (i = 0; i < 8; i++)
@@ -5841,8 +5842,12 @@ SoundSaveState (FILE *fp)
   ywrite (&check, (void *)&temp, 4, 1, fp);
 #endif
 
-  ywrite(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
-  ywrite (&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
+  ywrite(&check, (void *)&new_scsp_outbuf_pos, sizeof(int), 1, fp );
+  ywrite(&check, (void *)&new_scsp_outbuf_l, sizeof(s32), 900, fp );
+  ywrite(&check, (void *)&new_scsp_outbuf_r, sizeof(s32), 900, fp );
+
+  ywrite(&check, (void *)&new_scsp_cycles, sizeof(int), 1, fp);
+  ywrite (&check, (void *)new_scsp.sound_stack, sizeof(u16), 64, fp);
   for (i = 0; i < 32; i++) {
     ywrite (&check, (void *)&new_scsp.slots[i].regs.kx, sizeof(u8), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].regs.kb, sizeof(u8),  1,fp);
@@ -5888,7 +5893,7 @@ SoundSaveState (FILE *fp)
     ywrite (&check, (void *)&new_scsp.slots[i].regs.efpan, sizeof(u8), 1, fp);
 
     ywrite (&check, (void *)&new_scsp.slots[i].state.wave, sizeof(u16), 1, fp);
-    ywrite (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(int), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].state.envelope, sizeof(int), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].state.output, sizeof(s16), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].state.attenuation, sizeof(u16), 1, fp);
@@ -5900,17 +5905,30 @@ SoundSaveState (FILE *fp)
     ywrite (&check, (void *)&new_scsp.slots[i].state.address_pointer, sizeof(u32), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].state.lfo_counter, sizeof(u32), 1, fp);
     ywrite (&check, (void *)&new_scsp.slots[i].state.lfo_pos, sizeof(u32), 1, fp);
-    ywrite (&check, (void *)&new_scsp.slots[i].state.num, sizeof(u32), 1, fp);
-    ywrite (&check, (void *)&new_scsp.slots[i].state.is_muted, sizeof(u32), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.num, sizeof(int), 1, fp);
+    ywrite (&check, (void *)&new_scsp.slots[i].state.is_muted, sizeof(int), 1, fp);
 
   }
 
 
   // Now for the SCSP registers
-  ywrite (&check, (void *)scsp_reg, 0x1000, 1, fp);
+  ywrite (&check, (void *)scsp_reg, sizeof(u8), 0x1000, fp);
+
+  //Plfo
+  ywrite (&check, (void *)plfo.saw_table, 256, 1, fp);
+  ywrite (&check, (void *)plfo.square_table, 256, 1, fp);
+  ywrite (&check, (void *)plfo.tri_table, 256, 1, fp);
+  ywrite (&check, (void *)plfo.saw_table, 256, 1, fp);
+  //Alfo
+  ywrite (&check, (void *)alfo.saw_table, 256, 1, fp);
+  ywrite (&check, (void *)alfo.square_table, 256, 1, fp);
+  ywrite (&check, (void *)alfo.tri_table, 256, 1, fp);
+  ywrite (&check, (void *)alfo.saw_table, 256, 1, fp);
 
   // Sound RAM is important
   ywrite (&check, (void *)SoundRam, 0x80000, 1, fp);
+
+  ywrite (&check, (void *)cddabuf.data, CDDA_NUM_BUFFERS*2352, 1, fp);
 
   // Write slot internal variables
   for (i = 0; i < 32; i++)
@@ -6080,6 +6098,12 @@ SoundSaveState (FILE *fp)
   ywrite(&check, (void *)&scsp_dsp.updated, sizeof(int), 1, fp);
   ywrite(&check, (void *)&scsp_dsp.last_step, sizeof(int), 1, fp);
 
+  ywrite(&check, (void *)&scsp_dsp.shift_reg, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.read_pending, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.read_value, sizeof(u32), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.write_pending, sizeof(int), 1, fp);
+  ywrite(&check, (void *)&scsp_dsp.write_value, sizeof(u32), 1, fp);
+
   ywrite(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
   ywrite(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
 
@@ -6105,13 +6129,18 @@ SoundLoadState (FILE *fp, int version, int size)
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
-
+  u8 newM68state;
   // Read 68k registers first
-  yread(&check, (void *)&IsM68KRunning, 1, 1, fp);
-  yread(&check, (void *)&savedcycles, sizeof(u32), 1, fp);
-
+  yread(&check, (void *)&newM68state, 1, 1, fp);
+  yread(&check, (void *)&savedcycles, sizeof(s32), 1, fp);
+if (IsM68KRunning != newM68state) {
+  if (newM68state) M68KStart();
+  else M68KStop();
+}
 #ifdef IMPROVED_SAVESTATES
-  M68K->LoadState(fp);
+  if (version >= 4){
+    M68K->LoadState(fp);
+  }
 #else
   for (i = 0; i < 8; i++)
     {
@@ -6130,6 +6159,11 @@ SoundLoadState (FILE *fp, int version, int size)
   yread (&check, (void *)&temp, 4, 1, fp);
   M68K->SetPC (temp);
 #endif
+  if (version >= 4){
+    yread(&check, (void *)&new_scsp_outbuf_pos, sizeof(int), 1, fp );
+    yread(&check, (void *)&new_scsp_outbuf_l, 900*sizeof(s32), 1, fp );
+    yread(&check, (void *)&new_scsp_outbuf_r, 900*sizeof(s32), 1, fp );
+  }
 
   yread(&check, (void *)&new_scsp_cycles, 1, sizeof(u32), fp);
   yread(&check, (void *)new_scsp.sound_stack, 64, sizeof(u16), fp);
@@ -6178,7 +6212,7 @@ SoundLoadState (FILE *fp, int version, int size)
     yread (&check, (void *)&new_scsp.slots[i].regs.efpan, sizeof(u8), 1, fp);
 
     yread (&check, (void *)&new_scsp.slots[i].state.wave, sizeof(u16), 1, fp);
-    yread (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(u32), 1, fp);
+    yread (&check, (void *)&new_scsp.slots[i].state.backwards, sizeof(int), 1, fp);
     yread (&check, (void *)&new_scsp.slots[i].state.envelope, sizeof(int), 1, fp);
     yread (&check, (void *)&new_scsp.slots[i].state.output, sizeof(s16), 1, fp);
     yread (&check, (void *)&new_scsp.slots[i].state.attenuation, sizeof(u16), 1, fp);
@@ -6199,8 +6233,23 @@ SoundLoadState (FILE *fp, int version, int size)
   // Now for the SCSP registers
   yread (&check, (void *)scsp_reg, 0x1000, 1, fp);
 
+  if (version >= 4) {
+    //Plfo
+    yread (&check, (void *)plfo.saw_table, 256, 1, fp);
+    yread (&check, (void *)plfo.square_table, 256, 1, fp);
+    yread (&check, (void *)plfo.tri_table, 256, 1, fp);
+    yread (&check, (void *)plfo.saw_table, 256, 1, fp);
+    //Alfo
+    yread (&check, (void *)alfo.saw_table, 256, 1, fp);
+    yread (&check, (void *)alfo.square_table, 256, 1, fp);
+    yread (&check, (void *)alfo.tri_table, 256, 1, fp);
+    yread (&check, (void *)alfo.saw_table, 256, 1, fp);
+  }
+
   // Lastly, sound ram
   yread (&check, (void *)SoundRam, 0x80000, 1, fp);
+
+  yread (&check, (void *)cddabuf.data, CDDA_NUM_BUFFERS*2352, 1, fp);
 
   if (version > 1)
     {
@@ -6423,6 +6472,14 @@ SoundLoadState (FILE *fp, int version, int size)
     yread(&check, (void *)&scsp_dsp.updated, sizeof(int), 1, fp);
     yread(&check, (void *)&scsp_dsp.last_step, sizeof(int), 1, fp);
 
+    if (version >= 4) {
+      yread(&check, (void *)&scsp_dsp.shift_reg, sizeof(u32), 1, fp);
+      yread(&check, (void *)&scsp_dsp.read_pending, sizeof(int), 1, fp);
+      yread(&check, (void *)&scsp_dsp.read_value, sizeof(u32), 1, fp);
+      yread(&check, (void *)&scsp_dsp.write_pending, sizeof(int), 1, fp);
+      yread(&check, (void *)&scsp_dsp.write_value, sizeof(u32), 1, fp);
+    }
+
     yread(&check, (void *)&ScspInternalVars->scsptiming1, sizeof(u32), 1, fp);
     yread(&check, (void *)&ScspInternalVars->scsptiming2, sizeof(u32), 1, fp);
 
@@ -6433,8 +6490,6 @@ SoundLoadState (FILE *fp, int version, int size)
       yread(&check, (void *)&scspsoundlen, sizeof(u32), 1, fp);
       yread(&check, (void *)&scsplines, sizeof(u32), 1, fp);
     }
-
-
   return size;
 }
 

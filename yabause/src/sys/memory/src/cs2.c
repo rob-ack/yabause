@@ -68,6 +68,8 @@
 #define CDB_PLAYTYPE_SECTOR     0x01
 #define CDB_PLAYTYPE_FILE       0x02
 
+// #define CDLOG YuiMsg
+
 extern void resetSyncVideo(void);
 
 enum CDB_DATATRANSTYPE
@@ -257,6 +259,64 @@ u16 FASTCALL Cs2ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                                 Cs2Area->infotranstype = -1;
                              }
                              break;
+                     case 5:
+                              // Read sector data
+                              if (Cs2Area->datatranstype != CDB_DATATRANSTYPE_INVALID)
+                              {
+                                 // get sector
+                                 // Make sure we still have sectors to transfer
+                                 if (Cs2Area->datanumsecttrans < Cs2Area->datasectstotrans)
+                                 {
+                                   u8 *ptr = &Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->data[Cs2Area->datatransoffset];
+                                   if (Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans] == NULL)
+                                    {
+                                       CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
+                                       return 0;
+                                    }
+
+                                    val = T1ReadWord(ptr, 0);
+
+                                    //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
+
+                                    // increment datatransoffset/cdwnum
+                                    Cs2Area->cdwnum += 2;
+                                    Cs2Area->datatransoffset += 2;
+
+                                    // Make sure we're not beyond the sector size boundary
+                            if (Cs2Area->datatransoffset >= Cs2Area->datatranspartition->block[Cs2Area->datatranssectpos + Cs2Area->datanumsecttrans]->size)
+                                    {
+                                       Cs2Area->datatransoffset = 0;
+                                       Cs2Area->datanumsecttrans++;
+                                    }
+                                 }
+                                 else
+                                 {
+                                    if (Cs2Area->datatranstype == CDB_DATATRANSTYPE_GETDELSECTOR)
+                                    {
+                                       // Ok, so we don't have any more sectors to
+                                       // transfer, might as well delete them all.
+
+                                       Cs2Area->datatranstype = CDB_DATATRANSTYPE_INVALID;
+
+                                       // free blocks
+                                       for (int i = Cs2Area->datatranssectpos; i < (Cs2Area->datatranssectpos+Cs2Area->datasectstotrans); i++)
+                                       {
+                                          Cs2FreeBlock(Cs2Area->datatranspartition->block[i]);
+                                          Cs2Area->datatranspartition->block[i] = NULL;
+                                          Cs2Area->datatranspartition->blocknum[i] = 0xFF;
+                                       }
+
+                                       // sort remaining blocks
+                                       Cs2SortBlocks(Cs2Area->datatranspartition);
+
+                                       Cs2Area->datatranspartition->size -= Cs2Area->cdwnum;
+                                       Cs2Area->datatranspartition->numblocks -= Cs2Area->datasectstotrans;
+
+                                       CDLOG("cs2\t: datatranspartition->size = %x\n", Cs2Area->datatranspartition->size);
+                                    }
+                                 }
+                              }
+                              break;
                      default: break;
                   }
                   break;
@@ -1510,7 +1570,6 @@ void Cs2EndDataTransfer(void) {
   {
      case 0:
         // Get Sector Data
-        Cs2SetIRQ(CDB_HIRQ_EHST);
         break;
      case 2:
      {
@@ -1537,7 +1596,6 @@ void Cs2EndDataTransfer(void) {
 
         if (Cs2Area->blockfreespace == MAX_BLOCKS) Cs2Area->isonesectorstored = 0;
 
-        Cs2SetIRQ(CDB_HIRQ_EHST);
         break;
      }
      default: break;
@@ -1545,7 +1603,7 @@ void Cs2EndDataTransfer(void) {
 
   Cs2Area->cdwnum = 0;
 
-  Cs2SetIRQ(CDB_HIRQ_CMOK);
+  Cs2SetIRQ(CDB_HIRQ_EHST | CDB_HIRQ_CMOK);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2398,6 +2456,8 @@ void Cs2GetThenDeleteSectorData(void)
    Cs2Area->datanumsecttrans = 0;
    Cs2Area->datatranssectpos = (u16)gtdsdsectoffset;
    Cs2Area->datasectstotrans = (u16)gtdsdsectnum;
+
+   Cs2Area->infotranstype = 5;
 
    doCDReport(Cs2Area->status);
    Cs2SetIRQ(CDB_HIRQ_CMOK | CDB_HIRQ_DRDY | CDB_HIRQ_EHST);

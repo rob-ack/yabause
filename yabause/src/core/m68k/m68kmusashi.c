@@ -166,9 +166,14 @@ static void M68KMusashiSetWriteW(M68K_WRITE *Func) {
 }
 
 static void M68KMusashiSaveState(FILE *fp) {
+
+  m68k_save_context(fp);
+
 }
 
 static void M68KMusashiLoadState(FILE *fp) {
+
+  m68k_load_context(fp);
 }
 
 M68K_struct M68KMusashi = {

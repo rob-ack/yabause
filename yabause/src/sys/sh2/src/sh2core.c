@@ -34,8 +34,8 @@ SH2Interface_struct *SH2Core=NULL;
 extern SH2Interface_struct *SH2CoreList[];
 
 void OnchipReset(SH2_struct *context);
-static void FRTExec(SH2_struct *context, u32 cycles);
-static void WDTExec(SH2_struct *context, u32 cycles);
+static void FRTExec(SH2_struct *context);
+static void WDTExec(SH2_struct *context);
 u8 SCIReceiveByte(void);
 void SCITransmitByte(u8);
 
@@ -147,6 +147,8 @@ CACHE_LOG("%s reset\n", (context==SSH2)?"SSH2":"MSH2" );
    // Internal variables
    context->delay = 0x00000000;
    context->cycles = 0;
+   context->frtcycles = 0;
+   context->wdtcycles = 0;
 
    context->frc.leftover = 0;
    context->frc.shift = 3;
@@ -190,9 +192,10 @@ void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles)
 
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
+   u32 startCycle = context->cycles;
    SH2Core->Exec(context, cycles);
-   FRTExec(context, cycles);
-   WDTExec(context, cycles);
+   FRTExec(context);
+   WDTExec(context);
 }
 
 void FASTCALL SH2OnFrame(SH2_struct *context) {
@@ -305,6 +308,22 @@ void OnchipReset(SH2_struct *context) {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch(addr)
    {
       case 0x000:
@@ -410,6 +429,22 @@ u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL OnchipReadWord(SH2_struct *context, u32 addr) {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch(addr)
    {
       case 0x012:
@@ -460,6 +495,22 @@ u16 FASTCALL OnchipReadWord(SH2_struct *context, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL OnchipReadLong(SH2_struct *context, u32 addr) {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch(addr)
    {
       case 0x100:
@@ -534,6 +585,22 @@ u32 FASTCALL OnchipReadLong(SH2_struct *context, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch(addr) {
       case 0x000:
 //         LOG("Serial Mode Register write: %02X\n", val);
@@ -694,6 +761,22 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val) {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch(addr)
    {
       case 0x060:
@@ -814,6 +897,22 @@ void FASTCALL OnchipWriteWord(SH2_struct *context, u32 addr, u16 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
+  switch(addr) {
+    case 0x10:
+    case 0x11:
+    case 0x12:
+    case 0x13:
+    case 0x14:
+    case 0x15:
+    case 0x16:
+    case 0x17:
+    case 0x18:
+    case 0x19:
+      FRTExec(context);
+      break;
+    default:
+      break;
+  }
    switch (addr)
    {
    case 0x010:
@@ -1415,11 +1514,15 @@ void FASTCALL DataArrayWriteLong(SH2_struct *context,u32 addr, u32 val)  {
 
 //////////////////////////////////////////////////////////////////////////////
 
-void FRTExec(SH2_struct *context,u32 cycles)
+void FRTExec(SH2_struct *context)
 {
    u32 frcold;
    u32 frctemp;
    u32 mask;
+
+   u32 cycles = context->cycles - context->frtcycles;
+
+   context->frtcycles = context->cycles;
 
    frcold = frctemp = (u32)context->onchip.FRC.all;
    mask = (1 << context->frc.shift) - 1;
@@ -1473,9 +1576,13 @@ void FRTExec(SH2_struct *context,u32 cycles)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void WDTExec(SH2_struct *context, u32 cycles) {
+void WDTExec(SH2_struct *context) {
    u32 wdttemp;
    u32 mask;
+
+   u32 cycles = context->cycles - context->wdtcycles;
+
+   context->wdtcycles = context->cycles;
 
    if (!context->wdt.isenable || context->onchip.WTCSR & 0x80 || context->onchip.RSTCSR & 0x80)
       return;
@@ -1654,6 +1761,7 @@ extern u8 execInterrupt;
 
 void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 data)
 {
+   FRTExec(MSH2);
    // Set Input Capture Flag
    MSH2->onchip.FTCSR |= 0x80;
 
@@ -1673,6 +1781,7 @@ void FASTCALL MSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, 
 
 void FASTCALL SSH2InputCaptureWriteWord(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr, UNUSED u16 data)
 {
+   FRTExec(SSH2);
    // Set Input Capture Flag
    SSH2->onchip.FTCSR |= 0x80;
 

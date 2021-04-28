@@ -367,6 +367,8 @@ typedef struct SH2_struct_s
    sem_t lock;
    int thread_id;
 #endif
+    u32 frtcycles;
+    u32 wdtcycles;
 } SH2_struct;
 
 typedef struct

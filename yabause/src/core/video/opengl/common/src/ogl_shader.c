@@ -1070,6 +1070,7 @@ uniform int win0_mode; \n \
 uniform int win1; \n \
 uniform int win1_mode; \n \
 uniform int win_op; \n \
+uniform int nbFrame; \n \
 int PosY = int(gl_FragCoord.y)+1;\n \
 int PosX = int(gl_FragCoord.x);\n \
 vec2 getFBCoord(vec2 pos) {\n \
@@ -1864,6 +1865,16 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1"), Win1);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win1_mode"), Win1_mode);
   glUniform1i(glGetUniformLocation(vdp2blit_prg, "win_op"), Win_op);
+  if (((varVdp2Regs->TVMD>>6)&0x3) == 0){
+    //double density interlaced or progressive _ Do not mix fields. Maybe required by double density. To check
+    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),2);
+  } else {
+    //Single density
+    if (((varVdp2Regs->TVSTAT>>1)&0x1)==1)
+    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),1);
+    else
+    glUniform1i(glGetUniformLocation(vdp2blit_prg, "nbFrame"),0);
+  }
 
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_BLEND);
@@ -2287,6 +2298,7 @@ static int u_w = -1;
 static int u_h = -1;
 static int u_l = -1;
 static int u_d = -1;
+static int u_f = -1;
 static int outputSize = -1;
 static int inputSize = -1;
 
@@ -2312,6 +2324,7 @@ static const char fblit_head[] =
   "uniform float fHeight; \n"
   "uniform vec2 lineNumber; \n"
   "uniform float decim; \n"
+  "uniform int field; \n"
   "in highp vec2 vTexCoord;     \n"
   "uniform sampler2D u_Src;     \n"
   "out vec4 fragColor; \n";
@@ -2324,12 +2337,68 @@ static const char fblit_img[] =
 static const char fblit_img_end[] =
   "} \n";
 
-/////////////
 static const char fblitnear_img[] =
   "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
   "{ \n"
   "     return texture( textureSampler, TexCoord ) ; \n"
   "} \n";
+
+  static const char fbobsecure_img[] =
+    "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+    "{ \n"
+    "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+    "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+    "    if ((coord.y&0x1)==0x1) {\n"
+    "     vec4 val1 = texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ); \n"
+    "     vec4 val2 = texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ); \n"
+    "     vec4 interpol = mix( val1, val2,vec4(0.5)); \n"
+    "     if (distance(val1, val2) > 0.5f) return interpol;\n"
+    "     if (distance(cur, interpol) < 0.15f) return cur; else return interpol;\n"
+    "}\n"
+    " else"
+    "     return cur; \n"
+    "} \n";
+
+    static const char fbobsecure_debug_img[] =
+      "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+      "{ \n"
+      "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+      "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+      "    if ((coord.y&0x1)==0x1) {\n"
+      "     vec4 val1 = texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ); \n"
+      "     vec4 val2 = texelFetch( textureSampler, ivec2(coord.x,coord.y+1) , 0 ); \n"
+      "     vec4 interpol = mix( val1, val2,vec4(0.5)); \n"
+      "     if (distance(val1, val2) > 0.5f) return vec4(0.0,1.0,0.0,1.0);\n"
+      "     if (distance(cur, interpol) < 0.15f) return vec4(1.0,0.0,0.0,1.0); else return vec4(0.0,1.0,0.0,1.0);\n"
+      "}\n"
+      " else"
+      "     return cur; \n"
+      "} \n";
+
+    static const char fbobossc_img[] =
+      "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+      "{ \n"
+      "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+      "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+      "    if ((coord.y&0x1)!=field) {\n"
+      "     vec4 cur = texelFetch( textureSampler, ivec2(coord.x,coord.y-1) , 0 ); \n"
+      "     return cur; \n"
+      "}\n"
+      " else"
+      "     return cur; \n"
+      "} \n";
+
+      static const char fbobossc_debug_img[] =
+        "vec4 Filter( sampler2D textureSampler, vec2 TexCoord ) \n"
+        "{ \n"
+        "    ivec2 coord = ivec2(vec2(textureSize(textureSampler,0))*TexCoord);\n"
+        "    vec4 cur = texture( textureSampler, TexCoord ); \n"
+        "    if ((coord.y&0x1)!=field) {\n"
+        "     return vec4(1.0,0.0,0.0,1.0); \n"
+        "}\n"
+        " else"
+        "     return cur; \n"
+        "} \n";
 
 static const char fblitbilinear_img[] =
   "// Function to get a texel data from a texture with GL_NEAREST property. \n"
@@ -2374,6 +2443,13 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   const GLchar * fblit_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbilinear_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
   const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+
+  const GLchar * fblit_bob_secure_img_v[] = { fblit_head, fbobsecure_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_bob_secure_debug_img_v[] = { fblit_head, fbobsecure_debug_img, fblit_img, fblit_img_end, NULL };
+
+  const GLchar * fblit_bob_ossc_img_v[] = { fblit_head, fbobossc_img, fblit_img, fblit_img_end, NULL };
+  const GLchar * fblit_bob_ossc_debug_img_v[] = { fblit_head, fbobossc_debug_img, fblit_img, fblit_img_end, NULL };
+
   int aamode = _Ygl->aamode;
 
   float const vertexPosition[] = {
@@ -2414,9 +2490,12 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     width = scale*_Ygl->rwidth;
     height = scale*_Ygl->rheight;
   }
-
   //if ((aamode == AA_NONE) && ((w != dispw) || (h != disph))) aamode = AA_BILINEAR_FILTER;
-
+  if (((Vdp2Regs->TVMD>>6)&0x3) == 0) {
+    if (aamode >= AA_BOB_SECURE_FILTER) {
+      aamode = AA_NONE;
+    }
+  }
   if ((blit_prg == -1) || (blit_mode != aamode) || (scanline != _Ygl->scanline)){
     GLuint vshader;
     GLuint fshader;
@@ -2457,9 +2536,25 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
         case AA_BICUBIC_FILTER:
           glShaderSource(fshader, 4, fblitbicubic_img_v, NULL);
           break;
+        case AA_BOB_SECURE_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_secure_img_v, NULL);
+          break;
+        case AA_BOB_SECURE_DEBUG_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_secure_debug_img_v, NULL);
+          break;
+        case AA_BOB_OSSC_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_ossc_img_v, NULL);
+          break;
+        case AA_BOB_OSSC_DEBUG_FILTER:
+          glShaderSource(fshader, 4, fblit_bob_ossc_debug_img_v, NULL);
+          break;
       }
     } else {
       switch(aamode) {
+        case AA_BOB_SECURE_FILTER:
+        case AA_BOB_SECURE_DEBUG_FILTER:
+        case AA_BOB_OSSC_FILTER:
+        case AA_BOB_OSSC_DEBUG_FILTER:
         case AA_NONE:
           glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;
@@ -2497,6 +2592,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     u_h = glGetUniformLocation(blit_prg, "fHeight");
     u_l = glGetUniformLocation(blit_prg, "lineNumber");
     u_d = glGetUniformLocation(blit_prg, "decim");
+    u_f = glGetUniformLocation(blit_prg, "field");
   }
   else{
     GLUSEPROG(blit_prg);
@@ -2528,6 +2624,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   decim = (disph + nbLines) / nbLines;
   if (decim < 2) decim = 2;
   glUniform1f(u_d, (float)decim);
+  glUniform1i(u_f, (Vdp2Regs->TVSTAT>>1)&0x1);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, tex);

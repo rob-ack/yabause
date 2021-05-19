@@ -4966,7 +4966,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
           }
         }
       }
-    if (char_access == 0xFFFFFFFF) return;
+    if (char_access == 0) return;
 
     if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
@@ -5227,7 +5227,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
         }
       }
     }
-  if (char_access == 0xFFFFFFFF) return;
+  if (char_access == 0) return;
 
   info.transparencyenable = !(varVdp2Regs->BGON & 0x200);
   info.specialprimode = (varVdp2Regs->SFPRMD >> 2) & 0x3;

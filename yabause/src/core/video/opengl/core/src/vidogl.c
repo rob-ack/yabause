@@ -4978,7 +4978,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
-
+      if (char_access == 0) return;
       ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info.cellh *= 2;
 
@@ -4994,6 +4994,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     else
     {
       // Tile Mode
+      if (ptn_access == 0) return;
       info.mapwh = 2;
 
       ReadPlaneSize(&info, varVdp2Regs->PLSZ);
@@ -5255,7 +5256,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
   if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
   {
-
+    //If there is no access to character pattern data, do not display the layer
+    if (char_access == 0) return;
     ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 10, 0x3);
 
     info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
@@ -5268,6 +5270,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   }
   else
   {
+    if (ptn_access == 0) return;
     info.mapwh = 2;
 
     ReadPlaneSize(&info, varVdp2Regs->PLSZ >> 2);
@@ -5438,6 +5441,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   }
   else {
     if (info.islinescroll) {
+      if (char_access == 0) return;
       info.sh = (varVdp2Regs->SCXIN1 & 0x7FF);
       info.sv = (varVdp2Regs->SCYIN1 & 0x7FF);
       info.x = 0;
@@ -5463,6 +5467,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
       int xoffset = 0;
       // Setting miss of cycle patten need to plus 8 dot vertical
       // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
+      //If there is no access to pattern data, do not display the layer
       if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
         xoffset = -8;
       }
@@ -5555,12 +5560,13 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
         }
       }
     }
-
+    if (ptn_access == 0) return;
     // Setting miss of cycle patten need to plus 8 dot vertical
     if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
       xoffset = -8;
     }
   }
+
 
   info.x = (varVdp2Regs->SCXN2 & 0x7FF) + xoffset;
   info.y = varVdp2Regs->SCYN2 & 0x7FF;
@@ -5651,6 +5657,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
       }
     }
   }
+  if (ptn_access == 0) return;
   // Setting miss of cycle patten need to plus 8 dot vertical
   if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
     xoffset = -8;

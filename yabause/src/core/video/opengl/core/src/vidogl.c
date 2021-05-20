@@ -1692,7 +1692,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     }
     switch (info->colornumber) {
     case 0:
-      baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
+      baseaddr += (((sh + sv * info->cellw) >> 2) << 1);
       for (j = 0; j < width; j += 4)
       {
         Vdp2GetPixel4bpp(info, baseaddr, texture, varVdp2Regs);

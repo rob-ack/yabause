@@ -4975,10 +4975,10 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
       //ToDo Need to determine if NBG0 shall be disabled due to VRAM access
       //if (char_access == 0) return;
 
+    if (char_access == 0) return;
     if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
-      if (char_access == 0) return;
       ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info.cellh *= 2;
 
@@ -5254,10 +5254,11 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
 
   info.colornumber = (varVdp2Regs->CHCTLA & 0x3000) >> 12;
 
+  if (char_access == 0) return;
+
   if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
   {
     //If there is no access to character pattern data, do not display the layer
-    if (char_access == 0) return;
     ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 10, 0x3);
 
     info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
@@ -5560,6 +5561,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
         }
       }
     }
+    if (char_access == 0) return;
     if (ptn_access == 0) return;
     // Setting miss of cycle patten need to plus 8 dot vertical
     if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
@@ -5657,6 +5659,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
       }
     }
   }
+  if (char_access == 0) return;
   if (ptn_access == 0) return;
   // Setting miss of cycle patten need to plus 8 dot vertical
   if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {

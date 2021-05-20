@@ -5187,7 +5187,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
       else {
         int xoffset = 0;
         // Setting miss of cycle patten need to plus 8 dot vertical
-        if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+        // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
+        if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
           xoffset = -8;
         }
         info.x = (varVdp2Regs->SCXIN0 & 0x7FF) + xoffset;
@@ -5461,7 +5462,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
       //Vdp2DrawMap(&info, &texture);
       int xoffset = 0;
       // Setting miss of cycle patten need to plus 8 dot vertical
-      if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+      // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
+      if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
         xoffset = -8;
       }
       info.x = (varVdp2Regs->SCXIN1 & 0x7FF) + xoffset;

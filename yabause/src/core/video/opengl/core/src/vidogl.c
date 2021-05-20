@@ -5700,6 +5700,12 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     return;
   }
 
+  // //If no VRAM access is granted to RBG0, just abort.
+  if (varVdp2Regs->RAMCTL & 0xFF == 0) {
+    free(rgb);
+    return;
+  }
+
   for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
 
   info->priority = varVdp2Regs->PRIR & 0x7;
@@ -5894,6 +5900,13 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     else
       // Parameter B
       info->charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
+
+    //If no VRAM access is granted to RBG0 character pattern table , just abort.
+      int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+      if (((varVdp2Regs->RAMCTL>>(charAddrBk<<1))&0x3) != 0x3) {
+        free(rgb);
+        return;
+      }
 
     info->paladdr = (varVdp2Regs->BMPNB & 0x7) << 4;
     info->flipfunction = 0;

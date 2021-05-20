@@ -4932,6 +4932,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   YglTexture texture;
   YglCache tmpc;
   u32 char_access = 0;
+  u32 ptn_access = 0;
   info.dst = 0;
   info.uclipmode = 0;
   info.idScreen = NBG0;
@@ -4964,8 +4965,13 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
             info.char_bank[i] = 1;
             char_access |= 1<<j;
           }
+          if (Vdp2External.AC_VRAM[i][j] == 0x00) {
+            info.pname_bank[i] = 1;
+            ptn_access |= (1 << j);
+          }
         }
       }
+
       //ToDo Need to determine if NBG0 shall be disabled due to VRAM access
       //if (char_access == 0) return;
 
@@ -5179,7 +5185,12 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
         Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
       }
       else {
-        info.x = varVdp2Regs->SCXIN0 & 0x7FF;
+        int xoffset = 0;
+        // Setting miss of cycle patten need to plus 8 dot vertical
+        if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+          xoffset = -8;
+        }
+        info.x = (varVdp2Regs->SCXIN0 & 0x7FF) + xoffset;
         info.y = varVdp2Regs->SCYIN0 & 0x7FF;
         Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
       }
@@ -5201,6 +5212,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   YglTexture texture;
   YglCache tmpc;
   u32 char_access = 0;
+  u32 ptn_access = 0;
   info.dst = 0;
   info.idScreen = NBG1;
   info.uclipmode = 0;
@@ -5225,6 +5237,10 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
         if (Vdp2External.AC_VRAM[i][j] == 0x05) {
           info.char_bank[i] = 1;
           char_access |= 1<<j;
+        }
+        if (Vdp2External.AC_VRAM[i][j] == 0x01) {
+          info.pname_bank[i] = 1;
+          ptn_access |= (1 << j);
         }
       }
     }
@@ -5443,7 +5459,12 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     }
     else {
       //Vdp2DrawMap(&info, &texture);
-      info.x = varVdp2Regs->SCXIN1 & 0x7FF;
+      int xoffset = 0;
+      // Setting miss of cycle patten need to plus 8 dot vertical
+      if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+        xoffset = -8;
+      }
+      info.x = (varVdp2Regs->SCXIN1 & 0x7FF) + xoffset;
       info.y = varVdp2Regs->SCYIN1 & 0x7FF;
       Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
     }

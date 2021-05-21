@@ -391,7 +391,7 @@ static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
 static u32 Vdp2ColorRamGetLineColor(u32 colorindex, int alpha);
-static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
+static int Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy,  int lines, Vdp2 *varVdp2Regs);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
 static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
@@ -2101,13 +2101,16 @@ static void Vdp2PatternAddr(vdp2draw_struct *info, Vdp2 *varVdp2Regs)
 }
 
 
-static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs)
+static int Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs)
 {
   u32 addr = info->addr +
     (info->pagewh*info->pagewh*info->planew*planey +
       info->pagewh*info->pagewh*planex +
       info->pagewh*y +
       x)*info->patterndatasize * 2;
+
+  int ptnAddrBk = (((addr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+  if (info->pname_bank[ptnAddrBk] == 0) return 0;
 
   switch (info->patterndatasize)
   {
@@ -2183,6 +2186,8 @@ static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int pla
     info->charaddr &= 0x3FFF;
 
   info->charaddr *= 0x20; // thanks Runik
+
+  return 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2422,7 +2427,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
-        Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
+        if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) == 0) continue;
         preplanex = planex;
         preplaney = planey;
         prepagex = pagex;
@@ -2597,14 +2602,14 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
-      Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
+      if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) != 0) {
 
-      //Only drw if there is a valid character pattern VRAM access for the current layer
-      int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
-      if (info->char_bank[charAddrBk] == 1)
-        Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
-    }
-
+        //Only draw if there is a valid character pattern VRAM access for the current layer
+        int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+        if (info->char_bank[charAddrBk] == 1)
+          Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
+        }
+      }
     lineindex++;
   }
 

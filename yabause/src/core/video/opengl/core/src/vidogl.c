@@ -391,7 +391,7 @@ static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp
 static void Vdp2DrawRBG0(Vdp2* varVdp2Regs);
 
 static u32 Vdp2ColorRamGetLineColor(u32 colorindex, int alpha);
-static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
+static int Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs);
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy,  int lines, Vdp2 *varVdp2Regs);
 static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int mask);
 static INLINE u16 Vdp2ColorRamGetColorRaw(u32 colorindex);
@@ -1692,7 +1692,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     }
     switch (info->colornumber) {
     case 0:
-      baseaddr += ((sh + sv * (info->cellw >> 2)) << 1);
+      baseaddr += (((sh + sv * info->cellw) >> 2) << 1);
       for (j = 0; j < width; j += 4)
       {
         Vdp2GetPixel4bpp(info, baseaddr, texture, varVdp2Regs);
@@ -2101,13 +2101,16 @@ static void Vdp2PatternAddr(vdp2draw_struct *info, Vdp2 *varVdp2Regs)
 }
 
 
-static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs)
+static int Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int planey, int y, Vdp2 *varVdp2Regs)
 {
   u32 addr = info->addr +
     (info->pagewh*info->pagewh*info->planew*planey +
       info->pagewh*info->pagewh*planex +
       info->pagewh*y +
       x)*info->patterndatasize * 2;
+
+  int ptnAddrBk = (((addr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+  if (info->pname_bank[ptnAddrBk] == 0) return 0;
 
   switch (info->patterndatasize)
   {
@@ -2183,6 +2186,8 @@ static void Vdp2PatternAddrPos(vdp2draw_struct *info, int planex, int x, int pla
     info->charaddr &= 0x3FFF;
 
   info->charaddr *= 0x20; // thanks Runik
+
+  return 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2422,7 +2427,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       if (planex != preplanex || pagex != prepagex || planey != preplaney || pagey != prepagey) {
-        Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
+        if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) == 0) continue;
         preplanex = planex;
         preplaney = planey;
         prepagex = pagex;
@@ -2597,10 +2602,14 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
-      Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs);
-      Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
-    }
+      if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) != 0) {
 
+        //Only draw if there is a valid character pattern VRAM access for the current layer
+        int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+        if (info->char_bank[charAddrBk] == 1)
+          Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
+        }
+      }
     lineindex++;
   }
 
@@ -4519,6 +4528,116 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
 
 //////////////////////////////////////////////////////////////////////////////
 
+INLINE int Vdp2CheckCharAccessPenalty(int char_access, int ptn_access) {
+  if (_Ygl->rwidth >= 640) {
+    //if (char_access < ptn_access) {
+    //  return -1;
+    //}
+    if (ptn_access & 0x01) { // T0
+      // T0-T2
+      if ((char_access & 0x07) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x02) { // T1
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0,T2,T3
+      if ((char_access & 0x0D) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0,T1,T3
+      if ((char_access & 0xB) != 0) {
+        if (char_access < ptn_access) {
+          return -1;
+        }
+        return 0;
+      }
+    }
+    return -1;
+  }
+  else {
+
+    if (ptn_access & 0x01) { // T0
+      // T0-T2, T4-T7
+      if ((char_access & 0xF7) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x02) { // T1
+      // T0-T3, T5-T7
+      if ((char_access & 0xEF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x04) { // T2
+      // T0-T3, T6-T7
+      if ((char_access & 0xCF) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x08) { // T3
+      // T0-T3, T7
+      if ((char_access & 0x8F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x10) { // T4
+      // T0-T3
+      if ((char_access & 0x0F) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x20) { // T5
+      // T1-T3
+      if ((char_access & 0x0E) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x40) { // T6
+      // T2,T3
+      if ((char_access & 0x0C) != 0) {
+        return 0;
+      }
+    }
+
+    if (ptn_access & 0x80) { // T7
+      // T3
+      if ((char_access & 0x08) != 0) {
+        return 0;
+      }
+    }
+    return -1;
+  }
+  return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 {
   YglTexture texture;
@@ -4821,6 +4940,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   vdp2draw_struct info = {0};
   YglTexture texture;
   YglCache tmpc;
+  u32 char_access = 0;
+  u32 ptn_access = 0;
   info.dst = 0;
   info.uclipmode = 0;
   info.idScreen = NBG0;
@@ -4845,10 +4966,28 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
   }
     if (!info.enable) return;
 
+    for (int i=0; i < 4; i++) {
+        info.char_bank[i] = 0;
+        info.pname_bank[i] = 0;
+        for (int j=0; j < 8; j++) {
+          if (Vdp2External.AC_VRAM[i][j] == 0x04) {
+            info.char_bank[i] = 1;
+            char_access |= 1<<j;
+          }
+          if (Vdp2External.AC_VRAM[i][j] == 0x00) {
+            info.pname_bank[i] = 1;
+            ptn_access |= (1 << j);
+          }
+        }
+      }
+
+      //ToDo Need to determine if NBG0 shall be disabled due to VRAM access
+      //if (char_access == 0) return;
+
+    if (char_access == 0) return;
     if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
-
       ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info.cellh *= 2;
 
@@ -4864,6 +5003,7 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     else
     {
       // Tile Mode
+      if (ptn_access == 0) return;
       info.mapwh = 2;
 
       ReadPlaneSize(&info, varVdp2Regs->PLSZ);
@@ -5055,7 +5195,13 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
         Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
       }
       else {
-        info.x = varVdp2Regs->SCXIN0 & 0x7FF;
+        int xoffset = 0;
+        // Setting miss of cycle patten need to plus 8 dot vertical
+        // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
+        if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+          xoffset = -8;
+        }
+        info.x = (varVdp2Regs->SCXIN0 & 0x7FF) + xoffset;
         info.y = varVdp2Regs->SCYIN0 & 0x7FF;
         Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
       }
@@ -5076,6 +5222,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   vdp2draw_struct info = {0};
   YglTexture texture;
   YglCache tmpc;
+  u32 char_access = 0;
+  u32 ptn_access = 0;
   info.dst = 0;
   info.idScreen = NBG1;
   info.uclipmode = 0;
@@ -5092,14 +5240,34 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     info.enable |= info.display[i];
   }
   if (!info.enable) return;
+
+  for (int i=0; i < 4; i++) {
+      info.char_bank[i] = 0;
+      info.pname_bank[i] = 0;
+      for (int j=0; j < 8; j++) {
+        if (Vdp2External.AC_VRAM[i][j] == 0x05) {
+          info.char_bank[i] = 1;
+          char_access |= 1<<j;
+        }
+        if (Vdp2External.AC_VRAM[i][j] == 0x01) {
+          info.pname_bank[i] = 1;
+          ptn_access |= (1 << j);
+        }
+      }
+    }
+  //ToDo Need to determine if NBG1 shall be disabled due to VRAM access
+  //if (char_access == 0) return;
+
   info.transparencyenable = !(varVdp2Regs->BGON & 0x200);
   info.specialprimode = (varVdp2Regs->SFPRMD >> 2) & 0x3;
 
   info.colornumber = (varVdp2Regs->CHCTLA & 0x3000) >> 12;
 
+  if (char_access == 0) return;
+
   if ((info.isbitmap = varVdp2Regs->CHCTLA & 0x200) != 0)
   {
-
+    //If there is no access to character pattern data, do not display the layer
     ReadBitmapSize(&info, varVdp2Regs->CHCTLA >> 10, 0x3);
 
     info.x = -((varVdp2Regs->SCXIN1 & 0x7FF) % info.cellw);
@@ -5112,6 +5280,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   }
   else
   {
+    if (ptn_access == 0) return;
     info.mapwh = 2;
 
     ReadPlaneSize(&info, varVdp2Regs->PLSZ >> 2);
@@ -5282,6 +5451,7 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   }
   else {
     if (info.islinescroll) {
+      if (char_access == 0) return;
       info.sh = (varVdp2Regs->SCXIN1 & 0x7FF);
       info.sv = (varVdp2Regs->SCYIN1 & 0x7FF);
       info.x = 0;
@@ -5304,7 +5474,14 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     }
     else {
       //Vdp2DrawMap(&info, &texture);
-      info.x = varVdp2Regs->SCXIN1 & 0x7FF;
+      int xoffset = 0;
+      // Setting miss of cycle patten need to plus 8 dot vertical
+      // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
+      //If there is no access to pattern data, do not display the layer
+      if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+        xoffset = -8;
+      }
+      info.x = (varVdp2Regs->SCXIN1 & 0x7FF) + xoffset;
       info.y = varVdp2Regs->SCYIN1 & 0x7FF;
       Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
     }
@@ -5373,7 +5550,36 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   info.linescrolltbl = 0;
   info.lineinc = 0;
   info.isverticalscroll = 0;
-  info.x = varVdp2Regs->SCXN2 & 0x7FF;
+
+  int xoffset = 0;
+  {
+    int char_access = 0;
+    int ptn_access = 0;
+
+    for (int i = 0; i < 4; i++) {
+      info.char_bank[i] = 0;
+      info.pname_bank[i] = 0;
+      for (int j = 0; j < 8; j++) {
+        if (Vdp2External.AC_VRAM[i][j] == 0x06) {
+          info.char_bank[i] = 1;
+          char_access |= (1 << j);
+        }
+        if (Vdp2External.AC_VRAM[i][j] == 0x02) {
+          info.pname_bank[i] = 1;
+          ptn_access |= (1 << j);
+        }
+      }
+    }
+    if (char_access == 0) return;
+    if (ptn_access == 0) return;
+    // Setting miss of cycle patten need to plus 8 dot vertical
+    if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+      xoffset = -8;
+    }
+  }
+
+
+  info.x = (varVdp2Regs->SCXN2 & 0x7FF) + xoffset;
   info.y = varVdp2Regs->SCYN2 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
   executeDrawCell();
@@ -5442,7 +5648,35 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   info.linescrolltbl = 0;
   info.lineinc = 0;
   info.isverticalscroll = 0;
-  info.x = varVdp2Regs->SCXN3 & 0x7FF;
+
+
+  int xoffset = 0;
+{
+  int char_access = 0;
+  int ptn_access = 0;
+  for (int i = 0; i < 4; i++) {
+    info.char_bank[i] = 0;
+    info.pname_bank[i] = 0;
+    for (int j = 0; j < 8; j++) {
+      if (Vdp2External.AC_VRAM[i][j] == 0x07) {
+        info.char_bank[i] = 1;
+        char_access |= (1 << j);
+      }
+      if (Vdp2External.AC_VRAM[i][j] == 0x03) {
+        info.pname_bank[i] = 1;
+        ptn_access |= (1 << j);
+      }
+    }
+  }
+  if (char_access == 0) return;
+  if (ptn_access == 0) return;
+  // Setting miss of cycle patten need to plus 8 dot vertical
+  if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
+    xoffset = -8;
+  }
+}
+
+  info.x = (varVdp2Regs->SCXN3 & 0x7FF) + xoffset;
   info.y = varVdp2Regs->SCYN3 & 0x7FF;
   Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
   executeDrawCell();
@@ -5467,6 +5701,12 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->enable = ((varVdp2Regs->BGON & 0x10)!=0);
   if (!info->enable) {
+    free(rgb);
+    return;
+  }
+
+  // //If no VRAM access is granted to RBG0, just abort.
+  if (varVdp2Regs->RAMCTL & 0xFF == 0) {
     free(rgb);
     return;
   }
@@ -5665,6 +5905,13 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     else
       // Parameter B
       info->charaddr = (varVdp2Regs->MPOFR & 0x70) * 0x2000;
+
+    //If no VRAM access is granted to RBG0 character pattern table , just abort.
+      int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
+      if (((varVdp2Regs->RAMCTL>>(charAddrBk<<1))&0x3) != 0x3) {
+        free(rgb);
+        return;
+      }
 
     info->paladdr = (varVdp2Regs->BMPNB & 0x7) << 4;
     info->flipfunction = 0;

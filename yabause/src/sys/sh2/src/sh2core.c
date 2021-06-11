@@ -649,9 +649,11 @@ void FASTCALL OnchipWriteByte(SH2_struct *context, u32 addr, u8 val) {
          return;
       case 0x012:
          context->onchip.FRC.part.H = val;
+         context->frtcycles = context->cycles;
          return;
       case 0x013:
          context->onchip.FRC.part.L = val;
+         context->frtcycles = context->cycles;
          return;
       case 0x014:
          if (!(context->onchip.TOCR & 0x10))

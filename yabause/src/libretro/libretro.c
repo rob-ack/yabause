@@ -808,7 +808,7 @@ void YuiMsg(const char *format, ...)
   va_start( arglist, format );
   int rc = vsnprintf(buf, 512, format, arglist);
   va_end( arglist );
-  log_cb(RETRO_LOG_INFO, buf);
+  log_cb(RETRO_LOG_DEBUG, buf);
 }
 
 void YuiErrorMsg(const char *string)

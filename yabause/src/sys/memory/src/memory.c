@@ -1671,11 +1671,16 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    if (buffer != NULL) *buffer = NULL;
    *size = 0;
 
+   YuiMsg("Start savestate creation\n");
    fp = tmpfile();
+   YuiMsg("Created tmpfile\n");
 
    ScspLockThread();
+   YuiMsg("Locked scsp thread\n");
    status = YabSaveStateStream(fp);
+   YuiMsg("Saved savestate to tmpfile\n");
    ScspUnLockThread();
+   YuiMsg("Unlocked scsp thread\n");
 
    if (status != 0)
    {
@@ -1686,11 +1691,13 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    fseek(fp, 0, SEEK_END);
    *size = ftell(fp);
    fseek(fp, 0, SEEK_SET);
+   YuiMsg("Calculated size of %ld\n", *size);
 
    if (buffer != NULL)
    {
       *buffer = malloc(*size);
       num_read = fread(*buffer, 1, *size, fp);
+      YuiMsg("Sent tmpfile to buffer, found %d segments\n", num_read);
    }
 
    fclose(fp);

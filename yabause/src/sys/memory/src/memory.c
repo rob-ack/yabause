@@ -1753,20 +1753,23 @@ int YabSaveStateStream(FILE *fp)
    int movieposition;
    int temp;
    u32 temp32;
+   u8 endian;
 
    check.done = 0;
    check.size = 0;
 
    // Write signature
-   fprintf(fp, "YSS");
+   YuiMsg("Start writing\n");
+   ywrite(&check, "YSS", 3, 1, fp);
    YuiMsg("Wrote signature\n");
 
    // Write endianness byte
 #ifdef WORDS_BIGENDIAN
-   fputc(0x00, fp);
+   endian = 0x00;
 #else
-   fputc(0x01, fp);
+   endian = 0x01;
 #endif
+   ywrite(&check, (void *)&endian, 1, 1, fp);
 
    // Write version(fix me)
    i = 2;

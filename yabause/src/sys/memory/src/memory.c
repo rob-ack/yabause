@@ -1760,7 +1760,7 @@ int YabSaveStateStream(FILE *fp)
 
    // Write signature
    YuiMsg("Start writing\n");
-   ywrite(&check, "YSS", 3, 1, fp);
+   fwrite("YSS", 3, 1, fp);
    YuiMsg("Wrote signature\n");
 
    // Write endianness byte
@@ -1769,7 +1769,7 @@ int YabSaveStateStream(FILE *fp)
 #else
    endian = 0x01;
 #endif
-   ywrite(&check, (void *)&endian, 1, 1, fp);
+   fwrite((void *)&endian, 1, 1, fp);
 
    // Write version(fix me)
    i = 2;

@@ -1372,7 +1372,6 @@ size_t retro_serialize_size(void)
    YabSaveStateBuffer (&buffer, &size);
 
    free(buffer);
-   log_cb(RETRO_LOG_DEBUG, "retro_serialize_size returned a size of %d\n", size);
 
    return size;
 }
@@ -1390,8 +1389,6 @@ bool retro_serialize(void *data, size_t size)
    memcpy(data, buffer, size);
 
    free(buffer);
-   log_cb(RETRO_LOG_DEBUG, "retro_serialize saved a savestate of size %d\n", out_size);
-
    return !error;
 }
 
@@ -1402,7 +1399,6 @@ bool retro_unserialize(const void *data, size_t size)
       return true;
    int error = YabLoadStateBuffer(data, size);
    VIDCore->Resize(0, 0, window_width, window_height, 0);
-   log_cb(RETRO_LOG_DEBUG, "retro_unserialize loaded a savestate of size %d\n", size);
 
    return !error;
 }

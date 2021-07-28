@@ -1759,7 +1759,6 @@ int YabSaveStateStream(FILE *fp)
 
    // Write signature
    fprintf(fp, "YSS");
-   YuiMsg("Wrote signature\n");
 
    // Write endianness byte
 #ifdef WORDS_BIGENDIAN
@@ -1771,40 +1770,27 @@ int YabSaveStateStream(FILE *fp)
    // Write version(fix me)
    i = 2;
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
-   YuiMsg("Wrote version\n");
 
    // Skip the next 4 bytes for now
    i = 0;
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
-   YuiMsg("Skipped 4 bytes\n");
 
    //write frame number
    ywrite(&check, (void *)&framecounter, 4, 1, fp);
-   YuiMsg("Wrote frame number\n");
 
    //this will be updated with the movie position later
    ywrite(&check, (void *)&framecounter, 4, 1, fp);
-   YuiMsg("Wrote movie position\n");
 
    // Go through each area and write each state
    i += CartSaveState(fp);
-   YuiMsg("Wrote cart state\n");
    i += Cs2SaveState(fp);
-   YuiMsg("Wrote cs2 state\n");
    i += SH2SaveState(MSH2, fp);
-   YuiMsg("Wrote msh2 state\n");
    i += SH2SaveState(SSH2, fp);
-   YuiMsg("Wrote ssh2 state\n");
    i += SoundSaveState(fp);
-   YuiMsg("Wrote sound state\n");
    i += ScuSaveState(fp);
-   YuiMsg("Wrote scu state\n");
    i += SmpcSaveState(fp);
-   YuiMsg("Wrote smpc state\n");
    i += Vdp1SaveState(fp);
-   YuiMsg("Wrote vdp1 state\n");
    i += Vdp2SaveState(fp);
-   YuiMsg("Wrote vdp2 state\n");
 
    offset = StateWriteHeader(fp, "OTHR", 1);
 
@@ -1812,7 +1798,6 @@ int YabSaveStateStream(FILE *fp)
    //ywrite(&check, (void *)BupRam, 0x8000, 1, fp); // do we really want to save this?
    ywrite(&check, (void *)HighWram, 0x100000, 1, fp);
    ywrite(&check, (void *)LowWram, 0x100000, 1, fp);
-   YuiMsg("Wrote ram state\n");
 
    ywrite(&check, (void *)&yabsys.DecilineCount, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.LineCount, sizeof(int), 1, fp);
@@ -1826,7 +1811,6 @@ int YabSaveStateStream(FILE *fp)
    ywrite(&check, (void *)&temp32, sizeof(u32), 1, fp);
    ywrite(&check, (void *)&yabsys.CurSH2FreqType, sizeof(int), 1, fp);
    ywrite(&check, (void *)&yabsys.IsPal, sizeof(int), 1, fp);
-   YuiMsg("Wrote other state\n");
 
    VIDCore->GetGlSize(&outputwidth, &outputheight);
 
@@ -1851,23 +1835,18 @@ int YabSaveStateStream(FILE *fp)
    ywrite(&check, (void *)&outputheight, sizeof(outputheight), 1, fp);
 
    ywrite(&check, (void *)buf, totalsize, 1, fp);
-   YuiMsg("Wrote width/height/buff state, sizesare %d/%d/%d\n", outputwidth, outputheight, totalsize);
 
    movieposition=ftell(fp);
    //write the movie to the end of the savestate
    SaveMovieInState(fp, check);
-   YuiMsg("Wrote movie state\n");
 
    i += StateFinishHeader(fp, offset);
-   YuiMsg("Wrote footer\n");
 
    // Go back and update size
    fseek(fp, 8, SEEK_SET);
    ywrite(&check, (void *)&i, sizeof(i), 1, fp);
-   YuiMsg("Wrote size\n");
    fseek(fp, 16, SEEK_SET);
    ywrite(&check, (void *)&movieposition, sizeof(movieposition), 1, fp);
-   YuiMsg("Updated movie position\n");
 
    free(buf);
 

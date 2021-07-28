@@ -161,7 +161,7 @@ extern "C" {
 
   static INLINE int StateWriteHeader(FILE *fp, const char *name, int version) {
     IOCheck_struct check = { 0, 0 };
-    fwrite(name, strlen(name), 1, fp);
+    fprintf(fp, "%s", name);
     check.done = 0;
     check.size = 0;
     ywrite(&check, (void *)&version, sizeof(version), 1, fp);

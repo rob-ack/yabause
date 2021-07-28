@@ -1672,8 +1672,7 @@ int YabSaveStateBuffer(void ** buffer, size_t * size)
    *size = 0;
 
    YuiMsg("Start savestate creation\n");
-   if ((fp = tmpfile()) == NULL)
-      return -1;
+   fp = tmpfile();
    YuiMsg("Created tmpfile\n");
 
    ScspLockThread();

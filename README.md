@@ -1,3 +1,4 @@
+![CMake Windows](https://github.com/rob-ack/yabause/actions/workflows/cmake.windows.yml/badge.svg)
 [![Travis CI Build Status](https://travis-ci.org/FCare/Kronos.svg?branch=extui-align)](https://travis-ci.org/github/FCare/Kronos)
 
 

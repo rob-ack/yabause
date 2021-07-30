@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.12)
+cmake_policy(VERSION 3.12)
+
 project(kronos)
 
 #to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../kronos"
@@ -37,13 +40,10 @@ include_directories(tools/junzip)
 include_directories(core/osd/include)
 include_directories(core/m68k)
 
-cmake_minimum_required(VERSION 3.12)
-
-cmake_policy(VERSION 3.12)
-
 option(YAB_FORCE_GLES31 "force to use OpenGLES 3.1" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+option(KRONOS_LIBRETRO_CORE "Build kronos emulator as libretro core which can be used with i.e. RetroArch or RetroPie" OFF)
 
 set(kronos_HEADERS
 	sys/bios/include/bios.h
@@ -143,6 +143,20 @@ add_definitions(-DIMPROVED_SAVESTATES)
 add_subdirectory(tools/libchdr)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/src)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
+
+if(KRONOS_LIBRETRO_CORE)
+	set(LIBRETRO_COMM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libretro/libretro-common)
+	include_directories(${LIBRETRO_COMM_DIR}/include)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libretro)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+	add_definitions(
+		-D__LIBRETRO__ -DHAVE_LIBGL -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL
+		-DNO_CLI -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_FLOORF=1
+		-DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES -DHAVE_GLSYM_PRIVATE
+		-DVDP1RAM_CS_ASYNC=1 -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 -DNO_VIDCORE_SOFT -DDYNAREC_KRONOS=1
+	)
+endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/deps/zlib-1.2.11)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
@@ -335,8 +349,8 @@ option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
 if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	if (NOT YAB_FORCE_GLES31)
 		include(FindOpenGL)
-	endif (NOT YAB_FORCE_GLES31)
-  include(FindOpenGLES)
+	endif ()
+	include(FindOpenGLES)
 	include(FindEGL)
 
 	if (OPENGL_FOUND)
@@ -349,7 +363,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		if (OPENGLES31_FOUND)
 		  if (NOT EGL_FOUND)
 				message(ERROR "No EGL found")
-			endif (NOT EGL_FOUND)
+			endif()
 		  message(STATUS "OPENGL ES 3.1 supported")
 			add_definitions(-D_OGLES31_)
 			SET( OPENGL_CURRENT_LIBRARIES ${OPENGLES_LIBRARIES} ${EGL_LIBRARIES} )
@@ -374,13 +388,16 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		add_definitions(-DHAVE_LIBGL=1)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENGL_CURRENT_LIBRARIES})
 
-		include_directories(./ ./tools/nanovg)
-		set(kronos_SOURCES ${kronos_SOURCES}
-			tools/nanovg/nanovg.c
-			tools/nanovg/nanovg_osdcore.h
-			tools/nanovg/nanovg_osdcore.c
-		)
-		add_definitions(-DYAB_PORT_OSD)
+		if(NOT KRONOS_LIBRETRO_CORE)
+			include_directories(./ ./tools/nanovg)
+			set(kronos_SOURCES ${kronos_SOURCES}
+				tools/nanovg/nanovg.c
+				tools/nanovg/nanovg_osdcore.h
+				tools/nanovg/nanovg_osdcore.c
+			)
+			add_definitions(-DYAB_PORT_OSD)
+		endif()
+
 
 		include(FindGLUT)
 		if (GLUT_FOUND)
@@ -398,10 +415,12 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif()
 
 		if (NEED_GLEW)
-	    include(FindGLEW)
-	    add_definitions(-D_USEGLEW_)
-	    add_definitions(-DGLEW_STATIC)
-	    include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/tools/gllibs/include/ )
+			set(GLEW_USE_STATIC_LIBS ON)
+
+			find_package(GLEW)
+			add_definitions(-D_USEGLEW_)
+			add_definitions(-DGLEW_STATIC)
+			include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/tools/gllibs/include/ )
 			set(kronos_SOURCES
 				${kronos_SOURCES}
 				tools/gllibs/glew/glew.c
@@ -493,6 +512,7 @@ endif (  )
 if (WIN32)
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
+	mark_as_advanced(YAB_WANT_DDK)
 	if(YAB_WANT_DDK)
 		message (WARNING "Windows DDK/WDK use is deprecated. Support will be removed in the future. ")
 
@@ -509,7 +529,11 @@ if (WIN32)
 		endif (ntddcdrm_INCLUDE_DIR)
 	endif(YAB_WANT_DDK)
 
-	set(kronos_SOURCES ${kronos_SOURCES} core/cd/windows/cd-windows.c)
+	if(KRONOS_LIBRETRO_CORE)
+		set(kronos_SOURCES ${kronos_SOURCES} core/cd/libretro/cd-libretro.c)
+	else()
+		set(kronos_SOURCES ${kronos_SOURCES} core/cd/windows/cd-windows.c)
+	endif()
 
 	if (YAB_USE_SCSPMIDI)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} winmm)
@@ -719,13 +743,17 @@ endif()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
-if( IOS )
+if(IOS)
 	add_library(kronos OBJECT ${kronos_SOURCES} ${kronos_HEADERS})
 else()
 	add_library(kronos ${kronos_SOURCES} ${kronos_HEADERS})
 endif()
 
 add_dependencies(kronos m68kmake)
+
+if(KRONOS_LIBRETRO_CORE)
+	add_subdirectory(libretro)
+endif()
 
 macro(yab_port_start)
 	if (YAB_PORT_BUILT AND NOT YAB_MULTIBUILD)
@@ -772,3 +800,15 @@ option(YAB_TESTS "Build test programs for cores" OFF)
 if (YAB_TESTS)
 	add_subdirectory("tools")
 endif()
+
+message(STATUS "------ CONFIGS ------")
+message(STATUS "KRONOS_LIBRETRO_CORE ${KRONOS_LIBRETRO_CORE}")
+message(STATUS "YAB_WANT_OPENGL ${YAB_WANT_OPENGL}")
+message(STATUS "YAB_WANT_OPENAL ${YAB_WANT_OPENAL}")
+message(STATUS "YAB_WANT_OPENSL ${YAB_WANT_OPENSL}")
+if(YAB_RGB)
+	message(STATUS "YAB_RGB ${YAB_RGB}")
+endif()
+message(STATUS "------ STATUS -------")
+message(STATUS "OPENGL_SUPPORTED ${OPENGL_SUPPORTED}")
+message(STATUS "---------------------")

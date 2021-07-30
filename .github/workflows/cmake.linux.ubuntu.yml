@@ -24,6 +24,9 @@ jobs:
     - name: Install prerequisite packages
       run: |
         sudo apt-get update -y
+        sudo apt-get install -y libxrandr-dev
+        sudo apt-get install -y libxinerama-dev
+        sudo apt-get install -y libxcursor-dev
         sudo apt-get install -y libx11-dev
 
     - name: Configure CMake

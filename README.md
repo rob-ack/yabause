@@ -1,5 +1,6 @@
 ![CMake Windows](https://github.com/rob-ack/yabause/actions/workflows/cmake.windows.yml/badge.svg)
-![CMake Windows](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.yml/badge.svg)
+![CMake Linux](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.yml/badge.svg)
+[![CMake Linux with QT](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.qt.yml/badge.svg)](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.qt.yml)
 [![Travis CI Build Status](https://travis-ci.org/FCare/Kronos.svg?branch=extui-align)](https://travis-ci.org/github/FCare/Kronos)
 
 

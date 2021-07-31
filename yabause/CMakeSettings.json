@@ -133,7 +133,34 @@
       "rsyncCommandArgs": "-t --delete --delete-excluded",
       "remoteCopyBuildOutput": false,
       "remoteCopySourcesMethod": "rsync",
-      "addressSanitizerRuntimeFlags": "detect_leaks=0"
+      "addressSanitizerRuntimeFlags": "detect_leaks=0",
+      "variables": [
+        {
+          "name": "KRONOS_LIBRETRO_CORE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_PORTS",
+          "value": "",
+          "type": "STRING"
+        },
+        {
+          "name": "OPENGLCORE_TEST",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SH2_ASYNC",
+          "value": "True",
+          "type": "BOOL"
+        }
+      ]
     }
   ]
 }

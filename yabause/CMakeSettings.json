@@ -159,6 +159,11 @@
           "name": "YAB_WANT_SH2_ASYNC",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_ARM7",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     }

@@ -3,6 +3,9 @@ project(kronos)
 cmake_minimum_required(VERSION 3.12)
 cmake_policy(VERSION 3.12)
 
+#this is because multiple ports are atm not buildable in parallel
+set(YAB_PORTS "" CACHE STRING "List of ports to build" FORCE)
+
 if(WIN32 OR LINUX)
 	set(HAVE_CDROM ON)
 	add_definitions(-DHAVE_CDROM -DHAVE_FSEEKO)
@@ -87,6 +90,8 @@ if(WIN32)
 endif()
 
 if(UNIX)
+	target_compile_options(mini18n-static PUBLIC -fPIC)
+	target_compile_options(zlibstatic PUBLIC -fPIC)
 	target_compile_options(kronos PUBLIC -fPIC)
 	target_compile_options(kronos_libretro PUBLIC -fPIC)
 endif()

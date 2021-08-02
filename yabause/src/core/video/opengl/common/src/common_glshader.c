@@ -1793,20 +1793,30 @@ void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* 
   }
 }
 
-static void YglCommon_printShaderError( GLuint shader )
+void Ygl_printShaderError( GLuint shader )
 {
-  GLsizei bufSize;
+    GLsizei logLenght;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLenght);
 
-  glGetShaderiv(shader, GL_INFO_LOG_LENGTH , &bufSize);
-  if (bufSize > 1) {
-    GLchar *infoLog;
-
-    infoLog = (GLchar *)malloc(bufSize);
+    if (logLenght > 1) {
+        GLchar* infoLog = (GLchar*)malloc(logLenght);
     if (infoLog != NULL) {
       GLsizei length;
-      glGetShaderInfoLog(shader, bufSize, &length, infoLog);
+            glGetShaderInfoLog(shader, logLenght, &length, infoLog);
       YuiMsg("Shaderlog:\n%s\n", infoLog);
       free(infoLog);
+
+            GLsizei shaderSourceLength;
+            glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &shaderSourceLength);
+            if (shaderSourceLength > 0) {
+                GLchar* shaderSourceBuffer = (GLchar*)malloc(shaderSourceLength);
+                if (shaderSourceBuffer) {
+                    GLsizei actualSourceLength;
+                    glGetShaderSource(shader, shaderSourceLength, &actualSourceLength, shaderSourceBuffer);
+                    YGLLOG("Full Shader Code is:\n\n%s", shaderSourceBuffer);
+                    free(shaderSourceBuffer);
+                }
+            }
     }
   }
 }

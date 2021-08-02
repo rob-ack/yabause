@@ -725,7 +725,7 @@ const GLchar vdp1drawstart_no_mesh[] = {
   "out vec2 fragMesh; \n"
   "void main() {\n"
   "  vec4 outColor = vec4(0.0);\n"
-  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
+  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - int(gl_FragCoord.y)), sysClip.xy))) discard;\n"
   "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
   "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
   COLINDEX(spriteColor)
@@ -745,7 +745,7 @@ const GLchar vdp1drawstart_mesh[] = {
   "void main() {\n"
   "  vec4 outColor = vec4(0.0);\n"
   "  vec2 meshColor = vec2(0.0);\n"
-  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - gl_FragCoord.y), sysClip.xy))) discard;\n"
+  "  if (any(greaterThan(ivec2(gl_FragCoord.x, sysClip.z - int(gl_FragCoord.y)), sysClip.xy))) discard;\n"
   "  ivec2 addr = ivec2(vec2(textureSize(u_sprite, 0)) * v_texcoord.st / v_texcoord.q); \n"
   "  vec4 spriteColor = texelFetch(u_sprite,addr,0);\n"
   COLINDEX(spriteColor)
@@ -1048,11 +1048,9 @@ uniform int win1; \n \
 uniform int win1_mode; \n \
 uniform int win_op; \n \
 uniform int nbFrame; \n \
-int PosY = int(gl_FragCoord.y)+1;\n \
-int PosX = int(gl_FragCoord.x);\n \
-vec2 getFBCoord(vec2 pos) {\n \
- return pos;\n \
-"
+vec2 getFBCoord(vec2 pos) { return pos; } \n \
+";
+
 
 #define SAMPLER_TEX(ID) "\
 uniform sampler2D s_texture"Stringify(ID)";\n \
@@ -1076,7 +1074,6 @@ SAMPLER_TEX(3)
 SAMPLER_TEX(4)
 SAMPLER_TEX(5)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_5[] =
 SHADER_VERSION
@@ -1095,7 +1092,6 @@ SAMPLER_TEX(2)
 SAMPLER_TEX(3)
 SAMPLER_TEX(4)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_4[] =
 SHADER_VERSION
@@ -1113,7 +1109,6 @@ SAMPLER_TEX(1)
 SAMPLER_TEX(2)
 SAMPLER_TEX(3)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_3[] =
 SHADER_VERSION
@@ -1130,7 +1125,6 @@ SAMPLER_TEX(0)
 SAMPLER_TEX(1)
 SAMPLER_TEX(2)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_2[] =
 SHADER_VERSION
@@ -1146,7 +1140,6 @@ SHADER_VERSION
 SAMPLER_TEX(0)
 SAMPLER_TEX(1)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_1[] =
 SHADER_VERSION
@@ -1161,7 +1154,6 @@ SHADER_VERSION
 #endif
 SAMPLER_TEX(0)
 COMMON_START
-"}\n";
 
 static const char vdp2blit_gl_start_f_0[] =
 SHADER_VERSION
@@ -1175,7 +1167,6 @@ SHADER_VERSION
 "out vec4 fourthColor; \n"
 #endif
 COMMON_START
-"}\n";
 
 const GLchar * vdp2blit_gl_start_f[7]= {
   vdp2blit_gl_start_f_0,

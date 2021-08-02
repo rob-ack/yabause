@@ -151,7 +151,6 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
   case DEBUG_STREAM:
     if (d->output.stream == NULL)
       break;
-    fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, (long)line);
     vfprintf(d->output.stream, format, l);
     break;
   case DEBUG_STRING:
@@ -204,25 +203,17 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
   va_end(l);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-Debug * MainLog;
-
-//////////////////////////////////////////////////////////////////////////////
+Debug * MainLog = NULL;
 
 void LogStart(void) {
         MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
 //        MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
 void LogStop(void) {
 	DebugDeInit(MainLog);
 	MainLog = NULL;
 }
-
-//////////////////////////////////////////////////////////////////////////////
 
 void LogChangeOutput(DebugOutType t, char * s) {
 

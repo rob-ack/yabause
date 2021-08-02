@@ -3,6 +3,7 @@
 #include "hq4x_lut.h"
 #include "4xbrz_shader.h"
 #include "2xbrz_shader.h"
+#include "common_glshader.h"
 
 static const GLchar * fblithq4x_v[] = { Yglprg_blit_hq4x_v, NULL };
 static const GLchar * fblithq4x_f[] = { Yglprg_blit_hq4x_f, NULL };
@@ -16,25 +17,6 @@ static int up_mode = -1;
 static int d_size = -1;
 static int t_size = -1;
 static int up_lut_tex = -1;
-
-static void Ygl_printShaderError( GLuint shader )
-{
-  GLsizei bufSize;
-
-  glGetShaderiv(shader, GL_INFO_LOG_LENGTH , &bufSize);
-
-  if (bufSize > 1) {
-    GLchar *infoLog;
-
-    infoLog = (GLchar *)malloc(bufSize);
-    if (infoLog != NULL) {
-      GLsizei length;
-      glGetShaderInfoLog(shader, bufSize, &length, infoLog);
-      printf("Shaderlog:\n%s\n", infoLog);
-      free(infoLog);
-    }
-  }
-}
 
 static void Ygl_printProgError( GLuint prog )
 {

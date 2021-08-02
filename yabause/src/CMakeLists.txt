@@ -9,6 +9,9 @@ include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 11)
+
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 	add_definitions(-DARCH_IS_LINUX=1)
@@ -45,9 +48,9 @@ include_directories(tools/junzip)
 include_directories(core/osd/include)
 include_directories(core/m68k)
 
-option(YAB_FORCE_GLES31 "force to use OpenGLES 3.1" OFF)
-
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
+
+option(YAB_FORCE_GLES31 "force to use OpenGLES 3.1" OFF)
 option(KRONOS_LIBRETRO_CORE "Build kronos emulator as libretro core which can be used with i.e. RetroArch or RetroPie" OFF)
 
 set(kronos_HEADERS
@@ -83,6 +86,7 @@ set(kronos_HEADERS
   ctrl/include/yui.h
 	ctrl/threads/threads.h
   utils/include/error.h
+	utils/include/debug.h
 	utils/include/cdbase.h
   utils/include/profile.h
   utils/include/netlink.h
@@ -102,7 +106,7 @@ set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
 endif(WIN32)
 
 if (CMAKE_COMPILER_IS_GNUCC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer")
 endif (CMAKE_COMPILER_IS_GNUCC)
 
 set(kronos_SOURCES
@@ -140,6 +144,7 @@ set(kronos_SOURCES
   ctrl/src/stv.c
   ctrl/src/movie.c
 	utils/src/error.c
+	utils/src/debug.c
 	utils/src/cdbase.c
 	tools/junzip/junzip.c
 	)
@@ -674,7 +679,7 @@ else ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_DEFAULT_SOURCE -Wno-format -march=native -funroll-loops")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_DEFAULT_SOURCE -Wno-format -march=native -funroll-loops")
     set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -march=native -funroll-loops")
 
 	if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686" OR "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
@@ -698,26 +703,26 @@ endif ()
 
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++11")
-endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION}")
+endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++11")
-endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION}")
+endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
-endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
+endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
     set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
-endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
+endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++11 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti  ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC

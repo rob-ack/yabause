@@ -1,0 +1,25 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "cppgdb",
+      "name": "retropie retroarch kronos (src\\libretro\\libkronos_libretro.so)",
+      "project": "yabause\\CMakeLists.txt",
+      "projectTarget": "libkronos_libretro.so (src\\libretro\\libkronos_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "debuggerConfiguration": "gdb",
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+      "args": [
+        "--config=/opt/retropie/configs/saturn/retroarch.cfg",
+        "--verbose",
+        "--libretro=${debugInfo.fullTargetPath}",
+        //        "--libretro=/home/pi/.vs/yabause/ee5ebbd1-06a1-4162-9357-6634e7cf3dd5/out/build/linux_arm-Remote-Release/src/libretro/libkronos_libretro.so",
+        "/home/pi/RetroPie/roms/saturn/Guardian Heroes/Guardian Heroes Work.cue"
+      ],
+      "env": {},
+      "showDisplayString": false,
+      "stopOnEntry": false
+    }
+  ]
+}

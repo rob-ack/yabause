@@ -1816,10 +1816,12 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     GLint compiled,linked;
     GLuint vshader;
     GLuint fshader;
+#if defined _OGL3_
   GLuint tcsHandle = 0;
   GLuint tesHandle = 0;
   GLuint gsHandle = 0;
-  YGLLOG( "Compile Program %d\n", id);
+#endif
+  YGLLOG( "Compile GL Shader Program %d\n", id);
    _prgid[id] = glCreateProgram();
     if (_prgid[id] == 0 ) return -1;
     vshader = glCreateShader(GL_VERTEX_SHADER);
@@ -1829,7 +1831,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     glGetShaderiv(vshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
        YGLLOG( "Compile error in vertex shader. %d\n", id );
-       YglCommon_printShaderError(vshader);
+       Ygl_printShaderError(vshader);
        _prgid[id] = 0;
        return -1;
     }
@@ -1838,7 +1840,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     glGetShaderiv(fshader, GL_COMPILE_STATUS, &compiled);
     if (compiled == GL_FALSE) {
        YGLLOG( "Compile error in fragment shader.%d \n", id);
-       YglCommon_printShaderError(fshader);
+       Ygl_printShaderError(fshader);
        _prgid[id] = 0;
        return -1;
      }
@@ -1856,7 +1858,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
       glGetShaderiv(tcsHandle, GL_COMPILE_STATUS, &compiled);
       if (compiled == GL_FALSE) {
         YGLLOG("Compile error in GL_TESS_CONTROL_SHADER shader.\n");
-        YglCommon_printShaderError(tcsHandle);
+        Ygl_printShaderError(tcsHandle);
         _prgid[id] = 0;
         return -1;
       }
@@ -1874,7 +1876,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
       glGetShaderiv(tesHandle, GL_COMPILE_STATUS, &compiled);
       if (compiled == GL_FALSE) {
         YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-        YglCommon_printShaderError(tesHandle);
+        Ygl_printShaderError(tesHandle);
         _prgid[id] = 0;
         return -1;
       }
@@ -1892,7 +1894,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
       glGetShaderiv(gsHandle, GL_COMPILE_STATUS, &compiled);
       if (compiled == GL_FALSE) {
         YGLLOG("Compile error in GL_TESS_EVALUATION_SHADER shader.\n");
-        YglCommon_printShaderError(gsHandle);
+        Ygl_printShaderError(gsHandle);
         _prgid[id] = 0;
         return -1;
       }
@@ -1904,7 +1906,7 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {
        YGLLOG("Link error..\n");
-       YglCommon_printShaderError(_prgid[id]);
+       Ygl_printShaderError(_prgid[id]);
        _prgid[id] = 0;
        return -1;
     }
@@ -1969,7 +1971,7 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
   glGetShaderiv(result, GL_COMPILE_STATUS, &status);
   if (status == GL_FALSE) {
     YGLLOG("CS Compile error..\n");
-    YglCommon_printShaderError(result);
+    Ygl_printShaderError(result);
     _prgid[id] = 0;
     return -1;
   }
@@ -1979,7 +1981,7 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
   glGetProgramiv(_prgid[id], GL_LINK_STATUS, &status);
   if (status == GL_FALSE) {
     YGLLOG("Link error..\n");
-    YglCommon_printShaderError(_prgid[id]);
+    Ygl_printShaderError(_prgid[id]);
     _prgid[id] = 0;
     return -1;
   }
@@ -1988,12 +1990,27 @@ GLuint createCSProgram(int id, int count, const GLchar * cs[]) {
 
 
 void compileVDP2Prog(int id, const GLchar **v, int CS){
-  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", arrayid);
+  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --START [%d]--\n", id);
   LOG_SHADER("%d %d %d\n", id, PG_VDP2_DRAWFRAMEBUFF_NONE, id-PG_VDP2_DRAWFRAMEBUFF_NONE);
   if (CS == 0) {
-    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 17, NULL, NULL, NULL) != 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (YglInitShader(id, v, 1, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE], 17, NULL, NULL, NULL) != 0){
+	    YuiMsg("Error init prog %d\n",id);
+        GLchar const * const * s = pYglprg_vdp2_blit_f[id - PG_VDP2_DRAWFRAMEBUFF_NONE];
+        YGLLOG("Full Shader Code is:\n\n");
+        for (int c = 0; c < 18; c++) 
+        {
+            if(s[c] != NULL)
+            {
+	            YGLLOG("%s\n", s[c]);
+            }
+        }
+    	abort();
+    }
   } else {
-    if (createCSProgram(id, 17, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0) { YuiMsg("Error init prog %d\n",id); abort(); }
+    if (createCSProgram(id, 17, pYglprg_vdp2_blit_f[id-PG_VDP2_DRAWFRAMEBUFF_NONE])!= 0){
+	    YuiMsg("Error init prog %d\n",id);
+        abort();
+    }
   }
-  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", arrayid);
+  YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", id);
 }

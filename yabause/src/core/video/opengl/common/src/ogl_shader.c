@@ -30,9 +30,6 @@
 #include "scanline_shader.h"
 #include "common_glshader.h"
 
-#undef YGLLOG
-#define YGLLOG //YuiMsg
-
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
 
 static int saveFB;
@@ -46,26 +43,6 @@ extern int GlWidth;
 
 static YglVdp1CommonParam _ids[PG_MAX] = { 0 };
 extern void vdp1_compute_reset(void);
-
-
-static void Ygl_printShaderError( GLuint shader )
-{
-  GLsizei bufSize;
-
-  glGetShaderiv(shader, GL_INFO_LOG_LENGTH , &bufSize);
-
-  if (bufSize > 1) {
-    GLchar *infoLog;
-
-    infoLog = (GLchar *)malloc(bufSize);
-    if (infoLog != NULL) {
-      GLsizei length;
-      glGetShaderInfoLog(shader, bufSize, &length, infoLog);
-      YuiMsg("Shaderlog:\n%s\n", infoLog);
-      free(infoLog);
-    }
-  }
-}
 
 // void Ygl_Vdp1CommonGetUniformId(GLuint pgid, YglProgram* param){
 //

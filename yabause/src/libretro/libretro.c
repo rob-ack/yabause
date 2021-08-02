@@ -616,7 +616,7 @@ static int PERLIBRETROHandleEvents(void)
    return update_inputs();
 }
 
-void PERLIBRETRODeInit(void) {}
+void PERLIBRETRODeInit(void){}
 
 void PERLIBRETRONothing(void) {}
 
@@ -886,6 +886,7 @@ static void context_reset(void)
    glsm_ctl(GLSM_CTL_STATE_SETUP, NULL);
    if (first_ctx_reset == 1)
    {
+       LogStart();
       first_ctx_reset = 0;
       YabauseInit(&yinit);
       init_cheevos();
@@ -909,6 +910,7 @@ static void context_reset(void)
 
 static void context_destroy(void)
 {
+    LogStop();
    VIDCore->DeInit();
    rendering_started = false;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);

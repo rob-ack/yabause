@@ -280,6 +280,8 @@ int VideoChangeCore(int coreid)
    if (coreid == VIDCORE_DEFAULT)
       coreid = 0; // Assume we want the first one
 
+   VIDCore = VIDCoreList[0]; //always ensure at least we tried the first core if the search fails to get the core.
+
    // Go through core list and find the id
    for (i = 0; VIDCoreList[i] != NULL; i++)
    {

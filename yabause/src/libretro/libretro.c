@@ -741,7 +741,9 @@ M68K_struct *M68KCoreList[] = {
 SH2Interface_struct *SH2CoreList[] = {
     &SH2Interpreter,
     &SH2DebugInterpreter,
+#if defined DYNAREC_KRONOS
     &SH2KronosInterpreter,
+#endif
     NULL
 };
 
@@ -888,7 +890,9 @@ static void context_reset(void)
    {
        LogStart();
       first_ctx_reset = 0;
-      YabauseInit(&yinit);
+      if(YabauseInit(&yinit) == -1){
+          return;
+      }
       init_cheevos();
       if (g_videoformattype != -1)
          YabauseSetVideoFormat(g_videoformattype);
@@ -899,7 +903,9 @@ static void context_reset(void)
       VIDCore->Init();
       retro_reinit_av_info();
    }
-   VIDCore->Resize(0, 0, window_width, window_height, 0);
+    if(VIDCore){
+	   VIDCore->Resize(0, 0, window_width, window_height, 0);
+    }
    game_width = _Ygl->width;
    game_height = _Ygl->height;
    set_variable_visibility();
@@ -911,57 +917,75 @@ static void context_reset(void)
 static void context_destroy(void)
 {
     LogStop();
-   VIDCore->DeInit();
+    if(VIDCore){
+	   VIDCore->DeInit();
+    }
    rendering_started = false;
    glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
 }
 
-static bool try_init_context(u32 context_type)
-{
-   glsm_ctx_params_t params = {0};
-   params.context_reset = context_reset;
-   params.context_destroy = context_destroy;
-   params.environ_cb = environ_cb;
-   params.stencil = true;
-   params.context_type = context_type;
-   switch (context_type)
-   {
-      case RETRO_HW_CONTEXT_OPENGL_CORE:
-         // minimum requirements to run is opengl 4.2 (RA will try to use highest version available anyway)
-         // 3.3 wouldn't crash but has too many glitches
-         params.major = 4;
-         params.minor = 2;
-         if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-            return true;
-         break;
-#if 0
-      // keeping this around, just in case it might be useful someday
-      case RETRO_HW_CONTEXT_OPENGL:
-         // when using RETRO_HW_CONTEXT_OPENGL you can't set version above 3.0 (RA will try to use highest version available anyway)
-         // also, the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
-         hw_render.version_major = 3;
-         hw_render.version_minor = 0;
-         if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
-         {
-            // shared context is also required when using "gl" video driver
-            environ_cb(RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT, NULL);
-            return true;
-         }
-         break;
-#endif
-   }
-   return false;
+static bool try_init_context(u32 context_type){
+	glsm_ctx_params_t params = {0};
+	params.context_reset = context_reset;
+	params.context_destroy = context_destroy;
+	params.environ_cb = environ_cb;
+	params.stencil = true;
+	params.context_type = context_type;
+	switch (context_type){
+		case RETRO_HW_CONTEXT_OPENGL_CORE:
+			// minimum requirements to run is opengl 4.2 (RA will try to use highest version available anyway)
+			// 3.3 wouldn't crash but has too many glitches
+			params.major = 4;
+			params.minor = 2;
+			if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params))
+				return true;
+			break;
+			// keeping this around, just in case it might be useful someday
+		case RETRO_HW_CONTEXT_OPENGL:
+			// when using RETRO_HW_CONTEXT_OPENGL you can't set version above 3.0 (RA will try to use highest version available anyway)
+			// also, the only way to overwrite previously set version with zero values is to set them directly in hw_render, otherwise they are ignored (see glsm_state_ctx_init logic)
+			hw_render.version_major = 3;
+			hw_render.version_minor = 0;
+			if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)){
+				// shared context is also required when using "gl" video driver
+				environ_cb(RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT, NULL);
+				return true;
+			}
+			break;
+		case RETRO_HW_CONTEXT_OPENGLES3:
+			if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)){
+
+				environ_cb(RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT, NULL);
+				return true;
+			}
+		case RETRO_HW_CONTEXT_OPENGLES_VERSION:
+			params.major = 3;
+			params.minor = 1;
+			if (glsm_ctl(GLSM_CTL_STATE_CONTEXT_INIT, &params)){
+
+				environ_cb(RETRO_ENVIRONMENT_SET_HW_SHARED_CONTEXT, NULL);
+				return true;
+			}
+	}
+	return false;
 }
 
 static bool init_hw_context()
 {
    u32 preferred_context;
    bool found_context = false;
-   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred_context))
+   if (!environ_cb(RETRO_ENVIRONMENT_GET_PREFERRED_HW_RENDER, &preferred_context)){
       preferred_context = RETRO_HW_CONTEXT_DUMMY;
+   }
    // always requests a gl core context, because mesa will always fail giving a gl compat context above 3.0
    //if (preferred_context == RETRO_HW_CONTEXT_OPENGL || preferred_context == RETRO_HW_CONTEXT_OPENGL_CORE || preferred_context == RETRO_HW_CONTEXT_DUMMY)
+
+#if _OGL3_
       found_context = try_init_context(RETRO_HW_CONTEXT_OPENGL_CORE);
+#elif _OGLES31_
+		found_context = try_init_context(RETRO_HW_CONTEXT_OPENGLES3);
+#endif
+
    if (!found_context)
       log_cb(RETRO_LOG_ERROR, "Failed retrieving a glcore 4.2 context, make sure your GPU has the minimum requirements and RetroArch is set properly\n");
    return found_context;

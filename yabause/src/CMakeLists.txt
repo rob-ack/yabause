@@ -97,7 +97,7 @@ set(kronos_HEADERS
 	tools/junzip/junzip.h
 )
 
-option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
+option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one" OFF)
 set(YAB_PORT_BUILT FALSE)
 if (WIN32)
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
@@ -161,10 +161,16 @@ if(KRONOS_LIBRETRO_CORE)
 	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 	add_definitions(
-		-D__LIBRETRO__ -DHAVE_LIBGL -DHAVE_LROUND -D_7ZIP_ST -DFLAC__HAS_OGG=0 -DFLAC__NO_DLL
-		-DNO_CLI -DHAVE_BUILTIN_BSWAP16=1 -DHAVE_BUILTIN_BSWAP32=1 -DHAVE_C99_VARIADIC_MACROS=1 -DHAVE_FLOORF=1
-		-DHAVE_GETTIMEOFDAY=1 -DHAVE_STDINT_H=1 -DHAVE_SYS_TIME_H=1 -DIMPROVED_SAVESTATES -DHAVE_GLSYM_PRIVATE
-		-DVDP1RAM_CS_ASYNC=1 -DCELL_ASYNC=1 -DRGB_ASYNC=1 -DVDP1_TEXTURE_ASYNC=1 -DHAVE_THREADS=1 -DNO_VIDCORE_SOFT -DDYNAREC_KRONOS=1
+		-D__LIBRETRO__ 
+		-DHAVE_LROUND 
+		-D_7ZIP_ST 
+		-DFLAC__HAS_OGG=0 
+		-DFLAC__NO_DLL
+		-DNO_CLI 
+		-DIMPROVED_SAVESTATES 
+		-DHAVE_GLSYM_PRIVATE
+		-DHAVE_THREADS=1 
+		-DNO_VIDCORE_SOFT
 	)
 endif()
 
@@ -189,7 +195,7 @@ endif()
 
 #-------------------------------------------------------
 
-option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread" OFF)
+option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread" ON)
 if (YAB_WANT_SH2_ASYNC)
   add_definitions(-DxSH2_ASYNC=1)
 endif()
@@ -713,8 +719,8 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
-    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
+    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
@@ -821,4 +827,6 @@ if(YAB_RGB)
 endif()
 message(STATUS "------ STATUS -------")
 message(STATUS "OPENGL_SUPPORTED ${OPENGL_SUPPORTED}")
+message(STATUS "------ FLAGS  -------")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
 message(STATUS "---------------------")

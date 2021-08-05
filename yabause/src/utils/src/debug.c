@@ -152,6 +152,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     if (d->output.stream == NULL)
       break;
     vfprintf(d->output.stream, format, l);
+    fflush(d->output.stream);
     break;
   case DEBUG_STRING:
     {
@@ -206,8 +207,12 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
 Debug * MainLog = NULL;
 
 void LogStart(void) {
-        MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
-//        MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
+#if defined LOG_FILE_DEBUG
+	MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
+#else
+	MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
+#endif
+
 }
 
 void LogStop(void) {

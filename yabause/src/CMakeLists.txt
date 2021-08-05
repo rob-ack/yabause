@@ -75,8 +75,6 @@ set(kronos_HEADERS
 	core/video/opengl/core/include/vidogl.h
 	core/video/opengl/common/include/vidshared.h
 	core/video/opengl/common/include/ygl.h
-	core/video/soft/vidsoft.h
-	core/video/soft/titan/titan.h
 	core/sh2/sh2_simple/include/sh2int.h
 	core/peripheral/common/peripheral.h
 	core/net/sock.h
@@ -135,8 +133,6 @@ set(kronos_SOURCES
 	sys/memory/src/eeprom.c
 	sys/memory/src/decrypt.c
 	core/sh2/sh2_simple/src/sh2int.c
-	core/video/soft/vidsoft.c
-	core/video/soft/titan/titan.c
 	core/video/opengl/common/src/vidshared.c
 	core/peripheral/common/peripheral.c
 	core/sound/dummy/snddummy.c
@@ -234,9 +230,21 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
-option(YAB_WANT_SOFT_RENDERING "Enable software renderer support" OFF)
+option(YAB_WANT_SOFT_RENDERING "Enable software renderer support. Only for QT Builds" OFF)
 if (YAB_WANT_SOFT_RENDERING)
    add_definitions(-DUSE_SOFT_RENDER=1)
+
+	set(kronos_HEADERS
+		${kronos_HEADERS}
+		core/video/soft/vidsoft.h
+		core/video/soft/titan/titan.h
+	)
+
+	set(kronos_SOURCES
+		${kronos_SOURCES}
+		core/video/soft/vidsoft.c
+		core/video/soft/titan/titan.c
+	)
 endif()
 
 option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
@@ -700,27 +708,20 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-PIE -no-pie" )
 endif()
 
-
-set(YAB_OPTIMIZATION "-O3 -s" CACHE STRING "Override optimization level")
-if (MSVC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ox")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
-endif ()
-
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686 -msse")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
-    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
+    set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -mcpu=cortex-a72 -mtune=cortex-a72 -mfpu=vfp -mfloat-abi=hard")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
@@ -728,8 +729,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -ffast-math -fno-exceptions -fno-rtti  ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -ffast-math -fno-exceptions -fno-rtti")
 endif()
+
+set(YAB_OPTIMIZATION "" CACHE STRING "Override optimization compiler flags")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION}")
 
 # Warnings defined to know when we're breaking compilation with MSVC
 if (CMAKE_COMPILER_IS_GNUCC)

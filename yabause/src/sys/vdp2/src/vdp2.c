@@ -715,7 +715,7 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt)
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2ReadByte(SH2_struct *context, u8* mem, u32 addr) {
-   LOG("VDP2 register byte read = %08X\n", addr);
+   YuiMsg("Non supported VDP2 register byte read = %08X\n", addr);
    addr &= 0x1FF;
    return 0;
 }
@@ -723,6 +723,7 @@ u8 FASTCALL Vdp2ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
+  LOG("VDP2 register long read = %08X\n", addr);
    addr &= 0x1FF;
 
    switch (addr)
@@ -762,7 +763,7 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
         return Vdp2Regs->RAMCTL;
       default:
       {
-         LOG("Unhandled VDP2 word read: %08X\n", addr);
+         YuiMsg("Unhandled VDP2 word read: %08X\n", addr);
          break;
       }
    }

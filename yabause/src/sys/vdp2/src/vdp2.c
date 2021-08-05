@@ -758,6 +758,8 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
 		  return Vdp2Regs->HCNT;
       case 0x00A:
          return Vdp2Regs->VCNT;
+     case 0x00E:
+        return Vdp2Regs->RAMCTL;
       default:
       {
          LOG("Unhandled VDP2 word read: %08X\n", addr);
@@ -773,7 +775,9 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
 u32 FASTCALL Vdp2ReadLong(SH2_struct *context, u8* mem, u32 addr) {
    LOG("VDP2 register long read = %08X\n", addr);
    addr &= 0x1FF;
-   return 0;
+   u16 hi = Vdp2ReadWord(context, mem, addr);
+   u16 lo = Vdp2ReadWord(context, mem, addr+2);
+   return (hi<<16)|lo;
 }
 
 //////////////////////////////////////////////////////////////////////////////

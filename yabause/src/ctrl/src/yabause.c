@@ -37,6 +37,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
+#include "mk68Counter.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scspdsp.h"
@@ -736,9 +737,6 @@ u32 YabauseGetFrameCount() {
 
 //#define YAB_STATICS
 void SyncCPUtoSCSP();
-u64 getM68KCounter();
-u64 g_m68K_dec_cycle = 0;
-
 
 int YabauseEmulate(void) {
    int ret = 0;

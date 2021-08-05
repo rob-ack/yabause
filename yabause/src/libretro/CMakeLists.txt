@@ -46,6 +46,7 @@ if(HAVE_CDROM)
 		${LIBRETRO_COMM_DIR}/formats/libchdr/libchdr_chd.c
 		${LIBRETRO_COMM_DIR}/formats/libchdr/libchdr_huffman.c
 		${LIBRETRO_COMM_DIR}/formats/libchdr/libchdr_bitstream.c
+		../core/cd/libretro/cd-libretro.c
 	)
 endif()
 

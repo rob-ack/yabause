@@ -68,6 +68,7 @@ set(kronos_HEADERS
 	sys/memory/include/decrypt.h
   core/osd/include/osdcore.h
   core/osd/include/font.h
+  core/m68k/mk68Counter.h
   core/m68k/m68kcore.h
 	core/video/opengl/core/include/vidogl.h
 	core/video/opengl/common/include/vidshared.h
@@ -114,7 +115,7 @@ set(kronos_SOURCES
 	core/osd/src/osdcore.c
 	utils/src/profile.c
 	sys/vdp2/src/vdp2debug.c
-	core/m68k/Counter.cpp
+	core/m68k/mk68Counter.cpp
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
 	sys/vdp2/src/vdp2.c
@@ -190,7 +191,7 @@ endif()
 
 option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread. EXPERIMENTAL" OFF)
 if (YAB_WANT_SH2_ASYNC)
-  add_definitions(-DxSH2_ASYNC=1)
+	add_definitions(-DxSH2_ASYNC=1)
 	if(MSVC)
 		include_directories(utils/windows)
 		set(kronos_HEADERS
@@ -562,16 +563,13 @@ if (WIN32)
 		endif (ntddcdrm_INCLUDE_DIR)
 	endif(YAB_WANT_DDK)
 
-	if(KRONOS_LIBRETRO_CORE)
-		set(kronos_SOURCES ${kronos_SOURCES} core/cd/libretro/cd-libretro.c)
-	else()
-		set(kronos_SOURCES ${kronos_SOURCES} core/cd/windows/cd-windows.c)
-	endif()
-
 	if (YAB_USE_SCSPMIDI)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} winmm)
 	endif()
 
+	if(HAVE_CDROM AND NOT KRONOS_LIBRETRO_CORE)
+		set(kronos_SOURCES ${kronos_SOURCES} core/cd/windows/cd-windows.c)
+	endif()
 endif (WIN32)
 
 option(YAB_WANT_ARM7 "Build a binary with arm7 support")

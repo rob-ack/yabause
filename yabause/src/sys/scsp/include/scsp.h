@@ -74,10 +74,10 @@ typedef struct
 {
   u32 scsptiming1;
   u32 scsptiming2;  // 16.16 fixed point
-  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-  int numcodebreakpoints;
-  void (*BreakpointCallBack)(u32);
-  int inbreakpoint;
+//  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+//  int numcodebreakpoints;
+//  void (*BreakpointCallBack)(u32);
+//  int inbreakpoint;
 } ScspInternal;
 
 extern SoundInterface_struct SNDDummy;
@@ -98,8 +98,6 @@ void M68KStart(void);
 void M68KStop(void);
 void ScspReset(void);
 int ScspChangeVideoFormat(int type);
-void setM68kCounter(u64 counter);
-void setM68kDoneCounter(u64 counter);
 void M68KExec(s32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);

@@ -95,6 +95,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
+#include "mk68Counter.h"
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -158,9 +159,6 @@ u32 m68kcycle = 0;
 
 extern YabEventQueue * q_scsp_frame_start;
 extern YabEventQueue * q_scsp_finish;
-void setM68kCounter(u64 counter);
-u64 getM68KCounter();
-
 
 #define CLOCK_SYNC_SHIFT (4)
 
@@ -2780,14 +2778,12 @@ scsp_set_b (u32 a, u8 d)
 
     case 0x1E: // SCIEB(high byte)
     {
-      int i;
       scsp.scieb = (scsp.scieb & 0xFF) | (d << 8);
       scsp_check_interrupt();
       return;
     }
     case 0x1F: // SCIEB(low byte)
     {
-      int i;
       scsp.scieb = (scsp.scieb & 0x700) | d;
       scsp_check_interrupt();
       return;
@@ -4320,7 +4316,7 @@ scsp_w_d (SH2_struct *context, UNUSED u8* m, u32 a, u32 d)
 ////////////////////////////////////////////////////////////////
 
 u8 FASTCALL
-scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
+scsp_r_b (SH2_struct * const context, UNUSED u8* m, u32 a)
 {
   a &= 0xFFF;
 
@@ -4338,7 +4334,7 @@ scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
     }
   else if (a >= 0xEC0 && a <= 0xEDF){
     u16 val = scsp_dsp.efreg[ (a>>1) & 0x1F];
-    if( a&0x01 == 0){
+    if( (a & 0x01) == 0){
       return val >> 8;
     }else{
       return val & 0xFF;
@@ -4945,8 +4941,6 @@ SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 int
 ScspInit (int coreid)
 {
-  int i;
-
   if ((SoundRam = T2MemoryInit (0x80000)) == NULL)
     return -1;
 
@@ -4972,11 +4966,11 @@ ScspInit (int coreid)
   ScspInternalVars->scsptiming1 = 0;
   ScspInternalVars->scsptiming2 = 0;
 
-  for (i = 0; i < MAX_BREAKPOINTS; i++)
-    ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
-  ScspInternalVars->numcodebreakpoints = 0;
-  ScspInternalVars->BreakpointCallBack = NULL;
-  ScspInternalVars->inbreakpoint = 0;
+  //for (i = 0; i < MAX_BREAKPOINTS; i++)
+  //  ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+  //ScspInternalVars->numcodebreakpoints = 0;
+  //ScspInternalVars->BreakpointCallBack = NULL;
+  //ScspInternalVars->inbreakpoint = 0;
 
   m68kexecptr = M68K->Exec;
 
@@ -5218,34 +5212,34 @@ void new_scsp_exec(s32 cycles)
 
 //----------------------------------------------------------------------------
 
-static s32 FASTCALL
-M68KExecBP (s32 cycles)
-{
-  s32 cyclestoexec=cycles;
-  s32 cyclesexecuted=0;
-  int i;
-
-  while (cyclesexecuted < cyclestoexec)
-    {
-      // Make sure it isn't one of our breakpoints
-      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-        {
-          if ((M68K->GetPC () == ScspInternalVars->codebreakpoint[i].addr) &&
-              ScspInternalVars->inbreakpoint == 0)
-            {
-              ScspInternalVars->inbreakpoint = 1;
-              if (ScspInternalVars->BreakpointCallBack)
-                ScspInternalVars->BreakpointCallBack (ScspInternalVars->codebreakpoint[i].addr);
-              ScspInternalVars->inbreakpoint = 0;
-            }
-        }
-
-      // execute instructions individually
-      cyclesexecuted += M68K->Exec(1);
-
-    }
-  return cyclesexecuted;
-}
+//static s32 FASTCALL
+//M68KExecBP (s32 cycles)
+//{
+//  s32 cyclestoexec=cycles;
+//  s32 cyclesexecuted=0;
+//  int i;
+//
+//  while (cyclesexecuted < cyclestoexec)
+//    {
+//      // Make sure it isn't one of our breakpoints
+//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+//        {
+//          if ((M68K->GetPC () == ScspInternalVars->codebreakpoint[i].addr) &&
+//              ScspInternalVars->inbreakpoint == 0)
+//            {
+//              ScspInternalVars->inbreakpoint = 1;
+//              if (ScspInternalVars->BreakpointCallBack)
+//                ScspInternalVars->BreakpointCallBack (ScspInternalVars->codebreakpoint[i].addr);
+//              ScspInternalVars->inbreakpoint = 0;
+//            }
+//        }
+//
+//      // execute instructions individually
+//      cyclesexecuted += M68K->Exec(1);
+//
+//    }
+//  return cyclesexecuted;
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -5377,14 +5371,11 @@ void ScspExec(){
 
 void ScspAsynMainCpu( void * p ){
 
-  u64 before;
   u64 now;
-  u64 difftime;
   const int samplecnt = 256; // 11289600/44100
   const int step = 16;
   int frame = 0;
   int frame_count = 0;
-  int i;
   int frame_div = 1; // g_scsp_sync_count_per_frame;
   int framecnt = 188160 / frame_div; // 11289600/60
   int hzcheck = 0;
@@ -5394,7 +5385,6 @@ void ScspAsynMainCpu( void * p ){
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
-  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
   u32 wait_clock = 0;
   u64 pre_m68k_cycle = 0;
   u64 m68k_inc = 0;
@@ -5403,12 +5393,10 @@ void ScspAsynMainCpu( void * p ){
 
   //YabWaitEventQueue(q_scsp_frame_start);
   now = 0;
-  before = 0;
   while (thread_running){
     while (g_scsp_lock) { YabThreadUSleep(1000); }
-    u64 m68k_done_counter = 0;
-    u64 m68k_integer_part = 0;
-    u64 m68k_cycle = 0;
+    u64 m68k_integer_part;
+    u64 m68k_cycle;
     do {
       m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
@@ -5444,7 +5432,6 @@ void ScspAsynMainCpu( void * p ){
         now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
         //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
         hzcheck = 0;
-        before = now;
         break;
       }
     }
@@ -5706,106 +5693,106 @@ ScspSetVolume (int volume)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void
-M68KSetBreakpointCallBack (void (*func)(u32))
-{
-  ScspInternalVars->BreakpointCallBack = func;
-}
+//void
+//M68KSetBreakpointCallBack (void (*func)(u32))
+//{
+//  ScspInternalVars->BreakpointCallBack = func;
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 
-int
-M68KAddCodeBreakpoint (u32 addr)
-{
-  int i;
-
-  if (ScspInternalVars->numcodebreakpoints < MAX_BREAKPOINTS)
-    {
-      // Make sure it isn't already on the list
-      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-        {
-          if (addr == ScspInternalVars->codebreakpoint[i].addr)
-            return -1;
-        }
-
-      ScspInternalVars->codebreakpoint[i].addr = addr;
-      ScspInternalVars->numcodebreakpoints++;
-      m68kexecptr = M68KExecBP;
-
-      return 0;
-    }
-
-  return -1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void
-M68KSortCodeBreakpoints (void)
-{
-  int i, i2;
-  u32 tmp;
-
-  for (i = 0; i < (MAX_BREAKPOINTS - 1); i++)
-    {
-      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
-        {
-          if (ScspInternalVars->codebreakpoint[i].addr == 0xFFFFFFFF &&
-              ScspInternalVars->codebreakpoint[i2].addr != 0xFFFFFFFF)
-            {
-              tmp = ScspInternalVars->codebreakpoint[i].addr;
-              ScspInternalVars->codebreakpoint[i].addr =
-                ScspInternalVars->codebreakpoint[i2].addr;
-              ScspInternalVars->codebreakpoint[i2].addr = tmp;
-            }
-        }
-    }
-}
+//int
+//M68KAddCodeBreakpoint (u32 addr)
+//{
+//  int i;
+//
+//  if (ScspInternalVars->numcodebreakpoints < MAX_BREAKPOINTS)
+//    {
+//      // Make sure it isn't already on the list
+//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+//        {
+//          if (addr == ScspInternalVars->codebreakpoint[i].addr)
+//            return -1;
+//        }
+//
+//      ScspInternalVars->codebreakpoint[i].addr = addr;
+//      ScspInternalVars->numcodebreakpoints++;
+//      m68kexecptr = M68KExecBP;
+//
+//      return 0;
+//    }
+//
+//  return -1;
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 
-int
-M68KDelCodeBreakpoint (u32 addr)
-{
-  int i;
-  if (ScspInternalVars->numcodebreakpoints > 0)
-    {
-      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-        {
-          if (ScspInternalVars->codebreakpoint[i].addr == addr)
-            {
-              ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
-              M68KSortCodeBreakpoints ();
-              ScspInternalVars->numcodebreakpoints--;
-              if (ScspInternalVars->numcodebreakpoints == 0)
-                m68kexecptr = M68K->Exec;
-              return 0;
-            }
-        }
-    }
-
-  return -1;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-m68kcodebreakpoint_struct *
-M68KGetBreakpointList ()
-{
-  return ScspInternalVars->codebreakpoint;
-}
+//void
+//M68KSortCodeBreakpoints (void)
+//{
+//  int i, i2;
+//  u32 tmp;
+//
+//  for (i = 0; i < (MAX_BREAKPOINTS - 1); i++)
+//    {
+//      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
+//        {
+//          if (ScspInternalVars->codebreakpoint[i].addr == 0xFFFFFFFF &&
+//              ScspInternalVars->codebreakpoint[i2].addr != 0xFFFFFFFF)
+//            {
+//              tmp = ScspInternalVars->codebreakpoint[i].addr;
+//              ScspInternalVars->codebreakpoint[i].addr =
+//                ScspInternalVars->codebreakpoint[i2].addr;
+//              ScspInternalVars->codebreakpoint[i2].addr = tmp;
+//            }
+//        }
+//    }
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 
-void
-M68KClearCodeBreakpoints ()
-{
-  int i;
-  for (i = 0; i < MAX_BREAKPOINTS; i++)
-    ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+//int
+//M68KDelCodeBreakpoint (u32 addr)
+//{
+//  int i;
+//  if (ScspInternalVars->numcodebreakpoints > 0)
+//    {
+//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+//        {
+//          if (ScspInternalVars->codebreakpoint[i].addr == addr)
+//            {
+//              ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+//              M68KSortCodeBreakpoints ();
+//              ScspInternalVars->numcodebreakpoints--;
+//              if (ScspInternalVars->numcodebreakpoints == 0)
+//                m68kexecptr = M68K->Exec;
+//              return 0;
+//            }
+//        }
+//    }
+//
+//  return -1;
+//}
 
-  ScspInternalVars->numcodebreakpoints = 0;
-}
+//////////////////////////////////////////////////////////////////////////////
+
+//m68kcodebreakpoint_struct *
+//M68KGetBreakpointList ()
+//{
+//  return ScspInternalVars->codebreakpoint;
+//}
+
+//////////////////////////////////////////////////////////////////////////////
+
+//void
+//M68KClearCodeBreakpoints ()
+//{
+//  int i;
+//  for (i = 0; i < MAX_BREAKPOINTS; i++)
+//    ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+//
+//  ScspInternalVars->numcodebreakpoints = 0;
+//}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -5813,7 +5800,6 @@ int
 SoundSaveState (FILE *fp)
 {
   int i;
-  u32 temp;
   int offset;
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
@@ -5828,6 +5814,7 @@ SoundSaveState (FILE *fp)
 
   M68K->SaveState(fp);
 #else
+  u32 temp;
   for (i = 0; i < 8; i++)
     {
       temp = M68K->GetDReg (i);
@@ -6129,7 +6116,6 @@ int
 SoundLoadState (FILE *fp, int version, int size)
 {
   int i, i2;
-  u32 temp;
   u8 nextphase;
   IOCheck_struct check = { 0, 0 };
 
@@ -6146,7 +6132,8 @@ if (IsM68KRunning != newM68state) {
     M68K->LoadState(fp);
   }
 #else
-  for (i = 0; i < 8; i++)
+u32 temp;
+for (i = 0; i < 8; i++)
     {
       yread (&check, (void *)&temp, 4, 1, fp);
       M68K->SetDReg (i, temp);

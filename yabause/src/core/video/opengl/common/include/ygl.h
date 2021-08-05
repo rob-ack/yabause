@@ -293,7 +293,7 @@ void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
 void YglCacheReset(YglTextureManager * tm);
 void setupMaxSize();
 
-void YglCheckFBSwitch(int sync);
+void YglCheckFBSwitch(bool sync);
 
 #define VDP2_CC_NONE 0x00
 
@@ -755,7 +755,6 @@ void YglDirtyColorRamWord(void);
 void YglUpdateColorRam();
 void updateVdp2ColorRam(int line);
 void syncColorRam(void);
-int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);

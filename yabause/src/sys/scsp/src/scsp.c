@@ -88,6 +88,7 @@
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #include "cs2.h"
 #include "debug.h"
@@ -1797,7 +1798,7 @@ static void scsp_slot_update_keyon(slot_t *slot);
 
 static int scsp_mute_flags = 0;
 static int scsp_volume = 100;
-static int thread_running = 0;
+static bool thread_running = false;
 static int scsp_sample_count = 0;
 static int scsp_checktime = 0;
 ////////////////////////////////////////////////////////////////
@@ -4659,7 +4660,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
     scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
   scsp_reset();
-  thread_running = 0;
+  thread_running = false;
   g_scsp_mtx = YabThreadCreateMutex();
 }
 
@@ -5056,7 +5057,7 @@ ScspDeInit (void)
 {
   ScspUnMuteAudio(1);
   scsp_mute_flags = 0;
-  thread_running = 0;
+  thread_running = false;
 #if defined(ASYNC_SCSP)
   if (q_scsp_frame_start)YabAddEventQueue(q_scsp_frame_start, 0);
   YabThreadWait(YAB_THREAD_SCSP);
@@ -5411,7 +5412,10 @@ void ScspAsynMainCpu( void * p ){
     do {
       m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-      if (thread_running == 0) break;
+      if (!thread_running)
+      {
+          break;
+      }
   //    if (m68k_cycle == 0) YabSemWait(m68counterCond);
     } while (m68k_cycle == 0);
     m68k_inc += m68k_cycle;
@@ -5529,8 +5533,8 @@ void ScspAsynMainRT( void * p ){
 }
 
 void ScspExec(){
-	if (thread_running == 0){
-	  thread_running = 1;
+	if (!thread_running){
+	  thread_running = true;
 	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 	}
 }

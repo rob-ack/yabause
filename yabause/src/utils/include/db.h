@@ -9,9 +9,6 @@ extern "C" {
 
 void DBLookup(int* const cart_type, const char**  cartpath, const char * support_dir);
 
-#ifdef __cplusplus
-}
-#endif
 
 typedef struct GameDB_s{
   const char* game_code;
@@ -19,5 +16,9 @@ typedef struct GameDB_s{
   int cart_type;
   const char* filename;
 } GameDB;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

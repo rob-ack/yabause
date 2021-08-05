@@ -25,6 +25,10 @@
 #include "cdbase.h"
 #include "cs0.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_BLOCKS      200
 #define MAX_SELECTORS   24
 #define MAX_FILES       256
@@ -389,5 +393,9 @@ u32 Cs2GetMasterExecutionAdress();
 // external CD drive command
 void Cs2ForceOpenTray();
 int Cs2ForceCloseTray( int coreid, const char * cdpath );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -14,7 +14,7 @@
         "--config=/opt/retropie/configs/saturn/retroarch.cfg",
         "--verbose",
         "--libretro=${debugInfo.fullTargetPath}",
-        "/home/pi/RetroPie/roms/saturn/Guardian Heroes/Guardian Heroes Work.cue"
+        "/home/pi/RetroPie/roms/saturn/Story of Thor 2, The (Europe)/Story of Thor 2, The (Europe).cue"
       ],
       "env": {},
       "showDisplayString": false,
@@ -30,8 +30,9 @@
       "cwd": "C:/RetroArch-Win64",
       "args": [
         "--verbose",
-        //"--libretro=${debugInfo.fullTargetPath}",
-        //"C:/RetroArch-Win64/downloads/Guardian Heroes/Guardian Heroes.cue"
+        "--libretro=${debugInfo.fullTargetPath}"
+//        "--load-menu-on-error",
+//        "C:\\RetroArch-Win64\\downloads\\Story of Thor 2, The (Europe)\\Story of Thor 2, The (Europe).cue"
       ],
       "env": {},
       "showDisplayString": false,

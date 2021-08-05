@@ -19,6 +19,7 @@
 */
 #ifndef  _YGL_H_
 #define  _YGL_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -214,6 +215,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "threads.h"
 #include "vidshared.h"
 #include "vdp1.h"
+#include <stdbool.h>
 
 // #define DEBUG_BLIT
 

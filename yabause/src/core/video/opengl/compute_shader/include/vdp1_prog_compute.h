@@ -3,6 +3,10 @@
 
 #include "ygl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
 
@@ -750,4 +754,9 @@ static const char vdp1_end_mesh_f[] =
 "  imageStore(outSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),finalColor);\n"
 "  imageStore(meshSurface,ivec2(int(pos.x), int(size.y - 1.0 - pos.y)),meshColor);\n"
 "}\n";
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif //VDP1_PROG_COMPUTE_H

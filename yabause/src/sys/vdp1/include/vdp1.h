@@ -24,6 +24,10 @@
 #include "memory.h"
 #include "vdp2.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VIDCORE_DEFAULT         -1
 
 //#define YAB_ASYNC_RENDERING 1
@@ -222,5 +226,8 @@ void Vdp1HBlankOUT(void);
 void Vdp1VBlankIN(void);
 void Vdp1VBlankOUT(void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

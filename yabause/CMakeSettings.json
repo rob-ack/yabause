@@ -15,6 +15,11 @@
           "name": "KRONOS_LIBRETRO_CORE",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },
@@ -32,6 +37,21 @@
         {
           "name": "KRONOS_LIBRETRO_CORE",
           "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "KRONOS_FORCE_CXX_COMPILER",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SH2_ASYNC",
+          "value": "False",
           "type": "BOOL"
         }
       ]
@@ -91,13 +111,8 @@
       "addressSanitizerRuntimeFlags": "detect_leaks=0",
       "variables": [
         {
-          "name": "YAB_WANT_SH2_ASYNC",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
           "name": "KRONOS_GL_DEBUG",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {
@@ -109,13 +124,38 @@
           "name": "KRONOS_LIBRETRO_CORE",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_ARM7",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "KRONOS_SHADER_DEBUG",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SH2_ASYNC",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },
     {
       "name": "linux_arm-Remote-Release",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "Release",
       "cmakeExecutable": "/usr/bin/cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", ".github", "win_template", "yabauseut", "out" ],
       "cmakeCommandArgs": "",
@@ -154,12 +194,27 @@
         },
         {
           "name": "YAB_WANT_SH2_ASYNC",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {
           "name": "YAB_WANT_ARM7",
           "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SDL",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SOFT_RENDERING",
+          "value": "False",
           "type": "BOOL"
         }
       ]

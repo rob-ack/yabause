@@ -24,6 +24,10 @@
 #include "core.h"
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
   u32 addr;
@@ -324,5 +328,9 @@ scucodebreakpoint_struct *ScuDspGetBreakpointList(void);
 void ScuDspClearCodeBreakpoints(void);
 int ScuSaveState(FILE *fp);
 int ScuLoadState(FILE *fp, int version, int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

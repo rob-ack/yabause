@@ -4,6 +4,10 @@
 #include "vdp1_prog_compute.h"
 #include "vdp1.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
   VDP1_MESH_STANDARD_BANDING = 0,
@@ -26,5 +30,9 @@ extern void vdp1_clear(int id, float *col);
 extern u32* vdp1_get_directFB();
 extern void vdp1_set_directFB();
 extern void vdp1_setup(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //VDP1_COMPUTE_H

@@ -9,9 +9,6 @@ include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_C_STANDARD 11)
-
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 	add_definitions(-DARCH_IS_LINUX=1)
@@ -191,9 +188,21 @@ endif()
 
 #-------------------------------------------------------
 
-option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread" ON)
+option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread. EXPERIMENTAL" OFF)
 if (YAB_WANT_SH2_ASYNC)
   add_definitions(-DxSH2_ASYNC=1)
+	if(MSVC)
+		include_directories(utils/windows)
+		set(kronos_HEADERS
+			${kronos_HEADERS}
+			utils/windows/semaphore.h
+		)
+
+		set(kronos_SOURCES
+			${kronos_SOURCES}
+			utils/windows/semaphore.cpp
+		)
+	endif()
 endif()
 
 option(YAB_WANT_DYNAREC_KRONOS "Enable Sh2 dynarec by Kronos" ON)

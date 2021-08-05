@@ -1,3 +1,9 @@
+message("Your C++ compiler supports these C++ features:\n${CMAKE_CXX_COMPILE_FEATURES}")
+message("Your C compiler supports these C features:\n${CMAKE_C_COMPILE_FEATURES}")
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_C_STANDARD 11)
+
 option(KRONOS_GL_DEBUG "Debug output for GL" off)
 mark_as_advanced(KRONOS_GL_DEBUG)
 if(KRONOS_GL_DEBUG)

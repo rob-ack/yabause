@@ -3,6 +3,10 @@
 [![CMake Linux with QT](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.qt.yml/badge.svg)](https://github.com/rob-ack/yabause/actions/workflows/cmake.linux.ubuntu.qt.yml)
 [![Travis CI Build Status](https://travis-ci.org/FCare/Kronos.svg?branch=extui-align)](https://travis-ci.org/github/FCare/Kronos)
 
+# Sega Saturn Emulated Hardware
+
+You can read about the Sega Saturn Console and is components [here](https://www.copetti.org/writings/consoles/sega-saturn/).
+
 # Building
 
 ## [CMake](https://cmake.org/)

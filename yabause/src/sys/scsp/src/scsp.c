@@ -5380,7 +5380,7 @@ void ScspAsynMainCpu( void * p ){
 	    YabThreadUSleep(1000);
     }
 
-  	YabWaitEventQueue(q_scsp_m68counterCond); //signal set to compute new samples
+  	YabWaitEventQueue(q_scsp_m68counterCond); //wait for signal set to compute new samples
 
 	u64 const m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
     u64 const m68k_cycle = m68k_integer_part - pre_m68k_cycle;

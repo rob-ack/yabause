@@ -18,6 +18,11 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+/*Saturn Custom Sound Processor (SCSP): Also referred to as Yamaha YMF292, it’s composed of two modules:
+A multi-function sound generator: Processes up to 32 channels with PCM samples (up to 16-bit with 44.1 kHz, a.k.a ‘CD quality’) or FM channels. In the case of the latter, a number of channels are reserved for operators.
+A DSP: Applies effects like echo, reverb and chorus. The docs also mention ‘filters’ but I don’t know if it means envelope or frequency filter (i.e. low pass, etc).
+*/
+
 #ifndef SCSP_H
 #define SCSP_H
 

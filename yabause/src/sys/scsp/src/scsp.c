@@ -159,8 +159,7 @@ u32 m68kcycle = 0;
 
 extern YabEventQueue * q_scsp_frame_start;
 extern YabEventQueue * q_scsp_finish;
-
-#define CLOCK_SYNC_SHIFT (4)
+extern YabEventQueue * q_scsp_m68counterCond;
 
 enum EnvelopeStates
 {
@@ -4824,15 +4823,6 @@ int sh2_read_req = 0;
 static int mem_access_counter = 0;
 void SyncSh2And68k(SH2_struct *context){
   if (IsM68KRunning) {
-    /*
-    #if defined(ARCH_IS_LINUX)
-    pthread_mutex_lock(&sync_mutex);
-    pthread_cond_signal(&sync_cnd);
-    pthread_mutex_unlock(&sync_mutex);
-    #else
-    sh2_read_req++;
-    #endif
-    */
     // Memory Access cycle = 128 times per 44.1Khz
     // 28437500 / 4410 / 128 = 50
     SH2Core->AddCycle(context, 50);
@@ -5371,50 +5361,42 @@ void ScspExec(){
 
 void ScspAsynMainCpu( void * p ){
 
-  u64 now;
-  const int samplecnt = 256; // 11289600/44100
-  const int step = 16;
-  int frame = 0;
-  int frame_count = 0;
-  int frame_div = 1; // g_scsp_sync_count_per_frame;
-  int framecnt = 188160 / frame_div; // 11289600/60
-  int hzcheck = 0;
 
 #if defined(ARCH_IS_LINUX)
-  struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
-  u32 wait_clock = 0;
+
+  const int samplecnt = 256; // 11289600/44100
+  int frame = 0;
   u64 pre_m68k_cycle = 0;
-  u64 m68k_inc = 0;
+  u64 m68k_inc = 0; //how much remaining samples should be played
+  int framecnt = (44100 * samplecnt) / fps; // 11289600/60
 
-  framecnt = (11289600/((yabsys.IsPal)?50:60)); // 11289600/60
+  while (thread_running)
+  {
+    while (g_scsp_lock)
+    {
+	    YabThreadUSleep(1000);
+    }
 
-  //YabWaitEventQueue(q_scsp_frame_start);
-  now = 0;
-  while (thread_running){
-    while (g_scsp_lock) { YabThreadUSleep(1000); }
-    u64 m68k_integer_part;
-    u64 m68k_cycle;
-    do {
-      m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
-      m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-  //    if (m68k_cycle == 0) YabSemWait(m68counterCond);
-    } while (m68k_cycle == 0 && thread_running);
+  	YabWaitEventQueue(q_scsp_m68counterCond); //signal set to compute new samples
+
+	u64 const m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
+    u64 const m68k_cycle = m68k_integer_part - pre_m68k_cycle;
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
 
     // Sync 44100KHz
-    while (m68k_inc >= samplecnt) {
+    while (m68k_inc >= samplecnt) 
+    {
       m68k_inc = m68k_inc - samplecnt;
-      //LOG("[SCSP] MM68KExec %d", samplecnt);
       MM68KExec(samplecnt);
       new_scsp_exec((samplecnt << 1));
-      hzcheck++;
 
       frame += samplecnt;
-      if (frame >= framecnt) {
+      if (frame >= framecnt) 
+      {
         frame = frame - framecnt;
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
@@ -5423,97 +5405,87 @@ void ScspAsynMainCpu( void * p ){
         YabAddEventQueue( q_scsp_finish , 0);
         pre_m68k_cycle = 0;
         m68k_inc = 0;
-        //LOG("[SCSP] WAIT SH2");
         YabWaitEventQueue(q_scsp_frame_start);
-        now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-        //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
-        hzcheck = 0;
         break;
       }
     }
-    setM68kDoneCounter(pre_m68k_cycle);
+
+    //setM68kDoneCounter(pre_m68k_cycle);
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
 
-void ScspAsynMainRT( void * p ){
-
-  u64 before;
-  u64 now;
-  u32 difftime;
-  const int samplecnt = 256; // 11289600/44100
-  const int step = 256;
-  const int frame_div = 1;
-  int framecnt; // 11289600/60
-  int frame = 0;
-  int frame_count = 0;
-  int i;
-
-  const u32 base_clock = (u32)((644.8412698 / ((double)samplecnt / (double)step)) * (1 << CLOCK_SYNC_SHIFT));
-
-
-  YabThreadSetCurrentThreadAffinityMask( 0x03 );
-  before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-  u32 wait_clock = 0;
-  while (thread_running){
-
-    framecnt = (11289600/fps) / frame_div;
-
-    while (g_scsp_lock){ YabThreadUSleep(1);  }
-
-    // Run 1 sample(44100Hz)
-    for (i = 0; i < samplecnt; i += step){
-      MM68KExec(step);
-      m68kcycle += base_clock;
-    }
-
-    wait_clock = 0;
-
-    new_scsp_exec((samplecnt << 1));
-
-    // Sync 1/4 Frame(60Hz)
-    frame += samplecnt;
-    if (frame >= framecnt){
-      frame = frame - framecnt;
-      frame_count++;
-      if (frame_count >= frame_div){
-        ScspInternalVars->scsptiming2 = 0;
-        ScspInternalVars->scsptiming1 = scsplines;
-        ScspExecAsync();
-        frame_count = 0;
-      }
-      int sleeptime = 0;
-      u64 checktime = 0;
-      m68kcycle = 0;
-      sh2_read_req = 0;
-      do {
-        now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-        if (now > before){
-          difftime = now - before;
-        }
-        else{
-          difftime = now + (ULLONG_MAX - before);
-        }
-        sleeptime = ((1000000/fps) - difftime);
-        if ((sleeptime > 0) && (isAutoFrameSkip()==0)) YabThreadUSleep(sleeptime);
-
-        if(sh2_read_req != 0) {
-          for (i = 0; i < samplecnt; i += step) {
-            MM68KExec(step);
-            m68kcycle += base_clock;
-          }
-          frame += samplecnt;
-          new_scsp_exec((samplecnt << 1));
-          sh2_read_req = 0;
-        }
-      } while ((sleeptime > 0) && (isAutoFrameSkip()==0));
-      checktime = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
-      //yprintf("vsynctime = %d(%d)\n", (s32)(checktime - before), (s32)(operation_time - before));
-      before = checktime;
-    }
-  }
-  YabThreadWake(YAB_THREAD_SCSP);
-}
+//void ScspAsynMainRT(void * p)
+//{
+//	const int samplecnt = 256; // 11289600/44100
+//	const int step = 256;
+//	u64 const waitTime = 1000000 / fps;
+//    const int clockSyncShift = 4;
+//	const u32 base_clock = (u32)(644.8412698 * (1 << clockSyncShift));
+//
+//	int frame = 0;
+//	int frame_count = 0;
+//
+//	YabThreadSetCurrentThreadAffinityMask(0x03);
+//	u64 before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+//	while (thread_running)
+//	{
+//		int const framecnt = 11289600 / fps;
+//
+//		while (g_scsp_lock)
+//		{
+//			YabThreadUSleep(1);
+//		}
+//
+//		// Run 1 sample(44100Hz)
+//		MM68KExec(step);
+//		m68kcycle += base_clock;
+//
+//		new_scsp_exec((samplecnt << 1));
+//
+//		// Sync 1/4 Frame(60Hz)
+//		frame += samplecnt;
+//		if (frame >= framecnt)
+//		{
+//			frame = frame - framecnt;
+//			frame_count++;
+//			if (frame_count >= 1)
+//			{
+//				ScspInternalVars->scsptiming2 = 0;
+//				ScspInternalVars->scsptiming1 = scsplines;
+//				ScspExecAsync();
+//				frame_count = 0;
+//			}
+//            u64 sleeptime;
+//			m68kcycle = 0;
+//			sh2_read_req = 0;
+//			do
+//			{
+//                u64 const now = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+//                u64 const difftime = now > before ? now - before : now + (ULLONG_MAX - before);
+//				sleeptime = waitTime - difftime;
+//				if (sleeptime > 0 && isAutoFrameSkip() == 0)
+//				{
+//					YabThreadUSleep(sleeptime);
+//				}
+//
+//				if (sh2_read_req != 0)
+//				{
+//					for (int i = 0; i < samplecnt; i += step)
+//					{
+//						MM68KExec(step);
+//						m68kcycle += base_clock;
+//					}
+//					frame += samplecnt;
+//					new_scsp_exec(samplecnt << 1);
+//					sh2_read_req = 0;
+//				}
+//			} while (sleeptime > 0 && isAutoFrameSkip() == 0);
+//            before = YabauseGetTicks() * 1000000 / yabsys.tickfreq;
+//		}
+//	}
+//	YabThreadWake(YAB_THREAD_SCSP);
+//}
 
 void ScspExec(){
 	if (!thread_running){
@@ -5521,6 +5493,7 @@ void ScspExec(){
 	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 	}
 }
+
 void ScspExecAsync() {
   u32 audiosize;
 

@@ -92,6 +92,7 @@
 #endif
 
 #include <inttypes.h>
+#include "db.h"
 
 #define DECILINE_STEP (20.0)
 
@@ -192,7 +193,7 @@ void YabauseChangeTiming(int freqtype) {
 extern int tweak_backup_file_size;
 YabEventQueue * q_scsp_frame_start;
 YabEventQueue * q_scsp_finish;
-
+YabEventQueue * q_scsp_m68counterCond;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -342,6 +343,7 @@ int YabauseInit(yabauseinit_struct *init)
 
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
+  q_scsp_m68counterCond = YabThreadCreateQueue(1);
   setM68kCounter(0);
 
    // Initialize both cpu's
@@ -693,7 +695,7 @@ int YabauseExec(void) {
 //////////////////////////////////////////////////////////////////////////////
 int saved_centicycles;
 
-u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
+u32 get_cycles_per_line_division(u32 const clock, int const frames, int const lines, int const divisions_per_line)
 {
    return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
 }
@@ -748,9 +750,6 @@ int YabauseEmulate(void) {
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 
-   u32 m68k_cycles_per_deciline = 0;
-   u32 scsp_cycles_per_deciline = 0;
-
    int lines = 0;
    int frames = 0;
 
@@ -764,8 +763,8 @@ int YabauseEmulate(void) {
      lines = 263;
      frames = 60;
    }
-   scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
-   m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
+   u32 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
+   u32 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
 
    DoMovie();
 
@@ -828,7 +827,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60))<< SCSP_FRACTIONAL_BITS);
+            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS); //NOTE: this seems to basically add new samples to the scsp to process
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
@@ -927,7 +926,6 @@ void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
     YabWaitEventQueue(q_scsp_finish);
     saved_m68k_cycles = 0;
-    setM68kCounter(saved_m68k_cycles);
     YabAddEventQueue(q_scsp_frame_start, 0);
   //LOG("[SH2] START SCSP");
 }

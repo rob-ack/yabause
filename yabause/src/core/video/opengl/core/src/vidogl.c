@@ -5704,9 +5704,9 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     free(rgb);
     return;
   }
-
   // //If no VRAM access is granted to RBG0, just abort.
-  if (varVdp2Regs->RAMCTL & 0xFF == 0) {
+  if ((varVdp2Regs->RAMCTL & 0xFF) == 0) {
+    LOG("No RAMCTL for RBG0\n");
     free(rgb);
     return;
   }

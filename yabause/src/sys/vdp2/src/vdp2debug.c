@@ -1461,6 +1461,8 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
    u8 *sprccrlist = (u8 *)&Vdp2Regs->CCRSA;
    int i;
 
+   AddString(outstring, "RAMCTL 0x%x\r\n", Vdp2Regs->RAMCTL);
+   
    if (Vdp2Regs->TVMD & 0x8000)
    {
       // TVMD stuff

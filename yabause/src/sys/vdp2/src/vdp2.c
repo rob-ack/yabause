@@ -715,7 +715,7 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt)
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp2ReadByte(SH2_struct *context, u8* mem, u32 addr) {
-   LOG("VDP2 register byte read = %08X\n", addr);
+   YuiMsg("Non supported VDP2 register byte read = %08X\n", addr);
    addr &= 0x1FF;
    return 0;
 }
@@ -723,6 +723,7 @@ u8 FASTCALL Vdp2ReadByte(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
+  LOG("VDP2 register long read = %08X\n", addr);
    addr &= 0x1FF;
 
    switch (addr)
@@ -758,9 +759,11 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
 		  return Vdp2Regs->HCNT;
       case 0x00A:
          return Vdp2Regs->VCNT;
+     case 0x00E:
+        return Vdp2Regs->RAMCTL;
       default:
       {
-         LOG("Unhandled VDP2 word read: %08X\n", addr);
+         YuiMsg("Unhandled VDP2 word read: %08X\n", addr);
          break;
       }
    }
@@ -773,7 +776,9 @@ u16 FASTCALL Vdp2ReadWord(SH2_struct *context, u8* mem, u32 addr) {
 u32 FASTCALL Vdp2ReadLong(SH2_struct *context, u8* mem, u32 addr) {
    LOG("VDP2 register long read = %08X\n", addr);
    addr &= 0x1FF;
-   return 0;
+   u16 hi = Vdp2ReadWord(context, mem, addr);
+   u16 lo = Vdp2ReadWord(context, mem, addr+2);
+   return (hi<<16)|lo;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1753,45 +1758,42 @@ void FASTCALL Vdp2WriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp2SaveState(FILE *fp)
+int Vdp2SaveState(void ** stream)
 {
    int offset;
-   IOCheck_struct check = { 0, 0 };
 
-   offset = StateWriteHeader(fp, "VDP2", 1);
+   offset = MemStateWriteHeader(stream, "VDP2", 1);
 
    // Write registers
-   ywrite(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
+   MemStateWrite((void *)Vdp2Regs, sizeof(Vdp2), 1, stream);
 
    // Write VDP2 ram
-   ywrite(&check, (void *)Vdp2Ram, 0x100000, 1, fp);
+   MemStateWrite((void *)Vdp2Ram, 0x100000, 1, stream);
 
    // Write CRAM
-   ywrite(&check, (void *)Vdp2ColorRam, 0x1000, 1, fp);
+   MemStateWrite((void *)Vdp2ColorRam, 0x1000, 1, stream);
 
    // Write internal variables
-   ywrite(&check, (void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
+   MemStateWrite((void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, stream);
 
-   return StateFinishHeader(fp, offset);
+   return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int Vdp2LoadState(FILE *fp, UNUSED int version, int size)
+int Vdp2LoadState(const void * stream, UNUSED int version, int size)
 {
-   IOCheck_struct check = { 0, 0 };
-
    // Read registers
-   yread(&check, (void *)Vdp2Regs, sizeof(Vdp2), 1, fp);
+   MemStateRead((void *)Vdp2Regs, sizeof(Vdp2), 1, stream);
 
    // Read VDP2 ram
-   yread(&check, (void *)Vdp2Ram, 0x100000, 1, fp);
+   MemStateRead((void *)Vdp2Ram, 0x100000, 1, stream);
 
    // Read CRAM
-   yread(&check, (void *)Vdp2ColorRam, 0x1000, 1, fp);
+   MemStateRead((void *)Vdp2ColorRam, 0x1000, 1, stream);
 
    // Read internal variables
-   yread(&check, (void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, fp);
+   MemStateRead((void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, stream);
 
    if(VIDCore) VIDCore->Resize(0,0,0,0,0);
 

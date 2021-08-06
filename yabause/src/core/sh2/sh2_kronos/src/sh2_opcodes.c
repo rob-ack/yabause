@@ -1070,7 +1070,7 @@ static void SH2mova(SH2_struct * sh, u32 disp)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static void SH2movbl(SH2_struct * sh, u32 n, u32 m)
+static void SH2movbl(SH2_struct * const sh, u32 const n, u32 const m)
 {
    sh->regs.R[n] = (s32)(s8)SH2MappedMemoryReadByte(sh, sh->regs.R[m]);
    sh->regs.PC += 2;

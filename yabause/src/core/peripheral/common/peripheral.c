@@ -24,6 +24,7 @@
 
 #include "debug.h"
 #include "peripheral.h"
+#include "scsp.h"
 
 const char * PerPadNames[] =
 {

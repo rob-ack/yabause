@@ -95,7 +95,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
-#include "mk68Counter.h"
+#include "mk68Counter.hpp"
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -5400,12 +5400,8 @@ void ScspAsynMainCpu( void * p ){
     do {
       m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
       m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-      if (!thread_running)
-      {
-          break;
-      }
   //    if (m68k_cycle == 0) YabSemWait(m68counterCond);
-    } while (m68k_cycle == 0);
+    } while (m68k_cycle == 0 && thread_running);
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
 

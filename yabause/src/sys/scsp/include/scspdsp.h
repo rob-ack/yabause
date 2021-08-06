@@ -168,7 +168,7 @@ union ScspDspInstruction {
 #endif
 
 void ScspDspDisasm(u8 addr, char *outstring);
-void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
+void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram);
 
 extern ScspDsp scsp_dsp;
 

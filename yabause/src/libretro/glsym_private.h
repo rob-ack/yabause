@@ -1,5 +1,6 @@
 #ifndef RGLGEN_PRIV_DECL_H__
 #define RGLGEN_PRIV_DECL_H__
+
 #ifdef __cplusplus
 extern "C" {
 #endif

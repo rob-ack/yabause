@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "yabause.h"
 
 #include <thread>
-#include "mk68Counter.h"
+#include "mk68Counter.hpp"
 
 volatile u64 m68k_counter(0);
 volatile u64 m68k_counter_done(0);
@@ -37,15 +37,15 @@ const u64 MAX_SCSP_COUNTER = (u64)(44100 * 256 / 60) << SCSP_FRACTIONAL_BITS;
 
 void SyncCPUtoSCSP();
 
-extern void setM68kCounter(u64 counter) {
+void setM68kCounter(u64 counter) {
 	m68k_counter = counter;
 }
 
-extern void setM68kDoneCounter(u64 counter) {
+void setM68kDoneCounter(u64 counter) {
 	m68k_counter_done = counter;
 }
 
-extern u64 getM68KCounter() {
+u64 getM68KCounter() {
 	return m68k_counter;
 }
 

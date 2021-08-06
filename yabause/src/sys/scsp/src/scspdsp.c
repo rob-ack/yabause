@@ -24,57 +24,55 @@ s32 float_to_int(u16 f_val);
 u16 int_to_float(u32 i_val);
 
 //saturate 24 bit signed integer
-static INLINE s32 saturate_24(s32 value)
-{
-   if (value > 8388607)
-      value = 8388607;
-
-   if (value < (-8388608))
-      value = (-8388608);
-
-   return value;
-}
-
+//static INLINE s32 saturate_24(s32 value)
+//{
+//   if (value > 8388607)
+//      value = 8388607;
+//
+//   if (value < (-8388608))
+//      value = (-8388608);
+//
+//   return value;
+//}
 
 #define sign_x_to_s32(_bits, _value) (((int)((u32)(_value) << (32 - _bits))) >> (32 - _bits))
-#define min(a,b) (a<b)?a:b
+//#define min(a,b) (a<b)?a:b
 
-static INLINE unsigned clz(u32 v)
+//static INLINE unsigned clz(u32 v)
+//{
+//#if defined(__GNUC__) || defined(__clang__) || defined(__ICC) || defined(__INTEL_COMPILER)
+//  return __builtin_clz(v);
+//#elif defined(_MSC_VER)
+//  unsigned long idx;
+//
+//  _BitScanReverse(&idx, v);
+//
+//  return 31 ^ idx;
+//#else
+//  unsigned ret = 0;
+//  unsigned tmp;
+//
+//  tmp = !(v & 0xFFFF0000) << 4; v <<= tmp; ret += tmp;
+//  tmp = !(v & 0xFF000000) << 3; v <<= tmp; ret += tmp;
+//  tmp = !(v & 0xF0000000) << 2; v <<= tmp; ret += tmp;
+//  tmp = !(v & 0xC0000000) << 1; v <<= tmp; ret += tmp;
+//  tmp = !(v & 0x80000000) << 0;            ret += tmp;
+//
+//  return(ret);
+//#endif
+//}
+
+void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram)
 {
-#if defined(__GNUC__) || defined(__clang__) || defined(__ICC) || defined(__INTEL_COMPILER)
-  return __builtin_clz(v);
-#elif defined(_MSC_VER)
-  unsigned long idx;
-
-  _BitScanReverse(&idx, v);
-
-  return 31 ^ idx;
-#else
-  unsigned ret = 0;
-  unsigned tmp;
-
-  tmp = !(v & 0xFFFF0000) << 4; v <<= tmp; ret += tmp;
-  tmp = !(v & 0xFF000000) << 3; v <<= tmp; ret += tmp;
-  tmp = !(v & 0xF0000000) << 2; v <<= tmp; ret += tmp;
-  tmp = !(v & 0xC0000000) << 1; v <<= tmp; ret += tmp;
-  tmp = !(v & 0x80000000) << 0;            ret += tmp;
-
-  return(ret);
-#endif
-}
-
-void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
-{
-  u16* sound_ram_16 = (u16*)sound_ram;
   u64 mul_temp = 0;
   int nofl = 0;
   u32 x_temp = 0;
   s32 y_extended = 0;
-  union ScspDspInstruction inst;
   u32 address = 0;
   s32 shift_temp = 0;
 
-  inst.all = scsp_dsp.mpro[addr];
+  u16 * const sound_ram_16 = (u16 * const)sound_ram;
+  volatile union ScspDspInstruction const inst = { .all = scsp_dsp.mpro[addr] };
 
   const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
   const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
@@ -104,9 +102,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
     dsp->y_reg = INPUTS & 0xFFFFFF;
   }
 
-  int ShifterOutput;
-
-  ShifterOutput = (u32)sign_x_to_s32(26, dsp->shift_reg) << (inst.part.shift0 ^ inst.part.shift1);
+  int ShifterOutput = (u32)sign_x_to_s32(26, dsp->shift_reg) << (inst.part.shift0 ^ inst.part.shift1);
 
   if (!inst.part.shift1)
   {
@@ -133,9 +129,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
 
   dsp->product = ((s64)sign_x_to_s32(13, Y_SEL_Inputs[inst.part.ysel]) * X_SEL_Inputs[inst.part.xsel]) >> 12;
 
-  s32 SGAOutput;
-
-  SGAOutput = SGA_Inputs[inst.part.bsel];
+  s32 SGAOutput = SGA_Inputs[inst.part.bsel];
 
   if (inst.part.negb)
     SGAOutput = -SGAOutput;
@@ -164,9 +158,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram)
     dsp->write_pending = 0;
   }
   {
-    u16 addr;
-
-    addr = dsp->madrs[inst.part.masa];
+    u16 addr = dsp->madrs[inst.part.masa];
     addr += inst.part.nxadr;
 
     if (inst.part.adreb)

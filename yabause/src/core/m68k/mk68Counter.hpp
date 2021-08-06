@@ -19,8 +19,8 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef COUNTER__
-#define COUNTER__
+#ifndef COUNTER___M68k
+#define COUNTER___M68k
 
 #include "core.h"
 
@@ -28,9 +28,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 extern "C" {
 #endif
 
-	void setM68kCounter(u64 counter);
-	void setM68kDoneCounter(u64 counter);
-	u64 getM68KCounter();
+void setM68kCounter(u64 counter);
+void setM68kDoneCounter(u64 counter);
+u64 getM68KCounter();
 
 #ifdef __cplusplus
 }

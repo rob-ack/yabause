@@ -1819,7 +1819,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
               else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
               break;
             case 3:
-              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+              if (((Vdp2ColorRamGetColorRaw(color) & 0x8000) == 0)) { cc = 0; }
               break;
             }
             *texture->textdata++ = VDP2COLOR(info->idScreen, alpha, info->priority, cc, color);
@@ -1849,7 +1849,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
             else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
             break;
           case 3:
-            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+            if (((Vdp2ColorRamGetColorRaw(color) & 0x8000) == 0)) { cc = 0; }
             break;
           }
           *texture->textdata++ = VDP2COLOR(info->idScreen, alpha, info->priority, cc, color);
@@ -2217,7 +2217,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
@@ -2237,7 +2237,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
@@ -2257,7 +2257,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);

@@ -296,7 +296,8 @@ const char prg_rbg_rpmd0_2w[] =
 "   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return; \n"
+"   } \n"
 "  }\n";
 
 const char prg_rbg_rpmd1_2w[] =
@@ -307,7 +308,8 @@ const char prg_rbg_rpmd1_2w[] =
 "   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;\n"
+"   } \n"
 "  }\n";
 
 
@@ -339,7 +341,7 @@ const char prg_get_param_mode03[] =
 "        if( para[paramid].coefenab != 0 ){ \n"
 "          if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "            if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
-"            else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"             imageStore(lnclSurface,texel,vec4(0.0));\n"
 "   	       imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "          }else{ \n"
 "            ky = para[paramid].ky; \n"
@@ -359,17 +361,18 @@ const char prg_get_param_mode03[] =
 "            if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "              if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "              else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	         imageStore(outSurface,texel,vec4(0.0)); return;} \n"
-"            }else{ \n"
-"              ky = para[paramid].ky; \n"
-"              lineaddr = para[paramid].lineaddr; \n"
-"            }\n"
+"   	         imageStore(outSurface,texel,vec4(0.0)); return;\n"
+"            } \n"
+"          }else{ \n"
+"            ky = para[paramid].ky; \n"
+"            lineaddr = para[paramid].lineaddr; \n"
 "          }\n"
-"        }else{\n"
-"          ky = para[paramid].ky; \n"
-"          lineaddr = para[paramid].lineaddr; \n"
 "        }\n"
-"     }\n";
+"      }else{\n"
+"        ky = para[paramid].ky; \n"
+"        lineaddr = para[paramid].lineaddr; \n"
+"      }\n"
+"   }\n";
 
 
 const char prg_rbg_xy[] =

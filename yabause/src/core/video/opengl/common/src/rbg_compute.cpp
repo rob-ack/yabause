@@ -756,6 +756,7 @@ const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 	prg_rbg_getcolor_8bpp,
 	prg_generate_rbg_end };
 
+//Scorcher
 const GLchar * a_prg_rbg_1_2w_p2_8bpp[] = {
 	prg_generate_rbg,
 	prg_continue_rbg,

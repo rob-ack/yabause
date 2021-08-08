@@ -2166,6 +2166,8 @@ DEBUGWIP("Init\n");
     int work_groups_x = ceil(float(tex_width_) / float(local_size_x));
     int work_groups_y = ceil(float(tex_height_) / float(local_size_y));
 
+		u8 VRAMNeedAnUpdate = Vdp2RamIsUpdated();
+
     error = glGetError();
 
     if (rbg->info.idScreen == RBG0) updateRBG0(rbg, varVdp2Regs);
@@ -2173,12 +2175,74 @@ DEBUGWIP("Init\n");
 
        ErrorHandle("glUseProgram");
 
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
-  //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
-  if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-  memcpy(mapped_vram, Vdp2Ram, 0x100000);
-  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-  mapped_vram = nullptr;
+		if (VRAMNeedAnUpdate != 0) {
+			LOG("VRAM Update %x\n", VRAMNeedAnUpdate);
+			u32 start = 0;
+			u32 size = 0;
+			switch (VRAMNeedAnUpdate) {
+				case 0b0001:
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0010:
+						start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0011:
+						size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0100:
+						start = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0101:
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0110:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0111:
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1000:
+					start = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1001:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1010:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1011:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1100:
+					start = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1101:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1110:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1111:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				default:
+				break;
+			}
+
+  		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+  		//glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
+  		if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+  		memcpy(&((u8*)mapped_vram)[start], &Vdp2Ram[start], size);
+  		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  		mapped_vram = nullptr;
+		}
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
   ErrorHandle("glBindBufferBase");
 

@@ -5736,10 +5736,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   Vdp2ReadRotationTable(0, &rgb->paraA, varVdp2Regs, Vdp2Ram);
   Vdp2ReadRotationTable(1, &rgb->paraB, varVdp2Regs, Vdp2Ram);
-  A0_Updated = 0;
-  A1_Updated = 0;
-  B0_Updated = 0;
-  B1_Updated = 0;
 
   //rgb->paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
   //rgb->paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
@@ -6070,6 +6066,11 @@ LOG_ASYN("*********************************\n");
   sprintf(str, "VIDOGLVdp2DrawScreens = %d", difftime);
   DisplayMessage(str);
 #endif
+
+  A0_Updated = 0;
+  A1_Updated = 0;
+  B0_Updated = 0;
+  B1_Updated = 0;
 }
 
 int WaitVdp2Async(int sync) {

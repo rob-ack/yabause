@@ -1430,7 +1430,12 @@ void initVDPProg(YglProgram* prog, int id) {
   if (_prgid[id] == 0) {
     YGLLOG("Compile program %d\n",id);
     init = 1;
-    YglInitShader(id, prg_input_v[id-PG_VDP1_START], 2, prg_input_f[id-PG_VDP1_START], 8, prg_input_c[id-PG_VDP1_START],prg_input_e[id-PG_VDP1_START],prg_input_g[id-PG_VDP1_START]);
+    int const error = YglInitShader(id, prg_input_v[id-PG_VDP1_START], 2, prg_input_f[id-PG_VDP1_START], 8, prg_input_c[id-PG_VDP1_START],prg_input_e[id-PG_VDP1_START],prg_input_g[id-PG_VDP1_START]);
+    if(error != 0)
+    {
+        YuiMsg("Prog %d is not able to compile\n", id);
+        abort();
+    }
   }
   if (_prgid[id] == 0) {
     YuiMsg("Prog %d is not able to compile\n", id);

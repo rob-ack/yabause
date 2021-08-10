@@ -1,49 +1,48 @@
 #include "common_glshader.h"
 #include "yui.h"
-
-#define LOG_SHADER
+#include "debug.h"
 
 extern int YglInitDrawFrameBufferShaders(int id, int CS);
 
 GLuint _prgid[PG_MAX] = { 0 };
 
 static const GLchar Yglprg_vdp2_sprite_palette_only[] =
-"bool isRGBCode(int index) {"
+"\nbool isRGBCode(int index) {\n"
 " return false;\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_palette_rgb[] =
-"bool isRGBCode(int index) {"
+"\nbool isRGBCode(int index) {\n"
 " return ((index & 0x8000)!=0);\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_getCode_16[] =
-"int getCode(vec2 col) {\n"
+"\nint getCode(vec2 col) {\n"
 "//Sprite Type 16 bit - FB 16bit\n"
 " return (int(col.x*255.0) | (int(col.y*255.0) << 8));\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_getCode_8[] =
-"int getCode(vec2 col) {\n"
+"\nint getCode(vec2 col) {\n"
 "//Sprite Type 8 bit - FB 8bit\n"
 " return int(col.x*255.0);\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_getCode_16_8[] =
-"int getCode(vec2 col) {\n"
+"\nint getCode(vec2 col) {\n"
 "//Sprite Type 16 bit - FB 8 bit\n"
 " return (int(col.x*255.0) | 0xFF00);\n"
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_getCode_8_16[] =
-"int getCode(vec2 col) {\n"
+"\nint getCode(vec2 col) {\n"
 "//Srite Type 8 bit - FB 16bit\n"
 " return int(col.x*255.0);\n"
 "}\n";
 
 
 static const GLchar Yglprg_vdp2_sprite_type_0[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -65,7 +64,7 @@ static const GLchar Yglprg_vdp2_sprite_type_0[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_1[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -87,7 +86,7 @@ static const GLchar Yglprg_vdp2_sprite_type_1[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_2[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -116,7 +115,7 @@ static const GLchar Yglprg_vdp2_sprite_type_2[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_3[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -145,7 +144,7 @@ static const GLchar Yglprg_vdp2_sprite_type_3[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_4[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -174,7 +173,7 @@ static const GLchar Yglprg_vdp2_sprite_type_4[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_5[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -203,7 +202,7 @@ static const GLchar Yglprg_vdp2_sprite_type_5[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_6[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -232,7 +231,7 @@ static const GLchar Yglprg_vdp2_sprite_type_6[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_7[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"\nFBCol getVDP1PixelCode(vec2 col) {\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -426,7 +425,9 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "vec4 offcol4 = vec4(0.0);\n"
 "vec4 offcol5 = vec4(0.0);\n"
 "vec4 FBShadow = vec4(0.0);\n"
+#ifdef DEBUG_BLIT
 "vec4 FBTest = vec4(0.0);\n"
+#endif
 "int FBPrio = 0;\n"
 "bool FBSPwin = false;\n"
 "int FBMesh = 0;\n"
@@ -436,7 +437,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "bool FBMSBShadow = false;\n"
 "int NoVdp1 = 0;\n"
 
-"struct Col \n"
+"\nstruct Col \n"
 "{ \n"
 "  vec4 Color; \n"
 "  vec4 meshColor;\n"
@@ -451,7 +452,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "  int layer; \n"
 "}; \n"
 
-"struct FBCol \n"
+"\nstruct FBCol \n"
 "{ \n"
 "  vec4 color; \n"
 "  vec3 offset_color;\n"
@@ -468,7 +469,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "  bool normalShadow;\n"
 "}; \n"
 
-"FBCol zeroFBCol(){ \n"
+"\nFBCol zeroFBCol(){ \n"
 "  FBCol ret;\n"
 "  ret.color = vec4(0.0); \n"
 "  ret.offset_color = vec3(0.0);\n"
@@ -486,7 +487,7 @@ static const GLchar Yglprg_vdp2_common_start[] =
 "  return ret;\n"
 "}\n"
 
-"vec3 getRGB(int colindex) {\n"
+"\nvec3 getRGB(int colindex) {\n"
 " vec3 ret;\n"
 " ret.r = float((((colindex & 0x1F)) & 0x1F)<<3)/255.0;\n"
 " ret.g = float((((colindex & 0x3E0) >> 5) & 0x1F)<<3)/255.0;\n"
@@ -494,11 +495,11 @@ static const GLchar Yglprg_vdp2_common_start[] =
  " return ret;\n"
 "}\n"
 
-"vec4 getColoredPixel(int idx){ \n"
-"  return texelFetch( s_color,  ivec2( idx ,0 )  , 0 );"
+"\nvec4 getColoredPixel(int idx){ \n"
+"  return texelFetch( s_color,  ivec2( idx ,0 )  , 0 ); \n"
 "}\n"
 
-"vec2 getVec2(int colindex) {\n"
+"\nvec2 getVec2(int colindex) {\n"
 " vec2 ret;\n"
 " ret.x = float(colindex & 0xFF)/255.0;\n"
 " ret.y = float((colindex & 0xFF00) >> 8)/255.0;\n"
@@ -517,7 +518,9 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  fbCoord = ivec2(getFBCoord(vec2(fbCoord)));\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
 "  vec2 meshpix = texelFetch(s_vdp1Mesh, fbCoord, 0).rg;\n"
+#ifdef DEBUG_BLIT
 "  FBTest = col;\n"
+#endif
 "  ret = getVDP1PixelCode(col.rg);\n"
 //Support of extended mesh mode
 "  mesh = getVDP1PixelCode(meshpix);\n"
@@ -575,7 +578,8 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "ivec2 startW1 = ivec2(0);\n"
 "ivec2 endW0 = ivec2(0.0);\n"
 "ivec2 endW1 = ivec2(0.0);\n"
-"void initLineWindow() {\n"
+
+"\nvoid initLineWindow() {\n"
 "  ivec2 linepos; \n "
 "  linepos.y = 0; \n "
 "  int PosY = int(gl_FragCoord.y)+1;\n"
@@ -591,7 +595,8 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  startW1.y = int(float(int(lineW1.r*255.0) + (int(lineW1.g*255.0)<<8))*u_emu_vdp2_width);\n"
 "  endW1.y = int(float(int(lineW1.b*255.0) + (int(lineW1.a*255.0)<<8))*u_emu_vdp2_width);\n"
 "}\n"
-"bool inNormalWindow0(int id, int pos) {\n"
+
+"\nbool inNormalWindow0(int id, int pos) {\n"
 "  bool valid = true; \n"
 "  int sW0 = startW0.x;\n"
 "  int eW0 = endW0.x;\n"
@@ -604,7 +609,8 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  }\n"
 "  return valid;\n"
 "}\n"
-"bool inNormalWindow1(int id, int pos) {\n"
+
+"\nbool inNormalWindow1(int id, int pos) {\n"
 "  bool valid = true; \n"
 "  int sW1 = startW1.x;\n"
 "  int eW1 = endW1.x;\n"
@@ -617,11 +623,12 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  }\n"
 "  return valid;\n"
 "}\n"
-"bool inSpriteWindow(int id) {\n"
+"\nbool inSpriteWindow(int id) {\n"
 " if (((win_s_mode>>id)&0x1) == 0) return FBSPwin;\n"
 " else return !FBSPwin;\n"
 "}\n"
-"bool inWindow(int id) {\n"
+
+"\nbool inWindow(int id) {\n"
 "  int pos = int(gl_FragCoord.x);\n"
 "  bool valid = true;\n"
 "  if (((win_op>>id)&0x1) != 0) {\n"
@@ -638,7 +645,8 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  }\n"
 "  return valid;\n"
 "}\n"
-"bool inCCWindow() {\n"
+
+"\nbool inCCWindow() {\n"
 "  if ((((win1>>7)&0x1) != 0) || (((win0>>7)&0x1) != 0) || (((win_s>>7)&0x1)!= 0)) {\n"
 "    return inWindow(7);\n"
 "  } else {return false;}\n"
@@ -691,7 +699,7 @@ return ret; \
 \n"
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_6[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -706,7 +714,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_6[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_5[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -720,7 +728,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_5[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_4[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -733,7 +741,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_4[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_3[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -745,7 +753,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_3[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_2[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -756,7 +764,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_2[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_1[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -766,7 +774,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_1[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_on_0[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -776,7 +784,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_on_0[] =
 
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_6[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -790,7 +798,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_6[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_5[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -803,7 +811,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_5[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_4[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -815,7 +823,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_4[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_3[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -826,7 +834,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_3[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_2[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -836,7 +844,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_2[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_1[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -845,7 +853,7 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_1[] =
 "}  \n";
 
 static const GLchar Yglprg_vdp2_prio_part_fb_off_0[] =
-"Col getPriorityColor(int prio, int nbPrio)   \n"
+"\nCol getPriorityColor(int prio, int nbPrio)   \n"
 "{  \n"
 "  Col ret; \n"
 "  int remPrio = nbPrio;\n"
@@ -869,7 +877,7 @@ if (pix.layer == 6) { \n \
   ret.Color.rgb = pix.Color.rgb/2.0 + txcoll.rgb/4.0 + txcolll.rgb/4.0; \n"
 
 static const GLchar Yglprg_vdp2_common_end_fbon_6[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -888,7 +896,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_5[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -906,7 +914,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_4[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -923,7 +931,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_3[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -939,7 +947,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_2[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -954,7 +962,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_1[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -968,7 +976,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fbon_0[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -981,7 +989,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_6[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -999,7 +1007,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_5[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1016,7 +1024,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_4[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1032,7 +1040,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_3[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1047,7 +1055,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_2[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1061,7 +1069,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_1[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1074,7 +1082,7 @@ BLUR_COMPUTE
 "{  \n";
 
 static const GLchar Yglprg_vdp2_common_end_fboff_0[] =
-"Col getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
+"\nCol getBlur(ivec2 addr, Col pix, vec2 texCoord) \n"
 "{  \n"
 "  Col ret = pix;\n"
 "  vec4 txcoll;\n"
@@ -1105,49 +1113,41 @@ static const GLchar* Yglprg_vdp2_common_end[14] = {
 
 
 #define COMMON_FINAL_START "\
-vec4 topImage = vec4(0.0);\n \
 vec4 secondImage = vec4(0.0);\n \
-vec4 colortop = vec4(0.0);\n \
 vec4 colorsecond = vec4(0.0);\n \
 vec4 colorthird = vec4(0.0);\n \
 vec4 colorfourth = vec4(0.0);\n \
-vec4 colorback = vec4(0.0);\n \
 int foundColor1 = 0;\n \
 int foundColor2 = 0;\n \
 int foundColor3 = 0;\n \
 int modetop = 1;\n \
 int modesecond = 1;\n \
 int modethird = 1;\n \
-int isRGBtop = 0;\n \
 int isRGBsecond = 0;\n \
 int isRGBthird = 0;\n \
 int isRGBfourth = 0;\n \
 int use_lncl = 0;\n \
 int mesh = 0;\n \
 vec3 meshCol = vec3(0.0);\n \
-vec3 offset_color = vec3(0.0);\n \
-float alphatop = 1.0;\n \
 float alphasecond = 1.0;\n \
 float alphathird = 1.0;\n \
 float alphafourth = 1.0;\n \
-bool needColorOffRBG0 = false;\n \
-bool needColorOffRBG1 = false;\n \
 vec4 cl_off_rbg0 = vec4(0.0);\n \
 vec4 cl_off_rbg1 = vec4(0.0);\n \
 ivec2 addr = ivec2(vec2(textureSize(s_back, 0)) * v_texcoord.st);\n \
-colorback = texelFetch( s_back, addr,0 );\n \
+vec4 colorback = texelFetch( s_back, addr,0 );\n \
 int PosY = int(gl_FragCoord.y)+1; \n \
 ivec2 linepos = ivec2(int( (u_vheight-float(PosY)) * u_emu_height), 0);\n \
 linepos.y = is_perline[7];\n \
 if ((PosY %2) == nbFrame) discard;\n \
-offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n \
+vec3 offset_color = texelFetch( s_perline, linepos,0 ).rgb;\n \
 offset_color.rgb = (offset_color.rgb - vec3(0.5))*2.0;\n \
 addr = ivec2(vec2(tvSize) * vdp1Ratio * v_texcoord.st);\n \
 addr.y += textureSize(s_vdp1FrameBuffer, 0).y - int(float(tvSize.y)*vdp1Ratio.y);\n \
 initLineWindow();\n \
-colortop = colorback;\n \
-isRGBtop = 1;\n \
-alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n \
+vec4 colortop = colorback;\n \
+int isRGBtop = 1;\n \
+float alphatop = float((int(colorback.a * 255.0)&0xF8)>>3)/31.0;\n \
 "
 
 #define COMMON_FINAL_FB "\
@@ -1165,6 +1165,11 @@ FBMeshPrio = tmp.meshPrio;\n \
 FBMesh = tmp.mesh;\n \
 "
 
+#define COMMON_FINAL_SCREEN_VARS "\
+    bool needColorOffRBG0 = false;\n \
+	bool needColorOffRBG1 = false;\n \
+"
+
 #define COMMON_FINAL_SCREEN(ID) "\
 if (is_lncl_off["Stringify(ID)"] == 1) needColorOffRBG0 = true;\n \
 if (is_lncl_off["Stringify(ID)"] == 2) needColorOffRBG1 = true;\n \
@@ -1178,9 +1183,12 @@ else {\n \
 }\n \
 "
 
+#define COMMON_FINAL_SCREEN_END "\
+	if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+	if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
+"
+
 #define COMMON_GET_PRIORITY_SCREEN_FB "\
-if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
-if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
 for (int i = 7; i>0; i--) { \n \
   if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
     int hasColor = 1;\n \
@@ -1209,18 +1217,18 @@ for (int i = 7; i>0; i--) { \n \
               meshCol = FBShadow.rgb;\n \
             }\n \
             if (FBNormalShadow) {\n \
-//Normal shadow is always a transparent shadow. It does not have to be processed \n \
-//As a top image. But the shadow process shall be processed \n \
+				//Normal shadow is always a transparent shadow. It does not have to be processed \n \
+				//As a top image. But the shadow process shall be processed \n \
               processShadow = true;\n \
               if (((isShadow>>6)&0x1)!= 0) colorback.rgb *= 0.5; \n \
               continue;\n \
             }\n \
             if (FBMSBShadow) {\n \
-//The MSB shadow is only effetive when the sprite window is not used \n \
+				//The MSB shadow is only effetive when the sprite window is not used \n \
               processShadow = true;\n \
-//The shadow process shall be processed for any of color code \n \
+				//The shadow process shall be processed for any of color code \n \
               if (tmp.code == 0) {\n \
-//In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image \n \
+					//In case of a code of zero and if the transparent shadow code is enabled, then we do not process as a top image \n \
                   processShadow = (use_trans_shadow != 0);\n \
                   if (processShadow && (((isShadow>>6)&0x1)!= 0)) colorback.rgb *= 0.5; \n \
                   continue;\n \
@@ -1332,8 +1340,6 @@ for (int i = 7; i>0; i--) { \n \
 "
 
 #define COMMON_GET_PRIORITY_SCREEN_NO_FB "\
-if (needColorOffRBG0) cl_off_rbg0 = getPixel( s_lncl_off_rgb0, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
-if (needColorOffRBG1) cl_off_rbg1 = getPixel( s_lncl_off_rgb1, vec2(v_texcoord.s, 1.0-v_texcoord.t), 0, 0 );\n \
 for (int i = 7; i>0; i--) { \n \
   if ((foundColor1 == 0) || (foundColor2 == 0) || (foundColor3 == 0)) { \n \
     int hasColor = 1;\n \
@@ -1497,6 +1503,7 @@ if (!inCCWindow()) {\n \
 "
 
 #define COMPUTE_IMAGES "\
+  vec4 topImage = vec4(0.0);\n \
   if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n \
   if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n \
   if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n \
@@ -1512,12 +1519,14 @@ finalColor.rgb = clamp(finalColor.rgb+offset_color, vec3(0.0), vec3(1.0));\n \
 static const GLchar Yglprg_vdp2_common_final_fbon_6[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
 COMMON_FINAL_SCREEN(4)
 COMMON_FINAL_SCREEN(5)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1528,11 +1537,13 @@ COMPUTE_IMAGES
 static const GLchar Yglprg_vdp2_common_final_fbon_5[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
 COMMON_FINAL_SCREEN(4)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1542,10 +1553,12 @@ COMPUTE_IMAGES
 static const GLchar Yglprg_vdp2_common_final_fbon_4[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1555,9 +1568,11 @@ COMPUTE_IMAGES
 static const GLchar Yglprg_vdp2_common_final_fbon_3[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1567,8 +1582,10 @@ COMPUTE_IMAGES
 static const GLchar Yglprg_vdp2_common_final_fbon_2[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1578,7 +1595,9 @@ COMPUTE_IMAGES
 static const GLchar Yglprg_vdp2_common_final_fbon_1[]=
 COMMON_FINAL_START
 COMMON_FINAL_FB
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_FB
 FB_MESH
 COMMON_COMPUTE_SCREENS
@@ -1604,57 +1623,69 @@ COMPUTE_IMAGES
 
 static const GLchar Yglprg_vdp2_common_final_fboff_1[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
 ;
 static const GLchar Yglprg_vdp2_common_final_fboff_2[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
 ;
 static const GLchar Yglprg_vdp2_common_final_fboff_3[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
 ;
 static const GLchar Yglprg_vdp2_common_final_fboff_4[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
 ;
 static const GLchar Yglprg_vdp2_common_final_fboff_5[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
 COMMON_FINAL_SCREEN(4)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
 ;
 static const GLchar Yglprg_vdp2_common_final_fboff_6[]=
 COMMON_FINAL_START
+COMMON_FINAL_SCREEN_VARS
 COMMON_FINAL_SCREEN(0)
 COMMON_FINAL_SCREEN(1)
 COMMON_FINAL_SCREEN(2)
 COMMON_FINAL_SCREEN(3)
 COMMON_FINAL_SCREEN(4)
 COMMON_FINAL_SCREEN(5)
+COMMON_FINAL_SCREEN_END
 COMMON_GET_PRIORITY_SCREEN_NO_FB
 COMMON_COMPUTE_SCREENS
 COMPUTE_IMAGES
@@ -1678,7 +1709,7 @@ static const GLchar* Yglprg_vdp2_common_final[14] = {
 };
 
 static const GLchar vdp2blit_filter_f[] =
-"vec4 getPixel(sampler2D tex, vec2 st, int deltax, int deltay) {\n"
+"\nvec4 getPixel(sampler2D tex, vec2 st, int deltax, int deltay) {\n"
 " ivec2 addr = ivec2(vec2(textureSize(tex, 0)) * st);\n"
 " vec4 result = texelFetch( tex, addr+ivec2(deltax, deltay),0 );\n"
 //" result.rgb = Filter( tex, st ).rgb;\n"
@@ -1809,17 +1840,22 @@ void Ygl_printShaderError( GLuint shader )
             YuiMsg("Shaderlog:\n%s\n", infoLog);
             free(infoLog);
 
-            GLsizei shaderSourceLength;
-            glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &shaderSourceLength);
-            if (shaderSourceLength > 0) {
-                GLchar* shaderSourceBuffer = (GLchar*)malloc(shaderSourceLength);
-                if (shaderSourceBuffer) {
-                    GLsizei actualSourceLength;
-                    glGetShaderSource(shader, shaderSourceLength, &actualSourceLength, shaderSourceBuffer);
-                    YGLLOG("Full Shader Code is:\n\n%s", shaderSourceBuffer);
-                    free(shaderSourceBuffer);
-                }
-            }
+            Ygl_printShader(shader);
+        }
+    }
+}
+
+void Ygl_printShader(GLuint shader)
+{
+    GLsizei shaderSourceLength;
+    glGetShaderiv(shader, GL_SHADER_SOURCE_LENGTH, &shaderSourceLength);
+    if (shaderSourceLength > 0) {
+        GLchar* shaderSourceBuffer = (GLchar*)malloc(shaderSourceLength);
+        if (shaderSourceBuffer) {
+            GLsizei actualSourceLength;
+            glGetShaderSource(shader, shaderSourceLength, &actualSourceLength, shaderSourceBuffer);
+            LOG_SHADER("\nFull Shader %u Code is:\n\n%s", shader, shaderSourceBuffer);
+            free(shaderSourceBuffer);
         }
     }
 }
@@ -1915,6 +1951,12 @@ int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * fr
     }
   }
 #endif
+
+#if defined SHADER_DEBUG
+  Ygl_printShader(vshader);
+  Ygl_printShader(fshader);
+#endif
+
     glLinkProgram(_prgid[id]);
     glGetProgramiv(_prgid[id], GL_LINK_STATUS, &linked);
     if (linked == GL_FALSE) {

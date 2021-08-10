@@ -1,5 +1,5 @@
-message("Your C++ compiler supports these C++ features:\n${CMAKE_CXX_COMPILE_FEATURES}")
-message("Your C compiler supports these C features:\n${CMAKE_C_COMPILE_FEATURES}")
+message(STATUS "Your C++ compiler supports these C++ features:\n${CMAKE_CXX_COMPILE_FEATURES}")
+message(STATUS "Your C compiler supports these C features:\n${CMAKE_C_COMPILE_FEATURES}")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_STANDARD 11)
@@ -81,3 +81,5 @@ mark_as_advanced(KRONOS_LOG_DEBUG_TO_FILE)
 if(KRONOS_LOG_DEBUG_TO_FILE)
 	add_definitions(-DLOG_FILE_DEBUG)
 endif()
+
+add_definitions(-D_${CMAKE_SYSTEM_NAME}_ -D_${CMAKE_SYSTEM_PROCESSOR}_)

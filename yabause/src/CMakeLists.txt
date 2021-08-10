@@ -5,7 +5,7 @@ project(kronos)
 
 #to compile sdl port, use "cmake -DYAB_PORTS=sdl -DYAB_ASYNC_RENDERING ../kronos"
 
-include (CheckCSourceCompiles)
+include(CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
@@ -575,8 +575,6 @@ endif (WIN32)
 option(YAB_WANT_ARM7 "Build a binary with arm7 support")
 
 # SH2 dynamic recompiler
-message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME}")
-message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
 
 #MUSASHI GENERATION
 set (MUSASHI_GENERATED_SOURCES
@@ -840,5 +838,6 @@ endif()
 message(STATUS "------ STATUS -------")
 message(STATUS "OPENGL_SUPPORTED ${OPENGL_SUPPORTED}")
 message(STATUS "------ FLAGS  -------")
-message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR}")
+message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
+message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")
 message(STATUS "---------------------")

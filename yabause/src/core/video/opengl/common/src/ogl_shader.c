@@ -230,7 +230,7 @@ int Ygl_uniformNormalCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, in
   glUniform1i(id_normal_cram_s_texture, 0);
   glUniform1i(id_normal_cram_s_color, 1);
   glUniform1f(id_normal_cram_vdp2_hratio, (float)_Ygl->vdp2hdensity);
-  if ((id == RBG0) && (_Ygl->rbg_use_compute_shader)){
+  if (((id == RBG0)||(id == RBG1)) && (_Ygl->rbg_use_compute_shader)){
     glUniform1f(id_normal_cram_emu_height, (float)_Ygl->rheight / (float)_Ygl->height);
     glUniform1f(id_normal_cram_emu_width, (float)_Ygl->rwidth / (float)_Ygl->width);
     glUniform1f(id_normal_cram_vheight, (float)_Ygl->height);

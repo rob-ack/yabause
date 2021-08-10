@@ -441,8 +441,8 @@ extern "C" {
   int YabLoadState(const char *filename);
   int YabSaveStateSlot(const char *dirpath, u8 slot);
   int YabLoadStateSlot(const char *dirpath, u8 slot);
-  int YabSaveStateStream(FILE *stream);
-  int YabLoadStateStream(FILE *stream);
+  int YabSaveStateStream(void ** stream);
+  int YabLoadStateStream(const void * stream, size_t size_stream);
   int YabSaveStateBuffer(void **buffer, size_t *size);
   int YabLoadStateBuffer(const void *buffer, size_t size);
 

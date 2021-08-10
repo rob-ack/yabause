@@ -3172,34 +3172,31 @@ void ScuSendExternalInterrupt15(void) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScuSaveState(FILE *fp)
+int ScuSaveState(void ** stream)
 {
    int offset;
-   IOCheck_struct check = { 0, 0 };
 
-   offset = StateWriteHeader(fp, "SCU ", 4);
+   offset = MemStateWriteHeader(stream, "SCU ", 4);
 
    // Write registers and internal variables
-   ywrite(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+   MemStateWrite((void *)ScuRegs, sizeof(Scu), 1, stream);
 
    // Write DSP area
-   ywrite(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+   MemStateWrite((void *)ScuDsp, sizeof(scudspregs_struct), 1, stream);
 
-   ywrite(&check, incFlg, sizeof(int), 4, fp);
+   MemStateWrite(incFlg, sizeof(int), 4, stream);
 
 
-   return StateFinishHeader(fp, offset);
+   return MemStateFinishHeader(stream, offset);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-int ScuLoadState(FILE *fp, UNUSED int version, int size)
+int ScuLoadState(const void * stream, UNUSED int version, int size)
 {
-   IOCheck_struct check = { 0, 0 };
-
    // Read registers and internal variables
    if (version < 3) {
-     yread(&check, (void *)ScuRegs, sizeof(Scu)-sizeof(scudmainfo_struct)*3, 1, fp);
+     MemStateRead((void *)ScuRegs, sizeof(Scu)-sizeof(scudmainfo_struct)*3, 1, stream);
      ScuRegs->dma0.TransferNumber = 0;
      ScuRegs->dma1.TransferNumber = 0;
      ScuRegs->dma2.TransferNumber = 0;
@@ -3212,7 +3209,7 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
        - sizeof(ScuDsp->RA0M)
        - sizeof(ScuDsp->dmy);
 
-     yread(&check, (void *)ScuDsp, ssize, 1, fp);
+     MemStateRead((void *)ScuDsp, ssize, 1, stream);
 
      ScuDsp->dsp_dma_instruction = 0;
      ScuDsp->dsp_dma_wait = 0;
@@ -3222,7 +3219,7 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
    }
    else if (version == 3) {
 
-     yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
+     MemStateRead((void *)ScuRegs, sizeof(Scu), 1, stream);
 
      u32 ssize = sizeof(scudspregs_struct)
        - sizeof(ScuDsp->dsp_dma_instruction)
@@ -3232,7 +3229,7 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
        - sizeof(ScuDsp->RA0M)
        - sizeof(ScuDsp->dmy);
 
-     yread(&check, (void *)ScuDsp, ssize, 1, fp);
+     MemStateRead((void *)ScuDsp, ssize, 1, stream);
      ScuDsp->dsp_dma_instruction = 0;
      ScuDsp->dsp_dma_wait = 0;
      ScuDsp->dsp_dma_size = 0;
@@ -3241,13 +3238,13 @@ int ScuLoadState(FILE *fp, UNUSED int version, int size)
 
    }
    else {
-     yread(&check, (void *)ScuRegs, sizeof(Scu), 1, fp);
-     yread(&check, (void *)ScuDsp, sizeof(scudspregs_struct), 1, fp);
+     MemStateRead((void *)ScuRegs, sizeof(Scu), 1, stream);
+     MemStateRead((void *)ScuDsp, sizeof(scudspregs_struct), 1, stream);
    }
 
 
    if (version >= 2) {
-     yread(&check, incFlg, sizeof(int), 4, fp);
+     MemStateRead(incFlg, sizeof(int), 4, stream);
    }
    return size;
 }

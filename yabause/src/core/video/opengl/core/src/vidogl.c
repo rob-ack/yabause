@@ -1819,7 +1819,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
               else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
               break;
             case 3:
-              if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+              if (((Vdp2ColorRamGetColorRaw(color) & 0x8000) == 0)) { cc = 0; }
               break;
             }
             *texture->textdata++ = VDP2COLOR(info->idScreen, alpha, info->priority, cc, color);
@@ -1849,7 +1849,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
             else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
             break;
           case 3:
-            if (((T2ReadWord(Vdp2ColorRam, (color << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+            if (((Vdp2ColorRamGetColorRaw(color) & 0x8000) == 0)) { cc = 0; }
             break;
           }
           *texture->textdata++ = VDP2COLOR(info->idScreen, alpha, info->priority, cc, color);
@@ -2217,7 +2217,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
@@ -2237,7 +2237,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
@@ -2257,7 +2257,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
         else { if ((info->specialcode & (1 << ((dot & 0xF) >> 1))) == 0) { cc = 0; } }
         break;
       case 3:
-        if (((T2ReadWord(Vdp2ColorRam, (cramindex << 1) & 0xFFF) & 0x8000) == 0)) { cc = 0; }
+        if (((Vdp2ColorRamGetColorRaw(cramindex) & 0x8000) == 0)) { cc = 0; }
         break;
       }
       return   VDP2COLOR(info->idScreen, alpha, priority, cc, cramindex);
@@ -5704,9 +5704,9 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     free(rgb);
     return;
   }
-
   // //If no VRAM access is granted to RBG0, just abort.
-  if (varVdp2Regs->RAMCTL & 0xFF == 0) {
+  if ((varVdp2Regs->RAMCTL & 0xFF) == 0) {
+    LOG("No RAMCTL for RBG0\n");
     free(rgb);
     return;
   }
@@ -5736,10 +5736,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   Vdp2ReadRotationTable(0, &rgb->paraA, varVdp2Regs, Vdp2Ram);
   Vdp2ReadRotationTable(1, &rgb->paraB, varVdp2Regs, Vdp2Ram);
-  A0_Updated = 0;
-  A1_Updated = 0;
-  B0_Updated = 0;
-  B1_Updated = 0;
 
   //rgb->paraA.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterAPlaneAddr;
   //rgb->paraB.PlaneAddr = (void FASTCALL(*)(void *, int, Vdp2*))&Vdp2ParameterBPlaneAddr;
@@ -6070,6 +6066,11 @@ LOG_ASYN("*********************************\n");
   sprintf(str, "VIDOGLVdp2DrawScreens = %d", difftime);
   DisplayMessage(str);
 #endif
+
+  A0_Updated = 0;
+  A1_Updated = 0;
+  B0_Updated = 0;
+  B1_Updated = 0;
 }
 
 int WaitVdp2Async(int sync) {

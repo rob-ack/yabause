@@ -406,6 +406,8 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
+u8 Vdp2RamIsUpdated(void);
+
 u8 FASTCALL     Vdp2ReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL    Vdp2ReadWord(SH2_struct *context, u8*, u32);
 u32 FASTCALL    Vdp2ReadLong(SH2_struct *context, u8*, u32);
@@ -413,8 +415,8 @@ void FASTCALL   Vdp2WriteByte(SH2_struct *context, u8*, u32, u8);
 void FASTCALL   Vdp2WriteWord(SH2_struct *context, u8*, u32, u16);
 void FASTCALL   Vdp2WriteLong(SH2_struct *context, u8*, u32, u32);
 
-int Vdp2SaveState(FILE *fp);
-int Vdp2LoadState(FILE *fp, int version, int size);
+int Vdp2SaveState(void ** stream);
+int Vdp2LoadState(const void * stream, int version, int size);
 
 void ToggleNBG0(void);
 void ToggleNBG1(void);

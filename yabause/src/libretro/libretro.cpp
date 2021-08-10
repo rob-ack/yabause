@@ -908,7 +908,9 @@ static void context_reset(void)
       if (VIDCore) VIDCore->Init();
       retro_reinit_av_info();
    }
-   if (VIDCore) VIDCore->Resize(0, 0, window_width, window_height, 0);
+    if(VIDCore){
+	   VIDCore->Resize(0, 0, window_width, window_height, 0);
+    }
    game_width = _Ygl->width;
    game_height = _Ygl->height;
    set_variable_visibility();

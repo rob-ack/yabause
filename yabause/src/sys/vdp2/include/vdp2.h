@@ -406,6 +406,8 @@ void Vdp2SendExternalLatch(int hcnt, int vcnt);
 void SpeedThrottleEnable(void);
 void SpeedThrottleDisable(void);
 
+u8 Vdp2RamIsUpdated(void);
+
 u8 FASTCALL     Vdp2ReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL    Vdp2ReadWord(SH2_struct *context, u8*, u32);
 u32 FASTCALL    Vdp2ReadLong(SH2_struct *context, u8*, u32);

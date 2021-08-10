@@ -197,8 +197,10 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint get_cram_msb(uint colorindex) { \n"
+" uint shift = 1; \n"
 "	uint colorval = 0u; \n"
-"	colorindex = ((colorindex<<1)&0xFFFu); \n"
+" if (cram_mode == 2u) shift = 2; \n"
+"	colorindex = ((colorindex<<shift)&0xFFFu); \n"
 "	colorval = cram[colorindex >> 2]; \n"
 "	if ((colorindex & 0x02u) != 0u) { colorval >>= 16; } \n"
 "	return (colorval & 0x8000u); \n"
@@ -294,7 +296,8 @@ const char prg_rbg_rpmd0_2w[] =
 "   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return; \n"
+"   } \n"
 "  }\n";
 
 const char prg_rbg_rpmd1_2w[] =
@@ -305,7 +308,8 @@ const char prg_rbg_rpmd1_2w[] =
 "   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"   	imageStore(outSurface,texel,vec4(0.0)); return;\n"
+"   } \n"
 "  }\n";
 
 
@@ -336,38 +340,39 @@ const char prg_get_param_mode03[] =
 "        paramid=1;\n"
 "        if( para[paramid].coefenab != 0 ){ \n"
 "          if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
-"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
-"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
-"        }else{ \n"
-"          ky = para[paramid].ky; \n"
-"          lineaddr = para[paramid].lineaddr; \n"
+"            if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"             imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	       imageStore(outSurface,texel,vec4(0.0)); return;} \n"
+"          }else{ \n"
+"            ky = para[paramid].ky; \n"
+"            lineaddr = para[paramid].lineaddr; \n"
+"          }\n"
 "        }\n"
+"      }else{\n"
+"        ky = para[paramid].ky; \n"
+"        lineaddr = para[paramid].lineaddr; \n"
 "      }\n"
 "    }else{\n"
-"      ky = para[paramid].ky; \n"
-"      lineaddr = para[paramid].lineaddr; \n"
-"    }\n"
-"  }else{\n"
-"    paramid = 1; \n"
-"    if( para[paramid].coefenab != 0 ){ \n"
-"      if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
-"        paramid=0;\n"
-"        if( para[paramid].coefenab != 0 ){ \n"
-"          if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
-"     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
-"     else imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	imageStore(outSurface,texel,vec4(0.0)); return;} \n"
-"        }else{ \n"
-"          ky = para[paramid].ky; \n"
-"          lineaddr = para[paramid].lineaddr; \n"
+"      paramid = 1; \n"
+"      if( para[paramid].coefenab != 0 ){ \n"
+"        if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"          paramid=0;\n"
+"          if( para[paramid].coefenab != 0 ){ \n"
+"            if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"              if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
+"              else imageStore(lnclSurface,texel,vec4(0.0));\n"
+"   	         imageStore(outSurface,texel,vec4(0.0)); return;\n"
+"            } \n"
+"          }else{ \n"
+"            ky = para[paramid].ky; \n"
+"            lineaddr = para[paramid].lineaddr; \n"
+"          }\n"
 "        }\n"
+"      }else{\n"
+"        ky = para[paramid].ky; \n"
+"        lineaddr = para[paramid].lineaddr; \n"
 "      }\n"
-"    }else{\n"
-"      ky = para[paramid].ky; \n"
-"      lineaddr = para[paramid].lineaddr; \n"
-"    }\n"
-" }\n";
+"   }\n";
 
 
 const char prg_rbg_xy[] =
@@ -751,6 +756,7 @@ const GLchar * a_prg_rbg_1_2w_p1_8bpp[] = {
 	prg_rbg_getcolor_8bpp,
 	prg_generate_rbg_end };
 
+//Scorcher
 const GLchar * a_prg_rbg_1_2w_p2_8bpp[] = {
 	prg_generate_rbg,
 	prg_continue_rbg,
@@ -2160,6 +2166,8 @@ DEBUGWIP("Init\n");
     int work_groups_x = ceil(float(tex_width_) / float(local_size_x));
     int work_groups_y = ceil(float(tex_height_) / float(local_size_y));
 
+		u8 VRAMNeedAnUpdate = Vdp2RamIsUpdated();
+
     error = glGetError();
 
     if (rbg->info.idScreen == RBG0) updateRBG0(rbg, varVdp2Regs);
@@ -2167,12 +2175,74 @@ DEBUGWIP("Init\n");
 
        ErrorHandle("glUseProgram");
 
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
-  //glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
-  if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-  memcpy(mapped_vram, Vdp2Ram, 0x100000);
-  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
-  mapped_vram = nullptr;
+		if (VRAMNeedAnUpdate != 0) {
+			LOG("VRAM Update %x\n", VRAMNeedAnUpdate);
+			u32 start = 0;
+			u32 size = 0;
+			switch (VRAMNeedAnUpdate) {
+				case 0b0001:
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0010:
+						start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0011:
+						size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0100:
+						start = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+						size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0101:
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0110:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b0111:
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1000:
+					start = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1001:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1010:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1011:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1100:
+					start = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x40000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1101:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1110:
+					start = 0x20000<<(Vdp2Regs->VRSIZE>>15);
+					size = 0x60000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				case 0b1111:
+					size = 0x80000<<(Vdp2Regs->VRSIZE>>15);
+				break;
+				default:
+				break;
+			}
+
+  		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
+  		//glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
+  		if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+  		memcpy(&((u8*)mapped_vram)[start], &Vdp2Ram[start], size);
+  		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
+  		mapped_vram = nullptr;
+		}
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ssbo_vram_);
   ErrorHandle("glBindBufferBase");
 

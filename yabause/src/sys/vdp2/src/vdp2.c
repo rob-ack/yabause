@@ -70,6 +70,11 @@ int g_frame_count = 0;
 
 //////////////////////////////////////////////////////////////////////////////
 
+u8 Vdp2RamIsUpdated(void)
+{
+  return A0_Updated | (A1_Updated << 1) | (B0_Updated << 2) | (B1_Updated << 3);
+}
+
 u8 FASTCALL Vdp2RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;

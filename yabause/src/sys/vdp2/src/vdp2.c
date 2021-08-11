@@ -1800,6 +1800,8 @@ int Vdp2LoadState(const void * stream, UNUSED int version, int size)
    // Read internal variables
    MemStateRead((void *)&Vdp2Internal, sizeof(Vdp2Internal_struct), 1, stream);
 
+   A0_Updated = A1_Updated = B0_Updated = B1_Updated = 1;
+
    if(VIDCore) VIDCore->Resize(0,0,0,0,0);
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)

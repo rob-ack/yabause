@@ -1446,49 +1446,20 @@ if ((mesh == 0) && (FBMesh == 1)) {\n \
 //Take care  of the extended coloration mode \n \
 if (!inCCWindow()) {\n \
   if (extended_cc != 0) { \n \
-    if (ram_mode == 0) { \n \
-      if (use_lncl == 0) { \n \
-        if (modesecond == 1) \n \
-          secondImage.rgb = vec3(colorsecond.rgb); \n \
-        else \n \
-          secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
+	if (modesecond == 1) { \n \
+		secondImage.rgb = vec3(colorsecond.rgb); \n \
+    } else if (ram_mode == 0) { \n \
+      if (use_lncl == 0 || modethird == 1) { \n \
+        secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
       } else {\n \
-        if (modesecond == 1) \n \
-          secondImage.rgb = vec3(colorsecond.rgb); \n \
-        else {\n \
-          if (modethird == 1) \n \
-            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
-          else \n \
-            secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n \
-        }\n \
+        secondImage.rgb = vec3(0.66666 * colorsecond.rgb + 0.33334 * colorthird.rgb); \n \
       }\n \
+    } else if (isRGBthird == 0) { \n \
+		secondImage.rgb = vec3(colorsecond.rgb); \n \
+    } else if (use_lncl==0 || isRGBfourth==0 || modethird==1) { \n \
+        secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
     } else {\n \
-      if (use_lncl == 0) { \n \
-        if (isRGBthird == 0) { \n \
-          secondImage.rgb = vec3(colorsecond.rgb); \n \
-        } else { \n \
-          if (modesecond == 1) { \n \
-            secondImage.rgb = vec3(colorsecond.rgb); \n \
-          } else {\n \
-            secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb); \n \
-          } \n \
-        }\n \
-      } else {\n \
-        if (isRGBthird == 0) { \n \
-          secondImage.rgb = vec3(colorsecond.rgb); \n \
-        } else { \n \
-          if (isRGBfourth == 0) {\n \
-            if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n \
-            else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n \
-          } else { \n \
-            if (modesecond == 1) secondImage.rgb = vec3(colorsecond.rgb);\n \
-            else { \n \
-              if (modethird == 1) secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.5 * colorthird.rgb);\n \
-              else secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n \
-            }\n \
-          }\n \
-        }\n \
-      }\n \
+		secondImage.rgb = vec3(0.5 * colorsecond.rgb + 0.25 * colorthird.rgb + 0.25 * colorfourth.rgb);\n \
     } \n \
   } else { \n \
     // To be uncommented when we will have a CC issue in RAM_Mode 1 \n \

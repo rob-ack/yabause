@@ -1475,11 +1475,24 @@ if (!inCCWindow()) {\n \
 
 #define COMPUTE_IMAGES "\
   vec4 topImage = vec4(0.0);\n \
-  if (modetop == 1) topImage = vec4(colortop.rgb, 1.0); \n \
-  if (modetop == 2) topImage = vec4(colortop.rgb, 0.0); \n \
-  if (modetop == 3) topImage = vec4(colortop.rgb*alphatop, alphatop); \n \
-  if (modetop == 4) topImage = vec4(colortop.rgb*alphasecond, alphasecond); \n \
-  if (modetop == 5) topImage = vec4(colortop.rgb, 1.0); \n \
+  switch(modetop) { \n \
+    default:; \n \
+    case 1: \n \
+        topImage = vec4(colortop.rgb, 1.); \n \
+        break; \n \
+    case 2: \n \
+        topImage = vec4(colortop.rgb, 0.); \n \
+        break; \n \
+    case 3: \n \
+        topImage = vec4(colortop.rgb * alphatop, alphatop); \n \
+        break; \n \
+    case 4: \n \
+        topImage = vec4(colortop.rgb * alphasecond, alphasecond); \n \
+        break; \n \
+    case 5: \n \
+        topImage = vec4(colortop.rgb, 1.); \n \
+        break; \n \
+  } \n \
   finalColor = clamp(vec4( topImage.rgb + (1.0 - topImage.a) * secondImage.rgb, 1.0), vec4(0.0), vec4(1.0)); \n \
 } else {\n \
   finalColor = vec4(colortop.rgb, 1.0);\n \

@@ -828,7 +828,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS); //NOTE: this seems to basically add new samples to the scsp to process
+            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
 #endif
             PROFILE_START("vblankin");
             // VBlankIN

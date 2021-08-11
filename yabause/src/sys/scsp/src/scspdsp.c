@@ -64,17 +64,7 @@ u16 int_to_float(u32 i_val);
 
 void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram)
 {
-  u64 mul_temp = 0;
-  int nofl = 0;
-  u32 x_temp = 0;
-  s32 y_extended = 0;
-  u32 address = 0;
-  s32 shift_temp = 0;
-
-  u16 * const sound_ram_16 = (u16 * const)sound_ram;
-  volatile union ScspDspInstruction const inst = { .all = scsp_dsp.mpro[addr] };
-
-  const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
+  union ScspDspInstruction const inst = { .all = scsp_dsp.mpro[addr] };
   const unsigned TEMPReadAddr = (inst.part.tra + dsp->mdec_ct) & 0x7F;
 
   if (inst.part.ira & 0x20) {
@@ -117,7 +107,10 @@ void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram)
     dsp->efreg[inst.part.ewa] = (ShifterOutput >> 8);
 
   if (inst.part.twt)
+  {
+    const unsigned TEMPWriteAddr = (inst.part.twa + dsp->mdec_ct) & 0x7F;
     dsp->temp[TEMPWriteAddr] = ShifterOutput;
+  }
 
   if (inst.part.frcl)
   {
@@ -147,14 +140,18 @@ void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram)
 
   if (dsp->read_pending)
   {
-    u16 tmp = sound_ram_16[dsp->io_addr];
+    u16 const * const sound_ram_16 = (u16 const * const)sound_ram;
+    u16 const tmp = sound_ram_16[dsp->io_addr];
     dsp->read_value = (dsp->read_pending == 2) ? (tmp << 8) : float_to_int(tmp);
     dsp->read_pending = 0;
   }
   else if (dsp->write_pending)
   {
     if (!(dsp->io_addr & 0x40000))
+    {
+      u16* const sound_ram_16 = (u16* const)sound_ram;
       sound_ram_16[dsp->io_addr] = dsp->write_value;
+    }
     dsp->write_pending = 0;
   }
   {

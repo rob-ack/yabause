@@ -163,7 +163,6 @@ if(KRONOS_LIBRETRO_CORE)
 		-DIMPROVED_SAVESTATES 
 		-DHAVE_GLSYM_PRIVATE
 		-DHAVE_THREADS=1 
-		-DNO_VIDCORE_SOFT
 	)
 endif()
 
@@ -239,7 +238,7 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 	add_definitions(-DVDP1_TEXTURE_ASYNC=1)
 endif()
 
-option(YAB_WANT_SOFT_RENDERING "Enable software renderer support. Only for QT Builds" OFF)
+option(YAB_WANT_SOFT_RENDERING "Enable software renderer support." OFF)
 if (YAB_WANT_SOFT_RENDERING)
    add_definitions(-DUSE_SOFT_RENDER=1)
 

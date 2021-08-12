@@ -19,6 +19,7 @@
 */
 #ifndef  _YGL_H_
 #define  _YGL_H_
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -214,6 +215,7 @@ extern PFNGLMEMORYBARRIERPROC glMemoryBarrier;
 #include "threads.h"
 #include "vidshared.h"
 #include "vdp1.h"
+#include <stdbool.h>
 
 // #define DEBUG_BLIT
 
@@ -293,7 +295,7 @@ void YglCacheAdd(YglTextureManager * tm, u64, YglCache *);
 void YglCacheReset(YglTextureManager * tm);
 void setupMaxSize();
 
-void YglCheckFBSwitch(int sync);
+void YglCheckFBSwitch(bool sync);
 
 #define VDP2_CC_NONE 0x00
 
@@ -755,7 +757,6 @@ void YglDirtyColorRamWord(void);
 void YglUpdateColorRam();
 void updateVdp2ColorRam(int line);
 void syncColorRam(void);
-int YglInitShader(int id, const GLchar * vertex[], int vcount, const GLchar * frag[], int fcount, const GLchar * tc[], const GLchar * te[], const GLchar * g[] );
 
 int YglTriangleGrowShading(YglSprite * input, YglTexture * output, float * colors, YglCache * c, YglTextureManager *tm);
 void YglCacheTriangleGrowShading(YglSprite * input, float * colors, YglCache * cache, YglTextureManager *tm);

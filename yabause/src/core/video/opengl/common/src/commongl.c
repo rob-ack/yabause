@@ -2907,11 +2907,11 @@ static void YglUpdateVDP1FB(void) {
   releaseVDP1FB();
 }
 
-void YglCheckFBSwitch(int sync) {
+void YglCheckFBSwitch(bool sync) {
   GLenum ret = GL_WAIT_FAILED;
   if (_Ygl->sync == 0) return;
   ret = glClientWaitSync(_Ygl->sync, GL_SYNC_FLUSH_COMMANDS_BIT, 0);
-  if (sync != 0) {
+  if (sync) {
     int end = 0;
     while (end == 0) {
      ret = glClientWaitSync(_Ygl->sync, GL_SYNC_FLUSH_COMMANDS_BIT, 20000000);

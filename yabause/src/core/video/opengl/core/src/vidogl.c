@@ -4361,7 +4361,7 @@ int VIDOGLVdp2Reset(void)
 
 void VIDOGLVdp2Draw(void)
 {
-  YglCheckFBSwitch(1);
+  YglCheckFBSwitch(true);
   //varVdp2Regs = Vdp2RestoreRegs(0, Vdp2Lines);
   //if (varVdp2Regs == NULL) varVdp2Regs = Vdp2Regs;
   VIDOGLVdp2SetResolution(Vdp2Lines[0].TVMD);
@@ -6104,7 +6104,7 @@ int WaitVdp2Async(int sync) {
 
 void waitVdp2DrawScreensEnd(int sync, int abort) {
   if (abort == 0){
-    YglCheckFBSwitch(0);
+    YglCheckFBSwitch(false);
     if (vdp2busy == 1) {
       int empty = WaitVdp2Async(sync);
       if (empty == 0) {

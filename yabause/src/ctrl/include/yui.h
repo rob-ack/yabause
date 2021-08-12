@@ -29,6 +29,10 @@
 #include "vdp1.h"
 #include "yabause.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#define TIMING_SWAP
 
 void YuiMsg(const char *format, ...);
@@ -56,6 +60,10 @@ int YuiRevokeOGLOnThisThread();
 #define YuiTimedSwapBuffers YuiSwapBuffers
 #else
 void YuiTimedSwapBuffers(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif

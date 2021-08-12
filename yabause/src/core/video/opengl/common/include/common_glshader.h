@@ -3,6 +3,10 @@
 
 #include "ygl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const GLchar *vdp2blit_palette_mode_f[2];
 extern const GLchar *vdp2blit_srite_type_f[16];
 extern const GLchar *Yglprg_color_condition_f[5];
@@ -17,5 +21,9 @@ extern int setupVDP2Prog(Vdp2* varVdp2Regs, int nb_screen, int CS);
 
 #define QuoteIdent(ident) #ident
 #define Stringify(macro) QuoteIdent(macro)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //COMMON_GLSHADER_H

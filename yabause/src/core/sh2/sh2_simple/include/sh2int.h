@@ -21,6 +21,10 @@
 #ifndef SH2INT_H
 #define SH2INT_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SH2CORE_INTERPRETER             0
 #define SH2CORE_DEBUGINTERPRETER        1
 
@@ -68,5 +72,9 @@ extern SH2Interface_struct SH2DebugInterpreter;
 
 typedef u16 (FASTCALL *fetchfunc)(SH2_struct *context, u32);
 typedef void (FASTCALL *opcodefunc)(SH2_struct *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

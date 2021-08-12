@@ -29,6 +29,10 @@
 #include <stdio.h>
 #include "core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CDCORE_DEFAULT -1
 #define CDCORE_DUMMY    0
 #define CDCORE_ISO      1
@@ -64,5 +68,9 @@ extern CDInterface DummyCD;
 extern CDInterface ISOCD;
 
 extern CDInterface ArchCD;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

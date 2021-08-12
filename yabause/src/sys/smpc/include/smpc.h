@@ -23,6 +23,10 @@
 
 #include "memory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define REGION_AUTODETECT               0
 #define REGION_JAPAN                    1
 #define REGION_ASIANTSC                 2
@@ -110,4 +114,9 @@ void FASTCALL	SmpcWriteLong(SH2_struct *context, u8*, u32, u32);
 
 int SmpcSaveState(void ** stream);
 int SmpcLoadState(const void * stream, int version, int size);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

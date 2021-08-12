@@ -22,6 +22,10 @@
 
 #define VDP2_DEBUG_STRING_SIZE 2048
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void Vdp2DebugStatsRBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG0(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);
@@ -29,5 +33,9 @@ void Vdp2DebugStatsNBG2(char *outstring, int *isenabled);
 void Vdp2DebugStatsNBG3(char *outstring, int *isenabled);
 void Vdp2DebugStatsGeneral(char *outstring, int *isenabled);
 pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

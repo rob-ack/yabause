@@ -27,6 +27,10 @@
 #include "core.h"
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum
 {
    CHEATTYPE_NONE=0,
@@ -61,5 +65,9 @@ void CheatDoPatches(SH2_struct *context);
 cheatlist_struct *CheatGetList(int *cheatnum);
 int CheatSave(const char *filename);
 int CheatLoad(const char *filename);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

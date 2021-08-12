@@ -20,6 +20,10 @@
 #ifndef M68KCORE_H
 #define M68KCORE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 
 #define M68KCORE_DEFAULT -1
@@ -76,5 +80,10 @@ int M68KInit(int coreid);
 extern M68K_struct M68KDummy;
 extern M68K_struct M68KQ68;
 extern M68K_struct M68KMusashi;
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

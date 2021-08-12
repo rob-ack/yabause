@@ -21,6 +21,10 @@
 
 #include "core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define Stopped	  1
 #define Recording 2
 #define Playback  3
@@ -83,4 +87,9 @@ extern int lagframecounter;
 extern char MovieStatus[40];
 extern char InputDisplayString[40];
 extern int FrameAdvanceVariable;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

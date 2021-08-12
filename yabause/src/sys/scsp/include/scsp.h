@@ -24,6 +24,10 @@
 #include "core.h"
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
 #define SNDCORE_WAV     10 // should really be 1, but I'll probably break people's stuff
@@ -159,5 +163,9 @@ void SyncScsp();
 
 extern void ScspLockThread();
 extern void ScspUnLockThread();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

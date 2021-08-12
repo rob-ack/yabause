@@ -9,24 +9,7 @@
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-j 8",
-      "ctestCommandArgs": "",
-      "variables": [
-        {
-          "name": "KRONOS_LIBRETRO_CORE",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_USE_CACHE",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "KRONOS_FORCE_CXX_COMPILER",
-          "value": "True",
-          "type": "BOOL"
-        }
-      ]
+      "ctestCommandArgs": ""
     },
     {
       "name": "x64-ReleaseWithDebInfo",
@@ -37,27 +20,21 @@
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-j 8",
       "ctestCommandArgs": "",
-      "inheritEnvironments": [ "msvc_x64_x64" ],
-      "variables": [
-        {
-          "name": "KRONOS_LIBRETRO_CORE",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_USE_CACHE",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "KRONOS_FORCE_CXX_COMPILER",
-          "value": "True",
-          "type": "BOOL"
-        }
-      ]
+      "inheritEnvironments": [ "msvc_x64_x64" ]
     },
     {
       "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-j 8",
+      "ctestCommandArgs": ""
+    },
+    {
+      "name": "x64-Debug-libretro",
       "generator": "Ninja",
       "configurationType": "Debug",
       "inheritEnvironments": [ "msvc_x64_x64" ],
@@ -95,7 +72,45 @@
       ]
     },
     {
-      "name": "clang_x86_x64-Debug",
+      "name": "x64-ReleaseWithDebInfo-libretro",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-j 8",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        {
+          "name": "KRONOS_LIBRETRO_CORE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "KRONOS_FORCE_CXX_COMPILER",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SH2_ASYNC",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
+    },
+    {
+      "name": "clang_x86_x64-Debug-libretro",
       "generator": "Ninja",
       "configurationType": "Debug",
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
@@ -112,7 +127,7 @@
       ]
     },
     {
-      "name": "clang_x86_x64-Release",
+      "name": "clang_x86_x64-Release-libretro",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
@@ -129,7 +144,7 @@
       ]
     },
     {
-      "name": "linux_arm-Remote-Debug",
+      "name": "linux_arm-Remote-Debug-libretro",
       "generator": "Ninja",
       "configurationType": "Debug",
       "cmakeExecutable": "/usr/bin/cmake",
@@ -191,7 +206,7 @@
       ]
     },
     {
-      "name": "linux_arm-Remote-Release",
+      "name": "linux_arm-Remote-Release-libretro",
       "generator": "Ninja",
       "configurationType": "RelWithDebInfo",
       "cmakeExecutable": "/usr/bin/cmake",
@@ -236,11 +251,6 @@
           "type": "BOOL"
         },
         {
-          "name": "YAB_WANT_ARM7",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
           "name": "YAB_USE_CACHE",
           "value": "True",
           "type": "BOOL"
@@ -253,11 +263,6 @@
         {
           "name": "YAB_WANT_SOFT_RENDERING",
           "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "KRONOS_SHADER_DEBUG",
-          "value": "True",
           "type": "BOOL"
         }
       ]

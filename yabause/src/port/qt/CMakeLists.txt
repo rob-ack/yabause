@@ -26,7 +26,7 @@ if(YAB_USE_QT5)
 endif()
 
 if(Qt5_FOUND)
-    message(STATUS "Qt5 Found")
+    message(STATUS "Qt5 Found - Configuring QT frontend project")
 
     add_definitions(-DHAVE_QT_MULTIMEDIA=1)
 
@@ -39,7 +39,7 @@ if(Qt5_FOUND)
     endif()
 
 else()
-	message(STATUS "NO Qt5_FOUND")
+	message(STATUS "NO Qt5_FOUND - Not using QT frontend project")
 	return ()
 endif()
 

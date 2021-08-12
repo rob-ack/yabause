@@ -318,6 +318,9 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
+#if defined snprintf
+#undef snprintf
+#endif
 #define snprintf sprintf_s
 #endif
 

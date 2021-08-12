@@ -503,6 +503,10 @@ static int CalcSaveSize(SH2_struct *context, u32 tableaddr, int blocksize)
 
 //////////////////////////////////////////////////////////////////////////////
 
+#if defined WIN32
+#undef GetFreeSpace
+#endif
+
 static u32 GetFreeSpace(SH2_struct *context, UNUSED u32 device, u32 size, u32 addr, u32 blocksize)
 {
    u32 i;

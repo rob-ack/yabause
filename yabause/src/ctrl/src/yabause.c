@@ -93,6 +93,7 @@
 #endif
 
 #include <inttypes.h>
+#include "db.h"
 
 #define DECILINE_STEP (20.0)
 

@@ -112,26 +112,6 @@ DummyCDReadAheadFAD,
 DummyCDSetStatus,
 };
 
-static int ISOCDInit(const char *);
-static void ISOCDDeInit(void);
-static int ISOCDGetStatus(void);
-static s32 ISOCDReadTOC(u32 *);
-static int ISOCDReadSectorFAD(u32, void *);
-static void ISOCDReadAheadFAD(u32);
-static void ISOCDSetStatus(int status);
-
-CDInterface ISOCD = {
-CDCORE_ISO,
-"ISO-File Virtual Drive",
-ISOCDInit,
-ISOCDDeInit,
-ISOCDGetStatus,
-ISOCDReadTOC,
-ISOCDReadSectorFAD,
-ISOCDReadAheadFAD,
-ISOCDSetStatus,
-};
-
 static int dmy_status = 2;
 //////////////////////////////////////////////////////////////////////////////
 // Dummy Interface
@@ -261,6 +241,29 @@ static void DummyCDReadAheadFAD(UNUSED u32 FAD)
 	// them), make this function a no-op and just read sectors
 	// normally.
 }
+
+#if !defined __LIBRETRO__
+
+static int ISOCDInit(const char *);
+static void ISOCDDeInit(void);
+static int ISOCDGetStatus(void);
+static s32 ISOCDReadTOC(u32 *);
+static int ISOCDReadSectorFAD(u32, void *);
+static void ISOCDReadAheadFAD(u32);
+static void ISOCDSetStatus(int status);
+
+
+CDInterface ISOCD = {
+CDCORE_ISO,
+"ISO-File Virtual Drive",
+ISOCDInit,
+ISOCDDeInit,
+ISOCDGetStatus,
+ISOCDReadTOC,
+ISOCDReadSectorFAD,
+ISOCDReadAheadFAD,
+ISOCDSetStatus,
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // ISO Interface
@@ -2144,3 +2147,5 @@ static int ISOCDReadSectorFADFromCHD(u32 FAD, void *buffer) {
 
   return 1;
 }
+
+#endif

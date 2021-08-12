@@ -68,7 +68,7 @@ set(kronos_HEADERS
 	sys/memory/include/decrypt.h
   core/osd/include/osdcore.h
   core/osd/include/font.h
-  core/m68k/mk68Counter.hpp
+  core/m68k/mk68Counter.h
   core/m68k/m68kcore.h
 	core/video/opengl/core/include/vidogl.h
 	core/video/opengl/common/include/vidshared.h

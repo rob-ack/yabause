@@ -37,7 +37,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
-#include "mk68Counter.hpp"
+#include "mk68Counter.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scspdsp.h"

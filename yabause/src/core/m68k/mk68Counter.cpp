@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "yabause.h"
 
 #include <thread>
-#include "mk68Counter.hpp"
+#include "mk68Counter.h"
 #include "threads.h"
 
 volatile u64 m68k_counter = 0;

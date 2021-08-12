@@ -239,7 +239,7 @@ if (YAB_WANT_ASYNC_VDP1_TEXTURE)
 endif()
 
 option(YAB_WANT_SOFT_RENDERING "Enable software renderer support." OFF)
-if (YAB_WANT_SOFT_RENDERING)
+if (YAB_WANT_SOFT_RENDERING OR NOT KRONOS_LIBRETRO_CORE)
    add_definitions(-DUSE_SOFT_RENDER=1)
 
 	set(kronos_HEADERS

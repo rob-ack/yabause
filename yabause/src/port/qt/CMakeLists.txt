@@ -48,9 +48,6 @@ else()
 	return ()
 endif()
 
-message(STATUS "QT Builds require YAB_WANT_SOFT_RENDERING forces to be ON")
-set(YAB_WANT_SOFT_RENDERING ON CACHE BOOL "" FORCE)
-
 # qt resources file
 set( kronos_qt_RESOURCES resources/resources.qrc )
 

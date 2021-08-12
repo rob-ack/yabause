@@ -20,6 +20,10 @@
 #ifndef GAMESINFO_H
 #define GAMESINFO_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 
 typedef struct _GameInfo GameInfo;
@@ -43,5 +47,9 @@ int GameInfoFromPath(const char * filename, GameInfo * info);
 
 int LoadStateSlotScreenshotStream(FILE * fp, int * outputwidth, int * outputheight, u32 ** buffer);
 int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot, int * outputwidth, int * outputheight, u32 ** buffer);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

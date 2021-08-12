@@ -20,6 +20,10 @@
 #ifndef JAPMODEM_H
 #define JAPMODEM_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    unsigned char flash[0x20000];
@@ -39,5 +43,9 @@ void FASTCALL JapModemCs2WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 va
 int JapModemInit(const char *ip, const char *port);
 void JapModemDeInit(void);
 void JapModemExec(u32 timing);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

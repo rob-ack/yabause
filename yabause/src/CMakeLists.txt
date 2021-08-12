@@ -567,7 +567,7 @@ if (WIN32)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} winmm)
 	endif()
 
-	if(HAVE_CDROM AND NOT KRONOS_LIBRETRO_CORE)
+	if(NOT KRONOS_LIBRETRO_CORE)
 		set(kronos_SOURCES ${kronos_SOURCES} core/cd/windows/cd-windows.c)
 	endif()
 endif (WIN32)

@@ -665,6 +665,10 @@ if (MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
 endif ()
 
+if (MSVC)
+add_compile_options(/MP)
+endif()
+
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++11")

@@ -3,13 +3,41 @@
     {
       "name": "x64-Release",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "Release",
       "inheritEnvironments": [ "msvc_x64_x64" ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-j 8",
       "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "KRONOS_LIBRETRO_CORE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "KRONOS_FORCE_CXX_COMPILER",
+          "value": "True",
+          "type": "BOOL"
+        }
+      ]
+    },
+    {
+      "name": "x64-ReleaseWithDebInfo",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
+      "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "-j 8",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
       "variables": [
         {
           "name": "KRONOS_LIBRETRO_CORE",

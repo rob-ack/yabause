@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "platform.h"
 #include "peripheral.h"
-#include "../sh2core.h"
+#include "sh2core.h"
 
 #if defined(_USEGLEW_)
 #include <GL/glew.h>

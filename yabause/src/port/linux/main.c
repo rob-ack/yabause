@@ -23,37 +23,38 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-#include "platform.h"
-
 #include "yabause.h"
-#include "../gameinfo.h"
-#include "../yui.h"
+#include "gameinfo.h"
+#include "yui.h"
 #include "peripheral.h"
-#include "../sh2core.h"
-#include "../sh2int.h"
+#include "sh2core.h"
+#include "sh2int.h"
 #ifdef HAVE_LIBGL
 #include "vidogl.h"
 #include "ygl.h"
 #endif
-#include "../vidsoft.h"
-#include "../cs0.h"
-#include "../cs2.h"
-#include "../cdbase.h"
-#include "../scsp.h"
+#include "vidsoft.h"
+#include "cs0.h"
+#include "cs2.h"
+#include "cdbase.h"
+#include "scsp.h"
 #include "sndsdl.h"
 #include "sndal.h"
 #include "persdljoy.h"
 #ifdef ARCH_IS_LINUX
 #include "perlinuxjoy.h"
 #endif
+#include <ctype.h>
+
 #include "debug.h"
-#include "../m68kcore.h"
+#include "m68kcore.h"
 #include "vdp1.h"
-#include "../vdp2.h"
-#include "../cdbase.h"
+#include "vdp2.h"
+#include "cdbase.h"
 #include "peripheral.h"
+#include "platform/glfw/platform.h"
 #ifdef DYNAREC_KRONOS
-#include "../sh2_kronos/sh2int_kronos.h"
+#include "sh2int_kronos.h"
 #endif
 
 #define AR (4.0f/3.0f)
@@ -124,7 +125,7 @@ NULL
 };
 
 #ifdef YAB_PORT_OSD
-#include "nanovg/nanovg_osdcore.h"
+#include "nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
 NULL

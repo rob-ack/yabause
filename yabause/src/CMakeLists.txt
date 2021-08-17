@@ -840,4 +840,8 @@ message(STATUS "OPENGL_SUPPORTED ${OPENGL_SUPPORTED}")
 message(STATUS "------ FLAGS  -------")
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")
+if(MSVC)
+message(STATUS "CMAKE_SYSTEM_VERSION ${CMAKE_SYSTEM_VERSION} used")
+endif()
+
 message(STATUS "---------------------")

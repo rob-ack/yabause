@@ -118,7 +118,7 @@ void VIDOGLDeInit(void);
 void VIDOGLResize(int, int, unsigned int, unsigned int, int);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
-void VIDOGLVdp1Draw();
+void VIDOGLVdp1Draw(void);
 void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -137,7 +137,7 @@ void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDOGLSetSettingValueMode(int type, int value);
-void VIDOGLSync();
+void VIDOGLSync(void);
 void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 void VIDOGLVdp2DispOff(void);
 void waitVdp2DrawScreensEnd(int sync, int abort);
@@ -3425,7 +3425,7 @@ void VIDOGLReadColorOffset(void) {
 
 }
 //////////////////////////////////////////////////////////////////////////////
-void VIDOGLVdp1Draw()
+void VIDOGLVdp1Draw(void)
 {
   int i;
   int line = 0;

@@ -3796,7 +3796,7 @@ void YglChangeResolution(int w, int h) {
   YglOrtho(&_Ygl->rbgModelView, 0.0f, (float)_Ygl->rwidth, (float)_Ygl->rheight, 0.0f, 10.0f, 0.0f);
 }
 
-void VIDOGLSync(){
+void VIDOGLSync(void){
 }
 
 ///////////////////////////////////////////////////////////////////////////////

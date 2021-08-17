@@ -136,7 +136,7 @@ typedef struct
    int (*IsFullscreen)(void);
    // VDP1 specific
    int (*Vdp1Reset)(void);
-   void (*Vdp1Draw)();
+   void (*Vdp1Draw)(void);
    void(*Vdp1NormalSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
    void(*Vdp1ScaledSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
    void(*Vdp1DistortedSpriteDraw)(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
@@ -156,7 +156,7 @@ typedef struct
    void (*Vdp2Draw)(void);
    void (*GetGlSize)(int *width, int *height);
    void (*SetSettingValue)(int type, int value);
-   void(*Sync)();
+   void(*Sync)(void);
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
    void (*composeFB)(Vdp2 *regs);

@@ -95,11 +95,8 @@ set(kronos_HEADERS
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one" OFF)
 set(YAB_PORT_BUILT FALSE)
-if (WIN32)
+
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
-else()
-set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
-endif(WIN32)
 
 if (CMAKE_COMPILER_IS_GNUCC)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer")

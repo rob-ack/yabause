@@ -1329,7 +1329,9 @@ static void Vdp1NoDraw(void) {
    /* this should be done after a frame change or a plot trigger */
    Vdp1Regs->COPR = 0;
    Vdp1Regs->lCOPR = 0;
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
    _Ygl->vdp1On[_Ygl->drawframe] = 0;
+#endif
    Vdp1FakeDrawCommands(Vdp1Ram, Vdp1Regs);
 }
 
@@ -2166,7 +2168,9 @@ static void startField(void) {
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       int id = 0;
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
       if (_Ygl != NULL) id = _Ygl->readframe;
+#endif
       VIDCore->Vdp1EraseWrite(id);
       CmdListDrawn = 0;
       Vdp1External.manualerase = 0;
@@ -2274,7 +2278,9 @@ void Vdp1VBlankOUT(void)
   //Out of VBlankOut : Break Batman
   if (needVBlankErase()) {
     int id = 0;
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
     if (_Ygl != NULL) id = _Ygl->readframe;
+#endif
     CmdListDrawn = 0;
     VIDCore->Vdp1EraseWrite(id);
   }

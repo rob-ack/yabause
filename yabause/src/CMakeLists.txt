@@ -113,7 +113,6 @@ set(kronos_SOURCES
 	utils/src/netlink.c
 	core/osd/src/osdcore.c
 	utils/src/profile.c
-	sys/vdp2/src/vdp2debug.c
 	core/m68k/Counter.cpp
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
@@ -470,6 +469,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			core/video/opengl/compute_shader/src/yglcs.c
 			core/video/opengl/compute_shader/src/vidcs.c
 			core/video/opengl/compute_shader/src/vdp1_compute.c
+			sys/vdp2/src/vdp2debug.c
 		)
 		set(kronos_HEADERS
 			${kronos_HEADERS}

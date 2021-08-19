@@ -232,7 +232,7 @@ int sem_destroy(sem_t *sem)
 	return 0;
 }
 
-sem_t *sem_open(const char *name, int oflag, mode_t mode, unsigned int value)
+sem_t *sem_open(const char *name, int oflag, unsigned short mode, unsigned int value)
 {
 	int len;
 	char buffer[512];

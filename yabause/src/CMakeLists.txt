@@ -23,9 +23,6 @@ include_directories(sys/scsp/include)
 include_directories(sys/smpc/include)
 include_directories(sys/memory/include)
 include_directories(utils/include)
-include_directories(core/video/opengl/core/include)
-include_directories(core/video/opengl/compute_shader/include)
-include_directories(core/video/opengl/common/include)
 include_directories(core/video/soft)
 include_directories(core/sh2/sh2_simple/include)
 include_directories(core/sh2/sh2_kronos/include)
@@ -70,9 +67,6 @@ set(kronos_HEADERS
   core/osd/include/font.h
   core/m68k/mk68Counter.h
   core/m68k/m68kcore.h
-	core/video/opengl/core/include/vidogl.h
-	core/video/opengl/common/include/vidshared.h
-	core/video/opengl/common/include/ygl.h
 	core/sh2/sh2_simple/include/sh2int.h
 	core/peripheral/common/peripheral.h
 	core/net/sock.h
@@ -127,7 +121,6 @@ set(kronos_SOURCES
 	sys/memory/src/eeprom.c
 	sys/memory/src/decrypt.c
 	core/sh2/sh2_simple/src/sh2int.c
-	core/video/opengl/common/src/vidshared.c
 	core/peripheral/common/peripheral.c
 	core/sound/dummy/snddummy.c
 	ctrl/src/yabause.c
@@ -373,6 +366,15 @@ elseif (YAB_RGB STREQUAL "565")
     add_definitions(-DUSE_16BPP=1 -DUSE_RGB_565=1)
 endif ()
 
+include_directories(core/video)
+set(kronos_HEADERS
+	${kronos_HEADERS}
+	core/video/videoInterface.h
+)
+set(kronos_SOURCES
+	${kronos_SOURCES}
+	core/video/videoInterface.c
+)
 # OpenGL
 option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
 if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
@@ -380,6 +382,9 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	include(FindOpenGLES)
 	include(FindEGL)
 
+	include_directories(core/video/opengl/core/include)
+	include_directories(core/video/opengl/compute_shader/include)
+	include_directories(core/video/opengl/common/include)
 	if (OPENGLES31_FOUND)
 		if (NOT EGL_FOUND)
 			message(ERROR "No EGL found")
@@ -468,9 +473,13 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			core/video/opengl/compute_shader/src/vidcs.c
 			core/video/opengl/compute_shader/src/vdp1_compute.c
 			sys/vdp2/src/vdp2debug.c
+			core/video/opengl/common/src/vidshared.c
 		)
 		set(kronos_HEADERS
 			${kronos_HEADERS}
+			core/video/opengl/core/include/vidogl.h
+			core/video/opengl/common/include/vidshared.h
+			core/video/opengl/common/include/ygl.h
 			core/video/opengl/common/include/common_glshader.h
 			core/video/opengl/compute_shader/include/vidcs.h
 			core/video/opengl/compute_shader/include/vdp1_compute.h

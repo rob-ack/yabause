@@ -20,7 +20,7 @@
 #ifndef VIDSOFT_H
 #define VIDSOFT_H
 
-#include "vdp1.h"
+#include "videoInterface.h"
 
 #define VIDCORE_SOFT   3
 

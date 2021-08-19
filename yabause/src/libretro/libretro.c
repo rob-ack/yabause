@@ -29,14 +29,16 @@
 
 #include "cs0.h"
 #include "cs2.h"
+#include "debug.h"
 
 #include "m68kcore.h"
-#include "vidogl.h"
-#include "vidcs.h"
 #include "vidsoft.h"
-#include "ygl.h"
 #include "sh2int_kronos.h"
 #include "libretro_core_options.h"
+#include "videoInterface.h"
+#include "ygl.h"
+#include "vidogl.h"
+#include "vidcs.h"
 
 #ifdef __cplusplus
 extern "C" {

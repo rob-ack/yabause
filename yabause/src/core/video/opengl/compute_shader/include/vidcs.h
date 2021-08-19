@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-#include "vdp1.h"
+#include "videoInterface.h"
 #define VIDCORE_CS   2
 extern VideoInterface_struct VIDCS;
 #endif

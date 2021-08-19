@@ -30,19 +30,18 @@
 #include "vdp1.h"
 #include "debug.h"
 #include "scu.h"
-#include "vdp2.h"
 #include "vidsoft.h"
 #include "threads.h"
 #include "sh2core.h"
+#include "videoInterface.h"
+#if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 #include "ygl.h"
+#endif
 
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
 int VDP1_MASK = 0xFFFF;
-
-VideoInterface_struct *VIDCore=NULL;
-extern VideoInterface_struct *VIDCoreList[];
 
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;

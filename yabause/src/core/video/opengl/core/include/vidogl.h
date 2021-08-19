@@ -26,7 +26,7 @@ extern "C" {
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 
-#include "vdp1.h"
+#include "videoInterface.h"
 
 #define VIDCORE_OGL   1
 

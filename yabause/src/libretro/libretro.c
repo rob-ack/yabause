@@ -1335,6 +1335,7 @@ void retro_get_system_av_info(struct retro_system_av_info *info)
       initial_native_resolution_mode = native_resolution_mode;
       switch(resolution_mode)
       {
+		 default:
          case RES_ORIGINAL:
          case RES_480p:
             window_width = 704;

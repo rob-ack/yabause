@@ -66,18 +66,18 @@ typedef struct {
 
 // struct for Vdp1 part that shouldn't be saved
 typedef struct {
-   int disptoggle;
-   int manualerase;
-   int manualchange;
-   int onecyclemode;
-   int useVBlankErase;
-   int swap_frame_buffer;
-   int plot_trigger_line;
-   int plot_trigger_done;
-   int current_frame;
-   int updateVdp1Ram;
-   int checkEDSR;
-   int status;
+    int disptoggle;
+    int manualerase;
+    int manualchange;
+    int onecyclemode;
+    int useVBlankErase;
+    int swap_frame_buffer;
+    int plot_trigger_line;
+    int plot_trigger_done;
+    int current_frame;
+    int updateVdp1Ram;
+    int checkEDSR;
+    int status;
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
@@ -116,21 +116,7 @@ typedef struct
   u32 pad[2];
 } vdp1cmd_struct;
 
-typedef struct{
-  vdp1cmd_struct cmd;
-  int ignitionLine;
-  int completionLine;
-  int start_addr;
-  int end_addr;
-  int dirty;
-} vdp1cmdctrl_struct;
-
-extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
-extern int nbCmdToProcess;
-
 extern u8 * Vdp1Ram;
-extern int vdp1Ram_update_start;
-extern int vdp1Ram_update_end;
 
 u8 FASTCALL	Vdp1RamReadByte(SH2_struct *context, u8*, u32);
 u16 FASTCALL	Vdp1RamReadWord(SH2_struct *context, u8*, u32);

@@ -38,6 +38,15 @@
 #include "ygl.h"
 #endif
 
+typedef struct {
+    vdp1cmd_struct cmd;
+    int ignitionLine;
+    int completionLine;
+    int start_addr;
+    int end_addr;
+    int dirty;
+} vdp1cmdctrl_struct;
+
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;

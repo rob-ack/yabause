@@ -713,7 +713,6 @@ void vdp1_compute() {
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo_vdp1ram_[_Ygl->drawframe]);
   glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, ssbo_nbcmd_);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, ssbo_cmd_);
-	YuiMsg("Ratio %f %f\n", tex_ratiow, tex_ratioh);
 	glUniform2f(6, tex_ratiow, tex_ratioh);
 	glUniform2i(7, Vdp1Regs->systemclipX2, Vdp1Regs->systemclipY2);
 	glUniform4i(8, Vdp1Regs->userclipX1, Vdp1Regs->userclipY1, Vdp1Regs->userclipX2, Vdp1Regs->userclipY2);

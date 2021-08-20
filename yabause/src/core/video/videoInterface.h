@@ -3,6 +3,10 @@
 #ifndef _VID_INTERFACE_
 #define _VID_INTERFACE_
 
+#ifdef __cplusplus
+extern "C"{
+#endif
+
 #include "vdp1.h"
 #include "vdp2.h"
 
@@ -47,5 +51,9 @@ typedef struct
 
 extern VideoInterface_struct* VIDCore;
 extern VideoInterface_struct* VIDCoreList[];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

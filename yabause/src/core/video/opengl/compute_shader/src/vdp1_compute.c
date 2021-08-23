@@ -313,10 +313,10 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 					dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
 					addr1 = ((dot>>4) * 2 + cmd->CMDCOLR * 8);
 					addr2 = ((dot&0xF) * 2 + cmd->CMDCOLR * 8);
-					if (!END && (endcnt >= 2)) {
+					if ((!END) && (endcnt >= 2)) {
           	dot |= 0xF0;
 					}
-					else if (((dot & 0xF0) == 0xF0) && !END) {
+					else if (((dot & 0xF0) == 0xF0) && (!END)) {
           	endcnt++;
         	} else {
 						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
@@ -327,10 +327,10 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 							T1WriteWord(buf, addr1, val);
 						}
 					}
-					if (!END && (endcnt >= 2)) {
+					if ((!END) && (endcnt >= 2)) {
           	dot |= 0xF;
 					}
-					else if (((dot & 0xF) == 0xF) && !END) {
+					else if (((dot & 0xF) == 0xF) && (!END)) {
           	endcnt++;
 					} else {
 						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
@@ -356,10 +356,10 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 					for(int w = 0; w < MAX(1, cmd->w); w++)
 					{
 						dot = Vdp1RamReadByte(NULL, Vdp1Ram, pos);
-						if (!END && (endcnt >= 2)) {
+						if ((!END) && (endcnt >= 2)) {
 							dot = 0xFF;
 						}
-						else if ((dot == 0xFF) && !END) {
+						else if ((dot == 0xFF) && (!END)) {
 							endcnt++;
 						}
 						if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;
@@ -375,10 +375,10 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 				for(int w = 0; w < cmd->w; w++)
 	    	{
 					u16 dot = Vdp1RamReadWord(NULL, Vdp1Ram, pos);
-					if (!END && (endcnt >= 2)) {
+					if ((!END) && (endcnt >= 2)) {
 						dot = 0x7FFF;
 					}
-					else if ((dot == 0x7FFF) && !END) {
+					else if ((dot == 0x7FFF) && (!END)) {
 						endcnt++;
 					}
 					if (cmdRam_update_start[id] > pos) cmdRam_update_start[id] = pos;

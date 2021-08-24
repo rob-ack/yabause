@@ -148,7 +148,7 @@ extern void resetFrameSkip();
 
 extern u32 saved_scsp_cycles;
 #define SCSP_FRACTIONAL_BITS 20
-u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
+u64 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
 
 #ifdef __cplusplus

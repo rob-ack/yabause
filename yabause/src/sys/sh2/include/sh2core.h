@@ -24,6 +24,10 @@
 #include "core.h"
 #include "threads.h"
 
+#ifdef xSH2_ASYNC
+#include <semaphore.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -334,7 +338,7 @@ typedef struct SH2_struct_s
    u32 delay;
    u32 cycles;
    u8 isslave;
-   u8 isSleeping;
+//   u8 isSleeping;
    u16 instruction;
    u16 isInIt;
    int depth;

@@ -36,6 +36,7 @@
 #include "cs2.h"
 
 #ifdef xSH2_ASYNC
+#include <semaphore.h>
 #define LOCK(A) sem_wait(&A->lock)
 #define UNLOCK(A) sem_post(&A->lock)
 #else
@@ -54,7 +55,7 @@ void SH2KronosIOnFrame(SH2_struct *context) {
 void SH2HandleInterrupts(SH2_struct *context)
 {
   if (context->isInIt != 0) return;
-  LOCK(context);
+//  LOCK(context);
   if (context->NumberOfInterrupts != 0)
   {
     if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
@@ -75,10 +76,10 @@ void SH2HandleInterrupts(SH2_struct *context)
       }
       context->regs.PC = SH2MappedMemoryReadLong(context,context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
       context->NumberOfInterrupts--;
-      context->isSleeping = 0;
+//      context->isSleeping = 0;
     }
   }
-  UNLOCK(context);
+//  UNLOCK(context);
 }
 fetchfunc krfetchlist[0x1000];
 static u8 cacheId[0x1000];

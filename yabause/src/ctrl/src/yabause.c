@@ -133,8 +133,7 @@ void print_usage(const char *program_name) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-
-static unsigned long nextFrameTime = 0;
+static u64 nextFrameTime = 0;
 static int autoframeskipenab=0;
 
 #ifdef TIMING_SWAP
@@ -146,14 +145,14 @@ void YuiTimedSwapBuffers(){
 #endif
 
 static void syncVideoMode(void) {
-  unsigned long sleep = 0;
-  unsigned long now;
-  unsigned long delay = 0;
+    u64 sleep = 0;
+  u64 now;
+  u64 delay = 0;
   YuiEndOfFrame();
   now = YabauseGetTicks();
   if (nextFrameTime == 0) nextFrameTime = YabauseGetTicks();
   if(nextFrameTime > now) {
-    sleep = ((nextFrameTime - now)*1000000.0)/yabsys.tickfreq;
+    sleep = ((nextFrameTime - now) * (u64)1000000.0) / yabsys.tickfreq;
   } else {
     delay = nextFrameTime - now;
   }
@@ -195,6 +194,7 @@ extern int tweak_backup_file_size;
 YabEventQueue * q_scsp_frame_start;
 YabEventQueue * q_scsp_finish;
 YabEventQueue * q_scsp_m68counterCond;
+YabEventQueue * q_sh2_sync;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -217,40 +217,7 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
 }
 
 #ifdef xSH2_ASYNC
-static void sh2Execute( void * p ){
-  SH2_struct* sh = (SH2_struct*)p;
-  sh->thread_running = 1;
-  while(sh->thread_running) {
-    sh->cycles_request = 0;
-    while(YaGetQueueSize(sh->start) != 0){
-      YabWaitEventQueue(sh->start);
-      sh->cycles_request += yabsys.DecilineStop;
-    }
-    sh2ExecuteSync(sh, sh->cycles_request);
-  }
-  sh->thread_running = 0;
-}
-
-static void Msh2Execute( void * p ){
-  SH2_struct* sh = (SH2_struct*)p;
-  sh->thread_running = 1;
-  while(sh->thread_running) {
-    sh->cycles_request = 0;
-    int nbLoop = 1;
-    YabWaitEventQueue(sh->start);
-    while(YaGetQueueSize(sh->start) != 0){
-      YabWaitEventQueue(sh->start);
-      nbLoop++;
-    }
-    for (int i = 0; i< nbLoop*DECILINE_STEP; i++) {
-      sh2ExecuteSync(sh, yabsys.DecilineStop);
-      if (yabsys.IsSSH2Running) {
-          sh2ExecuteSync(SSH2, yabsys.DecilineStop);
-      }
-      // YabAddEventQueue(sh->end, NULL);
-    }
-  }
-}
+//static void Msh2ExecuteWorkerThreadFunction(void* p);
 #endif
 
 int YabauseSh2Init(yabauseinit_struct *init)
@@ -300,35 +267,39 @@ int YabauseSh2Init(yabauseinit_struct *init)
 #define NB_MSG (1)
 
 #ifdef xSH2_ASYNC
-   MSH2->thread_running = 0;
-   MSH2->start = YabThreadCreateQueue(NB_MSG);
-   MSH2->end = YabThreadCreateQueue(NB_MSG);
-   sem_init(&MSH2->lock, 0, 1);
-   MSH2->cycles_request = 0;
-   MSH2->thread_id = YAB_THREAD_MSH2;
+//   MSH2->thread_running = 0;
+//   MSH2->start = YabThreadCreateQueue(NB_MSG);
+//   MSH2->end = YabThreadCreateQueue(NB_MSG);
+//   sem_init(&MSH2->lock, 0, 1);
+//   MSH2->cycles_request = 0;
+//   MSH2->thread_id = YAB_THREAD_MSH2;
 #endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
    MSH2->cdiff = 0;
 #ifdef xSH2_ASYNC
-   SSH2->thread_running = 0;
-   SSH2->start = YabThreadCreateQueue(NB_MSG);
-   SSH2->end = YabThreadCreateQueue(NB_MSG);
-   sem_init(&SSH2->lock, 0, 1);
-   SSH2->cycles_request = 0;
-   SSH2->thread_id = YAB_THREAD_SSH2;
+//   SSH2->thread_running = 0;
+//   SSH2->start = YabThreadCreateQueue(NB_MSG);
+//   SSH2->end = YabThreadCreateQueue(NB_MSG);
+//   sem_init(&SSH2->lock, 0, 1);
+//   SSH2->cycles_request = 0;
+//   SSH2->thread_id = YAB_THREAD_SSH2;
 #endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
    SSH2->cdiff = 0;
 #ifdef xSH2_ASYNC
    // YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
-   YabThreadStart(YAB_THREAD_MSH2, Msh2Execute, MSH2);
+//   YabThreadStart(YAB_THREAD_MSH2, Msh2ExecuteWorkerThreadFunction, MSH2);
 #endif
    return 0;
 }
 
 static u64 fpsticks = 0;
+
+#ifdef xSH2_ASYNC
+void mainSH2Async(void* p);
+#endif
 
 int YabauseInit(yabauseinit_struct *init)
 {
@@ -345,7 +316,9 @@ int YabauseInit(yabauseinit_struct *init)
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
   q_scsp_m68counterCond = YabThreadCreateQueue(1);
-  setM68kCounter(0);
+  q_sh2_sync = YabThreadCreateQueue(1);
+
+	setM68kCounter(0);
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -395,30 +368,30 @@ int YabauseInit(yabauseinit_struct *init)
 
    MappedMemoryInit();
 #ifdef xSH2_ASYNC
-   MSH2->thread_running = 0;
-   MSH2->start = YabThreadCreateQueue(NB_MSG);
-   MSH2->end = YabThreadCreateQueue(NB_MSG);
-   sem_init(&MSH2->lock, 0, 1);
-   MSH2->cycles_request = 0;
-   MSH2->thread_id = YAB_THREAD_MSH2;
+//   MSH2->thread_running = 0;
+//   MSH2->start = YabThreadCreateQueue(NB_MSG);
+//   MSH2->end = YabThreadCreateQueue(NB_MSG);
+//   sem_init(&MSH2->lock, 0, 1);
+//   MSH2->cycles_request = 0;
+//   MSH2->thread_id = YAB_THREAD_MSH2;
 #endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
    MSH2->cdiff = 0;
 #ifdef xSH2_ASYNC
-   SSH2->thread_running = 0;
-   SSH2->start = YabThreadCreateQueue(NB_MSG);
-   SSH2->end = YabThreadCreateQueue(NB_MSG);
-   sem_init(&SSH2->lock, 0, 1);
-   SSH2->cycles_request = 0;
-   SSH2->thread_id = YAB_THREAD_SSH2;
+//   SSH2->thread_running = 0;
+//   SSH2->start = YabThreadCreateQueue(NB_MSG);
+//   SSH2->end = YabThreadCreateQueue(NB_MSG);
+//   sem_init(&SSH2->lock, 0, 1);
+//   SSH2->cycles_request = 0;
+//   SSH2->thread_id = YAB_THREAD_SSH2;
 #endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
    SSH2->cdiff = 0;
 #ifdef xSH2_ASYNC
    // YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
-   YabThreadStart(YAB_THREAD_MSH2, Msh2Execute, MSH2);
+//   YabThreadStart(YAB_THREAD_MSH2, Msh2ExecuteWorkerThreadFunction, MSH2);
 #endif
 
    if (VideoInit(init->vidcoretype) != 0)
@@ -564,6 +537,11 @@ int YabauseInit(yabauseinit_struct *init)
    }
 #endif
    fpsticks = YabauseGetTicks();
+   ScspExec();
+   VIDCore->setupFrame(false);
+#ifdef xSH2_ASYNC
+   YabThreadStart(YAB_NUM_THREADS + 1, mainSH2Async, 0);
+#endif
    return 0;
 }
 
@@ -696,9 +674,9 @@ int YabauseExec(void) {
 //////////////////////////////////////////////////////////////////////////////
 int saved_centicycles;
 
-u32 get_cycles_per_line_division(u32 const clock, int const frames, int const lines, int const divisions_per_line)
+u64 get_cycles_per_line_division(u32 const clock, int const frames, int const lines, int const divisions_per_line)
 {
-   return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
+   return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (u64)(lines * divisions_per_line);
 }
 
 u32 YabauseGetCpuTime(){
@@ -741,156 +719,217 @@ u32 YabauseGetFrameCount() {
 //#define YAB_STATICS
 void SyncCPUtoSCSP();
 
+#ifdef xSH2_ASYNC
+bool waitNextFrame = false;
+
+void mainSH2Async(void * p) {
+    int lines;
+    int frames;
+
+    if (yabsys.IsPal)
+    {
+        lines = 313;
+        frames = 50;
+    }
+    else
+    {
+        lines = 263;
+        frames = 60;
+    }
+
+    u64 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
+    u64 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
+
+	while (true) {
+        YabWaitEventQueue(q_sh2_sync);
+
+        waitNextFrame = false;
+        const u32 usecinc = yabsys.DecilineUsec;
+
+		MSH2->cycles = 0;
+        MSH2->frtcycles = 0;
+        MSH2->depth = 0;
+        SSH2->depth = 0;
+        SSH2->cycles = 0;
+        SSH2->frtcycles = 0;
+
+        while (!waitNextFrame)
+        {
+            PROFILE_START("Total Emulation");
+
+            sh2ExecuteSync(MSH2, yabsys.DecilineStop);
+            if (yabsys.IsSSH2Running) {
+                sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+            }
+
+            ScuExec((yabsys.DecilineStop >> YABSYS_TIMING_BITS) / 2);
+            yabsys.UsecFrac += usecinc;
+            SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+            Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+            yabsys.UsecFrac &= YABSYS_TIMING_MASK;
+            {
+                saved_m68k_cycles += m68k_cycles_per_deciline;
+                setM68kCounter(saved_m68k_cycles);
+            }
+            PROFILE_STOP("Total Emulation");
+        }
+    }
+}
+#endif
+
 int YabauseEmulate(void) {
-   int ret = 0;
-   int oneframeexec = 0;
-   yabsys.frame_count++;
+    yabsys.frame_count++;
+    DoMovie();
 
-   const u32 usecinc = yabsys.DecilineUsec;
+    int lines = 0;
+    int frames = 0;
+    if (yabsys.IsPal)
+    {
+        lines = 313;
+        frames = 50;
+    }
+    else
+    {
+        lines = 263;
+        frames = 60;
+    }
 
-   unsigned int m68kcycles;       // Integral M68k cycles per call
-   unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
+#if xSH2_ASYNC
+    bool _frameDone = false;
+    YabAddEventQueue(q_sh2_sync, NULL);
+    while (!_frameDone)
+    {
+        yabsys.DecilineCount++;
+        if (yabsys.DecilineCount == DECILINE_STEP - 1)
+	    {
+		    // HBlankIN
+		    PROFILE_START("hblankin");
+		    Vdp1HBlankIN();
+		    Vdp2HBlankIN();
+		    PROFILE_STOP("hblankin");
+        }
+    	else if (yabsys.DecilineCount == DECILINE_STEP)
+	    {
 
-   int lines = 0;
-   int frames = 0;
+		    // HBlankOUT
+		    PROFILE_START("hblankout");
+		    Vdp2HBlankOUT();
+		    Vdp1HBlankOUT();
+		    PROFILE_STOP("hblankout");
 
-   if (yabsys.IsPal)
-   {
-     lines = 313;
-     frames = 50;
-   }
-   else
-   {
-     lines = 263;
-     frames = 60;
-   }
-   u32 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
-   u32 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
+    		yabsys.LineCount++;
+            if (yabsys.LineCount == yabsys.VBlankLineCount)
+		    {
+                setM68kCounter((u64)(44100 * 256 / frames) << SCSP_FRACTIONAL_BITS);
 
-   DoMovie();
-
-   MSH2->cycles = 0;
-   MSH2->frtcycles = 0;
-   MSH2->depth = 0;
-   SSH2->depth = 0;
-   SSH2->cycles = 0;
-   SSH2->frtcycles = 0;
-//   SH2OnFrame(MSH2);
-//   SH2OnFrame(SSH2);
-   u64 cpu_emutime = 0;
-   while (!oneframeexec)
-   {
-      PROFILE_START("Total Emulation");
-      VIDCore->setupFrame(0);
-#ifdef YAB_STATICS
-		 u64 current_cpu_clock = YabauseGetTicks();
-#endif
-
-      THREAD_LOG("Unlock MSH2\n");
- #ifdef xSH2_ASYNC
-       if(yabsys.DecilineCount == 0) {
-         YabAddEventQueue(MSH2->start, NULL);
-       }
+			    // VBlankIN
+			    PROFILE_START("vblankin");
+			    Vdp1VBlankIN();
+			    Vdp2VBlankIN();
+			    PROFILE_STOP("vblankin");
+                CheatDoPatches(MSH2);
+            }
+	    	else if (yabsys.LineCount == yabsys.MaxLineCount)
+		    {
+			    // VBlankOUT
+			    PROFILE_START("VDP1/VDP2");
+			    Vdp1VBlankOUT();
+			    Vdp2VBlankOUT();
+			    PROFILE_STOP("VDP1/VDP2");
+                yabsys.LineCount = 0;
+                _frameDone = true;
+                waitNextFrame = true;
+            }
+            yabsys.DecilineCount = 0;
+        }else if(yabsys.DecilineCount >= DECILINE_STEP)
+        {
+            yabsys.DecilineCount = 0;
+        }
+        VIDCore->setupFrame(false);
+    }
 #else
-       sh2ExecuteSync(MSH2, yabsys.DecilineStop);
-       if (yabsys.IsSSH2Running) {
-         sh2ExecuteSync(SSH2, yabsys.DecilineStop);
-       }
-#endif
+    u64 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
+    u64 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
 
-#ifdef YAB_STATICS
-		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
-#endif
+    const u32 usecinc = yabsys.DecilineUsec;
 
-         yabsys.DecilineCount++;
-         if(yabsys.DecilineCount == DECILINE_STEP-1)
-         {
+	MSH2->cycles = 0;
+    MSH2->frtcycles = 0;
+    MSH2->depth = 0;
+    SSH2->depth = 0;
+    SSH2->cycles = 0;
+    SSH2->frtcycles = 0;
+
+    auto waitNextFrame = false;
+
+    while (!waitNextFrame)
+    {
+        VIDCore->setupFrame(0);
+
+        PROFILE_START("Total Emulation");
+
+        sh2ExecuteSync(MSH2, yabsys.DecilineStop);
+        if (yabsys.IsSSH2Running) {
+            sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+        }
+
+        yabsys.DecilineCount++;
+        if (yabsys.DecilineCount == DECILINE_STEP - 1)
+        {
             // HBlankIN
             PROFILE_START("hblankin");
             Vdp1HBlankIN();
             Vdp2HBlankIN();
             PROFILE_STOP("hblankin");
-         }
-
-      if (yabsys.DecilineCount == DECILINE_STEP)
-      {
-         // HBlankOUT
-         PROFILE_START("hblankout");
-         Vdp2HBlankOUT();
-         Vdp1HBlankOUT();
-        // SyncScsp();
-         PROFILE_STOP("hblankout");
-         PROFILE_START("SCSP");
-         ScspExec();
-         PROFILE_STOP("SCSP");
-         yabsys.DecilineCount = 0;
-         yabsys.LineCount++;
-         if (yabsys.LineCount == yabsys.VBlankLineCount)
-         {
-#if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
+        }
+        else if (yabsys.DecilineCount == DECILINE_STEP)
+        {
+            // HBlankOUT
+            PROFILE_START("hblankout");
+            Vdp2HBlankOUT();
+            Vdp1HBlankOUT();
+            PROFILE_STOP("hblankout");
+            yabsys.LineCount++;
+            if (yabsys.LineCount == yabsys.VBlankLineCount)
+            {
+                setM68kCounter((u64)(44100 * 256 / frames) << SCSP_FRACTIONAL_BITS);
+                // VBlankIN
+                PROFILE_START("vblankin");
+                Vdp1VBlankIN();
+                Vdp2VBlankIN();
+                PROFILE_STOP("vblankin");
+                //                    SyncCPUtoSCSP();
+                CheatDoPatches(MSH2);
+            }
+            else if (yabsys.LineCount == yabsys.MaxLineCount)
+            {
+                // VBlankOUT
+                PROFILE_START("VDP1/VDP2");
+                Vdp1VBlankOUT();
+                Vdp2VBlankOUT();
+                PROFILE_STOP("VDP1/VDP2");
+                yabsys.LineCount = 0;
+                waitNextFrame = true;
+            }
+            yabsys.DecilineCount = 0;
+        }
+        ScuExec((yabsys.DecilineStop >> YABSYS_TIMING_BITS) / 2);
+        yabsys.UsecFrac += usecinc;
+        SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+        Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
+        yabsys.UsecFrac &= YABSYS_TIMING_MASK;
+        {
+            saved_m68k_cycles += m68k_cycles_per_deciline;
+            setM68kCounter(saved_m68k_cycles);
+        }
+        PROFILE_STOP("Total Emulation");
+    }
 #endif
-            PROFILE_START("vblankin");
-            // VBlankIN
-            SmpcINTBACKEnd();
-            Vdp1VBlankIN();
-            Vdp2VBlankIN();
-#if defined(ASYNC_SCSP)
-            SyncCPUtoSCSP();
-#endif
-            PROFILE_STOP("vblankin");
-            CheatDoPatches(MSH2);
-         }
-         else if (yabsys.LineCount == yabsys.MaxLineCount)
-         {
-            // VBlankOUT
-            PROFILE_START("VDP1/VDP2");
-            Vdp1VBlankOUT();
-            Vdp2VBlankOUT();
-            yabsys.LineCount = 0;
-            oneframeexec = 1;
-            PROFILE_STOP("VDP1/VDP2");
-         }
-      }
-      PROFILE_START("SCU");
-      ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
-      PROFILE_STOP("SCU");
-      PROFILE_START("68K");
-      M68KSync();  // Wait for the previous iteration to finish
-      PROFILE_STOP("68K");
 
-      yabsys.UsecFrac += usecinc;
-      PROFILE_START("SMPC");
-      SmpcExec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
-      PROFILE_STOP("SMPC");
-      PROFILE_START("CDB");
-      Cs2Exec(yabsys.UsecFrac >> YABSYS_TIMING_BITS);
-      PROFILE_STOP("CDB");
-      yabsys.UsecFrac &= YABSYS_TIMING_MASK;
+    M68KSync();
 
-#if !defined(ASYNC_SCSP)
-      u32 m68k_integer_part = 0, scsp_integer_part = 0;
-      saved_m68k_cycles += m68k_cycles_per_deciline;
-      m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
-      M68KExec(m68k_integer_part);
-      saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
-
-      saved_scsp_cycles += scsp_cycles_per_deciline;
-      scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
-      new_scsp_exec(scsp_integer_part);
-      saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
-#else
-      {
-        saved_m68k_cycles  += m68k_cycles_per_deciline;
-        setM68kCounter(saved_m68k_cycles);
-#endif
-      }
-      PROFILE_STOP("Total Emulation");
-   }
-   M68KSync();
-
-   syncVideoMode();
-   FPSDisplay();
+    syncVideoMode();
+    FPSDisplay();
 
 #ifdef YAB_STATICS
    printf("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
@@ -919,7 +958,7 @@ int YabauseEmulate(void) {
    if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
-   return ret;
+   return 0;
 }
 
 

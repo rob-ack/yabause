@@ -5406,15 +5406,13 @@ void ScspAsynMainCpu( void * p ){
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
 
-        YabAddEventQueue( q_scsp_finish , 0);
+//        YabAddEventQueue( q_scsp_finish , 0);
         pre_m68k_cycle = 0;
         m68k_inc = 0;
-        YabWaitEventQueue(q_scsp_frame_start);
+//        YabWaitEventQueue(q_scsp_frame_start);
         break;
       }
     }
-
-    //setM68kDoneCounter(pre_m68k_cycle);
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }

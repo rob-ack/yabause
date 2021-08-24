@@ -31,7 +31,7 @@
 #include "yabause.h"
 #include <inttypes.h>
 
-Scu * ScuRegs;
+Scu * ScuRegs = NULL;
 scudspregs_struct * ScuDsp;
 static int incFlg[4] = { 0 };
 static void ScuTestInterruptMask(void);

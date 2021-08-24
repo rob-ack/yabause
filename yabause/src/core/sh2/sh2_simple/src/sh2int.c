@@ -33,6 +33,7 @@
 #include "yabause.h"
 
 #ifdef xSH2_ASYNC
+#include <semaphore.h>
 #define LOCK(A) sem_wait(&A->lock)
 #define UNLOCK(A) sem_post(&A->lock)
 #else
@@ -157,7 +158,7 @@ static INLINE void SH2HandleInterrupts(SH2_struct *context)
       context->regs.PC = SH2MappedMemoryReadLong(context,context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
       //LOG("[%s] Exception %u, vecnum=%u, saved PC=0x%08x --- New PC=0x%08x\n", context->isslave?"SH2-S":"SH2-M", 9, context->interrupts[context->NumberOfInterrupts - 1].vector, oldpc, context->regs.PC);
       context->NumberOfInterrupts--;
-      context->isSleeping = 0;
+//      context->isSleeping = 0;
     }
   }
   UNLOCK(context);

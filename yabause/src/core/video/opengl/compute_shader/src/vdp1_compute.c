@@ -178,7 +178,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   if (status == GL_FALSE) {
     GLint length;
     glGetShaderiv(result, GL_INFO_LOG_LENGTH, &length);
-    GLchar *info = malloc(sizeof(GLchar) *length);
+    GLchar *info = (GLchar*)malloc(sizeof(GLchar) *length);
     glGetShaderInfoLog(result, length, NULL, info);
     YuiMsg("[COMPILE] %s\n", info);
     free(info);
@@ -192,7 +192,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   if (status == GL_FALSE) {
     GLint length;
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-    GLchar *info = malloc(sizeof(GLchar) *length);
+    GLchar *info = (GLchar*)malloc(sizeof(GLchar) *length);
     glGetProgramInfoLog(program, length, NULL, info);
     YuiMsg("[LINK] %s\n", info);
     free(info);
@@ -222,6 +222,7 @@ static int regenerateMeshTex(int w, int h) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	return 0;
 }
 
 static void vdp1_clear_mesh() {
@@ -411,7 +412,7 @@ void vdp1GenerateBuffer_async_1(void *p){
 }
 
 void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
-	vdp1cmd_struct* cmdToSent = malloc(sizeof(vdp1cmd_struct));
+	vdp1cmd_struct* cmdToSent = (vdp1cmd_struct*)malloc(sizeof(vdp1cmd_struct));
 	memcpy(cmdToSent, cmd, sizeof(vdp1cmd_struct));
 	YabAddEventQueue(cmdq[_Ygl->drawframe], cmdToSent);
 }

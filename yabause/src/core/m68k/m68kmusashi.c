@@ -58,51 +58,51 @@ static void M68KMusashiSync(void) {
 }
 
 static u32 M68KMusashiGetDReg(u32 num) {
-   return m68k_get_reg(NULL, M68K_REG_D0 + num);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + num));
 }
 
 static u32 M68KMusashiGetAReg(u32 num) {
-   return m68k_get_reg(NULL, M68K_REG_A0 + num);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_A0 + num));
 }
 
 static u32 M68KMusashiGetPC(void) {
-   return m68k_get_reg(NULL, M68K_REG_PC);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)M68K_REG_PC);
 }
 
 static u32 M68KMusashiGetSR(void) {
-   return m68k_get_reg(NULL, M68K_REG_SR);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)M68K_REG_SR);
 }
 
 static u32 M68KMusashiGetUSP(void) {
-   return m68k_get_reg(NULL, M68K_REG_USP);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)M68K_REG_USP);
 }
 
 static u32 M68KMusashiGetMSP(void) {
-   return m68k_get_reg(NULL, M68K_REG_MSP);
+   return (u32)m68k_get_reg(NULL, (m68k_register_t)M68K_REG_MSP);
 }
 
 static void M68KMusashiSetDReg(u32 num, u32 val) {
-   m68k_set_reg(M68K_REG_D0 + num, val);
+   m68k_set_reg((m68k_register_t)(M68K_REG_D0 + num), val);
 }
 
 static void M68KMusashiSetAReg(u32 num, u32 val) {
-   m68k_set_reg(M68K_REG_A0 + num, val);
+   m68k_set_reg((m68k_register_t)(M68K_REG_A0 + num), val);
 }
 
 static void M68KMusashiSetPC(u32 val) {
-   m68k_set_reg(M68K_REG_PC, val);
+   m68k_set_reg((m68k_register_t)M68K_REG_PC, val);
 }
 
 static void M68KMusashiSetSR(u32 val) {
-   m68k_set_reg(M68K_REG_SR, val);
+   m68k_set_reg((m68k_register_t)M68K_REG_SR, val);
 }
 
 static void M68KMusashiSetUSP(u32 val) {
-   m68k_set_reg(M68K_REG_USP, val);
+   m68k_set_reg((m68k_register_t)M68K_REG_USP, val);
 }
 
 static void M68KMusashiSetMSP(u32 val) {
-   m68k_set_reg(M68K_REG_MSP, val);
+   m68k_set_reg((m68k_register_t)M68K_REG_MSP, val);
 }
 
 static void M68KMusashiSetFetch(u32 low_adr, u32 high_adr, pointer fetch_adr) {
@@ -182,11 +182,11 @@ void m68k_save_context(void ** stream){
 	m68k_substate.halted  = (CPU_STOPPED & STOP_LEVEL_HALT) != 0;
 
 	for (i = 0; i<8; i++) {
-		regd[i]=m68k_get_reg(NULL, M68K_REG_D0 + i);
+		regd[i]=m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + i));
 	}
 	MemStateWrite((void *)&regd, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		rega[i]=m68k_get_reg(NULL, M68K_REG_A0 + i);
+		rega[i]=m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_A0 + i));
 	}
 	MemStateWrite((void *)&rega, sizeof(uint32), 8, stream );
 
@@ -274,43 +274,43 @@ void m68k_load_context(const void * stream){
 
 	MemStateRead((void *)&regd, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		m68k_set_reg(M68K_REG_D0 + i, regd[i]);
+		m68k_set_reg((m68k_register_t)(M68K_REG_D0 + i), regd[i]);
 	}
 
 	MemStateRead((void *)&rega, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		m68k_set_reg(M68K_REG_A0 + i, rega[i]);
+		m68k_set_reg((m68k_register_t)(M68K_REG_A0 + i), rega[i]);
 	}
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_PPC, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_PPC, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_PC, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_PC, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_USP, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_USP, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_ISP, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_ISP, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_MSP, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_MSP, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_VBR, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_VBR, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_SFC, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_SFC, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_DFC, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_DFC, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_CACR, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_CACR, val);
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );
-	m68k_set_reg(M68K_REG_CAAR, val);
+	m68k_set_reg((m68k_register_t)M68K_REG_CAAR, val);
 
 	MemStateRead((void *)&m68k_substate.sr, sizeof(uint16), 1, stream );
 	m68ki_set_sr_noint_nosp(val);

@@ -506,7 +506,7 @@ int YabauseInit(yabauseinit_struct *init)
 	   {
 		   if (LoadBios(init->biospath) != 0)
 		   {
-			   YabSetError(YAB_ERR_FILENOTFOUND, (void *)init->biospath);
+			   YabSetError(YAB_ERR_FILENOTFOUND, (void const *)init->biospath);
 			   return -2;
 		   }
 		   yabsys.emulatebios = 0;

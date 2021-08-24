@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include "memory.h"
+#include "decrypt.h"
 
 typedef struct sbox_s {
   u8 table[64];
@@ -465,7 +466,7 @@ static u8 buffer[BUFFER_SIZE];
 static u8 line_buffer[LINE_SIZE];
 static u8 line_buffer_prev[LINE_SIZE];
 
-void cryptoReset()
+void cryptoReset(void)
 {
   cryptoKey = 0;
   cryptoSubKey = 0;
@@ -792,7 +793,7 @@ static void enc_fill()
 	buffer_pos = 0;
 }
 
-u16 cryptoDecrypt()
+u16 cryptoDecrypt(void)
 {
   u8* base;
   if(!cryptoReady)

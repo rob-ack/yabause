@@ -76,6 +76,10 @@ set(KRONOS_LIBRETRO_PRIVATE_HDRS
 	glsym_private.h
 )
 
+if(KRONOS_FORCE_CXX_COMPILER)
+	SET_SOURCE_FILES_PROPERTIES( ${KRONOS_LIBRETRO_SRCS} PROPERTIES LANGUAGE CXX )
+endif()
+
 add_library(kronos_libretro SHARED ${KRONOS_LIBRETRO_SRCS} ${KRONOS_LIBRETRO_PUBLIC_HDRS} ${KRONOS_LIBRETRO_PRIVATE_HDRS})
 #the order is important for now which is just about the order of linking. some of the components still need to be exchanged when building a libretrocore
 target_link_libraries(kronos_libretro kronos zlibstatic mini18n-static lzma-static)

@@ -2059,7 +2059,7 @@ int BiosBUPExport(SH2_struct *sh, u32 device, const char *savename, char ** buf,
   }
 
   LOG("BiosBUPExport from %08X size %08X", tableaddr, datasize);
-  *buf = malloc(datasize);
+  *buf = (char*) malloc(datasize);
   if( (*buf) ==NULL ){
     LOG("Failed to allocate *buf");
     return -1;

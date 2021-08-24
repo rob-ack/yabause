@@ -93,9 +93,6 @@ void OSDPushMessageDirect(char * msg) {
 #define YGL_THREAD_DEBUG
 //#define YGL_THREAD_DEBUG yprintf
 
-
-
-
 #define COLOR_ADDt(b)      (b>0xFF?0xFF:(b<0?0:b))
 #define COLOR_ADDb(b1,b2)   COLOR_ADDt((signed) (b1) + (b2))
 #ifdef WORDS_BIGENDIAN
@@ -288,15 +285,15 @@ void Vdp2DrawCell_in_async(void *p)
 }
 
 static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs, int order) {
-   drawCellTask *task = malloc(sizeof(drawCellTask));
+   drawCellTask *task = (drawCellTask*)malloc(sizeof(drawCellTask));
 
-   task->texture = malloc(sizeof(YglTexture));
+   task->texture = (YglTexture*)malloc(sizeof(YglTexture));
    memcpy(task->texture, texture, sizeof(YglTexture));
 
-   task->info = malloc(sizeof(vdp2draw_struct));
+   task->info = (vdp2draw_struct*)malloc(sizeof(vdp2draw_struct));
    memcpy(task->info, info, sizeof(vdp2draw_struct));
 
-   task->varVdp2Regs = malloc(sizeof(Vdp2));
+   task->varVdp2Regs = (Vdp2*)malloc(sizeof(Vdp2));
    memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
 
    task->order = order;
@@ -314,11 +311,11 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vd
 }
 
 static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vdp2* varVdp2Regs, int order) {
-  textureTable[nbLoop] = malloc(sizeof(YglTexture));
+  textureTable[nbLoop] = (YglTexture*)malloc(sizeof(YglTexture));
   memcpy(textureTable[nbLoop], texture, sizeof(YglTexture));
-  infoTable[nbLoop] = malloc(sizeof(vdp2draw_struct));
+  infoTable[nbLoop] = (vdp2draw_struct*)malloc(sizeof(vdp2draw_struct));
   memcpy(infoTable[nbLoop], info, sizeof(vdp2draw_struct));
-  vdp2RegsTable[nbLoop] = malloc(sizeof(Vdp2));
+  vdp2RegsTable[nbLoop] = (Vdp2*) malloc(sizeof(Vdp2));
   memcpy(vdp2RegsTable[nbLoop], varVdp2Regs, sizeof(Vdp2));
   orderTable[nbLoop] = order;
   nbLoop++;
@@ -691,11 +688,11 @@ void Vdp1ReadTexture_in_async(void *p)
 }
 
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
-   vdp1TextureTask *task = malloc(sizeof(vdp1TextureTask));
+   vdp1TextureTask *task = (vdp1TextureTask*)malloc(sizeof(vdp1TextureTask));
 
-   task->cmd = malloc(sizeof(vdp1cmd_struct));
-   task->texture = malloc(sizeof(YglTexture));
-   task->varVdp2Regs = malloc(sizeof(Vdp2));
+   task->cmd = (vdp1cmd_struct*)malloc(sizeof(vdp1cmd_struct));
+   task->texture = (YglTexture*)malloc(sizeof(YglTexture));
+   task->varVdp2Regs = (Vdp2*)malloc(sizeof(Vdp2));
 
    memcpy(task->cmd, cmd, sizeof(vdp1cmd_struct));
    memcpy(task->texture, texture, sizeof(YglTexture));
@@ -1108,10 +1105,10 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   memcpy(&_Ygl->Win_op[0], &Win_op[0], (enBGMAX+1)*sizeof(int));
 
   if( _Ygl->win[0] == NULL ){
-    _Ygl->win[0] = malloc(512 * 4);
+    _Ygl->win[0] = (u32*)malloc(512 * 4);
   }
   if( _Ygl->win[1] == NULL ){
-    _Ygl->win[1] = malloc(512 * 4);
+    _Ygl->win[1] = (u32*)malloc(512 * 4);
   }
 
   HShift = 0;
@@ -1195,6 +1192,7 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
       }
     }
   }
+  return 0;
 }
 
 // 0 .. outside,1 .. inside
@@ -2764,7 +2762,7 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
 
     rbg->vdp2_sync_flg = -1;
     if (!rbg->use_cs) {
-      YglTMAllocate(YglTM_vdp2, &rbg->texture, info->cellw, info->cellh, &x, &y);
+      YglTMAllocate(YglTM_vdp2, &rbg->texture, info->cellw, info->cellh, (unsigned*)&x, (unsigned*)&y);
       rbg->c.x = x;
       rbg->c.y = y;
       YglCacheAdd(YglTM_vdp2, cacheaddr, &rbg->c);
@@ -3242,12 +3240,12 @@ void Vdp2DrawRotation_in_async(void *p)
 }
 
 static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
-   rotationTask *task = malloc(sizeof(rotationTask));
+   rotationTask *task = (rotationTask*)malloc(sizeof(rotationTask));
 
-   task->rbg = malloc(sizeof(RBGDrawInfo));
+   task->rbg = (RBGDrawInfo*)malloc(sizeof(RBGDrawInfo));
    memcpy(task->rbg, rbg, sizeof(RBGDrawInfo));
 
-   task->varVdp2Regs = malloc(sizeof(Vdp2));
+   task->varVdp2Regs = (Vdp2*)malloc(sizeof(Vdp2));
    memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
 
    if (rotation_run == 0) {
@@ -6603,14 +6601,14 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 
   switch (type) {
   case VDP_SETTING_FILTERMODE:
-    _Ygl->aamode = value;
+    _Ygl->aamode = (AAMODE)value;
     break;
   case VDP_SETTING_UPSCALMODE:
-    _Ygl->upmode = value;
+    _Ygl->upmode = (UPMODE)value;
     break;
   case VDP_SETTING_RESOLUTION_MODE:
     if (_Ygl->resolution_mode != value) {
-       _Ygl->resolution_mode = value;
+       _Ygl->resolution_mode = (RESOLUTION_MODE)value;
        YglChangeResolution(_Ygl->rwidth, _Ygl->rheight);
     }
     break;
@@ -6622,7 +6620,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
 #if defined(_OGL3_)
       if ((maj >=4) && (min >=2)) {
         if (glPatchParameteri) {
-          _Ygl->polygonmode = value;
+          _Ygl->polygonmode = (POLYGONMODE) value;
         } else {
           YuiMsg("GPU tesselation is not possible - fallback on CPU tesselation\n");
           _Ygl->polygonmode = CPU_TESSERATION;
@@ -6637,7 +6635,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     } else {
 
 
-      _Ygl->polygonmode = value;
+      _Ygl->polygonmode = (POLYGONMODE)value;
     }
   break;
   case VDP_SETTING_COMPUTE_SHADER:
@@ -6661,7 +6659,7 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     YglChangeResolution(_Ygl->rwidth, _Ygl->rheight);
   break;
   case VDP_SETTING_ASPECT_RATIO:
-    _Ygl->stretch = value;
+    _Ygl->stretch = (RATIOMODE)value;
   break;
   case VDP_SETTING_SCANLINE:
     _Ygl->scanline = value;
@@ -6670,10 +6668,10 @@ void VIDOGLSetSettingValueMode(int type, int value) {
     _Ygl->wireframe_mode = value;
   break;
   case VDP_SETTING_MESH_MODE:
-    _Ygl->meshmode = value;
+    _Ygl->meshmode = (MESHMODE)value;
   break;
   case VDP_SETTING_BANDING_MODE:
-    _Ygl->bandingmode = value;
+    _Ygl->bandingmode = (BANDINGMODE)value;
   break;
   default:
   return;

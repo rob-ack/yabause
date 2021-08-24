@@ -107,12 +107,6 @@ int PerInit(int coreid);
  */
 void PerDeInit(void);
 
-/** @brief Adds a peripheral
- *
- * You shouldn't directly use this function but
- * PerPadAdd() or PerMouseAdd() instead.
- */
-void * PerAddPeripheral(PortData_struct *port, int perid);
 int PerGetId(void * peripheral);
 void PerPortReset(void);
 /**

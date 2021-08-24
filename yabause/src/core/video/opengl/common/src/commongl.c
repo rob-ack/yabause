@@ -310,7 +310,7 @@ void YglLoadIdentity(YglMatrix *result)
 
 YglTextureManager * YglTM_vdp2 = NULL;
 YglTextureManager * YglTM_vdp1[2] = { NULL, NULL };
-Ygl * _Ygl;
+Ygl * _Ygl = NULL;
 
 typedef struct
 {
@@ -630,7 +630,7 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tm->textureID);
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, tm->pixelBufferID);
-    tm->texture = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
+    tm->texture = (unsigned int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_WRITE_BIT | flg | GL_MAP_UNSYNCHRONIZED_BIT  );
     if (tm->texture == NULL){
       abort();
     }
@@ -1441,7 +1441,7 @@ int YglInit(int width, int height, unsigned int depth) {
   _Ygl->st = 0;
   _Ygl->aamode = AA_NONE;
   _Ygl->scanline = 0;
-  _Ygl->stretch = 0;
+  _Ygl->stretch = (RATIOMODE)0;
   _Ygl->wireframe_mode = 0;
 
   return 0;
@@ -2516,7 +2516,7 @@ void YglEraseWriteVDP1(int id) {
   // _Ygl->vdp1IsNotEmpty = 0;
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->vdp1fbo);
-  int drawBuf[2] = {0};
+  GLint drawBuf[2] = {0};
   glGetIntegerv(GL_DRAW_BUFFER0, &drawBuf[0]);
   glGetIntegerv(GL_DRAW_BUFFER1, &drawBuf[1]);
   glDrawBuffers(2, &DrawBuffers[id*2]);
@@ -2549,7 +2549,7 @@ void YglEraseWriteVDP1(int id) {
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
   FRAMELOG("YglEraseWriteVDP1xx: clear %d\n", id);
   //Get back to drawframe
-  glDrawBuffers(2, &drawBuf[0]);
+  glDrawBuffers(2, (GLenum*)&drawBuf[0]);
 
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 
@@ -2719,7 +2719,7 @@ void YglRenderVDP1(void) {
     glDisable(GL_STENCIL_TEST);
 
   for( j=0;j<(level->prgcurrent+1); j++ ) {
-    _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, &cprg, mat, varVdp2Regs);
+    _Ygl->vdp1On[_Ygl->drawframe] |= renderVDP1Level(level, j, (int*)&cprg, mat, varVdp2Regs);
     level->prg[j].currentQuad = 0;
   }
 
@@ -3208,6 +3208,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
      glClearBufferfv(GL_COLOR, 0, col);
      goto render_finish;
    }
+    {
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
@@ -3256,8 +3257,8 @@ void YglRender(Vdp2 *varVdp2Regs) {
   int isBlur[7] = {0};
   int isPerline[8] = {0};
   int isShadow[7] = {0};
-  glDisable(GL_BLEND);
   int id = 0;
+  glDisable(GL_BLEND);
 
   lncl[0] = (varVdp2Regs->LNCLEN >> 0)&0x1; //NBG0
   lncl[1] = (varVdp2Regs->LNCLEN >> 1)&0x1; //NBG1
@@ -3353,7 +3354,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 #endif
-
+   }
 render_finish:
 
   for (int i=0; i<SPRITE; i++)
@@ -3417,7 +3418,7 @@ u32 * YglGetColorRamPointer(int line) {
   }
 
   if (_Ygl->cram_tex_buf == NULL) {
-    _Ygl->cram_tex_buf = malloc(2048 * 4*512);
+    _Ygl->cram_tex_buf = (u32*)malloc(2048 * 4*512);
     memset(_Ygl->cram_tex_buf, 0, 2048 * 4*512);
     glTexSubImage2D(GL_TEXTURE_2D,0,0,0,2048, 512,GL_RGBA, GL_UNSIGNED_BYTE,_Ygl->cram_tex_buf);
   }

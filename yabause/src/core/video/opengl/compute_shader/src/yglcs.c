@@ -121,7 +121,7 @@ extern int WinS_mode[enBGMAX+1];
 static void YglSetVDP1FB(int i){
   if (_Ygl->vdp1IsNotEmpty != 0) {
     _Ygl->vdp1On[i] = 1;
-    vdp1_set_directFB(i);
+    vdp1_set_directFB();
     _Ygl->vdp1IsNotEmpty = 0;
   }
 }
@@ -253,7 +253,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    glActiveTexture(GL_TEXTURE0);
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
-
+   {
+	   
   int min = 8;
   int oldPrio = 0;
 
@@ -376,6 +377,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
    YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 #endif
+   }
 
 render_finish:
 

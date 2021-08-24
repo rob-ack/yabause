@@ -16,7 +16,7 @@ static int up_prg = -1;
 static int up_mode = -1;
 static int d_size = -1;
 static int t_size = -1;
-static int up_lut_tex = -1;
+static GLuint up_lut_tex = -1;
 
 static void Ygl_printProgError( GLuint prog )
 {
@@ -40,7 +40,7 @@ static void Ygl_printProgError( GLuint prog )
 }
 
 
-static int upscale_vbo = 0;
+static GLuint upscale_vbo = 0;
 
 int YglUpscaleFramebuffer(u32 srcTexture, u32 targetFbo, float w, float h, float texw, float texh) {
 

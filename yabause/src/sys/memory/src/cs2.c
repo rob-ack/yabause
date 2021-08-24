@@ -3912,9 +3912,9 @@ u8 Cs2GetIP(int autoregion) {
          memcpy(cdip->version, buf+0x2A, 6);
          cdip->version[6]='\0';
          sprintf(cdip->date, "%c%c/%c%c/%c%c%c%c", buf[0x34], buf[0x35], buf[0x36], buf[0x37], buf[0x30], buf[0x31], buf[0x32], buf[0x33]);
-         sscanf(buf+0x38, "%s", cdip->cdinfo);
-         sscanf(buf+0x40, "%s", cdip->region);
-         sscanf(buf+0x50, "%s", cdip->peripheral);
+         sscanf((char*)buf+0x38, "%s", cdip->cdinfo);
+         sscanf((char*)buf+0x40, "%s", cdip->region);
+         sscanf((char*)buf+0x50, "%s", cdip->peripheral);
          memcpy(cdip->gamename, buf+0x60, 112);
          cdip->gamename[112]='\0';
 #ifdef WORDS_BIGENDIAN

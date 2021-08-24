@@ -1307,7 +1307,7 @@ void * PerAddPeripheral(PortData_struct *port, int perid)
 
 int PerGetId(void * peripheral)
 {
-   u8 * id = peripheral;
+   u8 * id = (u8*)peripheral;
    return *id;
 }
 
@@ -1439,7 +1439,7 @@ void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * contr
 
    perkeyconfigsize += nelems;
 
-	 PerConfig_struct *new_data = realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
+	 PerConfig_struct *new_data = (PerConfig_struct*)realloc(perkeyconfig, perkeyconfigsize * sizeof(PerConfig_struct));
  	if (new_data == NULL)
  	{
 		YuiMsg("Peripheral realloc Error\n");
@@ -1460,49 +1460,49 @@ void PerUpdateConfig(PerBaseConfig_struct * baseconfig, int nelems, void * contr
 
 PerPad_struct * PerPadAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERPAD);
+   return (PerPad_struct *) PerAddPeripheral(port, PERPAD);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerMouse_struct * PerMouseAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERMOUSE);
+   return (PerMouse_struct*) PerAddPeripheral(port, PERMOUSE);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerAnalog_struct * PerWheelAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERWHEEL);
+   return (PerAnalog_struct*) PerAddPeripheral(port, PERWHEEL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerAnalog_struct * PerMissionStickAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERMISSIONSTICK);
+   return (PerAnalog_struct*) PerAddPeripheral(port, PERMISSIONSTICK);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerAnalog_struct * Per3DPadAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PER3DPAD);
+   return (PerAnalog_struct*) PerAddPeripheral(port, PER3DPAD);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerAnalog_struct * PerTwinSticksAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERTWINSTICKS);
+   return (PerAnalog_struct*) PerAddPeripheral(port, PERTWINSTICKS);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 PerGun_struct * PerGunAdd(PortData_struct * port)
 {
-   return PerAddPeripheral(port, PERGUN);
+   return (PerGun_struct*) PerAddPeripheral(port, PERGUN);
 }
 
 PerCab_struct * PerCabAdd(PortData_struct * port)

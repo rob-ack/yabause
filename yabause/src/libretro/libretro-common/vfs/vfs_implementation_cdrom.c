@@ -27,7 +27,11 @@
 #include <cdrom/cdrom.h>
 
 #if defined(_WIN32) && !defined(_XBOX)
-#include <windows.h>
+#include <Windows.h>
+#endif
+
+#ifdef __cplusplus
+extern "C"{
 #endif
 
 /* TODO/FIXME - static global variable */
@@ -227,7 +231,7 @@ void retro_vfs_file_open_cdrom(
    }
 #endif
 #if defined(_WIN32) && !defined(_XBOX)
-   char cdrom_path[] = "\\\\.\\D:";
+   wchar_t cdrom_path[] = L"\\\\.\\D:";
    size_t path_len   = strlen(path);
    const char *ext   = path_get_extension(path);
 
@@ -493,3 +497,8 @@ const vfs_cdrom_t* retro_vfs_file_get_cdrom_position(
 {
    return &stream->cdrom;
 }
+
+#ifdef __cplusplus
+}
+#endif
+

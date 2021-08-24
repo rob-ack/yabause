@@ -102,7 +102,7 @@ void FASTCALL JapModemCs2WriteByte(SH2_struct *context, u8* mem, u32 addr, u8 va
 
 int JapModemInit(const char *ip, const char *port)
 {  
-   if ((JapModemArea = malloc(sizeof(JapModem))) == NULL)
+   if ((JapModemArea = (JapModem*)malloc(sizeof(JapModem))) == NULL)
    {
       Cs2Area->carttype = CART_NONE;
       YabSetError(YAB_ERR_CANNOTINIT, (void *)"Japanese Modem");

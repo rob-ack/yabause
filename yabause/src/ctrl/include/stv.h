@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 int STVGetRomList(const char *dir, int force);
-char* getSTVGameName(int id);
+char const * const getSTVGameName(int id);
 int STVGetSingle(const char *pathfile, const char *biospath, int* id);
 int STVSingleInit(const char *gamepath, const char *biospath, const char *eepromdir, int stv_favorite_region);
 int STVInit(int id, const char *path, const char *eepromdir, int stv_favorite_region);
@@ -61,9 +61,9 @@ typedef struct FileEntry_s{
 } FileEntry;
 
 typedef struct Game_s{
-  char* romset;
-  char* parent;
-  char* name;
+  char const * const romset;
+  char const * const parent;
+  char const * const name;
   u32 regions;
   u32 key;
   u8 rotated;
@@ -88,8 +88,8 @@ typedef struct BiosFileEntry_s{
 } BiosFileEntry;
 
 typedef struct Bios_s{
-  char* romset;
-  char* name;
+  char const* romset;
+  char const* name;
   BiosFileEntry blobs[MAX_GAME_FILES];
 } Bios;
 

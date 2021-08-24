@@ -96,7 +96,7 @@ extern void VIDOGLVdp1Draw();
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-void VIDCSVdp1Draw();
+void VIDCSVdp1Draw(void);
 void VIDCSVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
 void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer);
@@ -118,7 +118,7 @@ extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void YglCSVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 extern void YglCSVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 extern void VIDOGLSetSettingValueMode(int type, int value);
-extern void VIDOGLSync();
+extern void VIDOGLSync(void);
 extern void VIDOGLGetNativeResolution(int *width, int *height, int*interlace);
 extern void VIDOGLVdp2DispOff(void);
 extern int YglGenFrameBuffer(int force);
@@ -206,7 +206,7 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-void VIDCSVdp1Draw()
+void VIDCSVdp1Draw(void)
 {
   VIDOGLVdp1Draw();
 }

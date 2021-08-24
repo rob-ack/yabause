@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "threads.h"
 
 volatile u64 m68k_counter = 0;
-extern "C" YabEventQueue * q_scsp_m68counterCond;
+extern YabEventQueue * q_scsp_m68counterCond;
 //u64 m68k_counter_done = 0;
 
 //constexpr u64 MAX_SCSP_COUNTER = (44100 * 256 / 60) << SCSP_FRACTIONAL_BITS;

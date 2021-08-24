@@ -620,7 +620,7 @@ void FASTCALL NetlinkWriteByte(SH2_struct *context, u8* memory, u32 addr, u8 val
 
 int NetlinkInit(const char *ip, const char *port)
 {  
-   if ((NetlinkArea = malloc(sizeof(Netlink))) == NULL)
+   if ((NetlinkArea = (Netlink*)malloc(sizeof(Netlink))) == NULL)
    {
       Cs2Area->carttype = CART_NONE;
       YabSetError(YAB_ERR_CANNOTINIT, (void *)"Netlink");

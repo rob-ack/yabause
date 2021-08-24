@@ -24,7 +24,15 @@
 #include "m68kcore.h"
 #include "memory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern u8 * SoundRam;
+
+#ifdef __cplusplus
+}
+#endif
 
 M68K_struct * M68K = NULL;
 

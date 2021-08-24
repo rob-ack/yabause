@@ -778,6 +778,10 @@ endif()
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
+if(KRONOS_FORCE_CXX_COMPILER)
+	SET_SOURCE_FILES_PROPERTIES( ${kronos_SOURCES} PROPERTIES LANGUAGE CXX )
+endif()
+
 if(IOS)
 	add_library(kronos OBJECT ${kronos_SOURCES} ${kronos_HEADERS})
 else()

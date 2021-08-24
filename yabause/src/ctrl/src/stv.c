@@ -6,7 +6,7 @@
 #include <sys/types.h>
 #include <dirent.h> 
 #else
-#include <windows.h>
+#include <Windows.h>
 #endif
 
 #ifdef __LIBRETRO__
@@ -2371,7 +2371,7 @@ int copyBios(JZFile *zip, void* id) {
     while(availableGames[gameId].entry->blobs[i].type != GAME_END) {
       if (availableGames[gameId].entry->blobs[i].type == BIOS_BLOB) {
         // We need a specific bios
-        biosname = malloc(strlen(availableGames[gameId].entry->blobs[i].filename) + 1);
+        biosname = (char*)malloc(strlen(availableGames[gameId].entry->blobs[i].filename) + 1);
         strcpy(biosname, availableGames[gameId].entry->blobs[i].filename);
       }
       i++;
@@ -2506,9 +2506,9 @@ int recordCallback(JZFile *zip, int idx, JZFileHeader *header, char *filename, v
 
     LOGSTV("%s\n", filename);
 #ifdef __LIBRETRO__
-    char *last = strrchr(info->filename, PATH_DEFAULT_SLASH_C());
+    char const *last = strrchr(info->filename, PATH_DEFAULT_SLASH_C());
 #else
-    char *last = strrchr(info->filename, '/');
+    char const *last = strrchr(info->filename, '/');
 #endif
     if (last != NULL) {
       if (strcmp(last+1, "stvbios.zip") == 0) {
@@ -2766,14 +2766,14 @@ int STVGetRomList(const char* path, int force){
   WIN32_FIND_DATAA FindFileData;
   //Force a detection of the bios first
   unsigned int len = strlen(path) + strlen("/") + strlen("stvbios.zip") + 1;
-  unsigned char *file = malloc(len);
+  char *file = (char *)malloc(len);
   snprintf(file, len, "%s/stvbios.zip", path);
   updateGameList(file, &nbGames);
   free(file);
   if((hFind = FindFirstFileA(pathfile, &FindFileData)) != INVALID_HANDLE_VALUE){
     do{
       unsigned int len = strlen(path)+strlen("/")+strlen(FindFileData.cFileName)+1;
-      unsigned char *file = malloc(len);
+      char *file = (char *)malloc(len);
       snprintf(file, len, "%s/%s",path, FindFileData.cFileName);
       LOGSTV(file);
       updateGameList(file, &nbGames);
@@ -2793,7 +2793,7 @@ int STVGetRomList(const char* path, int force){
 }
 #endif
 
-char* getSTVGameName(int id) {
+char const * const getSTVGameName(int id) {
   return availableGames[id].entry->name;
 }
 

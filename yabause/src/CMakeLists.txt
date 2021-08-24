@@ -105,7 +105,7 @@ set(kronos_SOURCES
 	utils/src/netlink.c
 	core/osd/src/osdcore.c
 	utils/src/profile.c
-	core/m68k/mk68Counter.cpp
+	core/m68k/mk68Counter.c
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
 	sys/vdp2/src/vdp2.c

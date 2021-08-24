@@ -1837,7 +1837,7 @@ void ScuExec(u32 timing) {
 
 //////////////////////////////////////////////////////////////////////////////
 
-static char *disd1bussrc(u8 num)
+static char const * const disd1bussrc(u8 num)
 {
    switch(num) {
       case 0x0:
@@ -1868,7 +1868,7 @@ static char *disd1bussrc(u8 num)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static char *disd1busdest(u8 num)
+static char const * const disd1busdest(u8 num)
 {
    switch(num) {
       case 0x0:
@@ -1907,7 +1907,7 @@ static char *disd1busdest(u8 num)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static char *disloadimdest(u8 num)
+static char const* const disloadimdest(u8 num)
 {
    switch(num) {
       case 0x0:
@@ -1938,7 +1938,7 @@ static char *disloadimdest(u8 num)
 
 //////////////////////////////////////////////////////////////////////////////
 
-static char *disdmaram(u8 num)
+static char const* const disdmaram(u8 num)
 {
    switch(num)
    {

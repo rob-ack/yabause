@@ -1474,7 +1474,7 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 
 //////////////////////////////////////////////////////////////////////////////
 
-char *Vdp1DebugGetCommandNumberName(u32 number)
+char const * const Vdp1DebugGetCommandNumberName(u32 number)
 {
    u32 addr;
    u16 command;
@@ -2273,7 +2273,7 @@ void Vdp1HBlankOUT(void)
 }
 
 //////////////////////////////////////////////////////////////////////////////
-extern void vdp1_compute();
+
 void Vdp1VBlankIN(void)
 {
   // if (VIDCore != NULL) {

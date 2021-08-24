@@ -37,7 +37,7 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
    {
       for (int i=0;;i++)
       {
-         char *string;
+         char const *string;
 
          if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
             break;

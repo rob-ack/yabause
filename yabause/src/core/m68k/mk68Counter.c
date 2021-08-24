@@ -25,9 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <malloc.h>
 #endif
 #include "core.h"
-#include "yabause.h"
 
-#include <thread>
 #include "mk68Counter.h"
 #include "threads.h"
 

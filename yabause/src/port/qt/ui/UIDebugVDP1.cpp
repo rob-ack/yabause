@@ -22,6 +22,8 @@
 #include <QImageWriter>
 #include <QGraphicsPixmapItem>
 
+#include "vdp1.debug.h"
+
 UIDebugVDP1::UIDebugVDP1( QWidget* p )
 	: QDialog( p )
 {

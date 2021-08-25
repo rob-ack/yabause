@@ -43,6 +43,7 @@
 #include <QDateTime>
 
 #include <QDebug>
+#include "vdp1.debug.h"
 
 extern "C" {
 extern VideoInterface_struct *VIDCoreList[];

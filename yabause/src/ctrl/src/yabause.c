@@ -194,7 +194,12 @@ extern int tweak_backup_file_size;
 YabEventQueue * q_scsp_frame_start;
 YabEventQueue * q_scsp_finish;
 YabEventQueue * q_scsp_m68counterCond;
-YabEventQueue * q_sh2_sync;
+#ifdef xSH2_ASYNC
+YabEventQueue* q_sh2_sync;
+bool sh2AsyncThreadRunning = false;
+bool sh2WaitNextFrame = false;
+void mainSH2Async(void* p);
+#endif
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -216,9 +221,6 @@ static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     }
 }
 
-#ifdef xSH2_ASYNC
-//static void Msh2ExecuteWorkerThreadFunction(void* p);
-#endif
 
 int YabauseSh2Init(yabauseinit_struct *init)
 {
@@ -266,40 +268,16 @@ int YabauseSh2Init(yabauseinit_struct *init)
 
 #define NB_MSG (1)
 
-#ifdef xSH2_ASYNC
-//   MSH2->thread_running = 0;
-//   MSH2->start = YabThreadCreateQueue(NB_MSG);
-//   MSH2->end = YabThreadCreateQueue(NB_MSG);
-//   sem_init(&MSH2->lock, 0, 1);
-//   MSH2->cycles_request = 0;
-//   MSH2->thread_id = YAB_THREAD_MSH2;
-#endif
    MSH2->cycleFrac = 0;
    MSH2->cycleLost = 0;
    MSH2->cdiff = 0;
-#ifdef xSH2_ASYNC
-//   SSH2->thread_running = 0;
-//   SSH2->start = YabThreadCreateQueue(NB_MSG);
-//   SSH2->end = YabThreadCreateQueue(NB_MSG);
-//   sem_init(&SSH2->lock, 0, 1);
-//   SSH2->cycles_request = 0;
-//   SSH2->thread_id = YAB_THREAD_SSH2;
-#endif
    SSH2->cycleFrac = 0;
    SSH2->cycleLost = 0;
    SSH2->cdiff = 0;
-#ifdef xSH2_ASYNC
-   // YabThreadStart(YAB_THREAD_SSH2, sh2Execute, SSH2);
-//   YabThreadStart(YAB_THREAD_MSH2, Msh2ExecuteWorkerThreadFunction, MSH2);
-#endif
    return 0;
 }
 
 static u64 fpsticks = 0;
-
-#ifdef xSH2_ASYNC
-void mainSH2Async(void* p);
-#endif
 
 int YabauseInit(yabauseinit_struct *init)
 {
@@ -316,7 +294,9 @@ int YabauseInit(yabauseinit_struct *init)
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
   q_scsp_m68counterCond = YabThreadCreateQueue(1);
+#ifdef xSH2_ASYNC
   q_sh2_sync = YabThreadCreateQueue(1);
+#endif
 
 	setM68kCounter(0);
 
@@ -556,7 +536,15 @@ void YabFlushBackups(void)
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseDeInit(void) {
-
+#ifdef xSH2_ASYNC
+    sh2AsyncThreadRunning = false;
+    sh2WaitNextFrame = true;
+	if(YaGetQueueSize(q_sh2_sync) == 0)
+    {
+        YabAddEventQueue(q_sh2_sync, 0);
+    }
+    YabThreadWait(YAB_NUM_THREADS + 1);
+#endif
    STVDeInit();
    Vdp2DeInit();
    Vdp1DeInit();
@@ -720,31 +708,30 @@ u32 YabauseGetFrameCount() {
 void SyncCPUtoSCSP();
 
 #ifdef xSH2_ASYNC
-bool waitNextFrame = false;
 
 void mainSH2Async(void * p) {
-    int lines;
-    int frames;
+    sh2AsyncThreadRunning = true;
+	while (sh2AsyncThreadRunning) {
+        int lines;
+        int frames;
 
-    if (yabsys.IsPal)
-    {
-        lines = 313;
-        frames = 50;
-    }
-    else
-    {
-        lines = 263;
-        frames = 60;
-    }
-
-    u64 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
-    u64 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
-
-	while (true) {
+        if (yabsys.IsPal)
+        {
+            lines = 313;
+            frames = 50;
+        }
+        else
+        {
+            lines = 263;
+            frames = 60;
+        }
         YabWaitEventQueue(q_sh2_sync);
 
-        waitNextFrame = false;
+        u64 const scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
+        u64 const m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
         const u32 usecinc = yabsys.DecilineUsec;
+
+        sh2WaitNextFrame = false;
 
 		MSH2->cycles = 0;
         MSH2->frtcycles = 0;
@@ -753,8 +740,11 @@ void mainSH2Async(void * p) {
         SSH2->cycles = 0;
         SSH2->frtcycles = 0;
 
-        while (!waitNextFrame)
+        int remainingCyclesPerFrame = yabsys.MaxLineCount * DECILINE_STEP;
+
+        while (!sh2WaitNextFrame)
         {
+            remainingCyclesPerFrame--;
             PROFILE_START("Total Emulation");
 
             sh2ExecuteSync(MSH2, yabsys.DecilineStop);
@@ -773,6 +763,7 @@ void mainSH2Async(void * p) {
             }
             PROFILE_STOP("Total Emulation");
         }
+        YabThreadYield();
     }
 }
 #endif
@@ -781,8 +772,8 @@ int YabauseEmulate(void) {
     yabsys.frame_count++;
     DoMovie();
 
-    int lines = 0;
-    int frames = 0;
+    int lines;
+    int frames;
     if (yabsys.IsPal)
     {
         lines = 313;
@@ -810,7 +801,6 @@ int YabauseEmulate(void) {
         }
     	else if (yabsys.DecilineCount == DECILINE_STEP)
 	    {
-
 		    // HBlankOUT
 		    PROFILE_START("hblankout");
 		    Vdp2HBlankOUT();
@@ -838,11 +828,8 @@ int YabauseEmulate(void) {
 			    PROFILE_STOP("VDP1/VDP2");
                 yabsys.LineCount = 0;
                 _frameDone = true;
-                waitNextFrame = true;
+                sh2WaitNextFrame = true;
             }
-            yabsys.DecilineCount = 0;
-        }else if(yabsys.DecilineCount >= DECILINE_STEP)
-        {
             yabsys.DecilineCount = 0;
         }
         VIDCore->setupFrame(false);
@@ -898,7 +885,7 @@ int YabauseEmulate(void) {
                 Vdp1VBlankIN();
                 Vdp2VBlankIN();
                 PROFILE_STOP("vblankin");
-                //                    SyncCPUtoSCSP();
+                SyncCPUtoSCSP();
                 CheatDoPatches(MSH2);
             }
             else if (yabsys.LineCount == yabsys.MaxLineCount)

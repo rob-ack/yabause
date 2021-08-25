@@ -25,13 +25,13 @@
       "exe": "C:/RetroArch-Win64/retroarch.exe",
       "project": "yabause\\CMakeLists.txt",
       "projectTarget": "kronos_libretro.dll (src\\libretro\\kronos_libretro.dll)",
-      "name": "win local retroarch (src\\libretro\\kronos_libretro.dll)",
+      "name": "kronos_libretro.dll (src\\libretro\\kronos_libretro.dll)",
       "program": "C:/RetroArch-Win64/retroarch.exe",
       "cwd": "C:/RetroArch-Win64",
       "args": [
-        "--verbose",
-        "--libretro=${debugInfo.fullTargetPath}"
-//        "--load-menu-on-error",
+//        "/verbose",
+//        "/libretro=${debugInfo.fullTargetPath}",
+//        "/load-menu-on-error"
 //        "C:\\RetroArch-Win64\\downloads\\Story of Thor 2, The (Europe)\\Story of Thor 2, The (Europe).cue"
       ],
       "env": {},

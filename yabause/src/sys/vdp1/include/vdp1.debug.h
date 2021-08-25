@@ -1,4 +1,5 @@
-/*  Copyright 2005-2008 Theo Berkau
+/*  Copyright 2003-2005 Guillaume Duhamel
+    Copyright 2004-2006 Theo Berkau
 
     This file is part of Yabause.
 
@@ -17,30 +18,17 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#ifndef VDP2DEBUG_H
-#define VDP2DEBUG_H
-
-#define VDP2_DEBUG_STRING_SIZE 2048
+#ifndef VDP1_DEBUG_H
+#define VDP1_DEBUG_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void ToggleNBG0(void);
-void ToggleNBG1(void);
-void ToggleNBG2(void);
-void ToggleNBG3(void);
-void ToggleRBG0(void);
-void ToggleRBG1(void);
-void ToggleFullScreen(void);
-
-void Vdp2DebugStatsRBG0(char *outstring, int *isenabled);
-void Vdp2DebugStatsNBG0(char *outstring, int *isenabled);
-void Vdp2DebugStatsNBG1(char *outstring, int *isenabled);
-void Vdp2DebugStatsNBG2(char *outstring, int *isenabled);
-void Vdp2DebugStatsNBG3(char *outstring, int *isenabled);
-void Vdp2DebugStatsGeneral(char *outstring, int *isenabled);
-pixel_t *Vdp2DebugTexture(u32 screen, int * w, int * h);
+char const * const Vdp1DebugGetCommandNumberName(u32 number);
+void Vdp1DebugCommand(u32 number, char *outstring);
+u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
+void ToggleVDP1(void);
 
 #ifdef __cplusplus
 }

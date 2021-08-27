@@ -271,12 +271,7 @@ void VIDCSVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_f
   cmd->SPCTL = Vdp2Lines[0].SPCTL;
   // cmd->type = POLYGON;
   cmd->COLOR[0] = Vdp1ReadPolygonColor(cmd,&Vdp2Lines[0]);
-  if (getBestMode(cmd) == DISTORTED) {
-    addCSCommands(cmd,POLYGON);
-  } else {
-    cmd->type = QUAD_POLY;
-    vdp1_add(cmd,0);
-  }
+  addCSCommands(cmd,POLYGON);
   return;
 }
 

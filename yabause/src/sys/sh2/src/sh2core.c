@@ -1695,7 +1695,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
       switch (size = ((*CHCR & 0x0C00) >> 10)) {
          case 0:
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteByte(context, *DAR, DMAMappedMemoryReadByte(context, *SAR, NULL), NULL);
+				DMAMappedMemoryWriteByte(context, *DAR, DMAMappedMemoryReadByte(context, *SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -1707,7 +1707,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
             srcInc *= 2;
 
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteWord(context, *DAR, DMAMappedMemoryReadWord(context, *SAR, NULL), NULL);
+				DMAMappedMemoryWriteWord(context, *DAR, DMAMappedMemoryReadWord(context, *SAR));
                *SAR += srcInc;
                *DAR += destInc;
             }
@@ -1719,7 +1719,7 @@ void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u
             srcInc *= 4;
 
             for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteLong(context, *DAR, DMAMappedMemoryReadLong(context, *SAR, NULL), NULL);
+				DMAMappedMemoryWriteLong(context, *DAR, DMAMappedMemoryReadLong(context, *SAR));
                *DAR += destInc;
                *SAR += srcInc;
             }

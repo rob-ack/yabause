@@ -771,9 +771,9 @@ void MappedMemoryInit()
      &BupRam);
 }
 
-u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr) {
+u8 FASTCALL DMAMappedMemoryReadByte(u32 addr) {
   u8 ret;
-  ret = MappedMemoryReadByte(context, addr);
+  ret = MappedMemoryReadByte(NULL, addr);
 return ret;
 }
 
@@ -863,8 +863,8 @@ LOG("Hunandled Byte R %x\n", addr);
 }
 
 
-u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr) {
-  return MappedMemoryReadWord(context, addr);
+u16 FASTCALL DMAMappedMemoryReadWord(u32 addr) {
+  return MappedMemoryReadWord(NULL, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -958,9 +958,9 @@ LOG("Hunandled Word R %x\n", addr);
    return 0;
 }
 
-u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr)
+u32 FASTCALL DMAMappedMemoryReadLong(u32 addr)
 {
-  return MappedMemoryReadLong(context, addr);
+  return MappedMemoryReadLong(NULL, addr);
 }
 //////////////////////////////////////////////////////////////////////////////
 u32 FASTCALL MappedMemoryReadLong(SH2_struct *context, u32 addr)
@@ -1055,9 +1055,9 @@ LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
    return 0;
 }
 
-void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
+void FASTCALL DMAMappedMemoryWriteByte(u32 addr, u8 val)
 {
-   MappedMemoryWriteByte(context, addr, val);
+   MappedMemoryWriteByte(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1161,9 +1161,9 @@ LOG("Hunandled Byte W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
+void FASTCALL DMAMappedMemoryWriteWord(u32 addr, u16 val)
 {
-   MappedMemoryWriteWord(context, addr, val);
+   MappedMemoryWriteWord(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1269,9 +1269,9 @@ LOG("Hunandled Word W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
+void FASTCALL DMAMappedMemoryWriteLong(u32 addr, u32 val)
 {
-   MappedMemoryWriteLong(context, addr, val);
+   MappedMemoryWriteLong(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1827,7 +1827,7 @@ int YabSaveStateStream(void ** stream)
    MemStateWrite((void *)&endian, 1, 1, stream);
 
    // Write version(fix me)
-   i = 2;
+   i = 3;
    MemStateWrite((void *)&i, sizeof(i), 1, stream);
 
    // Skip the next 4 bytes for now

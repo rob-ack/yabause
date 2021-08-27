@@ -367,12 +367,12 @@ extern "C" {
   void FASTCALL SH2MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
   void FASTCALL SH2MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
 
-  u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr);
-  u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr);
-  u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr);
-  void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val);
-  void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val);
-  void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val);
+  u8 FASTCALL DMAMappedMemoryReadByte(u32 addr);
+  u16 FASTCALL DMAMappedMemoryReadWord(u32 addr);
+  u32 FASTCALL DMAMappedMemoryReadLong(u32 addr);
+  void FASTCALL DMAMappedMemoryWriteByte(u32 addr, u8 val);
+  void FASTCALL DMAMappedMemoryWriteWord(u32 addr, u16 val);
+  void FASTCALL DMAMappedMemoryWriteLong(u32 addr, u32 val);
 
   extern u8 *HighWram;
   extern u8 *LowWram;

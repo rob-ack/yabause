@@ -256,7 +256,7 @@ SHADER_VERSION_COMPUTE
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
 "    if (distance(d.xy, P+vec2(0.5)) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux = d.z;\n" //u is the relative distance from first point to projected position
-"      float uy= (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
+"      float uy = (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"

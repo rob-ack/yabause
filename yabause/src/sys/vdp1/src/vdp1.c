@@ -83,6 +83,9 @@ static void abortVdp1() {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp1RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
+  if (context != NULL){
+    context->cycles += 50;
+  }
    addr &= 0x7FFFF;
    return T1ReadByte(mem, addr);
 }

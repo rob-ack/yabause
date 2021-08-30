@@ -49,7 +49,7 @@ void InvalidateCache(SH2_struct *ctx);
 void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles);
 int DMAProc(SH2_struct *context, int cycles );
 
-#define OLD_DMA 1
+#define OLD_DMA 0
 //////////////////////////////////////////////////////////////////////////////
 
 int SH2Init(int coreid)
@@ -227,6 +227,7 @@ void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
    SH2Core->Exec(context, cycles);
    FRTExec(context);
    WDTExec(context);
+   DMAProc(context, cycles);
 }
 
 void FASTCALL SH2OnFrame(SH2_struct *context) {
@@ -1117,7 +1118,12 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
          context->onchip.TCR0 = val & 0xFFFFFF;
          return;
       case 0x18C:
-         context->onchip.CHCR0 = val & 0xFFFF;
+        if (context->onchip.TCR0 != 0) {
+          DMAProc(context, 0x7FFFFFFF);
+        }
+//         context->onchip.CHCR0 = val & 0xFFFF;
+
+         context->onchip.CHCR0 = (val & ~2) | (context->onchip.CHCR0 & (val| context->onchip.CHCR0M) & 2);
 
          // If the DMAOR DME bit is set and AE and NMIF bits are cleared,
          // and CHCR's DE bit is set and TE bit is cleared,
@@ -1137,7 +1143,10 @@ void FASTCALL OnchipWriteLong(SH2_struct *context, u32 addr, u32 val)  {
          context->onchip.TCR1 = val & 0xFFFFFF;
          return;
       case 0x19C:
-         context->onchip.CHCR1 = val & 0xFFFF;
+        if (context->onchip.TCR1 != 0) {
+          DMAProc(context, 0x7FFFFFFF);
+        }
+//         context->onchip.CHCR1 = val & 0xFFFF;
 
          context->onchip.CHCR1 = (val & ~2) | (context->onchip.CHCR1 & (val| context->onchip.CHCR1M) & 2);
 

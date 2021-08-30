@@ -1998,6 +1998,7 @@ int YabLoadStateStream(const void * stream, size_t size_stream)
          /* This is the "original" version of the format */
          break;
       case 2:
+      case 3:
          /* version 2 adds video recording */
          MemStateRead((void *)&framecounter, 4, 1, stream);
          movieposition=MemStateGetOffset(); // yabause was doing this, why ? it's replaced right after
@@ -2007,7 +2008,7 @@ int YabLoadStateStream(const void * stream, size_t size_stream)
       default:
          /* we're trying to open a save state using a future version
           * of the YSS format, that won't work, sorry :) */
-         YuiMsg("Save file is not supported. Might be a future version.\n");
+         YuiMsg("Save file is not supported. Might be a future version (%d).\n", headerversion);
          return -3;
          break;
    }

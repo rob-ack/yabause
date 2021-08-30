@@ -2143,10 +2143,10 @@ int SH2SaveState(SH2_struct *context, void ** stream)
 
    // Write header
    if (context->isslave == 0)
-      offset = MemStateWriteHeader(stream, "MSH2", 2);
+      offset = MemStateWriteHeader(stream, "MSH2", 3);
    else
    {
-      offset = MemStateWriteHeader(stream, "SSH2", 2);
+      offset = MemStateWriteHeader(stream, "SSH2", 3);
       MemStateWrite((void *)&yabsys.IsSSH2Running, 1, 1, stream);
    }
 

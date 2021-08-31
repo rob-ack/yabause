@@ -279,6 +279,7 @@ FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct *context, u32 cycles)
    while (execInterrupt == 0)
    {
      inIt = context->isInIt;
+     context->cycles += 1;
      cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
      execInterrupt |= (inIt != context->isInIt);

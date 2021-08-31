@@ -273,7 +273,9 @@ u16 FASTCALL Cs2ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                                        CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                                        return 0;
                                     }
-
+                                    if (context != NULL){
+                                      context->cycles += 24;
+                                    }
                                     val = T1ReadWord(ptr, 0);
 
                                     //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
@@ -383,6 +385,7 @@ void FASTCALL Cs2WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16
 u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
   s32 i;
   u32 val = 0;
+
   addr &= 0x3F; // fix me(I should really have proper mapping)
 
   switch(addr) {
@@ -430,7 +433,9 @@ u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
                         }
-
+                        if (context != NULL){
+                          context->cycles += 24;
+                        }
                         val = T1ReadLong(ptr, 0);
                         //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
 
@@ -708,7 +713,7 @@ void Cs2Reset(void) {
   Cs2Area->reg.CR3 = ('L'<<8) | 'O';
   Cs2Area->reg.CR4 = ('C'<<8) | 'K';
   Cs2Area->reg.HIRQ = 0xFFFF;
-  Cs2Area->reg.HIRQMASK = 0xFFFF;
+  Cs2Area->reg.HIRQMASK = 0x0000;
 
   Cs2Area->playFAD = 0xFFFFFFFF;
   Cs2Area->playendFAD = 0xFFFFFFFF;

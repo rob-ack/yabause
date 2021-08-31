@@ -248,18 +248,6 @@ void VIDCSVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* b
   LOG_CMD("%d\n", __LINE__);
 }
 
-int getBestMode(vdp1cmd_struct* cmd) {
-  int ret = DISTORTED;
-  if (
-    ((cmd->CMDXA - cmd->CMDXD) == 0) &&
-    ((cmd->CMDYA - cmd->CMDYB) == 0) &&
-    ((cmd->CMDXB - cmd->CMDXC) == 0) &&
-    ((cmd->CMDYC - cmd->CMDYD) == 0)
-  ) {
-    ret = QUAD;
-  }
-  return ret;
-}
 void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   LOG_CMD("%d\n", __LINE__);
@@ -273,12 +261,7 @@ void VIDCSVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8
 
   cmd->SPCTL = Vdp2Lines[0].SPCTL;
 
-  if (getBestMode(cmd) == DISTORTED) {
-    addCSCommands(cmd,DISTORTED);
-  } else {
-    cmd->type = QUAD;
-    vdp1_add(cmd,0);
-  }
+  addCSCommands(cmd,DISTORTED);
 
   return;
 }
@@ -288,12 +271,7 @@ void VIDCSVdp1PolygonDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_f
   cmd->SPCTL = Vdp2Lines[0].SPCTL;
   // cmd->type = POLYGON;
   cmd->COLOR[0] = Vdp1ReadPolygonColor(cmd,&Vdp2Lines[0]);
-  if (getBestMode(cmd) == DISTORTED) {
-    addCSCommands(cmd,POLYGON);
-  } else {
-    cmd->type = QUAD_POLY;
-    vdp1_add(cmd,0);
-  }
+  addCSCommands(cmd,POLYGON);
   return;
 }
 

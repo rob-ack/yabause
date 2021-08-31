@@ -292,6 +292,7 @@ typedef struct
    u16 RTCSR;  // 0xFFFFFFF0
    u16 RTCNT;  // 0xFFFFFFF4
    u16 RTCOR;  // 0xFFFFFFF8
+   u32 CHCR0M;
 } Onchip_struct;
 
 typedef struct
@@ -311,6 +312,16 @@ typedef struct
    u32 addr;
    u64 count;
 } tilInfo_struct;
+
+typedef struct {
+  u32 * CHCR;
+  u32 * SAR;
+  u32 * DAR;
+  u32 * TCR;
+  u32 * CHCRM;
+  u32 * VCRDMA;
+  int copy_clock;
+} Dmac;
 
 typedef struct SH2_struct_s
 {
@@ -373,6 +384,9 @@ typedef struct SH2_struct_s
 #endif
     u32 frtcycles;
     u32 wdtcycles;
+
+    Dmac dma_ch0;
+    Dmac dma_ch1;
 } SH2_struct;
 
 typedef struct

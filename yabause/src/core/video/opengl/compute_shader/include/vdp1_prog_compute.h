@@ -256,10 +256,10 @@ SHADER_VERSION_COMPUTE
 "  for (uint i=0; i<step; i++) {\n"
 //A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec3 d = antiAliasedPoint(P+vec2(0.5)*upscale, A, B);\n" //Get the projection of the point P to the line segment
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
 "    if (distance(d.xy, P+vec2(0.5)) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux = d.z;\n" //u is the relative distance from first point to projected position
-"      float uy= (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
+"      float uy = (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"
@@ -309,7 +309,7 @@ SHADER_VERSION_COMPUTE
 "  vec2 A = V0+(vec2(0.5)*upscale);\n"
 "  vec2 B = vec2(V1.x, V0.y)+(vec2(0.5)*upscale);\n"
 "  for (uint i=0; i<step; i++) {\n"
-"    vec3 d = antiAliasedPoint(P+vec2(0.5)*upscale, A, B);\n"
+"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
 "    if (distance(d.xy, P+vec2(0.5)) <= (length(upscale)/2.0)) {\n"
 "      float ux= d.z;\n"
 "      float uy= (float(i))/float(step);\n"
@@ -381,17 +381,12 @@ SHADER_VERSION_COMPUTE
 
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
-" if ((pixcmd.flip & 0x2u) == 0x2u) {\n"
-"   uv.y += 0.5f/float(pixcmd.h);\n"
-" } else {\n"
-"   uv.y -= 0.5f/float(pixcmd.h);\n"
-" }\n"
 
 " float posf = pixcmd.h*uv.y;\n"
 " if ((pixcmd.flip & 0x2u) == 0x2u) posf = floor(posf);\n"
 " else posf = ceil(posf);\n"
 
-"  uint x = clamp(uint(uv.x*(pixcmd.w)), 0u, uint(pixcmd.w-1));\n"
+"  uint x = uint(ceil(uv.x*(pixcmd.w-1)));\n"
 "  uint pos = clamp(uint(posf), 0u, uint(pixcmd.h-1))*pixcmd.w+x;\n"
 
 
@@ -411,10 +406,10 @@ SHADER_VERSION_COMPUTE
 "      dot = Vdp1RamReadByte(charAddr);\n"
 "       if ((x & 0x1u) == 0u) dot = (dot>>4)&0xFu;\n"
 "       else dot = (dot)&0xFu;\n"
-"      if ((dot == 0x0Fu) && !END) {\n"
+"      if ((dot == 0x0Fu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if ((dot == 0) && !SPD) {\n"
+"      else if ((dot == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "      else color = VDP1COLOR(dot | colorBank);\n"
@@ -429,10 +424,10 @@ SHADER_VERSION_COMPUTE
 "       dot = Vdp1RamReadByte(charAddr);\n"
 "       if ((x & 0x1u) == 0u) dot = (dot>>4)&0xFu;\n"
 "       else dot = (dot)&0xFu;\n"
-"       if ((dot == 0x0Fu) && !END) {\n"
+"       if ((dot == 0x0Fu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if ((dot == 0) && !SPD) {\n"
+"      else if ((dot == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "       else {\n"
@@ -446,10 +441,10 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(64 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFFC0u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) {\n"
+"      if ((dot == 0xFFu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if ((dot == 0) && !SPD) {\n"
+"      else if ((dot == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "      else {\n"
@@ -462,10 +457,10 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(128 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF80u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) {\n"
+"      if ((dot == 0xFFu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if ((dot == 0) && !SPD) {\n"
+"      else if ((dot == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "      else {\n"
@@ -478,10 +473,10 @@ SHADER_VERSION_COMPUTE
       // 8 bpp(256 color) Bank mode
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF00u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
-"      if ((dot == 0xFFu) && !END) {\n"
+"      if ((dot == 0xFFu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if ((dot == 0) && !SPD) {\n"
+"      else if ((dot == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "      else {\n"
@@ -495,10 +490,10 @@ SHADER_VERSION_COMPUTE
 "      uint temp;\n"
 "      charAddr += pos;\n"
 "      temp = Vdp1RamReadWord(charAddr);\n"
-"      if ((temp == 0x7FFFu) && !END) {\n"
+"      if ((temp == 0x7FFFu) && (!END)) {\n"
 "        discarded = true;\n"
 "      }\n"
-"      else if (((temp & 0x8000u) == 0) && !SPD) {\n"
+"      else if (((temp & 0x8000u) == 0) && (!SPD)) {\n"
 "        discarded = true;\n"
 "      }\n"
 "      else {\n"

@@ -1,5 +1,8 @@
 project( kronos-qt )
 
+#add translations
+include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt) 
+
 yab_port_start()
 
 option(YAB_USE_QT5 "Use Qt 5 if available." ON)

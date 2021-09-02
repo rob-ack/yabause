@@ -170,7 +170,7 @@ UISettings::UISettings(QList <translation_struct> *translations, QWidget* p )
 	cbTranslation->hide();
 #endif
 
-	loadShortcuts();
+	populateShortcutsView();
 
 	// load settings
 	loadSettings();
@@ -578,12 +578,12 @@ void UISettings::loadTranslations()
 
 }
 
-void UISettings::loadShortcuts()
+void UISettings::populateShortcutsView()
 {
 	QList<QAction *> actions = parent()->findChildren<QAction *>();
 	foreach ( QAction* action, actions )
 	{
-		if (action->text().isEmpty())
+		if (action->text().isEmpty() || !action->isShortcutVisibleInContextMenu())
 			continue;
 
 		actionsList.append(action);
@@ -734,6 +734,23 @@ void UISettings::loadSettings()
 	bgShowToolbar->setId( rbToolbarFullscreen, BD_HIDEFS );
 	bgShowToolbar->setId( rbToolbarAlways, BD_ALWAYSHIDE );
 	bgShowToolbar->button( s->value( "View/Toolbar", BD_HIDEFS ).toInt() )->setChecked( true );
+
+	//shortcuts
+	{
+		auto const actions = parent()->findChildren<QAction *>();
+		for(auto const action : actions)
+		{
+			if (action->text().isEmpty() || !action->isShortcutVisibleInContextMenu())
+				continue;
+
+			auto const var = s->value(action->text());
+			if(!var.isValid() || var.isNull() )
+			{
+				continue;
+			}
+			action->setShortcut(QKeySequence(var.toString()));
+		}
+	}
 }
 
 void UISettings::saveSettings()
@@ -820,14 +837,13 @@ void UISettings::saveSettings()
 	// shortcuts
 	applyShortcuts();
 	s->beginGroup("Shortcuts");
-	QList<QAction *> actions = parent()->findChildren<QAction *>();
-	foreach ( QAction* action, actions )
+	auto const actions = parent()->findChildren<QAction *>();
+	for ( auto const * const action : actions )
 	{
-		if (action->text().isEmpty())
+		if (action->text().isEmpty() || !action->isShortcutVisibleInContextMenu())
 			continue;
 
-		QString accelText = QString(action->shortcut().toString());
-		s->setValue(action->text(), accelText);
+		s->setValue(action->text(), action->shortcut().toString());
 	}
 	s->endGroup();
 }

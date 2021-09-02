@@ -92,9 +92,9 @@ static void abortVdp1() {
 //////////////////////////////////////////////////////////////////////////////
 
 u8 FASTCALL Vdp1RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += 50;
-  }
+  // if (context != NULL){
+  //   context->cycles += 50;
+  // }
    addr &= 0x7FFFF;
    return T1ReadByte(mem, addr);
 }
@@ -102,9 +102,9 @@ u8 FASTCALL Vdp1RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp1RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += 50;
-  }
+  // if (context != NULL){
+  //   context->cycles += 50;
+  // }
     addr &= 0x07FFFF;
     return T1ReadWord(mem, addr);
 }
@@ -112,9 +112,9 @@ u16 FASTCALL Vdp1RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += 50;
-  }
+  // if (context != NULL){
+  //   context->cycles += 50;
+  // }
    addr &= 0x7FFFF;
    return T1ReadLong(mem, addr);
 }
@@ -122,9 +122,9 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-  if (context != NULL){
-    context->cycles += 2;
-  }
+  // if (context != NULL){
+  //   context->cycles += 2;
+  // }
    addr &= 0x7FFFF;
    if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
@@ -139,9 +139,9 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-  if (context != NULL){
-    context->cycles += 2;
-  }
+  // if (context != NULL){
+  //   context->cycles += 2;
+  // }
    addr &= 0x7FFFF;
    if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
@@ -156,9 +156,9 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-  if (context != NULL){
-    context->cycles += 2;
-  }
+  // if (context != NULL){
+  //   context->cycles += 2;
+  // }
    addr &= 0x7FFFF;
    if (CmdListLimit >= addr) {
      CmdListDrawn = 0;

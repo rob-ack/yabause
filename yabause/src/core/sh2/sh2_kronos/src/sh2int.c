@@ -273,18 +273,18 @@ u8 execInterrupt = 0;
 
 FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct * context, u32 cycles)
 {
-	u32 const target_cycle = context->cycles + cycles;
-	execInterrupt = 0;
-	while (execInterrupt == 0)
-	{
-		int const inIt = context->isInIt;
-		int const iA = (context->regs.PC >> 20) & 0xFFF;
-		int const iB = (context->regs.PC >> 1) & 0x7FFFF;
-		opcode_func const func = cacheCode[cacheId[iA]][iB];
-		func(context);
-		execInterrupt |= (context->cycles >= target_cycle);
-		execInterrupt |= (inIt != context->isInIt);
-	}
+  u32 target_cycle = context->cycles + cycles;
+ char res[512];
+ int inIt;
+  execInterrupt = 0;
+   while (execInterrupt == 0)
+   {
+     inIt = context->isInIt;
+     // context->cycles += 1;
+     cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     execInterrupt |= (context->cycles >= target_cycle);
+     execInterrupt |= (inIt != context->isInIt);
+   }
 }
 
 FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)

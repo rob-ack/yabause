@@ -380,6 +380,8 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 {
 }
 
+QPoint preFullscreenModeWindowPosition;
+
 void UIYabause::fullscreenRequested( bool f )
 {
 	if ( isFullScreen() && !f )
@@ -388,6 +390,7 @@ void UIYabause::fullscreenRequested( bool f )
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
 		showNormal();
+		this->move(preFullscreenModeWindowPosition);
 
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		int menubarHide = vs->value( "View/Menubar" ).toInt();
@@ -409,10 +412,8 @@ void UIYabause::fullscreenRequested( bool f )
 
 		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
 		setMinimumSize( 0,0 );
-		QPoint ps;
-		ps.setX(0);
-		ps.setY(0);
-		this->move(ps);
+		preFullscreenModeWindowPosition = this->pos();
+		this->move(0,0);
 
 		showFullScreen();
 

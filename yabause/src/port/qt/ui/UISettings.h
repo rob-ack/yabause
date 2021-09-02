@@ -45,7 +45,7 @@ protected:
 	void setupCdDrives();
 	void loadCores();
 	void loadTranslations();
-	void loadShortcuts();
+	void populateShortcutsView();
 	void applyShortcuts();
 	void loadSettings();
 	void saveSettings();

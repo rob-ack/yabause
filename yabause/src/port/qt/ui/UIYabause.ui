@@ -14,7 +14,7 @@
    <string>Yabause Qt GUI</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset>
     <normaloff>:/icons/icons/yabause.png</normaloff>:/icons/icons/yabause.png</iconset>
   </property>
   <property name="iconSize">
@@ -124,7 +124,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile">
@@ -296,7 +296,7 @@
      <normaloff>:/actions/icons/actions/quit.png</normaloff>:/actions/icons/actions/quit.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Quit</string>
+    <string>Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -318,7 +318,7 @@
      <normaloff>:/actions/icons/actions/settings.png</normaloff>:/actions/icons/actions/settings.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Settings...</string>
+    <string>Settings</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -330,7 +330,7 @@
      <normaloff>:/actions/icons/actions/play.png</normaloff>:/actions/icons/actions/play.png</iconset>
    </property>
    <property name="text">
-    <string>R&amp;un</string>
+    <string>Run</string>
    </property>
    <property name="shortcut">
     <string>F1</string>
@@ -345,7 +345,7 @@
      <normaloff>:/actions/icons/actions/pause.png</normaloff>:/actions/icons/actions/pause.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Pause</string>
+    <string>Pause</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
@@ -360,7 +360,7 @@
      <normaloff>:/actions/icons/actions/reset.png</normaloff>:/actions/icons/actions/reset.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Reset</string>
+    <string>Reset</string>
    </property>
    <property name="shortcut">
     <string>F3</string>
@@ -375,7 +375,7 @@
      <normaloff>:/actions/icons/actions/transfert.png</normaloff>:/actions/icons/actions/transfert.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Transfer</string>
+    <string>Transfer</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
@@ -387,7 +387,7 @@
      <normaloff>:/actions/icons/actions/screenshot.png</normaloff>:/actions/icons/actions/screenshot.png</iconset>
    </property>
    <property name="text">
-    <string>Sc&amp;reenshot</string>
+    <string>Screenshot</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -402,7 +402,7 @@
      <normaloff>:/actions/icons/actions/frame_skipping.png</normaloff>:/actions/icons/actions/frame_skipping.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Vertical synchronization</string>
+    <string>Vertical synchronization</string>
    </property>
    <property name="shortcut">
     <string>F4</string>
@@ -417,7 +417,7 @@
      <normaloff>:/actions/icons/actions/fps.png</normaloff>:/actions/icons/actions/fps.png</iconset>
    </property>
    <property name="text">
-    <string>F&amp;PS</string>
+    <string>FPS</string>
    </property>
    <property name="iconText">
     <string>FPS</string>
@@ -449,7 +449,7 @@
      <normaloff>:/actions/fullscreen.png</normaloff>:/actions/fullscreen.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Fullscreen</string>
+    <string>Fullscreen</string>
    </property>
    <property name="shortcut">
     <string>Alt+Return</string>
@@ -464,7 +464,7 @@
      <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
    </property>
    <property name="text">
-    <string>VDP&amp;1</string>
+    <string>VDP1</string>
    </property>
   </action>
   <action name="aViewDebugVDP2">
@@ -476,7 +476,7 @@
      <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
    </property>
    <property name="text">
-    <string>VDP&amp;2</string>
+    <string>VDP2</string>
    </property>
   </action>
   <action name="aHelpAbout">
@@ -485,7 +485,10 @@
      <normaloff>:/actions/icons/actions/about.png</normaloff>:/actions/icons/actions/about.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;About...</string>
+    <string>About...</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
    </property>
   </action>
   <action name="aViewLayerNBG0">
@@ -738,7 +741,7 @@
      <normaloff>:/actions/icons/actions/cheats.png</normaloff>:/actions/icons/actions/cheats.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Cheats List...</string>
+    <string>Cheats List...</string>
    </property>
    <property name="shortcut">
     <string>Alt+L</string>
@@ -750,7 +753,7 @@
      <normaloff>:/actions/icons/actions/backup_ram.png</normaloff>:/actions/icons/actions/backup_ram.png</iconset>
    </property>
    <property name="text">
-    <string>&amp;Backup Manager...</string>
+    <string>Backup Manager...</string>
    </property>
    <property name="shortcut">
     <string>Alt+B</string>
@@ -774,7 +777,7 @@
      <normaloff>:/actions/icons/actions/cd.png</normaloff>:/actions/icons/actions/cd.png</iconset>
    </property>
    <property name="text">
-    <string>Open &amp;CD Rom...</string>
+    <string>Open CD Rom...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -791,6 +794,9 @@
    <property name="statusTip">
     <string>https://github.com/FCare/yabause/issues</string>
    </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
@@ -802,6 +808,9 @@
    </property>
    <property name="statusTip">
     <string>http://tradu-france.com/tfwiki-1.28.2/index.php?title=Compatibility_list_of_Kronos</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
    </property>
   </action>
   <action name="aSound">
@@ -844,7 +853,7 @@
      <normaloff>:/actions/icons/actions/cheat_search.png</normaloff>:/actions/icons/actions/cheat_search.png</iconset>
    </property>
    <property name="text">
-    <string>Cheat &amp;Search...</string>
+    <string>Cheat Search...</string>
    </property>
    <property name="shortcut">
     <string>Alt+S</string>

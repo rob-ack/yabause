@@ -5,12 +5,9 @@
 # SDL2_INCLUDE_DIR, where to find SDL.h
 #
 # This module responds to the the flag:
-# SDL2_BUILDING_LIBRARY
-# If this is defined, then no SDL2_main will be linked in because
+# SDL2_BUILDING_WITH_MAIN
+# If this is defined, then SDL2_main will be linked in because
 # only applications need main().
-# Otherwise, it is assumed you are building an application and this
-# module will attempt to locate and set the the proper link flags
-# as part of the returned SDL2_LIBRARY variable.
 #
 # Don't forget to include SDL2main.h and SDL2main.m your project for the
 # OS X framework based version. (Other versions link to -lSDL2main which
@@ -106,7 +103,7 @@ FIND_LIBRARY(SDL2_LIBRARY_TEMP
 
 #MESSAGE("SDL2_LIBRARY_TEMP is ${SDL2_LIBRARY_TEMP}")
 
-IF(NOT SDL2_BUILDING_LIBRARY)
+IF(SDL2_BUILDING_WITH_MAIN)
   IF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
     # Non-OS X framework versions expect you to also dynamically link to
     # SDL2main. This is mainly for Windows and OS X. Other (Unix) platforms
@@ -116,15 +113,15 @@ IF(NOT SDL2_BUILDING_LIBRARY)
       NAMES SDL2main
       HINTS
       $ENV{SDL2DIR}
-      PATH_SUFFIXES lib64 lib
+      PATH_SUFFIXES lib64 lib ${VC_LIB_SUFFIX}
       PATHS
       /sw
       /opt/local
       /opt/csw
       /opt
     )
-  ENDIF(NOT ${SDL2_INCLUDE_DIR} MATCHES ".framework")
-ENDIF(NOT SDL2_BUILDING_LIBRARY)
+  ENDIF()
+ENDIF()
 
 # SDL2 may require threads on your system.
 # The Apple build may not need an explicit flag because one of the
@@ -182,5 +179,4 @@ ENDIF(SDL2_LIBRARY_TEMP)
 
 INCLUDE(FindPackageHandleStandardArgs)
 
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2
-                                  REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(SDL2 REQUIRED_VARS SDL2_LIBRARY SDL2_INCLUDE_DIR)

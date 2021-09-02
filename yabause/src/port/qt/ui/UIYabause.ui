@@ -296,7 +296,7 @@
      <normaloff>:/actions/icons/actions/quit.png</normaloff>:/actions/icons/actions/quit.png</iconset>
    </property>
    <property name="text">
-    <string>Quit</string>
+    <string>&amp;Quit</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+Q</string>
@@ -318,7 +318,7 @@
      <normaloff>:/actions/icons/actions/settings.png</normaloff>:/actions/icons/actions/settings.png</iconset>
    </property>
    <property name="text">
-    <string>Settings</string>
+    <string>&amp;Settings...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -330,7 +330,7 @@
      <normaloff>:/actions/icons/actions/play.png</normaloff>:/actions/icons/actions/play.png</iconset>
    </property>
    <property name="text">
-    <string>Run</string>
+    <string>R&amp;un</string>
    </property>
    <property name="shortcut">
     <string>F1</string>
@@ -345,7 +345,7 @@
      <normaloff>:/actions/icons/actions/pause.png</normaloff>:/actions/icons/actions/pause.png</iconset>
    </property>
    <property name="text">
-    <string>Pause</string>
+    <string>&amp;Pause</string>
    </property>
    <property name="shortcut">
     <string>F2</string>
@@ -360,7 +360,7 @@
      <normaloff>:/actions/icons/actions/reset.png</normaloff>:/actions/icons/actions/reset.png</iconset>
    </property>
    <property name="text">
-    <string>Reset</string>
+    <string>&amp;Reset</string>
    </property>
    <property name="shortcut">
     <string>F3</string>
@@ -375,7 +375,7 @@
      <normaloff>:/actions/icons/actions/transfert.png</normaloff>:/actions/icons/actions/transfert.png</iconset>
    </property>
    <property name="text">
-    <string>Transfer</string>
+    <string>&amp;Transfer</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
@@ -387,7 +387,7 @@
      <normaloff>:/actions/icons/actions/screenshot.png</normaloff>:/actions/icons/actions/screenshot.png</iconset>
    </property>
    <property name="text">
-    <string>Screenshot</string>
+    <string>Sc&amp;reenshot</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -402,7 +402,7 @@
      <normaloff>:/actions/icons/actions/frame_skipping.png</normaloff>:/actions/icons/actions/frame_skipping.png</iconset>
    </property>
    <property name="text">
-    <string>Vertical synchronization</string>
+    <string>&amp;Vertical synchronization</string>
    </property>
    <property name="shortcut">
     <string>F4</string>
@@ -417,7 +417,7 @@
      <normaloff>:/actions/icons/actions/fps.png</normaloff>:/actions/icons/actions/fps.png</iconset>
    </property>
    <property name="text">
-    <string>FPS</string>
+    <string>F&amp;PS</string>
    </property>
    <property name="iconText">
     <string>FPS</string>
@@ -449,7 +449,7 @@
      <normaloff>:/actions/fullscreen.png</normaloff>:/actions/fullscreen.png</iconset>
    </property>
    <property name="text">
-    <string>Fullscreen</string>
+    <string>&amp;Fullscreen</string>
    </property>
    <property name="shortcut">
     <string>Alt+Return</string>
@@ -464,7 +464,7 @@
      <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
    </property>
    <property name="text">
-    <string>VDP1</string>
+    <string>VDP&amp;1</string>
    </property>
   </action>
   <action name="aViewDebugVDP2">
@@ -476,7 +476,7 @@
      <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
    </property>
    <property name="text">
-    <string>VDP2</string>
+    <string>VDP&amp;2</string>
    </property>
   </action>
   <action name="aHelpAbout">
@@ -485,7 +485,7 @@
      <normaloff>:/actions/icons/actions/about.png</normaloff>:/actions/icons/actions/about.png</iconset>
    </property>
    <property name="text">
-    <string>About...</string>
+    <string>&amp;About...</string>
    </property>
    <property name="shortcutVisibleInContextMenu">
     <bool>false</bool>
@@ -741,7 +741,7 @@
      <normaloff>:/actions/icons/actions/cheats.png</normaloff>:/actions/icons/actions/cheats.png</iconset>
    </property>
    <property name="text">
-    <string>Cheats List...</string>
+    <string>&amp;Cheats List...</string>
    </property>
    <property name="shortcut">
     <string>Alt+L</string>
@@ -753,7 +753,7 @@
      <normaloff>:/actions/icons/actions/backup_ram.png</normaloff>:/actions/icons/actions/backup_ram.png</iconset>
    </property>
    <property name="text">
-    <string>Backup Manager...</string>
+    <string>&amp;Backup Manager...</string>
    </property>
    <property name="shortcut">
     <string>Alt+B</string>
@@ -777,7 +777,7 @@
      <normaloff>:/actions/icons/actions/cd.png</normaloff>:/actions/icons/actions/cd.png</iconset>
    </property>
    <property name="text">
-    <string>Open CD Rom...</string>
+    <string>Open &amp;CD Rom...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -853,7 +853,7 @@
      <normaloff>:/actions/icons/actions/cheat_search.png</normaloff>:/actions/icons/actions/cheat_search.png</iconset>
    </property>
    <property name="text">
-    <string>Cheat Search...</string>
+    <string>Cheat &amp;Search...</string>
    </property>
    <property name="shortcut">
     <string>Alt+S</string>

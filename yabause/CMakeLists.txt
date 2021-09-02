@@ -41,5 +41,4 @@ include(CPack)
 
 include(CMake/Options/CMakeLists.txt)
 add_subdirectory(doc)
-add_subdirectory(l10n)
 add_subdirectory(src)

@@ -1,7 +1,7 @@
 %1 Images (*.%2)|%1 Bilder (*.%2)
 %1/%2 blocks free|%1/%2 Blöcke frei
 3D Control Pad Configuration|3D Control Pad Konfiguration
-&About...|&Über...  
+&About...|&Über...
 &Action Replay|&Action Replay
 &Backup Manager...|&Speichermanager...
 &Browse|&Suchen
@@ -28,7 +28,7 @@
 &Raw Memory Address|&Raw Speicheradresse
 &Reset|&Zurücksetzen
 &Save To File|&In Datei speichern
-&Settings...|Einstellungen...
+&Settings...|&Einstellungen...
 &Slave SH2|&Slave SH2
 &Tools|&Werkzeuge
 &Transfer|&Transferieren
@@ -227,16 +227,16 @@ Kronos Qt Gui<br />Based on Kronos %1<br /><a href="http://yabause.org">http://y
 Kronos Save State (*.yss)|Kronos Speicherstände (*.yss)
 Kronos is not initialized, can't manage backup ram.|Kronos ist nicht initialisiert, Backup Ram kann nicht verwaltet werden.						  
 Language :|Sprache :
-Load0|Beladen0
-Load1|Beladen1
-Load2|Beladen2
-Load3|Beladen3
-Load4|Beladen4
-Load5|Beladen5
-Load6|Beladen6
-Load7|Beladen7
-Load8|Beladen8
-Load9|Beladen9
+Load0|Lade0
+Load1|Lade1
+Load2|Lade2
+Load3|Lade3
+Load4|Lade4
+Load5|Lade5
+Load6|Lade6
+Load7|Lade7
+Load8|Lade8
+Load9|Lade9
 L&oad State|L&ade Spielstand
 Left|Links
 Left trigger|Linke Schultertaste
@@ -254,7 +254,7 @@ Loop Track Start|Loop Track Start
 Loop Track Stop|Loop Track Stop
 Memory|Speicher
 Memory Breakpoints|Memory Breakpoints
-Memory Editor|
+Memory Editor|Speicher Editor
 Memory &Editor|Speicher&editierer
 Memory Editor|Speichereditierer
 Memory Search|Memory Search
@@ -285,7 +285,7 @@ None|Keine
 None|Keine
 Normal format not available, trying alternative|Normales Format nicht verfügbar, versuche es alternativ										
 North America (NTSC)|Nordamerika (NTSC)
-Number of Threads|
+Number of Threads|Anzahl der Threads
 On fullscreen|Auf Vollbild
 On message|Auf Nachricht
 Open &CD Rom...|&CD-Rom öffnen...
@@ -319,7 +319,7 @@ Right Stick Axis X|Rechte Stielachse X
 Right Stick Axis Y|Rechte Stielachse Y
 Right Stick Axis Throttle|Steuerknüppel der rechten Achse
 Right trigger|Rechte Schultertaste
-R&un|
+R&un|&Starten
 Save0|Speichern0
 Save1|Speichern1
 Save2|Speichern2
@@ -340,29 +340,29 @@ Save MD1|Save MD1
 Save MD2|Save MD2
 Save Selected|Save Selected			 
 Save Program|Save Program
-S&ave State|
-Save States|					
+S&ave State|&Spielstand Speichern
+Save States|Spielstände
 Save Slot Registers|Save Slot Registers
-Save Tab|
+Save Tab|Speichern
 Screen Enabled|Bildschirm eingeschaltet
 Screen Select:|Bildschirm auswählen:
 Screenshot|Bildschirmfoto
-Scanline filter|
-Scanline off|
-Scanline on|
-SCSP|
+Scanline filter|Scanline Filter
+Scanline off|Scanline aus
+Scanline on|Scanline ein
+SCSP|SCSP
 SCSP Channels|SCSP-Kanäle
 SDL Joystick Interface|SDL-Joystick-Schnittstelle
 SDL Sound Interface|SDL-Klingen-Schnittstelle
 Search|Suche
-Search/Add Cheats|				
+Search/Add Cheats|Suchen/Hizufügen Cheats
 Search Criteria|Suchkriterien
 Search Memory|Speichersuche
 Search Value:|Suchwert:
 Sega Saturn Sound Format files (*.ssf *.minissf)|Sega Saturn Sound Format-Dateien (* .ssf * .minissf)
 Select a file to load your state|Wählen Sie eine Datei zum Laden des Spielstandes aus
 Select your iso/cue/bin/zip/chd file|Wählen Sie Ihre iso/cue/bin/zip/chd Datei
-Select your ssf file|						
+Select your ssf file|Wählen Sie Ihre ssf Datei
 Set PC to Start Address|PC zur Startadresse setzen
 Settings|Einstellungen
 SH2 Debugger Interpreter|
@@ -381,12 +381,11 @@ Slot Number:|Slot Number:
 Software OSD Interface|Software OSD Oberfläche
 Software Video Interface|Software Video Oberfläche
 Sound|Sound
-Sound|		   
 Sound Core|Sound Kern
 Spanish|Spanisch
-ST-V cabinet Configuration|
-ST-V Cabinet|
-STV Rom game|			 
+ST-V cabinet Configuration|ST-V Cabinet Konfiguration
+ST-V Cabinet|ST-V Cabinet
+STV Rom game|STV Rom spiel			 
 Start|Start
 Start Address:|Adressenanfang:
 Start in Fullscreen|Start in Fullscreen
@@ -394,20 +393,20 @@ Status|Status
 Step Into|Step Into
 Step Out|Schritt raus
 Step Over|Schritt über
-Stick Down|Bleib unten
 Stick left button: same as A \nStick right button: same as B \nStick trigger: same as C|
-Stick Left|Bleib links
-Stick Right|Bleib rechts
-Stick Up|Bleib auf
-Stop|
+Stick Down|Stick unten
+Stick Left|Stick links
+Stick Right|Stick rechts
+Stick Up|Stick oben
+Stop|Stop
 Stretch to window|Zum Fenster strecken								
 Synchronize Saturn internal clock with set time|Synchronize Saturn internal clock with set time
 Tesselation|Tessellation
 Text|Text
 Texture|Texture
 The dummies cores don't need configuration|Die Dummieskerne müssen nicht konfiguriert werden
-Throttle Down|
-Throttle Up|   
+Throttle Down|Runterregeln
+Throttle Up|Hochregeln
 To File...|Zur Datei...
 toolBar|Werkzeugleiste
 Trace Logging|Trace-Protokollierung
@@ -426,11 +425,11 @@ Unsigned|Unsigniert
 Unsigned 8-bit value|Unsigned 8-bit value	
 Unsigned 16-bit value|Unsigned 16-bit value
 Unsigned 32-bit value|Unsigned 32-bit value	
-Up|Hoch					  
+Up|Hoch			  
 Upload|Hochladen					  
-Upscale Filter :|
+Upscale Filter :|Hochskalierungsfilter :
 Use Vdp1 Cache|Verwenden Sie den Vdp1-Cache
-Use System Locale|
+Use System Locale|Nutzersystem Spreache
 Value|Wert
 Value:|Value:
 Value :|Wert :
@@ -438,7 +437,7 @@ Vdp1|Vdp1
 VDP1 Command Info|VDP1 Command Info
 VDP1 Command List|VDP1 Command List
 VDP2|VDP2
-VDP2Viewer Viewer|
+VDP2Viewer Viewer|VDP2 sicht
 Video|Video
 Video Core|Video Kern
 Video Driver|Video Treiber

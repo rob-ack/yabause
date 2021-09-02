@@ -28,6 +28,7 @@
 #include <QDir>
 #include <QList>
 #include <QDesktopWidget>
+#include <QImageWriter>
 #include <QStorageInfo>
 
 extern "C" {
@@ -289,6 +290,10 @@ void UISettings::tbBrowse_clicked()
 	}
 	else if ( tb == tbSaveStates )
 		requestFolder( QtYabause::translate( "Choose a folder to store save states" ), leSaveStates );
+	else if (tb == tbScreenshots)
+	{
+		requestFolder(QtYabause::translate("Choose a folder to store screenshots"), leScreenshots);
+	}
 	else if ( tb == tbCartridge )
 	{
 		if (mCartridgeTypes[cbCartridge->currentIndex()].pathFlag) {
@@ -540,6 +545,16 @@ void UISettings::loadCores()
 	foreach ( const Item& it, mRegions )
 		cbRegion->addItem( QtYabause::translate( it.Name ), it.id );
 
+	// images filter that qt can write
+	QStringList filters;
+	foreach(QByteArray ba, QImageWriter::supportedImageFormats())
+		if (!filters.contains(ba, Qt::CaseInsensitive))
+			filters << QString(ba).toLower();
+	for (auto entry : filters)
+	{
+		cbScreenshotImageFormat->addItem(entry, entry);
+	}
+
 	// System Language
 	foreach ( const Item& it, mSysLanguageID  )
 		cbSysLanguageID ->addItem( QtYabause::translate( it.Name ), it.id );
@@ -607,7 +622,7 @@ void UISettings::applyShortcuts()
 void UISettings::loadSettings()
 {
 	// get settings pointer
-	Settings* s = QtYabause::settings();
+	Settings const * const s = QtYabause::settings();
 
 	// general
 	leBios->setText( s->value( "General/Bios" ).toString() );
@@ -618,6 +633,28 @@ void UISettings::loadSettings()
 		cbCdDrive->setCurrentIndex(leCdRom->text().isEmpty() ? 0 : cbCdDrive->findText(leCdRom->text()));
 
 	leSaveStates->setText( s->value( "General/SaveStates", getDataDirPath() ).toString() );
+
+	//screenshots
+	{
+		auto const defaultScreenshotsPath = Settings::DefaultPaths::Screenshots();
+		leScreenshots->setText(s->value(Settings::Keys::ScreenshotsDirectory, defaultScreenshotsPath).toString());
+		auto screenshotsDirectory = QDir(leScreenshots->text());
+		auto checkAndCreateDirectory = [&screenshotsDirectory]{
+			if(!screenshotsDirectory.exists())
+			{
+				return screenshotsDirectory.mkdir(screenshotsDirectory.path());
+			}
+			return true;
+		};
+		if (!checkAndCreateDirectory())
+		{
+			//when there is an invalid entry to the setting fall back to the default directory
+			leScreenshots->setText(defaultScreenshotsPath);
+			screenshotsDirectory = QDir(leScreenshots->text());
+			checkAndCreateDirectory(); //we could show an message box if this fails (no write access to our folder) but if so we have plenty of problems and i do not want to spam the user with the message that screenshots folder cant be created. it would be misleading in with the overall problem to not having write access in general
+		}
+		cbScreenshotImageFormat->setCurrentIndex(cbScreenshotImageFormat->findData(s->value(Settings::Keys::ScreenshotsFormat, cbScreenshotImageFormat->itemData(0))));
+	}
 	cbSysLanguageID->setCurrentIndex( cbSysLanguageID->findData( s->value( "General/SystemLanguageID", mSysLanguageID.at( 0 ).id ).toString() ) );
 #ifdef HAVE_LIBMINI18N
 	int i;
@@ -702,7 +739,7 @@ void UISettings::loadSettings()
 void UISettings::saveSettings()
 {
 	// get settings pointer
-	Settings* s = QtYabause::settings();
+	Settings * const s = QtYabause::settings();
         s->setValue( "General/Version", Settings::programVersion() );
 
 	// general
@@ -715,6 +752,8 @@ void UISettings::saveSettings()
 	else
 		s->setValue( "General/CdRomISO", leCdRom->text() );
 	s->setValue( "General/SaveStates", leSaveStates->text() );
+	s->setValue(Settings::Keys::ScreenshotsDirectory, leScreenshots->text());
+	s->setValue(Settings::Keys::ScreenshotsFormat, cbScreenshotImageFormat->itemData(cbScreenshotImageFormat->currentIndex()).toString());
 	s->setValue( "General/SystemLanguageID", cbSysLanguageID->itemData( cbSysLanguageID->currentIndex() ).toString() );
 #ifdef HAVE_LIBMINI18N
 	s->setValue( "General/Translation", cbTranslation->itemData(cbTranslation->currentIndex()).toString() );

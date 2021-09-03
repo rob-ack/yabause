@@ -593,7 +593,7 @@ void UISettings::populateShortcutsView()
 	twShortcuts->setRowCount(actionsList.count());
 	foreach ( QAction* action, actionsList )
 	{
-		QString text = QString::fromUtf8(_(action->text().toUtf8()));
+		QString text = QtYabause::translate(action->text());
 		text = text.remove('&');
 		QTableWidgetItem *tblItem = new QTableWidgetItem(text);
 		tblItem->setFlags(tblItem->flags() ^ Qt::ItemIsEditable);

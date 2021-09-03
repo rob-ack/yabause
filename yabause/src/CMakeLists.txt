@@ -176,6 +176,8 @@ if (UNIX)
 elseif (WIN32)
 	add_definitions(-DYTSDIR=\"trans\")
 endif()
+#add translations
+include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt) 
 
 #-------------------------------------------------------
 

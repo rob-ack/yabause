@@ -49,7 +49,6 @@ void InvalidateCache(SH2_struct *ctx);
 void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles);
 int DMAProc(SH2_struct *context, int cycles );
 
-#define OLD_DMA 0
 //////////////////////////////////////////////////////////////////////////////
 
 int SH2Init(int coreid)
@@ -1669,60 +1668,10 @@ void WDTExec(SH2_struct *context) {
 //////////////////////////////////////////////////////////////////////////////
 
 void DMAExec(SH2_struct *context) {
-#if OLD_DMA
-   // If AE and NMIF bits are set, we can't continue
-   if (context->onchip.DMAOR & 0x6)
-      return;
-
-   if ( ((context->onchip.CHCR0 & 0x3)==0x01)  && ((context->onchip.CHCR1 & 0x3)==0x01) ) { // both channel wants DMA
-      if (context->onchip.DMAOR & 0x8) { // round robin priority
-         LOG("dma\t: FIXME: two channel dma - round robin priority not properly implemented\n");
-         DMATransfer(context, &context->onchip.CHCR0, &context->onchip.SAR0,
-		     &context->onchip.DAR0,  &context->onchip.TCR0,
-		     &context->onchip.VCRDMA0);
-         DMATransfer(context, &context->onchip.CHCR1, &context->onchip.SAR1,
-		     &context->onchip.DAR1,  &context->onchip.TCR1,
-                     &context->onchip.VCRDMA1);
-
-         context->onchip.CHCR1M |= 2;
-      }
-      else { // channel 0 > channel 1 priority
-         DMATransfer(context, &context->onchip.CHCR0, &context->onchip.SAR0,
-		     &context->onchip.DAR0,  &context->onchip.TCR0,
-		     &context->onchip.VCRDMA0);
-         DMATransfer(context, &context->onchip.CHCR1, &context->onchip.SAR1,
-		     &context->onchip.DAR1,  &context->onchip.TCR1,
-		     &context->onchip.VCRDMA1);
-         context->onchip.CHCR1M |= 2;
-      }
-   }
-   else { // only one channel wants DMA
-	   if (((context->onchip.CHCR0 & 0x3) == 0x01)) { // DMA for channel 0
-         DMATransfer(context, &context->onchip.CHCR0, &context->onchip.SAR0,
-		     &context->onchip.DAR0,  &context->onchip.TCR0,
-		     &context->onchip.VCRDMA0);
-         return;
-      }
-	   if (((context->onchip.CHCR1 & 0x3) == 0x01)) { // DMA for channel 1
-         DMATransfer(context, &context->onchip.CHCR1, &context->onchip.SAR1,
-		     &context->onchip.DAR1,  &context->onchip.TCR1,
-		     &context->onchip.VCRDMA1);
-         context->onchip.CHCR1M |= 2;
-         return;
-      }
-   }
-#else
   DMAProc(context, 200);
-#endif
 }
 
-#if OLD_DMA
-int DMAProc(SH2_struct *context, int cycles) {
-  return 0;
-}
-#else
 int DMAProc(SH2_struct *context, int cycles ){
-
 
    if (context->onchip.DMAOR & 0x6)
       return 0;
@@ -1762,7 +1711,6 @@ int DMAProc(SH2_struct *context, int cycles ){
    }
    return 0;
 }
-#endif
 
 int getEatClock(u32 src, u32 dst) {
   switch (src & 0x0FF00000) {
@@ -1987,94 +1935,6 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
       SH2WriteNotify(context, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
    }
 
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
-{
-   int size;
-   u32 i, i2;
-
-   if (!(*CHCR & 0x2)) { // TE is not set
-      int srcInc;
-      int destInc;
-
-      switch(*CHCR & 0x3000) {
-         case 0x0000: srcInc = 0; break;
-         case 0x1000: srcInc = 1; break;
-         case 0x2000: srcInc = -1; break;
-         default: srcInc = 0; break;
-      }
-
-      switch(*CHCR & 0xC000) {
-         case 0x0000: destInc = 0; break;
-         case 0x4000: destInc = 1; break;
-         case 0x8000: destInc = -1; break;
-         default: destInc = 0; break;
-      }
-
-      switch (size = ((*CHCR & 0x0C00) >> 10)) {
-         case 0:
-            for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteByte(*DAR, DMAMappedMemoryReadByte(*SAR));
-               *SAR += srcInc;
-               *DAR += destInc;
-            }
-
-            *TCR = 0;
-            break;
-         case 1:
-            destInc *= 2;
-            srcInc *= 2;
-
-            for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteWord(*DAR, DMAMappedMemoryReadWord(*SAR));
-               *SAR += srcInc;
-               *DAR += destInc;
-            }
-
-            *TCR = 0;
-            break;
-         case 2:
-            destInc *= 4;
-            srcInc *= 4;
-
-            for (i = 0; i < *TCR; i++) {
-				DMAMappedMemoryWriteLong(*DAR, DMAMappedMemoryReadLong(*SAR));
-               *DAR += destInc;
-               *SAR += srcInc;
-            }
-
-            *TCR = 0;
-            break;
-         case 3: {
-           u32 buffer[4];
-           u32 show = 0;
-           destInc *= 4;
-           srcInc *= 4;
-           for (i = 0; i < *TCR; i += 4) {
-             for (i2 = 0; i2 < 4; i2++) {
-               buffer[i2] = MappedMemoryReadLong(context,((*SAR + (i2 << 2)) & 0x07FFFFFC));
-             }
-             *SAR += 0x10;
-             for (i2 = 0; i2 < 4; i2++) {
-               MappedMemoryWriteLong(context,*DAR & 0x07FFFFFC, buffer[i2]);
-              *DAR += destInc;
-             }
-           }
-           *TCR = 0;
-         }
-         break;
-      }
-      SH2WriteNotify(context, destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
-   }
-
-   if (*CHCR & 0x4)
-      SH2SendInterrupt(context, *VCRDMA, (context->onchip.IPRA & 0xF00) >> 8);
-
-   // Set Transfer End bit
-   *CHCR |= 0x2;
 }
 
 extern u8 execInterrupt;

@@ -51,6 +51,29 @@ enum {
    EMUTYPE_KEYBOARD
 };
 
+typedef struct
+{
+	LPDIRECTINPUTDEVICE8 lpDIDevice;
+	int type;
+	int emulatetype;
+#ifdef HAVE_XINPUT
+	int is_xinput_device;
+	int xinput_num;
+#endif
+} padconf_struct;
+
+enum XIAXIS
+{
+	XI_THUMBL = 1,
+	XI_THUMBLX = 1,
+	XI_THUMBLY = 5,
+	XI_THUMBR = 9,
+	XI_THUMBRX = 9,
+	XI_THUMBRY = 13,
+	XI_TRIGGERL = 17,
+	XI_TRIGGERR = 19
+};
+
 #define DX_PADOFFSET 24
 #define DX_STICKOFFSET 8
 #define DX_MAKEKEY(p, s, a) ( ((p) << DX_PADOFFSET) | ((s) << DX_STICKOFFSET) | (a) )
@@ -59,6 +82,11 @@ enum {
 #define DX_PerKeyDown(p, s, a) PerKeyDown(DX_MAKEKEY(p, s, a) )
 
 int Check_Skip_Key();
+int PERDXInit(void);
+void PERDXDeInit(void);
+int PERDXHandleEvents(void);
+u32 PERDXScan(u32 flags);
+void PERDXFlush(void);
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
@@ -144,13 +172,12 @@ HRESULT SetupForIsXInputDevice()
 	if( FAILED(hr) || pIWbemLocator == NULL )
 		goto bail;
 
-	bstrNamespace = SysAllocString( L"\\\\.\\root\\cimv2" );if( bstrNamespace == NULL ) goto bail;
+	bstrNamespace = SysAllocString( L"ROOT\\CimV2" );if( bstrNamespace == NULL ) goto bail;
 	bstrClassName = SysAllocString( L"Win32_PNPEntity" );   if( bstrClassName == NULL ) goto bail;
 	bstrDeviceID  = SysAllocString( L"DeviceID" );          if( bstrDeviceID == NULL )  goto bail;
 
 	// Connect to WMI 	
-	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, NULL, 
-		0L, NULL, NULL, &pIWbemServices );
+	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, NULL, 0L, NULL, NULL, &pIWbemServices );
 
 	if( FAILED(hr) || pIWbemServices == NULL )
 		goto bail;

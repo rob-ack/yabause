@@ -27,34 +27,4 @@
 
 extern PerInterface_struct PERDIRECTX;
 
-typedef struct
-{
-   LPDIRECTINPUTDEVICE8 lpDIDevice;
-   int type;
-   int emulatetype;
-#ifdef HAVE_XINPUT
-	int is_xinput_device;
-	int xinput_num;
-#endif
-} padconf_struct;
-
-enum XIAXIS
-{
-	XI_THUMBL=1,
-	XI_THUMBLX=1,
-	XI_THUMBLY=5,
-	XI_THUMBR=9,
-	XI_THUMBRX=9,
-	XI_THUMBRY=13,
-	XI_TRIGGERL=17,
-	XI_TRIGGERR=19
-};
-
-int PERDXInit(void);
-void PERDXDeInit(void);
-int PERDXHandleEvents(void);
-void PERDXPerSetButtonMapping(void);
-u32 PERDXScan(u32 flags);
-void PERDXFlush(void);
-
 #endif

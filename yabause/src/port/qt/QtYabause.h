@@ -41,8 +41,12 @@ extern "C"
 	#include "sndal.h"
 	#include "sndsdl.h"
 	#include "persdljoy.h"
+#if defined HAVE_DIRECTINPUT
 	#include "perdx.h"
+#endif
+#if defined HAVE_DIRECTSOUND
 	#include "snddx.h"
+#endif
 	#include "permacjoy.h"
 	#include "perlinuxjoy.h"
 	#include "debug.h"

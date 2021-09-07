@@ -22,6 +22,7 @@
 */
 
 #include <Windows.h>
+#include "Dbt.h"
 #ifdef __MINGW32__
 #undef HAVE_XINPUT
 #endif
@@ -40,6 +41,7 @@
 #include "yui.h"
 #include "movie.h"
 #include "error.h"
+#include <stdbool.h>
 //#include "dx.h"
 
 enum {
@@ -318,14 +320,43 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 	return DIENUM_CONTINUE;
 }
 
+int SetupDevices();
+
+LRESULT SubWndProc(int code, WPARAM wParam, LPARAM lParam)
+{
+	// invalid code skip
+	if (code < 0) return CallNextHookEx(NULL, code, wParam, lParam);
+
+	// check if device was added/removed
+	PCWPSTRUCT pMsg = (PCWPSTRUCT)(lParam);
+	if (pMsg->message == WM_DEVICECHANGE)
+	{
+		switch (pMsg->wParam)
+		{
+			case DBT_DEVNODES_CHANGED:
+				SetupDevices();
+				break;
+
+			case DBT_DEVICEARRIVAL:
+				SetupDevices();
+				break;
+
+			case DBT_DEVICEREMOVECOMPLETE:
+				SetupDevices();
+				break;
+		}
+	}
+
+	// continue as normal
+	return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 int PERDXInit(void)
 {
 	char tempstr[512];
 	HRESULT ret;
-	int user_index=0;
-	u32 i;
 
 	if (PERCORE_INITIALIZED)
 		return 0;
@@ -338,36 +369,51 @@ int PERDXInit(void)
 		return -1;
 	}
 
+	int const err = SetupDevices();
+	if(err != 0)
+	{
+		return err;
+	}
+
+	SetWindowsHookExW(WH_CALLWNDPROC, &SubWndProc, GetModuleHandleW(NULL), GetCurrentThreadId());
+
+	//LoadDefaultPort1A();
+	PERCORE_INITIALIZED = 1;
+	return 0;
+}
+
+int SetupDevices()
+{
+	int user_index = 0;
+
 #ifdef HAVE_XINPUT
 	SetupForIsXInputDevice();
 #endif
 	num_devices = 0;
-	IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback,
-							&user_index, DIEDFL_ATTACHEDONLY);
+	IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback, &user_index, DIEDFL_ATTACHEDONLY);
 
 #ifdef HAVE_XINPUT
 	CleanupForIsXInputDevice();
 #endif
 
-	for (i = 0; i < num_devices; i++)
+	for (int i = 0; i < num_devices; i++)
 	{
 		if (!dev_list[i].is_xinput_device)
 		{
-			if( FAILED( ret = IDirectInputDevice8_SetDataFormat(dev_list[i].lpDIDevice, &c_dfDIJoystick2 ) ) )
+			HRESULT ret;
+
+			if (FAILED(ret = IDirectInputDevice8_SetDataFormat(dev_list[i].lpDIDevice, &c_dfDIJoystick2)))
 				return -1;
 
 			// Set the cooperative level to let DInput know how this device should
 			// interact with the system and with other DInput applications.
-			if( FAILED( ret = IDirectInputDevice8_SetCooperativeLevel( dev_list[i].lpDIDevice, DXGetWindow(), 
+			if (FAILED(ret = IDirectInputDevice8_SetCooperativeLevel(dev_list[i].lpDIDevice, DXGetWindow(),
 				DISCL_NONEXCLUSIVE | DISCL_BACKGROUND
 				/* DISCL_EXCLUSIVE |
-				DISCL_FOREGROUND */ ) ) )
+				DISCL_FOREGROUND */)))
 				return -1;
 		}
 	}
-	PerPortReset();
-	//LoadDefaultPort1A();
-	PERCORE_INITIALIZED = 1;
 	return 0;
 }
 

@@ -78,6 +78,9 @@ PerInterface_struct *PERCoreList[] = {
 #ifdef ARCH_IS_LINUX
 &PERLinuxJoy,
 #endif
+#if defined HAVE_DIRECTINPUT
+&PERDIRECTX,
+#endif
 NULL
 };
 
@@ -100,6 +103,9 @@ SoundInterface_struct *SNDCoreList[] = {
 #endif
 #ifdef ARCH_IS_MACOSX
 &SNDMac,
+#endif
+#if defined HAVE_DIRECTSOUND
+&SNDDIRECTX,
 #endif
 NULL
 };
@@ -204,8 +210,14 @@ extern "C"
 	int YuiGetFB()
 	{
           return 0;
-        }
+    }
 
+#if defined(HAVE_DIRECTINPUT) || defined(HAVE_DIRECTSOUND)
+	HWND DXGetWindow()
+	{
+		return (HWND)mUIYabause->winId();
+	}
+#endif
 }
 
 void QtYabause::appendLog( const char* str )

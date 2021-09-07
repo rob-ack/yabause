@@ -40,7 +40,7 @@ public:
 	YabauseGL( );
 	
 	void updateView( const QSize& size = QSize() );
-	void swapBuffers();
+	void swapBuffers() const;
 #ifndef HAVE_LIBGL
         QImage grabFrameBuffer();
 	virtual void paintEvent( QPaintEvent * event );

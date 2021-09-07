@@ -63,9 +63,11 @@ void YabauseGL::initializeGL()
   glInitialized();
 }
 
-void YabauseGL::swapBuffers()
+void YabauseGL::swapBuffers() const
 {
-  context()->swapBuffers(context()->surface());
+	auto const surface = context()->surface();
+	context()->swapBuffers(surface);
+	context()->makeCurrent(surface);
 }
 
 void YabauseGL::resizeGL( int w, int h )

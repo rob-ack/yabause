@@ -29,6 +29,7 @@
 #include <Windows.h>
 #endif
 #include <string.h>
+#include <stdbool.h>
 #include "yabause.h"
 #include "cheat.h"
 #include "cs0.h"
@@ -847,7 +848,7 @@ int YabauseEmulate(void) {
     SSH2->cycles = 0;
     SSH2->frtcycles = 0;
 
-    auto waitNextFrame = false;
+    bool waitNextFrame = false;
 
     while (!waitNextFrame)
     {

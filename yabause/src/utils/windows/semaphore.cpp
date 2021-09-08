@@ -25,8 +25,6 @@
 #include "semaphore.h"
 #include <time.h> //c++11 required
 
-#define UNUSED(x)				(void)(x)
-
 typedef struct {
 	HANDLE handle;
 } arch_sem_t;
@@ -232,12 +230,11 @@ int sem_destroy(sem_t *sem)
 	return 0;
 }
 
-sem_t *sem_open(const char *name, int oflag, mode_t mode, unsigned int value)
+sem_t *sem_open(const char *name, int oflag, unsigned short mode, unsigned int value)
 {
 	int len;
 	char buffer[512];
 	arch_sem_t *pv;
-	UNUSED(mode);
 
 	if (value > (unsigned int) SEM_VALUE_MAX || (len = strlen(name)) > (int) sizeof(buffer) - 8 || len < 1) 
 	{
@@ -306,6 +303,5 @@ sem_t *sem_open(const char *name, int oflag, mode_t mode, unsigned int value)
 int sem_close(sem_t *sem) {	return sem_destroy(sem); }
 
 int sem_unlink(const char *name) {
-	UNUSED(name); 
 	return 0;
 }

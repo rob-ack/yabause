@@ -20,15 +20,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
-      with:
-        sdk-version: 19041
+#    - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1
+#      with:
+#        sdk-version: 19041
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
       run: |
-        cmake -S ${{github.workspace}}/yabause -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0.19041.0
+        cmake -S ${{github.workspace}}/yabause -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} 
+      #-DCMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION=10.0.19041.0
 
     - name: Build
       # Build your program with the given configuration

@@ -697,7 +697,7 @@ if (YAB_PORT_OSD)
 endif()
 
 # Exec from cache
-option(YAB_USE_CACHE "Allow external bus access to use cache" OFF)
+option(YAB_USE_CACHE "Allow external bus access to use cache" ON)
 if (YAB_USE_CACHE)
 	add_definitions(-DUSE_CACHE=1)
 endif()

@@ -467,7 +467,6 @@ void CacheWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val);
 void CacheInvalidate(SH2_struct *context,u32 addr);
 
 void DMAExec(SH2_struct *context);
-void DMATransfer(SH2_struct *context, u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA);
 
 u8 FASTCALL OnchipReadByte(SH2_struct *context, u32 addr);
 u16 FASTCALL OnchipReadWord(SH2_struct *context, u32 addr);

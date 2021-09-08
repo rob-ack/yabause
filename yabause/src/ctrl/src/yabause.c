@@ -879,7 +879,9 @@ int YabauseEmulate(void) {
             yabsys.LineCount++;
             if (yabsys.LineCount == yabsys.VBlankLineCount)
             {
+#if defined(ASYNC_SCSP)
                 setM68kCounter((u64)(44100 * 256 / frames) << SCSP_FRACTIONAL_BITS);
+#endif
                 // VBlankIN
                 PROFILE_START("vblankin");
                 Vdp1VBlankIN();

@@ -23,6 +23,10 @@
 
 #include "memory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CART_NONE               0
 #define CART_PAR                1
 #define CART_BACKUPRAM4MBIT     2
@@ -85,5 +89,9 @@ void CartDeInit(void);
 
 int CartSaveState(void ** stream);
 int CartLoadState(const void * stream, int version, int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

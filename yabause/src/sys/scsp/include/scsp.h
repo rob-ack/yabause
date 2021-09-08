@@ -24,6 +24,10 @@
 #include "core.h"
 #include "sh2core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SNDCORE_DEFAULT -1
 #define SNDCORE_DUMMY   0
 #define SNDCORE_WAV     10 // should really be 1, but I'll probably break people's stuff
@@ -98,8 +102,6 @@ void M68KStart(void);
 void M68KStop(void);
 void ScspReset(void);
 int ScspChangeVideoFormat(int type);
-void setM68kCounter(u64 counter);
-void setM68kDoneCounter(u64 counter);
 void M68KExec(s32 cycles);
 void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
@@ -161,5 +163,9 @@ void SyncScsp();
 
 extern void ScspLockThread();
 extern void ScspUnLockThread();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -88,12 +88,14 @@
 #include <stdarg.h>
 #include <math.h>
 #include <limits.h>
+#include <stdbool.h>
 
 #include "cs2.h"
 #include "debug.h"
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
+#include "mk68Counter.h"
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -157,11 +159,8 @@ u32 m68kcycle = 0;
 
 extern YabEventQueue * q_scsp_frame_start;
 extern YabEventQueue * q_scsp_finish;
-void setM68kCounter(u64 counter);
-u64 getM68KCounter();
-
-
 #define CLOCK_SYNC_SHIFT (4)
+extern YabEventQueue * q_scsp_m68counterCond;
 
 enum EnvelopeStates
 {
@@ -1797,7 +1796,7 @@ static void scsp_slot_update_keyon(slot_t *slot);
 
 static int scsp_mute_flags = 0;
 static int scsp_volume = 100;
-static int thread_running = 0;
+static bool thread_running = false;
 static int scsp_sample_count = 0;
 static int scsp_checktime = 0;
 ////////////////////////////////////////////////////////////////
@@ -4321,6 +4320,9 @@ scsp_w_d (SH2_struct *context, UNUSED u8* m, u32 a, u32 d)
 u8 FASTCALL
 scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   a &= 0xFFF;
 
   if (a < 0x400)
@@ -4358,6 +4360,9 @@ scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
 u16 FASTCALL
 scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   if (a & 1)
     {
       SCSPLOG ("ERROR: scsp r_w misaligned : %.8X\n", a);
@@ -4444,6 +4449,9 @@ scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
 u32 FASTCALL
 scsp_r_d (SH2_struct *context, UNUSED u8* m, u32 a)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   if (a & 3)
     {
       SCSPLOG ("ERROR: scsp r_d misaligned : %.8X\n", a);
@@ -4659,7 +4667,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
     scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
   scsp_reset();
-  thread_running = 0;
+  thread_running = false;
   g_scsp_mtx = YabThreadCreateMutex();
 }
 
@@ -4794,6 +4802,9 @@ scu_interrupt_handler (void)
 u8 FASTCALL
 SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   addr &= 0x7FFFF;
   u8 val = 0;
 
@@ -4810,6 +4821,9 @@ SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
+  if (context != NULL){
+    context->cycles += 2;
+  }
   addr &= 0x7FFFF;
 
   // If mem4b is set, mirror ram every 256k
@@ -4857,6 +4871,9 @@ void SyncSh2And68k(SH2_struct *context){
 u16 FASTCALL
 SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   addr &= 0xFFFFF;
   u16 val = 0;
 
@@ -4879,6 +4896,9 @@ SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
+  if (context != NULL){
+    context->cycles += 2;
+  }
   addr &= 0xFFFFF;
 
   // If mem4b is set, mirror ram every 256k
@@ -4897,6 +4917,9 @@ SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 u32 FASTCALL
 SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 10;
+  }
   addr &= 0xFFFFF;
   u32 val;
   u32 pre_cycle = m68kcycle;
@@ -4924,6 +4947,9 @@ SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 void FASTCALL
 SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
+  if (context != NULL){
+    context->cycles += 2;
+  }
   addr &= 0xFFFFF;
   //u32 pre_cycle = m68kcycle;
 
@@ -5056,8 +5082,12 @@ ScspDeInit (void)
 {
   ScspUnMuteAudio(1);
   scsp_mute_flags = 0;
-  thread_running = 0;
+  thread_running = false;
 #if defined(ASYNC_SCSP)
+  if (q_scsp_m68counterCond && YaGetQueueSize(q_scsp_m68counterCond) == 0 )
+  {
+      YabAddEventQueue(q_scsp_m68counterCond, 0);
+  } 
   if (q_scsp_frame_start)YabAddEventQueue(q_scsp_frame_start, 0);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
@@ -5376,57 +5406,42 @@ void ScspExec(){
 
 void ScspAsynMainCpu( void * p ){
 
-  u64 before;
-  u64 now;
-  u64 difftime;
-  const int samplecnt = 256; // 11289600/44100
-  const int step = 16;
-  int frame = 0;
-  int frame_count = 0;
-  int i;
-  int frame_div = 1; // g_scsp_sync_count_per_frame;
-  int framecnt = 188160 / frame_div; // 11289600/60
-  int hzcheck = 0;
 
 #if defined(ARCH_IS_LINUX)
-  struct timespec tm;
   setpriority( PRIO_PROCESS, 0, -20);
 #endif
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
-  before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-  u32 wait_clock = 0;
+
+  const int samplecnt = 256; // 11289600/44100
+  int frame = 0;
   u64 pre_m68k_cycle = 0;
-  u64 m68k_inc = 0;
+  u64 m68k_inc = 0; //how much remaining samples should be played
+  int framecnt = (44100 * samplecnt) / fps; // 11289600/60
 
-  framecnt = (11289600/((yabsys.IsPal)?50:60)); // 11289600/60
+  while (thread_running)
+  {
+    while (g_scsp_lock)
+    {
+	    YabThreadUSleep(1000);
+    }
 
-  //YabWaitEventQueue(q_scsp_frame_start);
-  now = 0;
-  before = 0;
-  while (thread_running){
-    while (g_scsp_lock) { YabThreadUSleep(1000); }
-    u64 m68k_done_counter = 0;
-    u64 m68k_integer_part = 0;
-    u64 m68k_cycle = 0;
-    do {
-      m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
-      m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-      if (thread_running == 0) break;
-  //    if (m68k_cycle == 0) YabSemWait(m68counterCond);
-    } while (m68k_cycle == 0);
+  	YabWaitEventQueue(q_scsp_m68counterCond); //wait for signal set to compute new samples
+
+	u64 const m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
+    u64 const m68k_cycle = m68k_integer_part - pre_m68k_cycle;
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
 
     // Sync 44100KHz
-    while (m68k_inc >= samplecnt) {
+    while (m68k_inc >= samplecnt) 
+    {
       m68k_inc = m68k_inc - samplecnt;
-      //LOG("[SCSP] MM68KExec %d", samplecnt);
       MM68KExec(samplecnt);
       new_scsp_exec((samplecnt << 1));
-      hzcheck++;
 
       frame += samplecnt;
-      if (frame >= framecnt) {
+      if (frame >= framecnt) 
+      {
         frame = frame - framecnt;
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
@@ -5435,16 +5450,10 @@ void ScspAsynMainCpu( void * p ){
         YabAddEventQueue( q_scsp_finish , 0);
         pre_m68k_cycle = 0;
         m68k_inc = 0;
-        //LOG("[SCSP] WAIT SH2");
         YabWaitEventQueue(q_scsp_frame_start);
-        now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-        //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
-        hzcheck = 0;
-        before = now;
         break;
       }
     }
-    setM68kDoneCounter(pre_m68k_cycle);
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
@@ -5529,11 +5538,12 @@ void ScspAsynMainRT( void * p ){
 }
 
 void ScspExec(){
-	if (thread_running == 0){
-	  thread_running = 1;
+	if (!thread_running){
+	  thread_running = true;
 	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 	}
 }
+
 void ScspExecAsync() {
   u32 audiosize;
 

@@ -21,6 +21,10 @@
 #ifndef PERIPHERAL_H
 #define PERIPHERAL_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "core.h"
 #include "yui.h"
 #include "stv.h"
@@ -462,5 +466,9 @@ void PerCabP2Button6Released(PerCab_struct * pad);
 /** @} */
 
 /** @} */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

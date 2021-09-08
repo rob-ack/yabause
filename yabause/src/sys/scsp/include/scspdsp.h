@@ -22,6 +22,10 @@
 
 #include "core.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct
 {
    u16 coef[64];
@@ -167,5 +171,9 @@ void ScspDspDisasm(u8 addr, char *outstring);
 void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
 
 extern ScspDsp scsp_dsp;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

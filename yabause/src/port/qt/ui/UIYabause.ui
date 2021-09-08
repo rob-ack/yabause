@@ -14,7 +14,7 @@
    <string>Yabause Qt GUI</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resources/resources.qrc">
+   <iconset>
     <normaloff>:/icons/icons/yabause.png</normaloff>:/icons/icons/yabause.png</iconset>
   </property>
   <property name="iconSize">
@@ -124,7 +124,7 @@
      <x>0</x>
      <y>0</y>
      <width>640</width>
-     <height>21</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile">
@@ -487,6 +487,9 @@
    <property name="text">
     <string>&amp;About...</string>
    </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="aViewLayerNBG0">
    <property name="checkable">
@@ -791,6 +794,9 @@
    <property name="statusTip">
     <string>https://github.com/FCare/yabause/issues</string>
    </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="aHelpCompatibilityList">
    <property name="icon">
@@ -802,6 +808,9 @@
    </property>
    <property name="statusTip">
     <string>http://tradu-france.com/tfwiki-1.28.2/index.php?title=Compatibility_list_of_Kronos</string>
+   </property>
+   <property name="shortcutVisibleInContextMenu">
+    <bool>false</bool>
    </property>
   </action>
   <action name="aSound">

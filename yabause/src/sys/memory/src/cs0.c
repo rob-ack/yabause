@@ -42,6 +42,9 @@ static u8 decryptOn = 0;
 
 static u8 FASTCALL DummyCs0ReadByte(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return 0xFF;
 }
 
@@ -49,6 +52,9 @@ static u8 FASTCALL DummyCs0ReadByte(SH2_struct *context, UNUSED u8* memory, UNUS
 
 static u16 FASTCALL DummyCs0ReadWord(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return 0xFFFF;
 }
 
@@ -56,6 +62,9 @@ static u16 FASTCALL DummyCs0ReadWord(SH2_struct *context, UNUSED u8* memory, UNU
 
 static u32 FASTCALL DummyCs0ReadLong(SH2_struct *context, UNUSED u8* memory, UNUSED u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return 0xFFFFFFFF;
 }
 
@@ -168,7 +177,7 @@ static void FASTCALL DummyCs2WriteLong(SH2_struct *context, UNUSED u8* memory, U
 typedef enum
   {
     FL_READ,
-    FL_SDP,   
+    FL_SDP,
     FL_CMD,
     FL_ID,
     FL_IDSDP,
@@ -196,7 +205,11 @@ static u8 FASTCALL FlashCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 
 {
   flashstate* state;
   u8* reg;
-    
+
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
+
   if (addr & 1)
     {
       state = &flstate1;
@@ -216,8 +229,8 @@ static u8 FASTCALL FlashCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 
        if (addr & 2) return deviceid;
        else return vendorid;
     case FL_WRITEARRAY: *reg ^= 0x02;
-    case FL_WRITEBUF: return *reg;  
-    case FL_SDP: 
+    case FL_WRITEBUF: return *reg;
+    case FL_SDP:
     case FL_CMD: *state = FL_READ;
     case FL_READ:
     default: return T2ReadByte(memory, addr);
@@ -228,14 +241,20 @@ static u8 FASTCALL FlashCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 
 
 static u16 FASTCALL FlashCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-  return ((u16)(FlashCs0ReadByte(context, memory, addr) << 8) | (u16)(FlashCs0ReadByte(context, memory, addr+1)));
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
+  return ((u16)(FlashCs0ReadByte(NULL, memory, addr) << 8) | (u16)(FlashCs0ReadByte(NULL, memory, addr+1)));
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static u32 FASTCALL FlashCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-  return ((u32)FlashCs0ReadWord(context, memory, addr) << 16) |(u32) FlashCs0ReadWord(context, memory, addr + 2);
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
+  return ((u32)FlashCs0ReadWord(NULL, memory, addr) << 16) |(u32) FlashCs0ReadWord(NULL, memory, addr + 2);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -245,7 +264,7 @@ static void FASTCALL FlashCs0WriteByte(SH2_struct *context, UNUSED u8* memory, u
    flashstate* state;
    u8* reg;
    u8* buf;
-  
+
    if (addr & 1)
    {
       state = &flstate1;
@@ -258,7 +277,7 @@ static void FASTCALL FlashCs0WriteByte(SH2_struct *context, UNUSED u8* memory, u
       reg = &flreg0;
       buf = flbuf0;
    }
-  
+
    switch (*state)
    {
       case FL_READ:
@@ -344,12 +363,16 @@ static u8 FASTCALL AR4MCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 a
 {
    addr &= 0x1FFFFFF;
 
+   // if (context != NULL){
+   //   context->cycles += 24;
+   // }
+
    switch (addr >> 20)
    {
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadByte(context, memory,addr);
+	   return FlashCs0ReadByte(NULL, memory,addr);
 //            return biosarea->getByte(addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Byte read\n");
@@ -379,6 +402,9 @@ static u8 FASTCALL AR4MCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 a
 
 static u16 FASTCALL AR4MCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -386,7 +412,7 @@ static u16 FASTCALL AR4MCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadWord(context, memory, addr);
+	   return FlashCs0ReadWord(NULL, memory, addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Word read\n");
          break;
@@ -427,6 +453,9 @@ static u16 FASTCALL AR4MCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 
 
 static u32 FASTCALL AR4MCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -434,7 +463,7 @@ static u32 FASTCALL AR4MCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 
       case 0x00:
       {
          if ((addr & 0x80000) == 0) // EEPROM
-	   return FlashCs0ReadLong(context, memory, addr);
+	   return FlashCs0ReadLong(NULL, memory, addr);
 //         else // Outport
 //            fprintf(stderr, "Commlink Outport Long read\n");
          break;
@@ -582,6 +611,9 @@ static void FASTCALL AR4MCs0WriteLong(SH2_struct *context, UNUSED u8* memory, u3
 
 static u8 FASTCALL DRAM8MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -601,6 +633,9 @@ static u8 FASTCALL DRAM8MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory, 
 
 static u16 FASTCALL DRAM8MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -620,6 +655,9 @@ static u16 FASTCALL DRAM8MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory,
 
 static u32 FASTCALL DRAM8MBITCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -698,6 +736,9 @@ static void FASTCALL DRAM8MBITCs0WriteLong(SH2_struct *context, UNUSED u8* memor
 
 static u8 FASTCALL DRAM32MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -718,6 +759,9 @@ static u8 FASTCALL DRAM32MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory,
 
 static u16 FASTCALL DRAM32MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -738,6 +782,9 @@ static u16 FASTCALL DRAM32MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory
 
 static u32 FASTCALL DRAM32MBITCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    addr &= 0x1FFFFFF;
 
    switch (addr >> 20)
@@ -821,7 +868,7 @@ static u8 FASTCALL BUP4MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u
    if (addr & 0x1) {
       return T1ReadByte(CartridgeArea->bupram, addr>>1);
    }
-   else 
+   else
       return 0xFF;
 }
 
@@ -875,7 +922,7 @@ static u8 FASTCALL BUP8MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, u
    if (addr & 0x1) {
       return T1ReadByte(CartridgeArea->bupram, addr>>1);
    }
-   else 
+   else
       return 0xFF;
 }
 
@@ -929,7 +976,7 @@ static u8 FASTCALL BUP16MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, 
    if (addr & 0x1) {
       return T1ReadByte(CartridgeArea->bupram, addr>>1);
    }
-   else 
+   else
       return 0xFF;
 }
 
@@ -983,7 +1030,7 @@ static u8 FASTCALL BUP32MBITCs1ReadByte(SH2_struct *context, UNUSED u8* memory, 
    if (addr & 0x1) {
       return T1ReadByte(CartridgeArea->bupram, addr>>1);
    }
-   else 
+   else
       return 0xFF;
 }
 
@@ -1084,6 +1131,9 @@ static void FASTCALL BUP128MBITCs1WriteLong(SH2_struct *context, UNUSED u8* memo
 
 static u8 FASTCALL ROM16MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return T1ReadByte(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
@@ -1091,6 +1141,9 @@ static u8 FASTCALL ROM16MBITCs0ReadByte(SH2_struct *context, UNUSED u8* memory, 
 
 static u16 FASTCALL ROM16MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return T1ReadWord(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
@@ -1098,6 +1151,9 @@ static u16 FASTCALL ROM16MBITCs0ReadWord(SH2_struct *context, UNUSED u8* memory,
 
 static u32 FASTCALL ROM16MBITCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return T1ReadLong(CartridgeArea->rom, addr & 0x1FFFFF);
 }
 
@@ -1128,6 +1184,9 @@ static void FASTCALL ROM16MBITCs0WriteLong(SH2_struct *context, UNUSED u8* memor
 
 static u8 FASTCALL ROMSTVCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    return T1ReadByte(CartridgeArea->rom, addr & 0x1FFFFFF);
 }
 
@@ -1135,6 +1194,9 @@ static u8 FASTCALL ROMSTVCs0ReadByte(SH2_struct *context, UNUSED u8* memory, u32
 
 static u16 FASTCALL ROMSTVCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    u16 ret = T1ReadWord(CartridgeArea->rom, addr & 0x1FFFFFF);
    return ret;
 }
@@ -1143,6 +1205,9 @@ static u16 FASTCALL ROMSTVCs0ReadWord(SH2_struct *context, UNUSED u8* memory, u3
 
 static u32 FASTCALL ROMSTVCs0ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 24;
+  // }
    u32 ret = T1ReadLong(CartridgeArea->rom, addr & 0x1FFFFFF);
    return ret;
 }
@@ -1213,7 +1278,7 @@ static void FASTCALL ROMSTVCs1WriteByte(SH2_struct *context, UNUSED u8* memory, 
     decryptOn = val&0x1;
     return;
   }
-  T1WriteByte(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
+  T1WriteByte(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1238,14 +1303,14 @@ static void FASTCALL ROMSTVCs1WriteWord(SH2_struct *context, UNUSED u8* memory, 
   {
     cyptoSetSubkey(val);
   } else
-    T1WriteWord(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
+    T1WriteWord(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 static void FASTCALL ROMSTVCs1WriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
-  T1WriteLong(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);  
+  T1WriteLong(&CartridgeArea->rom[0x2000000], addr & 0xFFFFFF, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1305,7 +1370,7 @@ int CartInit(const char * filename, int type)
          deviceid = 0xD5;
          flstate0 = FL_READ;
          flstate1 = FL_READ;
-		 
+
          // Setup Functions
          CartridgeArea->Cs0ReadByte = &AR4MCs0ReadByte;
          CartridgeArea->Cs0ReadWord = &AR4MCs0ReadWord;
@@ -1679,7 +1744,7 @@ int CartSaveState(void ** stream)
       }
       case CART_DRAM32MBIT: {
          MemStateWrite((void *)CartridgeArea->dram, 1, 0x400000, stream);
-         break;      
+         break;
       }
    }
    return MemStateFinishHeader(stream, offset);
@@ -1710,7 +1775,7 @@ int CartLoadState(const void * stream, UNUSED int version, int size)
             }
             case CART_DRAM32MBIT: {
                MemStateRead((void *)CartridgeArea->dram , 1, 0x400000, stream);
-               break;      
+               break;
             }
       }
    }

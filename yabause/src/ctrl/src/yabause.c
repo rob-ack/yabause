@@ -37,6 +37,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
+#include "mk68Counter.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scspdsp.h"
@@ -192,7 +193,7 @@ void YabauseChangeTiming(int freqtype) {
 extern int tweak_backup_file_size;
 YabEventQueue * q_scsp_frame_start;
 YabEventQueue * q_scsp_finish;
-
+YabEventQueue * q_scsp_m68counterCond;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -342,6 +343,7 @@ int YabauseInit(yabauseinit_struct *init)
 
   q_scsp_frame_start = YabThreadCreateQueue(1);
   q_scsp_finish = YabThreadCreateQueue(1);
+  q_scsp_m68counterCond = YabThreadCreateQueue(1);
   setM68kCounter(0);
 
    // Initialize both cpu's
@@ -737,7 +739,6 @@ u32 YabauseGetFrameCount() {
 
 //#define YAB_STATICS
 void SyncCPUtoSCSP();
-u64 getM68KCounter();
 u64 g_m68K_dec_cycle = 0;
 
 
@@ -831,7 +832,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / ((yabsys.IsPal)?50:60))<< SCSP_FRACTIONAL_BITS);
+            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
@@ -930,7 +931,6 @@ void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
     YabWaitEventQueue(q_scsp_finish);
     saved_m68k_cycles = 0;
-    setM68kCounter(saved_m68k_cycles);
     YabAddEventQueue(q_scsp_frame_start, 0);
   //LOG("[SH2] START SCSP");
 }

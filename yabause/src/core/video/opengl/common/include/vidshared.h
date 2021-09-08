@@ -25,6 +25,10 @@
 #include "vdp2.h"
 #include "debug.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define YGL_TESS_COUNT (4)
 #define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
 
@@ -978,5 +982,9 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
 #define VDP2_VRAM_B1 (3)
 
 int Vdp2GetBank(Vdp2* regs, u32 addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

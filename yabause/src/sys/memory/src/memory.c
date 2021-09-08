@@ -59,73 +59,6 @@
 #include "vidsoft.h"
 #include "vidogl.h"
 
-INLINE int getVramCycle(u32 addr) {
-  if (yabsys.LineCount >= yabsys.VBlankLineCount) {
-    return 2;
-  }
-  if ((addr & 0x000F0000) < 0x00040000) {
-   return Vdp2External.cpu_cycle_a;
-	return 0;
-  }
-  else {
-   return Vdp2External.cpu_cycle_b;
-	return 0;
-  }
-  return 2;
-}
-
-// gcc 4.9 bug
-#define GET_MEM_CYCLE_W \
-  switch (addr & 0xDFF00000) { \
-  case 0x00200000: /* Low */ \
-    *cycle = 7; \
-    break; \
-  case 0x05A00000: /* SOUND */ \
-    *cycle = 7; \
-    break; \
-  case 0x05C00000: /* VDP1 */ \
-    *cycle = 2; \
-    break; \
-  case 0x05e00000: /* VDP2 */ \
-    *cycle = getVramCycle(addr);  \
-    break; \
-  case 0x06000000: /* High */ \
-    *cycle = 2; \
-    break; \
-  default: \
-    *cycle = 0; \
-    break; \
-  } \
-
-#define GET_MEM_CYCLE_R \
-  switch (addr & 0xDFF00000) { \
-  case 0x00000000: /* ROM */ \
-  case 0x00100000: /* Backup */ \
-    *cycle = 16; \
-    break; \
-  case 0x00200000: /* Low */ \
-    *cycle = 12; \
-    break; \
-  case 0x02000000: /* CS0 */ \
-  case 0x05800000: /* CS2 */ \
-    *cycle = 24; \
-    break; \
-  case 0x05A00000: /* SOUND RAM */ \
-  case 0x05B00000: /* SOUND REG */ \
-  case 0x05C00000: /* VDP1 RAM */ \
-    *cycle = 50; \
-    break; \
-  case 0x05E00000: /* VDP2 RAM */ \
-    *cycle = getVramCycle(addr); \
-    break; \
-  case 0x06000000: /* High */ \
-    *cycle = 0; \
-    break; \
-  default: \
-    *cycle = 0; \
-    break; \
-  } \
-
 //////////////////////////////////////////////////////////////////////////////
 
 u8** MemoryBuffer[0x1000];
@@ -385,6 +318,9 @@ static void FASTCALL UnhandledMemoryWriteLong(SH2_struct *context, UNUSED u8* me
 
 static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *context, u8* mem, u32 addr)
 {
+  if (context != NULL){
+    context->cycles +=4; //Done
+  }
    return T2ReadByte(mem, addr & 0xFFFFF);
 }
 
@@ -392,7 +328,9 @@ static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *context, u8* mem, u32 addr
 
 static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *context, u8* mem, u32 addr)
 {
-//printf("hi rw %x\n", addr);
+  if (context != NULL){
+    context->cycles +=4; //Done
+  }
    return T2ReadWord(mem, addr & 0xFFFFF);
 }
 
@@ -400,6 +338,9 @@ static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *context, u8* mem, u32 add
 
 static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *context, u8* mem, u32 addr)
 {
+  if (context != NULL){
+    context->cycles +=4; //Done
+  }
    return T2ReadLong(mem, addr & 0xFFFFF);
 }
 
@@ -407,6 +348,9 @@ static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *context, u8* mem, u32 add
 
 static void FASTCALL HighWramMemoryWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
+  if (context != NULL){
+    context->cycles +=1; //Done
+  }
    T2WriteByte(mem, addr & 0xFFFFF, val);
 }
 
@@ -414,6 +358,9 @@ static void FASTCALL HighWramMemoryWriteByte(SH2_struct *context, u8* mem, u32 a
 
 static void FASTCALL HighWramMemoryWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
+  if (context != NULL){
+    context->cycles += 1; //Done
+  }
    T2WriteWord(mem, addr & 0xFFFFF, val);
 }
 
@@ -421,6 +368,9 @@ static void FASTCALL HighWramMemoryWriteWord(SH2_struct *context, u8* mem, u32 a
 
 static void FASTCALL HighWramMemoryWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
+  if (context != NULL){
+    context->cycles += 1; //Done
+  }
    T2WriteLong(mem, addr & 0xFFFFF, val);
 }
 
@@ -428,6 +378,9 @@ static void FASTCALL HighWramMemoryWriteLong(SH2_struct *context, u8* mem, u32 a
 
 static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 4; //Done
+  }
    return T2ReadByte(memory, addr & 0xFFFFF);
 }
 
@@ -435,6 +388,9 @@ static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *context, UNUSED u8* memory,
 
 static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 4; //Done
+  }
    return T2ReadWord(memory, addr & 0xFFFFF);
 }
 
@@ -442,6 +398,9 @@ static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *context, UNUSED u8* memory
 
 static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
+  if (context != NULL){
+    context->cycles += 12; //Done
+  }
    return T2ReadLong(memory, addr & 0xFFFFF);
 }
 
@@ -449,6 +408,9 @@ static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *context, UNUSED u8* memory
 
 static void FASTCALL LowWramMemoryWriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
+  if (context != NULL){
+    context->cycles += 2; //Done
+  }
    T2WriteByte(memory, addr & 0xFFFFF, val);
 }
 
@@ -456,6 +418,9 @@ static void FASTCALL LowWramMemoryWriteByte(SH2_struct *context, UNUSED u8* memo
 
 static void FASTCALL LowWramMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
+  if (context != NULL){
+    context->cycles += 2; //Done
+  }
    T2WriteWord(memory, addr & 0xFFFFF, val);
 }
 
@@ -463,6 +428,9 @@ static void FASTCALL LowWramMemoryWriteWord(SH2_struct *context, UNUSED u8* memo
 
 static void FASTCALL LowWramMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
+  if (context != NULL){
+    context->cycles += 9; //Done
+  }
    T2WriteLong(memory, addr & 0xFFFFF, val);
 }
 
@@ -470,6 +438,9 @@ static void FASTCALL LowWramMemoryWriteLong(SH2_struct *context, UNUSED u8* memo
 
 static u8 FASTCALL BiosRomMemoryReadByte(SH2_struct *context, UNUSED u8* memory,  u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 16;
+  // }
    return T2ReadByte(memory, addr & 0x7FFFF);
 }
 
@@ -477,6 +448,9 @@ static u8 FASTCALL BiosRomMemoryReadByte(SH2_struct *context, UNUSED u8* memory,
 
 static u16 FASTCALL BiosRomMemoryReadWord(SH2_struct *context, u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 16;
+  // }
    return T2ReadWord(memory, addr & 0x7FFFF);
 }
 
@@ -484,6 +458,9 @@ static u16 FASTCALL BiosRomMemoryReadWord(SH2_struct *context, u8* memory, u32 a
 
 static u32 FASTCALL BiosRomMemoryReadLong(SH2_struct *context, u8* memory, u32 addr)
 {
+  // if (context != NULL){
+  //   context->cycles += 16;
+  // }
    return T2ReadLong(memory, addr & 0x7FFFF);
 }
 
@@ -528,6 +505,9 @@ static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, 
     return fgetc(pbackup);
   }
 #endif
+  // if (context != NULL){
+  //   context->cycles += 16;
+  // }
   addr = addr & ((backup_file_size<<1) - 1);
   if (addr & 0x1) {
     return T1ReadByte(memory, addr>>1);
@@ -540,6 +520,9 @@ static u8 FASTCALL BupRamMemoryReadByte(SH2_struct *context, UNUSED u8* memory, 
 static u16 FASTCALL BupRamMemoryReadWord(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    // LOG("bup\t: BackupRam read word - %08X\n", addr);
+   // if (context != NULL){
+   //   context->cycles += 16;
+   // }
    return (BupRamMemoryReadByte(context, memory, addr | 0x1) << 8);
 }
 
@@ -548,6 +531,9 @@ static u16 FASTCALL BupRamMemoryReadWord(SH2_struct *context, UNUSED u8* memory,
 static u32 FASTCALL BupRamMemoryReadLong(SH2_struct *context, UNUSED u8* memory, USED_IF_DEBUG u32 addr)
 {
    // LOG("bup\t: BackupRam read long - %08X\n", addr);
+   // if (context != NULL){
+   //   context->cycles += 16;
+   // }
    return ((BupRamMemoryReadByte(context, memory, addr | 0x1) << 8) || (BupRamMemoryReadByte(context, memory, addr | 0x3) << 16));
 }
 
@@ -779,13 +765,9 @@ void MappedMemoryInit()
      &BupRam);
 }
 
-u8 FASTCALL DMAMappedMemoryReadByte(SH2_struct *context, u32 addr, u32 * cycle) {
+u8 FASTCALL DMAMappedMemoryReadByte(u32 addr) {
   u8 ret;
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr);
-    GET_MEM_CYCLE_R
-  }
-  ret = MappedMemoryReadByte(context, addr);
+  ret = MappedMemoryReadByte(NULL, addr);
 return ret;
 }
 
@@ -875,12 +857,8 @@ LOG("Hunandled Byte R %x\n", addr);
 }
 
 
-u16 FASTCALL DMAMappedMemoryReadWord(SH2_struct *context, u32 addr, u32 *cycle) {
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr);
-    GET_MEM_CYCLE_R
-  }
-  return MappedMemoryReadWord(context, addr);
+u16 FASTCALL DMAMappedMemoryReadWord(u32 addr) {
+  return MappedMemoryReadWord(NULL, addr);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -974,13 +952,9 @@ LOG("Hunandled Word R %x\n", addr);
    return 0;
 }
 
-u32 FASTCALL DMAMappedMemoryReadLong(SH2_struct *context, u32 addr, u32 *cycle)
+u32 FASTCALL DMAMappedMemoryReadLong(u32 addr)
 {
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr);
-    GET_MEM_CYCLE_R
-  }
-  return MappedMemoryReadLong(context, addr);
+  return MappedMemoryReadLong(NULL, addr);
 }
 //////////////////////////////////////////////////////////////////////////////
 u32 FASTCALL MappedMemoryReadLong(SH2_struct *context, u32 addr)
@@ -1075,13 +1049,9 @@ LOG("Hunandled SH2 Long R %x %d\n", addr,(addr >> 29));
    return 0;
 }
 
-void FASTCALL DMAMappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val, u32 *cycle)
+void FASTCALL DMAMappedMemoryWriteByte(u32 addr, u8 val)
 {
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr); ]
-    GET_MEM_CYCLE_W
-  }
-   MappedMemoryWriteByte(context, addr, val);
+   MappedMemoryWriteByte(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1185,13 +1155,9 @@ LOG("Hunandled Byte W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val, u32 *cycle)
+void FASTCALL DMAMappedMemoryWriteWord(u32 addr, u16 val)
 {
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr); ]
-    GET_MEM_CYCLE_W
-  }
-   MappedMemoryWriteWord(context, addr, val);
+   MappedMemoryWriteWord(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1297,13 +1263,9 @@ LOG("Hunandled Word W %x\n", addr);
    }
 }
 
-void FASTCALL DMAMappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val, u32 *cycle)
+void FASTCALL DMAMappedMemoryWriteLong(u32 addr, u32 val)
 {
-  if (cycle != NULL) {
-    //*cycle = getMemCycle(addr); ]
-    GET_MEM_CYCLE_W
-  }
-   MappedMemoryWriteLong(context, addr, val);
+   MappedMemoryWriteLong(NULL, addr, val);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1859,7 +1821,7 @@ int YabSaveStateStream(void ** stream)
    MemStateWrite((void *)&endian, 1, 1, stream);
 
    // Write version(fix me)
-   i = 2;
+   i = 3;
    MemStateWrite((void *)&i, sizeof(i), 1, stream);
 
    // Skip the next 4 bytes for now
@@ -2036,6 +1998,7 @@ int YabLoadStateStream(const void * stream, size_t size_stream)
          /* This is the "original" version of the format */
          break;
       case 2:
+      case 3:
          /* version 2 adds video recording */
          MemStateRead((void *)&framecounter, 4, 1, stream);
          movieposition=MemStateGetOffset(); // yabause was doing this, why ? it's replaced right after
@@ -2045,7 +2008,7 @@ int YabLoadStateStream(const void * stream, size_t size_stream)
       default:
          /* we're trying to open a save state using a future version
           * of the YSS format, that won't work, sorry :) */
-         YuiMsg("Save file is not supported. Might be a future version.\n");
+         YuiMsg("Save file is not supported. Might be a future version (%d).\n", headerversion);
          return -3;
          break;
    }

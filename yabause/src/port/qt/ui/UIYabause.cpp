@@ -379,6 +379,8 @@ void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat
 {
 }
 
+QPoint preFullscreenModeWindowPosition;
+
 void UIYabause::fullscreenRequested( bool f )
 {
 	if ( isFullScreen() && !f )
@@ -387,6 +389,7 @@ void UIYabause::fullscreenRequested( bool f )
 		setUnifiedTitleAndToolBarOnMac( true );
 #endif
 		showNormal();
+		this->move(preFullscreenModeWindowPosition);
 
 		VolatileSettings* vs = QtYabause::volatileSettings();
 		int menubarHide = vs->value( "View/Menubar" ).toInt();
@@ -408,10 +411,8 @@ void UIYabause::fullscreenRequested( bool f )
 
 		setMaximumSize( QWIDGETSIZE_MAX, QWIDGETSIZE_MAX );
 		setMinimumSize( 0,0 );
-		QPoint ps;
-		ps.setX(0);
-		ps.setY(0);
-		this->move(ps);
+		preFullscreenModeWindowPosition = this->pos();
+		this->move(0,0);
 
 		showFullScreen();
 
@@ -716,23 +717,21 @@ void UIYabause::on_aFileLoadStateAs_triggered()
 void UIYabause::on_aFileScreenshot_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
-	// images filter that qt can write
-	QStringList filters;
-	foreach ( QByteArray ba, QImageWriter::supportedImageFormats() )
-		if ( !filters.contains( ba, Qt::CaseInsensitive ) )
-			filters << QString( ba ).toLower();
-	for ( int i = 0; i < filters.count(); i++ )
-		filters[i] = QtYabause::translate( "%1 Images (*.%2)" ).arg( filters[i].toUpper() ).arg( filters[i] );
 
 #if defined(HAVE_LIBGL) && !defined(QT_OPENGL_ES_1) && !defined(QT_OPENGL_ES_2)
 	glReadBuffer(GL_FRONT);
 #endif
 
+	QFileInfo const fileInfo(QtYabause::volatileSettings()->value("General/CdRomISO").toString());
+
 	// take screenshot of gl view
-	QImage screenshot = mYabauseGL->grabFramebuffer();
+	QImage const screenshot = mYabauseGL->grabFramebuffer();
+
+	auto const directory = QtYabause::volatileSettings()->value(Settings::Keys::ScreenshotsDirectory, Settings::DefaultPaths::Screenshots()).toString();
+	auto const format = QtYabause::volatileSettings()->value(Settings::Keys::ScreenshotsFormat, "png").toString();
 
 	// request a file to save to to user
-	QString s = CommonDialogs::getSaveFileName( QString(), QtYabause::translate( "Choose a location for your screenshot" ), filters.join( ";;" ) );
+	QString s = directory + "/" + fileInfo.baseName() + QString("_%1." + format).arg(QDateTime::currentDateTime().toString("dd_MM_yyyy-hh_mm_ss"));
 
 	// if the user didn't provide a filename extension, we force it to png
 	QFileInfo qfi( s );

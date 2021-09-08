@@ -68,6 +68,7 @@ set(kronos_HEADERS
 	sys/memory/include/decrypt.h
   core/osd/include/osdcore.h
   core/osd/include/font.h
+  core/m68k/mk68Counter.h
   core/m68k/m68kcore.h
 	core/video/opengl/core/include/vidogl.h
 	core/video/opengl/common/include/vidshared.h
@@ -113,7 +114,8 @@ set(kronos_SOURCES
 	utils/src/netlink.c
 	core/osd/src/osdcore.c
 	utils/src/profile.c
-	core/m68k/Counter.cpp
+	sys/vdp2/src/vdp2debug.c
+	core/m68k/mk68Counter.cpp
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
 	sys/vdp2/src/vdp2.c
@@ -183,6 +185,8 @@ if (UNIX)
 elseif (WIN32)
 	add_definitions(-DYTSDIR=\"trans\")
 endif()
+#add translations
+include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt) 
 
 #-------------------------------------------------------
 
@@ -643,7 +647,7 @@ if (YAB_PORT_OSD)
 endif()
 
 # Exec from cache
-option(YAB_USE_CACHE "Allow external bus access to use cache" OFF)
+option(YAB_USE_CACHE "Allow external bus access to use cache" ON)
 if (YAB_USE_CACHE)
 	add_definitions(-DUSE_CACHE=1)
 endif()

@@ -2,9 +2,9 @@ name: CMake Linux Ubuntu with QT
 
 on:
   push:
-    branches: [ kronos-cmake_ci ]
+    branches: [ kronos-develop ]
   pull_request:
-    branches: [ kronos-cmake_ci ]
+    branches: [ kronos-develop ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)

@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "memory.h"
 #include "yabause.h"
+#include "assert.h"
 
 SH2_struct *SSH2=NULL;
 SH2_struct *MSH2=NULL;
@@ -261,18 +262,16 @@ void SH2NMI(SH2_struct *context)
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r)
 {
-   if (r != NULL) {
-      SH2Core->GetRegisters(context, r);
-   }
+	assert(r != NULL);
+	SH2Core->GetRegisters(context, r);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
 {
-   if (r != NULL) {
-      SH2Core->SetRegisters(context, r);
-   }
+    assert(r != NULL);
+	SH2Core->SetRegisters(context, r);
 }
 
 //////////////////////////////////////////////////////////////////////////////

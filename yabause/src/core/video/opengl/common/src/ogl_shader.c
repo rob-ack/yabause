@@ -19,6 +19,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#if !defined SHADER_GEN_INCLUDED
 
 //#ifdef __ANDROID__
 #include <stdlib.h>
@@ -118,6 +119,8 @@ int Ygl_cleanupVdp1CommonParam(void * p, YglTextureManager *tm){
   return 0;
 }
 
+#endif
+
 /*------------------------------------------------------------------------------------
  *  Normal Draw
  * ----------------------------------------------------------------------------------*/
@@ -149,6 +152,7 @@ SHADER_VERSION
 "}  \n";
 
 const GLchar * pYglprg_vdp2_normal_f[] = {Yglprg_normal_f, NULL};
+#if !defined SHADER_GEN_INCLUDED
 static int id_normal_s_texture = -1;
 static int id_normal_matrix = -1;
 
@@ -167,6 +171,7 @@ int Ygl_cleanupNormal(void * p, YglTextureManager *tm)
   return 0;
 }
 
+#endif
 
 //---------------------------------------------------------
 // Draw pxels refering color ram
@@ -204,6 +209,8 @@ SHADER_VERSION
 
 
 const GLchar * pYglprg_normal_cram_f[] = { Yglprg_normal_cram_f, NULL };
+#if !defined SHADER_GEN_INCLUDED
+
 static int id_normal_cram_s_texture = -1;
 static int id_normal_cram_emu_height = -1;
 static int id_normal_cram_vdp2_hratio = -1;
@@ -246,6 +253,8 @@ int Ygl_cleanupNormalCram(void * p, YglTextureManager *tm)
   return 0;
 }
 
+#endif
+
 const GLchar Yglprg_normal_cram_addcol_f[] =
 SHADER_VERSION
 "#ifdef GL_ES\n"
@@ -269,6 +278,7 @@ static int id_normal_cram_s_texture_addcol = -1;
 static int id_normal_cram_s_color_addcol = -1;
 static int id_normal_cram_matrix_addcol = -1;
 
+#if !defined SHADER_GEN_INCLUDED
 
 int Ygl_uniformAddColCram(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, int id)
 {
@@ -399,6 +409,8 @@ int Ygl_cleanupMosaic(void * p, YglTextureManager *tm)
 
   return 0;
 }
+
+#endif
 
 /*------------------------------------------------------------------------------------
  *  UserClip Operation
@@ -592,6 +604,9 @@ SHADER_VERSION_TESS
 " \n"
 "	EndPrimitive(); \n"
 "} \n";
+
+#if !defined SHADER_GEN_INCLUDED
+
 /*------------------------------------------------------------------------------------
  *  VDP1 UserClip Operation
  * ----------------------------------------------------------------------------------*/
@@ -679,6 +694,8 @@ int Ygl_uniformEndUserClip(void * p, YglTextureManager *tm, Vdp2 *varVdp2Regs, i
 }
 
 int Ygl_cleanupEndUserClip(void * p, YglTextureManager *tm ){return 0;}
+
+#endif
 
 const GLchar version_core_3_3[] = {
 SHADER_VERSION
@@ -1184,6 +1201,8 @@ const GLchar * prg_input_c[PG_MAX][2];
 const GLchar * prg_input_e[PG_MAX][2];
 const GLchar * prg_input_g[PG_MAX][2];
 
+#if !defined SHADER_GEN_INCLUDED
+
 void initDrawShaderCode() {
   int nbMode = 2;
 #if defined(_OGL3_)
@@ -1545,6 +1564,8 @@ int YglProgramChange( YglLevel * level, int prgid )
 
 }
 
+#endif
+
 //----------------------------------------------------------------------------------------
 static int clear_prg = -1;
 
@@ -1574,6 +1595,8 @@ static const char fclear_img[] =
 "    linepos.x = int( (u_vheight-gl_FragCoord.y) * u_emu_height);\n"
   "  fragColor = texelFetch( u_Clear, linepos,0 ); \n"
   "} \n";
+
+#if !defined SHADER_GEN_INCLUDED
 
 int YglDrawBackScreen() {
 
@@ -1895,6 +1918,8 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
   return 0;
 }
 
+#endif
+
 //--------------------------------------------------------------------------------------------------------------
 static int winprio_prg = -1;
 
@@ -1924,6 +1949,8 @@ SHADER_VERSION
 "  if (all(equal(fragColor.rg,vec2(0.0)))) discard;  \n"
 //"  fragColor.a = 1.0;  \n"
 "}  \n";
+
+#if !defined SHADER_GEN_INCLUDED
 
 int YglBlitSimple(int texture, int blend) {
   const GLchar * fblit_winprio_v[] = { winprio_v, NULL };
@@ -2033,6 +2060,8 @@ static int vdp1_write_prg = -1;
 static int vdp1_read_prg = -1;
 static GLint vdp1MtxModelView = 0;
 
+#endif
+
 static const char vdp1_v[] =
       SHADER_VERSION
       "layout (location = 0) in vec2 a_position;   \n"
@@ -2085,6 +2114,8 @@ SHADER_VERSION
 "  fragColor.b = tex.g;         \n"
 "  fragColor.a = tex.r;         \n"
 "}  \n";
+
+#if !defined SHADER_GEN_INCLUDED
 
 int YglBlitVDP1(u32 srcTexture, float w, float h, int write) {
   const GLchar * fblit_vdp1_v[] = { vdp1_v, NULL };
@@ -2259,6 +2290,8 @@ static int u_f = -1;
 static int outputSize = -1;
 static int inputSize = -1;
 
+#endif
+
 static const char vblit_img[] =
   SHADER_VERSION
   "layout (location = 0) in vec2 aPosition;   \n"
@@ -2388,6 +2421,8 @@ static const char fblitbilinear_img[] =
 GLuint textureCoord_buf[2] = {0,0};
 
 static int last_upmode = 0;
+
+#if !defined SHADER_GEN_INCLUDED
 
 int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disph) {
   float width = w;
@@ -2605,6 +2640,8 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   return 0;
 }
 
+#endif
+
 /*
 hard/vdp2/hon/p12_13.htm
 */
@@ -2645,6 +2682,8 @@ SHADER_VERSION
 "  else \n      "
 "     discard;\n"
 "}  \n";
+
+#if !defined SHADER_GEN_INCLUDED
 
 static int mosaic_prg = -1;
 static int u_mosaic_mtxModelView = -1;
@@ -2778,3 +2817,5 @@ void Ygl_prog_Destroy(void) {
   }
   vdp1_compute_reset();
 }
+
+#endif

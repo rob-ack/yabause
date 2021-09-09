@@ -424,6 +424,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	endif()
 
 	if (OPENGL_SUPPORTED)
+		add_subdirectory(core/video/opengl/shader_gen)
 		add_definitions(-DHAVE_LIBGL=1)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENGL_CURRENT_LIBRARIES})
 

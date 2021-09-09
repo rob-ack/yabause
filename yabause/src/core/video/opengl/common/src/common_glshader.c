@@ -1,6 +1,8 @@
+#if !defined SHADER_GEN_INCLUDED
 #include "common_glshader.h"
 #include "yui.h"
 #include "debug.h"
+#endif
 
 extern int YglInitDrawFrameBufferShaders(int id, int CS);
 
@@ -1763,6 +1765,8 @@ const GLchar * Yglprg_vdp2_common_part_screen[14] = {
 
 const GLchar * pYglprg_vdp2_blit_f[BLIT_TEXTURE_NB_PROG][18];
 
+#if !defined SHADER_GEN_INCLUDED
+
 void initVDP2DrawCode(const GLchar* start[7], const GLchar* draw, const GLchar* end, const GLchar* final) {
   int m_start = 0;
   //VDP2 programs
@@ -2053,3 +2057,5 @@ void compileVDP2Prog(int id, const GLchar **v, int CS){
   }
   YGLLOG("PG_VDP2_DRAWFRAMEBUFF_NONE --DONE [%d]--\n", id);
 }
+
+#endif

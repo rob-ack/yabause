@@ -23,12 +23,13 @@
 #include "VolatileSettings.h"
 #include "ui/UIPortManager.h"
 #include "ui/UIYabause.h"
-
+#include "QtYabause.h"
 #include "peripheral.h"
 
 #include <QDateTime>
 #include <QStringList>
 #include <QDebug>
+#include <QString>
 
 YabauseThread::YabauseThread( QObject* o )
 	: QObject( o )
@@ -79,7 +80,8 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 
 	if ( mInit < 0 )
 	{
-		emit error( QtYabause::translate( "Can't initialize Kronos." ), false );
+		auto const & lastErrorString = QtYabause::getErrorStack().top();
+		emit error( QtYabause::translate(lastErrorString.ErrorMessage), false );
 		return false;
 	}
 

@@ -28,6 +28,10 @@
 #include "error.h"
 #include "yui.h"
 
+int lastErrorType = 0;
+
+int YabGetLastErrorType() { return lastErrorType; }
+
 //////////////////////////////////////////////////////////////////////////////
 
 static void AllocAmendPrintString(const char *string1, const char *string2)
@@ -51,12 +55,10 @@ static void AllocAmendPrintString(const char *string1, const char *string2)
 
 void YabSetError(int type, const void *extra)
 {
-   char tempstr[512];
-   SH2_struct *sh;
-
+    lastErrorType = type;
    switch (type)
    {
-      case YAB_ERR_FILENOTFOUND:
+	   case YAB_ERR_FILENOTFOUND:
          AllocAmendPrintString(_("File not found: "), (const char*) extra);
          break;
       case YAB_ERR_MEMORYALLOC:
@@ -75,8 +77,9 @@ void YabSetError(int type, const void *extra)
 #ifdef DMPHISTORY
         SH2DumpHistory(CurrentSH2);
 #endif
-         sh = (SH2_struct *)extra;
+		SH2_struct const * const sh = (SH2_struct const *)extra;
          SH2GetRegisters(sh, &sh->regs);
+         char tempstr[512] = {0};
          sprintf(tempstr, "%s SH2 invalid opcode\n\n"
                           "R0 =  %08lX\tR12 =  %08lX\n"
                           "R1 =  %08lX\tR13 =  %08lX\n"

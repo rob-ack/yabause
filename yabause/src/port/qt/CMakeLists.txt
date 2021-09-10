@@ -91,14 +91,17 @@ set( kronos_qt_FORMS
     ui/UIHexInput.ui
     ui/UIMemoryTransfer.ui
     ui/UIMemoryEditor.ui
-    ui/UIMemorySearch.ui )
+    ui/UIMemorySearch.ui
+	ui/UILogs.ui
+)
 
 # pure C headers
 set( kronos_qt_HEADERS
 	QtYabause.h
 	CommonDialogs.h
 	PerQt.h
-	Arguments.h )
+	Arguments.h 
+)
 
 # C headers needing moc
 set( kronos_qt_MOC_HEADERS
@@ -130,10 +133,12 @@ set( kronos_qt_MOC_HEADERS
     ui/UIHexEditor.h
     ui/UIMemoryEditor.h
     ui/UIMemorySearch.h
+	ui/UILogs.h 
 	YabauseGL.h
 	VolatileSettings.h
 	Settings.h
-	YabauseThread.h )
+	YabauseThread.h 
+)
 
 # C sources
 set( kronos_qt_SOURCES
@@ -169,10 +174,12 @@ set( kronos_qt_SOURCES
     ui/UIHexEditor.cpp
     ui/UIMemoryEditor.cpp
     ui/UIMemorySearch.cpp
+	ui/UILogs.cpp 
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp
-	Arguments.cpp )
+	Arguments.cpp 
+)
 
 if( OPENGL_SUPPORTED )
 	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseGL.cpp )

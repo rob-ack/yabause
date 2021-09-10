@@ -27,6 +27,7 @@
 #include "UICheatSearch.h"
 #include "UIDebugVDP1.h"
 #include "UIDebugVDP2.h"
+#include "UILogs.h"
 #include "UIMemoryEditor.h"
 #include "UIMemoryTransfer.h"
 #include "UIAbout.h"
@@ -325,7 +326,7 @@ void UIYabause::errorReceived( const QString& error, bool internal )
 		QtYabause::appendLog( error.toLocal8Bit().constData() );
 	}
 	else {
-		CommonDialogs::information( error );
+		CommonDialogs::error( error );
 	}
 }
 
@@ -869,6 +870,29 @@ void UIYabause::on_aViewDebugVDP2_triggered()
 {
 	YabauseLocker locker( mYabauseThread );
 	UIDebugVDP2( this ).exec();
+}
+
+void UIYabause::on_actionShow_Captured_Errors_triggered()
+{
+	static UILogs * existingLogsWindow = nullptr;
+
+	if(existingLogsWindow)
+	{
+		existingLogsWindow->setFocus();
+		return;
+	}
+
+	YabauseLocker locker(mYabauseThread);
+	auto const window = new UILogs(this);
+	window->showNormal();
+
+	existingLogsWindow = window;
+
+	connect(window, &UILogs::closing, []
+	{
+		delete existingLogsWindow;
+		existingLogsWindow = nullptr;
+	});
 }
 
 void UIYabause::on_aHelpReport_triggered()

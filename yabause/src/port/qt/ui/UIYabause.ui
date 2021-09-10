@@ -218,6 +218,8 @@
     </property>
     <addaction name="aViewDebugVDP1"/>
     <addaction name="aViewDebugVDP2"/>
+    <addaction name="separator"/>
+    <addaction name="actionShow_Captured_Errors"/>
    </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
@@ -857,6 +859,11 @@
    </property>
    <property name="shortcut">
     <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="actionShow_Captured_Errors">
+   <property name="text">
+    <string>Show Captured Errors</string>
    </property>
   </action>
  </widget>

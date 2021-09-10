@@ -75,6 +75,8 @@ public:
 	void swapBuffers();
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
+	YabauseThread const * GetYabauseThread() const { return mYabauseThread; }
+
 protected:
 	YabauseGL* mYabauseGL;
 	YabauseThread* mYabauseThread;
@@ -150,6 +152,7 @@ protected slots:
 	// debug menu
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
+	void on_actionShow_Captured_Errors_triggered();
 	// help menu
 	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();

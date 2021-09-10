@@ -22,6 +22,7 @@
 #include "ui/UIYabause.h"
 #include "Settings.h"
 #include "VolatileSettings.h"
+#include "error.h"
 
 #include <QApplication>
 #include <QLabel>
@@ -151,6 +152,12 @@ QMap<uint, PerMouse_struct*> mPort2MouseBits;
 QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
 QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
+QStack<QtYabause::QtYabauseError> allErrors;
+
+QStack<QtYabause::QtYabauseError> & QtYabause::getErrorStack() {
+	return allErrors;
+};
+
 extern "C"
 {
 
@@ -195,7 +202,9 @@ extern "C"
 
        void YuiErrorMsg(const char *error_text)
        {
-         YuiMsg("Error: %s\n", error_text);
+         YuiMsg("Yabause Error: %s\n", error_text);
+		 auto const lastErrorCode = YabGetLastErrorType();
+		 allErrors.push(QtYabause::QtYabauseError(lastErrorCode , error_text));
        }
 
   void YuiEndOfFrame()
@@ -531,7 +540,9 @@ OSD_struct QtYabause::defaultOSDCore()
 
 PerInterface_struct QtYabause::defaultPERCore()
 {
-#ifdef HAVE_LIBSDL
+#if defined HAVE_DIRECTINPUT
+	return PERDIRECTX;
+#elif defined HAVE_LIBSDL
 	return PERSDLJoy;
 #else
 	return PERQT;

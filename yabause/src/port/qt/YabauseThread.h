@@ -24,8 +24,7 @@
 #include <QThread>
 #include <QSize>
 #include <QMutexLocker>
-
-#include "QtYabause.h"
+#include "yabause.h"
 
 class YabauseThread : public QObject
 {

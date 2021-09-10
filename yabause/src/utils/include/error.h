@@ -39,6 +39,8 @@ extern "C" {
 
 #define YAB_ERR_OTHER                   10
 
+int YabGetLastErrorType();
+
 void YabSetError(int type, const void *extra);
 void YabErrorMsg(const char * format, ...);
 

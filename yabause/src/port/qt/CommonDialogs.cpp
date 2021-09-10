@@ -28,6 +28,11 @@ void CommonDialogs::warning( const QString& m, const QString& c )
 void CommonDialogs::information( const QString& m, const QString& c )
 { QMessageBox::information( QApplication::activeWindow(), QtYabause::translate( c ), m ); }
 
+void CommonDialogs::error(const QString& m, const QString& c)
+{
+	QMessageBox::information(QApplication::activeWindow(), QtYabause::translate(c), m);
+}
+
 QString CommonDialogs::getItem( const QStringList i, const QString& l, const QString& c )
 {
 	bool b;

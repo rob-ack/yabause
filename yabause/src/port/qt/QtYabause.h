@@ -71,6 +71,7 @@ extern "C"
 
 #include <QString>
 #include <QMap>
+#include <QStack>
 
 class UIYabause;
 class Settings;
@@ -85,6 +86,12 @@ typedef struct
 
 namespace QtYabause
 {
+	struct QtYabauseError
+	{
+		int ErrorType;
+		QString ErrorMessage;
+	};
+
 	void appendLog( const char* str );
 	UIYabause* mainWindow( bool create = true );
 	Settings* settings( bool create = true );
@@ -129,6 +136,8 @@ namespace QtYabause
 	void clearGunBits();
 	QMap<uint, PerMouse_struct*>* portMouseBits( uint portNumber );
 	void clearMouseBits();
+
+	QStack<QtYabauseError> & getErrorStack();
 };
 
 #endif // QTYABAUSE_H

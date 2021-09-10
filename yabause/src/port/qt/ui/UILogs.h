@@ -20,9 +20,11 @@ Q_SIGNALS:
 
 protected:
     void closeEvent(QCloseEvent *) override;
-    void populateErrors() const;
+    void populateErrors();
+
 private:
     Ui::UILogs *ui;
+    int errorsDisplayed;
 };
 
 #endif // UILOGS_H

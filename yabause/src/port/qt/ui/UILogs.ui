@@ -14,9 +14,9 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Errors</string>
   </property>
-  <widget class="QListWidget" name="logsListContainer">
+  <widget class="QPlainTextEdit" name="logsListContainer">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -25,17 +25,11 @@
      <height>381</height>
     </rect>
    </property>
-   <property name="uniformItemSizes">
-    <bool>false</bool>
-   </property>
-   <property name="wordWrap">
+   <property name="readOnly">
     <bool>true</bool>
    </property>
-   <property name="selectionRectVisible">
-    <bool>false</bool>
-   </property>
-   <property name="itemAlignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+   <property name="plainText">
+    <string>pls report if you see this text</string>
    </property>
   </widget>
  </widget>

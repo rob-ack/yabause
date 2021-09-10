@@ -3,11 +3,13 @@
 #include "QtYabause.h"
 #include "UIYabause.h"
 
-UILogs::UILogs(QWidget *parent) : QDialog(parent), ui(new Ui::UILogs)
+UILogs::UILogs(QWidget *parent) : QDialog(parent), ui(new Ui::UILogs), errorsDisplayed(0)
 {
     ui->setupUi(this);
+    ui->logsListContainer->clear();
 
     auto const * const yabauseInstance = QtYabause::mainWindow(false)->GetYabauseThread();
+    populateErrors();
     connect(yabauseInstance, &YabauseThread::error, this, &UILogs::populateErrors);
 }
 
@@ -24,14 +26,22 @@ void UILogs::closeEvent(QCloseEvent * closeEvent)
     emit closing();
 }
 
-void UILogs::populateErrors() const
+void UILogs::populateErrors()
 {
-    QListWidget* const container = ui->logsListContainer;
-    container->clear();
-
-    auto const& stack = QtYabause::getErrorStack();
-    for (auto const& element : stack)
+    auto const & stack = QtYabause::getErrorStack();
+    if (!(stack.size() > errorsDisplayed))
     {
-        container->addItem(element.ErrorMessage);
+	    return;
+    }
+
+    auto iterator = stack.cbegin();
+    std::advance(iterator, errorsDisplayed);
+    errorsDisplayed = stack.size();
+
+    auto* const container = ui->logsListContainer;
+    for (auto it = iterator; it != stack.end(); ++it)
+    {
+        auto const& element = *it;
+        container->appendPlainText(element.ErrorTimestamp.toString() + ": " + element.ErrorMessage + "\n");
     }
 }

@@ -72,6 +72,7 @@ extern "C"
 #include <QString>
 #include <QMap>
 #include <QStack>
+#include <QDateTime>
 
 class UIYabause;
 class Settings;
@@ -90,6 +91,7 @@ namespace QtYabause
 	{
 		int ErrorType;
 		QString ErrorMessage;
+		QDateTime ErrorTimestamp = QDateTime::currentDateTime();
 	};
 
 	void appendLog( const char* str );

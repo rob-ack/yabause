@@ -55,6 +55,7 @@ static void AllocAmendPrintString(const char *string1, const char *string2)
 
 void YabSetError(int type, const void *extra)
 {
+    SH2_struct * sh;
     lastErrorType = type;
    switch (type)
    {
@@ -77,7 +78,7 @@ void YabSetError(int type, const void *extra)
 #ifdef DMPHISTORY
         SH2DumpHistory(CurrentSH2);
 #endif
-		SH2_struct const * const sh = (SH2_struct const *)extra;
+		sh = (SH2_struct *)extra;
          SH2GetRegisters(sh, &sh->regs);
          char tempstr[512] = {0};
          sprintf(tempstr, "%s SH2 invalid opcode\n\n"

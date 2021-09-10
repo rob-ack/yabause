@@ -18,8 +18,6 @@ typedef char GLchar;
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <execution>
-#include <algorithm>
 #include <filesystem>
 #include <unordered_set>
 #include <iostream>
@@ -76,33 +74,38 @@ int main(int argc, char** argv)
 
     std::cout << "Shaders: " << shaders.size() << std::endl << "Unique Shaders:" << unique_shaders.size() << std::endl;
 
-    auto const * outPath = "";
+    std::string outPath = "";
     if (argc > 1 && std::filesystem::exists(argv[1]))
     {
         outPath = argv[1];
+        if (!outPath.ends_with("/") && !outPath.ends_with("\\\\"))
+        {
+            outPath += "/";
+        }
     }
 
-    std::for_each(std::execution::par_unseq, shaders.begin(), shaders.end(), [&](auto && tuple)
+//    std::for_each(std::execution::par_unseq, shaders.begin(), shaders.end(), [&](auto && tuple)
+//    {
+//        auto const & [index, shader] = tuple;
+//        std::ostringstream fileName;
+//        fileName << outPath;
+//        fileName << "kronos_shader_" << index << "_.glsl";
+//
+//        std::ofstream file;
+//        file.open(fileName.str(), std::ios::out);
+//        file << shader;
+//        file.close();
+//    });
+
+    std::ofstream file;
+    for (auto const & [index, shader] : shaders)
     {
-        auto const & [index, shader] = tuple;
         std::ostringstream fileName;
         fileName << outPath;
         fileName << "kronos_shader_" << index << "_.glsl";
 
-        std::ofstream file;
         file.open(fileName.str(), std::ios::out);
         file << shader;
         file.close();
-    });
-
-    //std::ofstream file;
-    //for (auto const & [index, shader] : shaders)
-    //{
-    //    std::ostringstream fileName;
-    //    fileName << "kronos_shader_" << index << "_.glsl";
-
-    //    file.open(fileName.str(), std::ios::out);
-    //    file << shader;
-    //    file.close();
-    //}
+    }
 }

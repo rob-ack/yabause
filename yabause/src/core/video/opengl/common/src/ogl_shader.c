@@ -445,78 +445,78 @@ const GLchar Yglprg_userclip_f[] =
 } \n"
 
 #define MESH_IMPROVED_PROCESS(A, B) \
-" meshColor = "Stringify(A)".rg; \n \
-  "Stringify(A)".rg = "Stringify(B)".rg; \n"
+" meshColor = " Stringify(A) ".rg; \n \
+  " Stringify(A) ".rg = " Stringify(B) ".rg; \n"
 
 // we have a gouraud value, we can consider the pixel code is RGB otherwise gouraud effect is not guaranted (VDP1 doc p26)
 #define GOURAUD_PROCESS(A) "\
-int Rg = int(clamp((float((col"Stringify(A)" >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
-int Gg = int(clamp((float((col"Stringify(A)" >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
-int Bg = int(clamp((float((col"Stringify(A)" >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
-int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(Rg | ((Gg & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((Gg>>3) | (Bg<<2) | MSBg)/255.0;\n"
+int Rg = int(clamp((float((col" Stringify(A) " >> 00) & 0x1F)/31.0 + v_vtxcolor.r), 0.0, 1.0)*31.0);\n \
+int Gg = int(clamp((float((col" Stringify(A) " >> 05) & 0x1F)/31.0 + v_vtxcolor.g), 0.0, 1.0)*31.0);\n \
+int Bg = int(clamp((float((col" Stringify(A) " >> 10) & 0x1F)/31.0 + v_vtxcolor.b), 0.0, 1.0)*31.0);\n \
+int MSBg = (col" Stringify(A) " & 0x8000) >> 8;\n \
+" Stringify(A) ".r = float(Rg | ((Gg & 0x7)<<5))/255.0;\n \
+" Stringify(A) ".g = float((Gg>>3) | (Bg<<2) | MSBg)/255.0;\n"
 
 // the v_vtxcolor interpolated value has not enough precision to avoid banding with gouraud shading
 //The only solution might be to upload the four gouraud point and compute the interpolated value with texcoord
 #define GOURAUD_PROCESS_IMPROVED(A) "\
-float Rg = float((col"Stringify(A)" >> 00) & 0x1F)/31.0;\n \
-float Gg = float((col"Stringify(A)" >> 05) & 0x1F)/31.0;\n \
-float Bg = float((col"Stringify(A)" >> 10) & 0x1F)/31.0;\n \
-int MSBg = (col"Stringify(A)" & 0x8000) >> 8;\n \
+float Rg = float((col" Stringify(A) " >> 00) & 0x1F)/31.0;\n \
+float Gg = float((col" Stringify(A) " >> 05) & 0x1F)/31.0;\n \
+float Bg = float((col" Stringify(A) " >> 10) & 0x1F)/31.0;\n \
+int MSBg = (col" Stringify(A) " & 0x8000) >> 8;\n \
 Rg = clamp(Rg + v_vtxcolor.r, 0.0, 1.0);\n \
 Gg = clamp(Gg+ v_vtxcolor.g, 0.0, 1.0);\n \
 Bg = clamp(Bg + v_vtxcolor.b, 0.0, 1.0);\n \
-"Stringify(A)".r = float((int(Rg*255.0)>>3) | (((int(Gg*255.0)>>3) & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float(((int(Gg*255.0)>>3)>>3) | ((int(Bg*255.0)>>3)<<2) | MSBg)/255.0;\n \
-"Stringify(A)".b = float((int(Rg*255.0)&0x7) | (int(Gg*255.0)&0x7)<< 4  )/255.0;\n \
-"Stringify(A)".a = float((int(Bg*255.0)&0x7))/255.0;\n \
+" Stringify(A) ".r = float((int(Rg*255.0)>>3) | (((int(Gg*255.0)>>3) & 0x7)<<5))/255.0;\n \
+" Stringify(A) ".g = float(((int(Gg*255.0)>>3)>>3) | ((int(Bg*255.0)>>3)<<2) | MSBg)/255.0;\n \
+" Stringify(A) ".b = float((int(Rg*255.0)&0x7) | (int(Gg*255.0)&0x7)<< 4  )/255.0;\n \
+" Stringify(A) ".a = float((int(Bg*255.0)&0x7))/255.0;\n \
 ""\n"
 
 
 #define HALF_TRANPARENT_MIX(A, B) \
-"if ((col"Stringify(B)" & 0x8000) != 0) { \
-  int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
-  int MSBht = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
+"if ((col" Stringify(B) " & 0x8000) != 0) { \
+  int Rht = int(clamp(((float((col" Stringify(A) " >> 00) & 0x1F)/31.0) + (float((col" Stringify(B) " >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Ght = int(clamp(((float((col" Stringify(A) " >> 05) & 0x1F)/31.0) + (float((col" Stringify(B) " >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int Bht = int(clamp(((float((col" Stringify(A) " >> 10) & 0x1F)/31.0) + (float((col" Stringify(B) " >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
+  int MSBht = (col" Stringify(A) " & 0x8000) >> 8;\n \
+  " Stringify(A) ".r = float(Rht | ((Ght & 0x7)<<5))/255.0;\n \
+  " Stringify(A) ".g = float((Ght>>3) | (Bht<<2) | MSBht)/255.0;\n \
 }\n"
 
 #define HALF_LUMINANCE(A) \
-"int Rhl = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-int Ghl = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-int Bhl = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
-"Stringify(A)".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
-"Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
+"int Rhl = ((col" Stringify(A) " >> 00) & 0x1F)>>1;\n \
+int Ghl = ((col" Stringify(A) " >> 05) & 0x1F)>>1;\n \
+int Bhl = ((col" Stringify(A) " >> 10) & 0x1F)>>1;\n \
+int MSBhl = (col" Stringify(A) " & 0x8000) >> 8;\n \
+" Stringify(A) ".r = float(Rhl | ((Ghl & 0x7)<<5))/255.0;\n \
+" Stringify(A) ".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
 
 #define SHADOW(A) \
-"if ((col"Stringify(A)" & 0x8000) != 0) { \n\
-  int Rs = ((col"Stringify(A)" >> 00) & 0x1F)>>1;\n \
-  int Gs = ((col"Stringify(A)" >> 05) & 0x1F)>>1;\n \
-  int Bs = ((col"Stringify(A)" >> 10) & 0x1F)>>1;\n \
-  int MSBs = (col"Stringify(A)" & 0x8000) >> 8;\n \
-  "Stringify(A)".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
-  "Stringify(A)".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
+"if ((col" Stringify(A) " & 0x8000) != 0) { \n\
+  int Rs = ((col" Stringify(A) " >> 00) & 0x1F)>>1;\n \
+  int Gs = ((col" Stringify(A) " >> 05) & 0x1F)>>1;\n \
+  int Bs = ((col" Stringify(A) " >> 10) & 0x1F)>>1;\n \
+  int MSBs = (col" Stringify(A) " & 0x8000) >> 8;\n \
+  " Stringify(A) ".r = float(Rs | ((Gs & 0x7)<<5))/255.0;\n \
+  " Stringify(A) ".g = float((Gs>>3) | (Bs<<2) | MSBs)/255.0;\n \
 } else discard;\n"
 
 
 #define COLINDEX(A) \
-"int col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+"int col" Stringify(A) " = (int(" Stringify(A) ".r*255.0) | (int(" Stringify(A) ".g*255.0)<<8));\n"
 
 #define RECOLINDEX(A) \
-"col"Stringify(A)" = (int("Stringify(A)".r*255.0) | (int("Stringify(A)".g*255.0)<<8));\n"
+"col" Stringify(A) " = (int(" Stringify(A) ".r*255.0) | (int(" Stringify(A) ".g*255.0)<<8));\n"
 
 #define COLZERO(A) \
-"if (col"Stringify(A)" == 0) discard;\n"
+"if (col" Stringify(A) " == 0) discard;\n"
 
 #define TAGINDEX(A) \
-"int tag"Stringify(A)" = (int("Stringify(A)".b*255.0) | (int("Stringify(A)".a*255.0)<<8));\n"
+"int tag" Stringify(A) " = (int(" Stringify(A) ".b*255.0) | (int(" Stringify(A) ".a*255.0)<<8));\n"
 
 #define TAGZERO(A) \
-"if (tag"Stringify(A)" != 0) discard;\n"
+"if (tag" Stringify(A) " != 0) discard;\n"
 
 /*------------------------------------------------------------------------------------
 *  VDP1 Operation with tessellation

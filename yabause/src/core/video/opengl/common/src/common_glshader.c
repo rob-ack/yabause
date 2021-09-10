@@ -675,16 +675,16 @@ ret.mesh = 0;\n\
 "
 
 #define VDP2_SCREEN_SETUP(ID) " \
-ret.offset_color = offcol"Stringify(ID)".rgb;\n \
-if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && inWindow("Stringify(ID)")) {\n \
+ret.offset_color = offcol" Stringify(ID) ".rgb;\n \
+if (((int(vdp2col" Stringify(ID) ".a*255.0)&0x7) == prio) && inWindow(" Stringify(ID) ")) {\n \
   remPrio = remPrio - 1;\n \
-  ret.Color = vdp2col"Stringify(ID)"; \n \
-  ret.mode = mode["Stringify(ID)"]; \n \
-  ret.normalShadow = (((isShadow>>"Stringify(ID)")&0x1)!= 0);\n \
-  ret.lncl=(u_lncl>>"Stringify(ID)")&0x1;\n \
-  ret.lncl_off = is_lncl_off["Stringify(ID)"];\n \
-  ret.layer = "Stringify(ID)";\n \
-  ret.isRGB = (isRGB>>"Stringify(ID)")&0x1;\n \
+  ret.Color = vdp2col" Stringify(ID) "; \n \
+  ret.mode = mode[" Stringify(ID)"]; \n \
+  ret.normalShadow = (((isShadow>>" Stringify(ID)")&0x1)!= 0);\n \
+  ret.lncl=(u_lncl>>" Stringify(ID) ")&0x1;\n \
+  ret.lncl_off = is_lncl_off[" Stringify(ID) "];\n \
+  ret.layer = " Stringify(ID) ";\n \
+  ret.isRGB = (isRGB>>" Stringify(ID) ")&0x1;\n \
   ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
   if (remPrio == 0) return ret;\n \
 }\n"
@@ -864,9 +864,9 @@ static const GLchar Yglprg_vdp2_prio_part_fb_off_0[] =
 
 
 #define BLUR_SETUP(ID) "\
-if (pix.layer == "Stringify(ID)") { \n \
-  txcoll = getPixel( s_texture"Stringify(ID)", texCoord, -1, 0 );\n \
-  txcolll = getPixel( s_texture"Stringify(ID)", texCoord, -2, 0 );\n \
+if (pix.layer == " Stringify(ID) ") { \n \
+  txcoll = getPixel( s_texture" Stringify(ID) ", texCoord, -1, 0 );\n \
+  txcolll = getPixel( s_texture" Stringify(ID) ", texCoord, -2, 0 );\n \
 }\n"
 
 #define BLUR_SETUP_SPRITE "\
@@ -1173,15 +1173,15 @@ FBMesh = tmp.mesh;\n \
 "
 
 #define COMMON_FINAL_SCREEN(ID) "\
-if (is_lncl_off["Stringify(ID)"] == 1) needColorOffRBG0 = true;\n \
-if (is_lncl_off["Stringify(ID)"] == 2) needColorOffRBG1 = true;\n \
-vdp2col"Stringify(ID)" = getPixel( s_texture"Stringify(ID)", v_texcoord.st, 0, 0 ); \n \
-linepos.y = is_perline["Stringify(ID)"];\n \
-offcol"Stringify(ID)" = texelFetch( s_perline, linepos,0 );\n \
-if (offcol"Stringify(ID)" == vec4(0.0)) vdp2col"Stringify(ID)" = vec4(0.0);\n \
+if (is_lncl_off[" Stringify(ID) "] == 1) needColorOffRBG0 = true;\n \
+if (is_lncl_off[" Stringify(ID) "] == 2) needColorOffRBG1 = true;\n \
+vdp2col" Stringify(ID) " = getPixel( s_texture" Stringify(ID) ", v_texcoord.st, 0, 0 ); \n \
+linepos.y = is_perline[" Stringify(ID) "];\n \
+offcol" Stringify(ID) " = texelFetch( s_perline, linepos,0 );\n \
+if (offcol" Stringify(ID) " == vec4(0.0)) vdp2col" Stringify(ID) " = vec4(0.0);\n \
 else {\n \
-  offcol"Stringify(ID)".rgb = (offcol"Stringify(ID)".rgb - vec3(0.5))*2.0;\n \
-  if (offcol"Stringify(ID)".a > 0.0) vdp2col"Stringify(ID)".a = float(int(offcol"Stringify(ID)".a * 255.0) | (int(vdp2col"Stringify(ID)".a * 255.0) & 0x7))/255.0;\n \
+  offcol" Stringify(ID) ".rgb = (offcol" Stringify(ID) ".rgb - vec3(0.5))*2.0;\n \
+  if (offcol" Stringify(ID) ".a > 0.0) vdp2col" Stringify(ID) ".a = float(int(offcol" Stringify(ID) ".a * 255.0) | (int(vdp2col" Stringify(ID) ".a * 255.0) & 0x7))/255.0;\n \
 }\n \
 "
 

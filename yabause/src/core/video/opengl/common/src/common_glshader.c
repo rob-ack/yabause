@@ -655,7 +655,7 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "}\n";
 
 //Thios can be still optimized. Sprite related variables are doubled
-#define VDP2_SPRITE_SCREN_SETUP "\
+#define VDP2_SPRITE_SCREN_SETUP " \
 if ((prio == FBPrio) && inWindow(6)) {\n \
   ret.Color = FBColor; \n \
   ret.mode = int(FBColor.a*255.0)&0x7; \n \
@@ -671,25 +671,25 @@ if ((prio == FBPrio) && inWindow(6)) {\n \
 }\n \
 ret.isSprite = 0;\n \
 ret.meshColor = vec4(0.0);\n \
-ret.mesh = 0;\n \
+ret.mesh = 0;\n\
 "
 
-#define VDP2_SCREEN_SETUP(ID) "\
+#define VDP2_SCREEN_SETUP(ID) " \
 ret.offset_color = offcol"Stringify(ID)".rgb;\n \
 if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && inWindow("Stringify(ID)")) {\n \
-remPrio = remPrio - 1;\n \
-ret.Color = vdp2col"Stringify(ID)"; \n \
-ret.mode = mode["Stringify(ID)"]; \n \
-ret.normalShadow = (((isShadow>>"Stringify(ID)")&0x1)!= 0);\n \
-ret.lncl=(u_lncl>>"Stringify(ID)")&0x1;\n \
-ret.lncl_off = is_lncl_off["Stringify(ID)"];\n \
-ret.layer = "Stringify(ID)";\n \
-ret.isRGB = (isRGB>>"Stringify(ID)")&0x1;\n \
-ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
-if (remPrio == 0) return ret;\n \
+  remPrio = remPrio - 1;\n \
+  ret.Color = vdp2col"Stringify(ID)"; \n \
+  ret.mode = mode["Stringify(ID)"]; \n \
+  ret.normalShadow = (((isShadow>>"Stringify(ID)")&0x1)!= 0);\n \
+  ret.lncl=(u_lncl>>"Stringify(ID)")&0x1;\n \
+  ret.lncl_off = is_lncl_off["Stringify(ID)"];\n \
+  ret.layer = "Stringify(ID)";\n \
+  ret.isRGB = (isRGB>>"Stringify(ID)")&0x1;\n \
+  ret.Color.a = float((int(ret.Color.a*255.0)&0xF8)>>3)/31.0; \n \
+  if (remPrio == 0) return ret;\n \
 }\n"
 
-#define VDP2_RETURN_PRIO_EMPTY "\
+#define VDP2_RETURN_PRIO_EMPTY " \
 ret.Color = vec4(0.0);\n \
 ret.mode = 0;\n \
 ret.normalShadow = false;\n \

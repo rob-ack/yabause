@@ -146,7 +146,7 @@ void YuiTimedSwapBuffers(){
 #endif
 
 static void syncVideoMode(void) {
-    u64 sleep = 0;
+  u64 sleep = 0;
   u64 now;
   u64 delay = 0;
   YuiEndOfFrame();
@@ -331,6 +331,7 @@ int YabauseInit(yabauseinit_struct *init)
    }
 
    // Now that we have some informations on current game, trying to auto-detect required settings
+   if (init->auto_cart != 0)
    DBLookup(&init->carttype, &init->cartpath, init->supportdir);
 
    if (CartInit(init->cartpath, init->carttype) != 0)

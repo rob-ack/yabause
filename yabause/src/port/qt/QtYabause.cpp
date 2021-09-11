@@ -204,7 +204,7 @@ extern "C"
        {
          YuiMsg("Yabause Error: %s\n", error_text);
 		 auto const lastErrorCode = YabGetLastErrorType();
-		 allErrors.push(QtYabause::QtYabauseError(lastErrorCode , error_text));
+		 allErrors.push(QtYabause::QtYabauseError{ lastErrorCode , error_text });
        }
 
   void YuiEndOfFrame()

@@ -519,20 +519,20 @@ if (YAB_WANT_SDL)
 endif()
 
 if (WIN32)
-	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
-	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
+	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available" ON)
+	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available" ON)
 	# Direct X
 	if (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
-		find_package(DirectX REQUIRED)
+		find_package(DirectX)
 
 		if(DirectX_FOUND)
 			if (YAB_WANT_DIRECTINPUT)
-				find_library(DirectX_INPUT8_LIBRARY dinput8 "${DirectX_LIBRARY}" REQUIRED)
-				find_library(DirectX_XINPUT_LIBRARY xinput "${DirectX_LIBRARY}" REQUIRED)
+				find_library(DirectX_INPUT8_LIBRARY dinput8 "${DirectX_LIBRARY}")
+				find_library(DirectX_XINPUT_LIBRARY xinput "${DirectX_LIBRARY}")
 			endif()
 
 			if (YAB_WANT_DIRECTSOUND)
-				find_library(DirectX_SOUND_LIBRARY dsound "${DirectX_LIBRARY}" REQUIRED)
+				find_library(DirectX_SOUND_LIBRARY dsound "${DirectX_LIBRARY}")
 			endif()
 
 			if (DirectX_INCLUDE_DIR AND DirectX_DXGUID_LIBRARY)

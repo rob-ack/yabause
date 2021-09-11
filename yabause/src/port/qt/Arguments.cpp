@@ -77,8 +77,7 @@ namespace Arguments
 			//if its a file its probably a game file so if so use it as such
 			if(std::filesystem::exists(argument.toStdString()))
 			{
-				if (argument.endsWith(".cue") || argument.endsWith(".iso") 
-					|| argument.endsWith(".bin") || argument.endsWith(".zip"))
+				if (!argument.endsWith(".exe"))
 				{
 					auto const & autoStartOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](auto const & e)
 					{

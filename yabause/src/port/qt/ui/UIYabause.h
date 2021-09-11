@@ -76,6 +76,7 @@ public:
 	virtual bool eventFilter( QObject* o, QEvent* e );
 
 	YabauseThread const * GetYabauseThread() const { return mYabauseThread; }
+	int loadGameFromFile(QString const & fullFilePath);
 
 protected:
 	YabauseGL* mYabauseGL;
@@ -102,6 +103,8 @@ protected:
 	virtual void mouseReleaseEvent( QMouseEvent* event );
 	virtual void mouseMoveEvent( QMouseEvent* event );
 	virtual void resizeEvent( QResizeEvent* event );
+	virtual void dragEnterEvent(QDragEnterEvent* e) override;
+	virtual void dropEvent(QDropEvent* e) override;
 	bool mIsCdIn;
 
 public slots:

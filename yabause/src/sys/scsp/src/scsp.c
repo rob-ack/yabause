@@ -5074,7 +5074,6 @@ ScspDeInit (void)
   {
       YabAddEventQueue(q_scsp_m68counterCond, 0);
   } 
-  if (q_scsp_frame_start)YabAddEventQueue(q_scsp_frame_start, 0);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
 

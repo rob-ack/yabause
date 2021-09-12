@@ -192,8 +192,6 @@ void YabauseChangeTiming(int freqtype) {
 
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
-YabEventQueue * q_scsp_frame_start;
-YabEventQueue * q_scsp_finish;
 YabEventQueue * q_scsp_m68counterCond;
 #ifdef xSH2_ASYNC
 YabEventQueue* q_sh2_sync;
@@ -292,8 +290,6 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.isRotated = 0;
    nextFrameTime = 0;
 
-  q_scsp_frame_start = YabThreadCreateQueue(1);
-  q_scsp_finish = YabThreadCreateQueue(1);
   q_scsp_m68counterCond = YabThreadCreateQueue(1);
 #ifdef xSH2_ASYNC
   q_sh2_sync = YabThreadCreateQueue(1);

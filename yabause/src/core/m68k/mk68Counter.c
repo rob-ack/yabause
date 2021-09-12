@@ -31,10 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 volatile u64 m68k_counter = 0;
 extern YabEventQueue * q_scsp_m68counterCond;
-//u64 m68k_counter_done = 0;
-
-//constexpr u64 MAX_SCSP_COUNTER = (44100 * 256 / 60) << SCSP_FRACTIONAL_BITS;
-//void SyncCPUtoSCSP();
 
 void setM68kCounter(u64 counter) {
 	m68k_counter = counter;
@@ -45,19 +41,6 @@ void setM68kCounter(u64 counter) {
     }
 }
 
-//void setM68kDoneCounter(u64 counter) {
-//	m68k_counter_done = counter;
-//}
-
 u64 getM68KCounter() {
 	return m68k_counter;
 }
-
-//extern void syncM68K() {
-//	int timeout = 0;
-//	while ( (m68k_counter >> SCSP_FRACTIONAL_BITS) > m68k_counter_done)
-//	{
-//	    timeout++;
-//	    std::this_thread::yield();
-//	}
-//}

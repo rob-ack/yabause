@@ -29,7 +29,6 @@ extern "C" {
 #endif
 
 void setM68kCounter(u64 counter);
-//void setM68kDoneCounter(u64 counter);
 u64 getM68KCounter();
 
 #ifdef __cplusplus

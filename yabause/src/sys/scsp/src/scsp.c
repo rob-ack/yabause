@@ -5412,6 +5412,7 @@ void ScspAsynMainCpu( void * p ){
     }
 
   	YabWaitEventQueue(q_scsp_m68counterCond); //wait for signal set to compute new samples
+    YabThreadLock(g_scsp_mtx);
 
 	u64 const m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
     u64 const m68k_cycle = m68k_integer_part - pre_m68k_cycle;
@@ -5433,13 +5434,15 @@ void ScspAsynMainCpu( void * p ){
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
 
-//        YabAddEventQueue( q_scsp_finish , 0);
         pre_m68k_cycle = 0;
         m68k_inc = 0;
-//        YabWaitEventQueue(q_scsp_frame_start);
         break;
       }
     }
+    YabThreadUnLock(g_scsp_mtx);
+#if defined(ASYNC_SCSP)
+    while (scsp_mute_flags) { YabThreadUSleep((1000000 / fps)); }
+#endif
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
@@ -5600,10 +5603,6 @@ void ScspExecAsync() {
   {
      SNDCore->MidiOut(scsp_midi_out_read());
   }
-#endif
-
-#if defined(ASYNC_SCSP)
-  while (scsp_mute_flags){ YabThreadUSleep((1000000/fps)); }
 #endif
 }
 

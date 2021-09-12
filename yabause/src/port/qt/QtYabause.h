@@ -87,6 +87,23 @@ typedef struct
 
 namespace QtYabause
 {
+	namespace SettingKeys
+	{
+		static constexpr char const* const ScreenshotsDirectory = "General/ScreenshotsDirectory";
+		static constexpr char const* const ScreenshotsFormat = "General/ScreenshotsFormat";
+	};
+
+	namespace VolatileSettingKeys
+	{
+		static constexpr char const* const CartridgePath = "Cartridge/Path";
+	};
+
+	namespace DefaultPaths
+	{
+		QString Screenshots();
+		QString Cartridge();
+	};
+
 	struct QtYabauseError
 	{
 		int ErrorType;

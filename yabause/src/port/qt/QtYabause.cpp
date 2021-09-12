@@ -659,3 +659,7 @@ void QtYabause::clearMouseBits()
    mPort1MouseBits.clear();
    mPort2MouseBits.clear();
 }
+
+QString QtYabause::DefaultPaths::Screenshots() { return getDataDirPath() + "/screenshots"; }
+
+QString QtYabause::DefaultPaths::Cartridge() { return getDataDirPath(); }

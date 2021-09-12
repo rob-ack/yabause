@@ -75,6 +75,7 @@ void YabSetError(int type, const void *extra)
          AllocAmendPrintString(_("Cannot initialize "), (const char*) extra);
          break;
       case YAB_ERR_SH2INVALIDOPCODE:
+			{
 #ifdef DMPHISTORY
         SH2DumpHistory(CurrentSH2);
 #endif
@@ -107,6 +108,7 @@ void YabSetError(int type, const void *extra)
                           (long)sh->regs.R[10], (long)sh->regs.PC,
                           (long)sh->regs.R[11]);
          YuiErrorMsg(tempstr);
+			}
          break;
       case YAB_ERR_SH2READ:
          YuiErrorMsg(_("SH2 read error")); // fix me

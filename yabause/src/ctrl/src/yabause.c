@@ -770,7 +770,24 @@ void mainSH2Async(void * p) {
 }
 #endif
 
+#if defined CV_SUPPORT
+#include "cvmarkers.h"
+PCV_MARKERSERIES series;
+PCV_PROVIDER provider;
+#endif
+
 int YabauseEmulate(void) {
+#if defined CV_SUPPORT
+    static once = false;
+    if(!once)
+    {
+		CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series); 
+        once = true;
+    }
+    PCV_SPAN spanFrame;
+    CvEnterSpan(series, &spanFrame, L"Frame");
+#endif
+
     yabsys.frame_count++;
     DoMovie();
 
@@ -947,6 +964,10 @@ int YabauseEmulate(void) {
 #endif
 #if DYNAREC_DEVMIYAX
    if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
+#endif
+
+#if defined CV_SUPPORT
+   CvLeaveSpan(spanFrame);
 #endif
 
    return 0;

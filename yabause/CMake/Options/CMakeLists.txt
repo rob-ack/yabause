@@ -84,3 +84,10 @@ if(KRONOS_LOG_DEBUG_TO_FILE)
 endif()
 
 add_definitions(-D_${CMAKE_SYSTEM_NAME}_ -D_${CMAKE_SYSTEM_PROCESSOR}_)
+
+option(ENABLE_CONCURENCY_VISUALIZER_SUPPORT "Adds concurency visualizer sdk support" off)
+mark_as_advanced(ENABLE_CONCURENCY_VISUALIZER_SUPPORT)
+if(ENABLE_CONCURENCY_VISUALIZER_SUPPORT)
+	add_definitions(-DCV_SUPPORT)
+	include_directories(${CMAKE_SOURCE_DIR}/src/tools/cv/Inc)
+endif()

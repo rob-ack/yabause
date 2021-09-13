@@ -59,12 +59,12 @@ static const char *smpcfilename = NULL;
 int SmpcInit(u8 regionid, int clocksync, u32 basetime, const char *smpcpath, u8 languageid) {
    if ((SmpcRegsT = (u8 *) calloc(1, sizeof(Smpc))) == NULL)
       return -1;
- 
+
    SmpcRegs = (Smpc *) SmpcRegsT;
 
    if ((SmpcInternalVars = (SmpcInternal *) calloc(1, sizeof(SmpcInternal))) == NULL)
       return -1;
-  
+
    SmpcInternalVars->regionsetting = regionid;
    SmpcInternalVars->regionid = regionid;
    SmpcInternalVars->clocksync = clocksync;
@@ -130,6 +130,7 @@ static int SmpcLoadBiosSettings(void) {
    if ((fp = fopen(smpcfilename, "rb")) == NULL)
       return -1;
    fread(SmpcInternalVars->SMEM, 1, sizeof(SmpcInternalVars->SMEM), fp);
+   SmpcInternalVars->languageid = SmpcInternalVars->SMEM[3] & 0xF;
    fclose(fp);
    return 0;
 }

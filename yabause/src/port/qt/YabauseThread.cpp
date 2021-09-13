@@ -386,6 +386,8 @@ void YabauseThread::reloadSettings()
 		mYabauseConf.biospath = strdup( "" );
 	else
 		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+
+	mYabauseConf.smpcpath = strdup( vs->value( "General/BiosSettings", mYabauseConf.smpcpath ).toString().toLatin1().constData() );
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
 	showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.vsyncon = vs->value("General/EnableVSync", true).toBool();
@@ -465,6 +467,7 @@ void YabauseThread::resetYabauseConf()
 	mYabauseConf.regionid = 0;
 	mYabauseConf.languageid = 0;
 	mYabauseConf.biospath = 0;
+	mYabauseConf.smpcpath = 0;
 	mYabauseConf.cdpath = 0;
 	mYabauseConf.buppath = 0;
 	mYabauseConf.mpegpath = 0;

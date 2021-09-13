@@ -156,6 +156,12 @@ namespace Arguments
 		vs->setValue("General/Bios", param);
 	}
 
+	void biosSettings(const QString &param)
+	{
+		VolatileSettings * vs = QtYabause::volatileSettings();
+		vs->setValue("General/BiosSettings", param);
+	}
+
 	void syslangid(const QString& param)
 	{
 		VolatileSettings * vs = QtYabause::volatileSettings();
@@ -166,7 +172,7 @@ namespace Arguments
 		if (param.toLower() == "italian") { vs->setValue("General/SystemLanguageID", 4); }
 		if (param.toLower() == "japanese") { vs->setValue("General/SystemLanguageID", 5); }
 	}
-	
+
 	void cdrom(const QString& param)
 	{
 		VolatileSettings * vs = QtYabause::volatileSettings();

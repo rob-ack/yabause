@@ -52,6 +52,7 @@ protected:
 
 protected slots:
 	void on_leBios_textChanged(const QString & text);
+	void on_leBiosSettings_textChanged(const QString & text);
 	void tbBrowse_clicked();
 	void on_cbInput_currentIndexChanged( int id );
 	void on_cbCdRom_currentIndexChanged( int id );

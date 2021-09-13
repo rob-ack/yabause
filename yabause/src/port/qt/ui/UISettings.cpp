@@ -275,6 +275,19 @@ void UISettings::on_leBios_textChanged(const QString & text)
 		cbEnableBiosEmulation->setEnabled(false);
 }
 
+void UISettings::on_leBiosSettings_textChanged(const QString & text){
+	if (QFileInfo(text).exists()){
+		cbSysLanguageID->setVisible(false);
+		lSysLanguageID->setVisible(false);
+	}
+	else{
+		Settings const * const s = QtYabause::settings();
+		cbSysLanguageID->setVisible(true);
+		lSysLanguageID->setVisible(true);
+		cbSysLanguageID->setCurrentIndex( cbSysLanguageID->findData( s->value( "General/SystemLanguageID", mSysLanguageID.at( 0 ).id ).toString() ) );
+	}
+}
+
 void UISettings::tbBrowse_clicked()
 {
 	// get toolbutton sender
@@ -282,6 +295,8 @@ void UISettings::tbBrowse_clicked()
 
 	if ( tb == tbBios )
 		requestFile( QtYabause::translate( "Choose a bios file" ), leBios );
+	else if ( tb == tbBiosSettings )
+		requestNewFile( QtYabause::translate("Choose a file to store bios settings"), leBiosSettings);
 	else if ( tb == tbCdRom )
 	{
 		if ( cbCdRom->currentText().contains( "dummy", Qt::CaseInsensitive ) )
@@ -681,6 +696,7 @@ void UISettings::loadSettings()
 
 	// general
 	leBios->setText( s->value( "General/Bios" ).toString() );
+	leBiosSettings->setText( s->value( "General/BiosSettings" ).toString() );
 	cbEnableBiosEmulation->setChecked( s->value( "General/EnableEmulatedBios" ).toBool() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
@@ -819,6 +835,7 @@ void UISettings::saveSettings()
 
 	// general
 	s->setValue( "General/Bios", leBios->text() );
+	s->setValue( "General/BiosSettings", leBiosSettings->text() );
 	s->setValue( "General/EnableEmulatedBios", cbEnableBiosEmulation->isChecked() );
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );

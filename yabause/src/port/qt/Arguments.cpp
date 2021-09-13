@@ -75,12 +75,12 @@ namespace Arguments
 			{
 				if (!argument.endsWith(".exe"))
 				{
-					auto const & autoStartOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](auto const & e)
+					Option const & autoStartOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](Option const & e)
 					{
 						return e.shortname && strcmp(e.shortname, "-a") == 0;
 					});
 					choosenOptions[autoStartOption.priority] = &autoStartOption;
-					auto const & imageFileOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](auto const & e)
+					Option const & imageFileOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](Option const & e)
 					{
 						return e.shortname && strcmp(e.shortname, "-i") == 0;
 					});

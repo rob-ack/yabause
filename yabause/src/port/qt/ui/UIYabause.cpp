@@ -45,7 +45,6 @@
 
 #include <QDebug>
 #include <QMimeData>
-#include "vdp1.debug.h"
 
 extern "C" {
 extern VideoInterface_struct *VIDCoreList[];

@@ -157,8 +157,6 @@ static volatile int fps = 60;
 u32 m68kcycle = 0;
 #endif
 
-extern YabEventQueue * q_scsp_frame_start;
-extern YabEventQueue * q_scsp_finish;
 extern YabEventQueue * q_scsp_m68counterCond;
 
 enum EnvelopeStates

@@ -22,13 +22,12 @@ if(WIN32) # The only platform it makes sense to check for DirectX SDK
     "${DIRECTX_HOME}" "${ENV_DIRECTX_HOME}"
     "${DIRECTX_ROOT}" "${ENV_DIRECTX_ROOT}"
     "${DIRECTX_BASE}" "${ENV_DIRECTX_BASE}"
-    "C:/apps_x86/Microsoft DirectX SDK*"
-    "C:/Program Files (x86)/Microsoft DirectX SDK*"
-    "C:/apps/Microsoft DirectX SDK*"
-    "C:/Program Files/Microsoft DirectX SDK*"
-    "C:/Program Files (x86)/Windows Kits/8.1"
-    "$ENV{ProgramFiles}/Microsoft DirectX SDK*"
+    "$ENV{ProgramFiles}/Windows Kits/10"
+    "$ENV{ProgramFiles\(x86\)}/Windows Kits/10"
+    "$ENV{ProgramFiles}/Windows Kits/8.1"
+    "$ENV{ProgramFiles\(x86\)}/Windows Kits/8.1"
   )
+
   create_search_paths(DirectX)
   # redo search if prefix path changed
   clear_if_changed(DirectX_PREFIX_PATH
@@ -36,7 +35,7 @@ if(WIN32) # The only platform it makes sense to check for DirectX SDK
     DirectX_INCLUDE_DIR
   )
 
-  find_path(DirectX_INCLUDE_DIR NAMES d3d9.h HINTS ${DirectX_INC_SEARCH_PATH})
+  find_path(DirectX_INCLUDE_DIR NAMES d3d.h HINTS ${DirectX_INC_SEARCH_PATH} PATH_SUFFIXES "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/um/")
   # dlls are in DirectX_ROOT_DIR/Developer Runtime/x64|x86
   # lib files are in DirectX_ROOT_DIR/Lib/x64|x86
   if(CMAKE_CL_64)
@@ -44,10 +43,10 @@ if(WIN32) # The only platform it makes sense to check for DirectX SDK
   else()
     set(DirectX_LIBPATH_SUFFIX "x86")
   endif()
-  find_library(DirectX_LIBRARY NAMES d3d9 HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
-  find_library(DirectX_D3DX9_LIBRARY NAMES d3dx9 HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
-  find_library(DirectX_DXERR_LIBRARY NAMES DxErr HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
-  find_library(DirectX_DXGUID_LIBRARY NAMES dxguid HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
+  find_library(DirectX_LIBRARY NAMES d3d9 d3d10 d3d11 HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/um/${DirectX_LIBPATH_SUFFIX}" ${DirectX_LIBPATH_SUFFIX})
+  find_library(DirectX_D3DX9_LIBRARY NAMES d3dx9 d3d10 d3d11 HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/um/${DirectX_LIBPATH_SUFFIX}" ${DirectX_LIBPATH_SUFFIX})
+  find_library(DirectX_DXERR_LIBRARY NAMES DxErr HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/um/${DirectX_LIBPATH_SUFFIX}" ${DirectX_LIBPATH_SUFFIX})
+  find_library(DirectX_DXGUID_LIBRARY NAMES dxguid HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES "${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}/um/${DirectX_LIBPATH_SUFFIX}" ${DirectX_LIBPATH_SUFFIX})
 
   # look for dxgi (needed by both 10 and 11)
   find_library(DirectX_DXGI_LIBRARY NAMES dxgi HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
@@ -56,6 +55,7 @@ if(WIN32) # The only platform it makes sense to check for DirectX SDK
   find_library(DirectX_D3DCOMPILER_LIBRARY NAMES d3dcompiler HINTS ${DirectX_LIB_SEARCH_PATH} PATH_SUFFIXES ${DirectX_LIBPATH_SUFFIX})
 
   findpkg_finish(DirectX)
+
   set(DirectX_LIBRARIES ${DirectX_LIBRARIES} 
     ${DirectX_D3DX9_LIBRARY}
     ${DirectX_DXERR_LIBRARY}

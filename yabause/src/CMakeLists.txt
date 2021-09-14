@@ -526,15 +526,6 @@ if (WIN32)
 		find_package(DirectX)
 
 		if(DirectX_FOUND)
-			if (YAB_WANT_DIRECTINPUT)
-				find_library(DirectX_INPUT8_LIBRARY dinput8 "${DirectX_LIBRARY}")
-				find_library(DirectX_XINPUT_LIBRARY xinput "${DirectX_LIBRARY}")
-			endif()
-
-			if (YAB_WANT_DIRECTSOUND)
-				find_library(DirectX_SOUND_LIBRARY dsound "${DirectX_LIBRARY}")
-			endif()
-
 			if (DirectX_INCLUDE_DIR AND DirectX_DXGUID_LIBRARY)
 				include_directories(${DirectX_INCLUDE_DIR})
 				set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${DirectX_DXGUID_LIBRARY})

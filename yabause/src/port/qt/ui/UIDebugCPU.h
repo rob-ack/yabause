@@ -33,7 +33,13 @@ class UIDebugCPU : public QDialog, public Ui::UIDebugCPU
 
 public:
     UIDebugCPU(YabauseThread * mYabauseThread, QWidget * parent = nullptr);
+    ~UIDebugCPU() override;
+
     virtual void updateRegisters();
+    virtual void updateProgramCounter(u32 & pc_out, bool & changed_out);
+    virtual void updateDissasemblyView();
+    virtual void updateAll();
+
     virtual void updateCodeList(u32 addr);
     virtual u32 getRegister(int index, int * size);
     virtual void setRegister(int index, u32 value);
@@ -49,7 +55,6 @@ public:
     virtual void reserved3();
     virtual void reserved4();
     virtual void reserved5();
-    void updateDissasemblyView();
 
     void showEvent(QShowEvent * event) override;
     void hideEvent(QHideEvent * event) override;
@@ -57,9 +62,9 @@ public:
 protected:
     bool isReadWriteButtonAndTextOK();
 
-    YabauseThread * mYabauseThread = nullptr;
+    YabauseThread * mYabauseThread;
     QTimer autoUpdateTimer;
-    
+
 protected slots:
     void on_lwRegisters_itemDoubleClicked(QListWidgetItem * item);
     void on_lwBackTrace_itemDoubleClicked(QListWidgetItem * item);
@@ -81,6 +86,8 @@ protected slots:
     void on_cbWriteWord_toggled(bool enable);
     void on_cbWriteLong_toggled(bool enable);
     void on_pbBreakAll_clicked();
+    void on_pbFetch_clicked();
+    void on_pbJumpToPC_clicked();
     void on_pbStepInto_clicked();
     void on_pbStepOver_clicked();
     void on_pbStepOut_clicked();
@@ -93,7 +100,9 @@ protected slots:
     void on_pbReserved4_clicked();
     void on_pbReserved5_clicked();
 
+    void on_yabThreadPause_changed(bool paused);
     void on_cbAutoUpdate_toggled(bool on);
+    void on_cbAutoUpdatePc_toggled(bool on);
     void on_spAutoUpdateIntervall_valueChanged(int newValue);
     void toggleCodeBreakpoint(u32 addr);
 };

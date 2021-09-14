@@ -228,6 +228,7 @@
     <addaction name="separator"/>
     <addaction name="actionShow_Captured_Errors"/>
     <addaction name="aViewDebugMemoryEditor"/>
+    <addaction name="aOpen_All_CPU_Debug_Views"/>
    </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
@@ -948,6 +949,11 @@
    </property>
    <property name="text">
     <string>Memory Editor</string>
+   </property>
+  </action>
+  <action name="aOpen_All_CPU_Debug_Views">
+   <property name="text">
+    <string>Open All CPU Debug Views</string>
    </property>
   </action>
  </widget>

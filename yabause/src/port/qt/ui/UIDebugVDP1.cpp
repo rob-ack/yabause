@@ -32,18 +32,26 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
    QGraphicsScene *scene=new QGraphicsScene(this);
    gvTexture->setScene(scene);
 
-   vdp1texture = NULL;
+   vdp1texture = nullptr;
    vdp1texturew = vdp1textureh = 1;
    pbSaveBitmap->setEnabled(vdp1texture ? true : false);
 
 	updateCommandList();
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+
+	connect(&timer, &QTimer::timeout, [this]
+	{
+        UpdateSystemStats();
+	});
+	timer.start(100);
+
 	this->show();
 }
 
 UIDebugVDP1::~UIDebugVDP1()
 {
+	timer.stop();
    if (vdp1texture)
       free(vdp1texture);
 }
@@ -58,7 +66,7 @@ void UIDebugVDP1::updateCommandList()
 		{
 			char const* string;
 
-			if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
+			if ((string = Vdp1DebugGetCommandNumberName(i)) == nullptr)
 				break;
 
 			lwCommandList->addItem(QtYabause::translate(string));
@@ -118,4 +126,33 @@ void UIDebugVDP1::on_pbSaveBitmap_clicked ()
 void UIDebugVDP1::on_dbbButtons_clicked()
 {
 	updateCommandList();
+}
+
+void UIDebugVDP1::updateCommandListFromBuffer()
+{
+	lwCommandList->clear();
+
+	if (Vdp1Ram)
+	{
+		for (int i = 0; i < 2000; i++)
+		{
+			char const * string;
+			Vdp1DebugReadCommandFromCommandBufferAtOffset(i + sbCommandListOffset->value(), string);
+			if (string == nullptr)
+				break;
+
+			lwCommandList->addItem(QtYabause::translate(string));
+		}
+	}
+}
+
+void UIDebugVDP1::UpdateSystemStats()
+{
+	lcdNCmdBufferPos->display(Vdp1DebugCmdBufferPos());
+	lcdNVLine->display(yabsys.LineCount);
+}
+
+void UIDebugVDP1::on_bFromCommandListBuffer_clicked()
+{
+	updateCommandListFromBuffer();
 }

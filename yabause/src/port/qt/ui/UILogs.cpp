@@ -23,7 +23,6 @@ void UILogs::closeEvent(QCloseEvent * closeEvent)
     auto const* const yabauseInstance = QtYabause::mainWindow(false)->GetYabauseThread();
     disconnect(yabauseInstance, &YabauseThread::error, this, &UILogs::populateErrors);
     QDialog::closeEvent(closeEvent);
-    emit closing();
 }
 
 void UILogs::populateErrors()

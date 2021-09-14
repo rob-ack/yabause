@@ -22,7 +22,7 @@
 #include <QPaintEvent>
 #include <QScrollBar>
 
-int DisasmInstructionNull(u32 address, char * string)
+u32 DisasmInstructionNull(u32 address, char * string)
 {
 	strcpy(string, " ");
 	return 0;
@@ -36,7 +36,6 @@ UIDisasm::UIDisasm(QWidget * p) : QAbstractScrollArea(p)
 	instructionSize = 1;
 
 	setSelectionColor(QColor(0x6d, 0x9e, 0xff, 0xff));
-
 	adjustSettings();
 }
 
@@ -46,7 +45,7 @@ void UIDisasm::setSelectionColor(const QColor & color)
 	viewport()->update();
 }
 
-void UIDisasm::setDisassembleFunction(int (*func)(u32, char *))
+void UIDisasm::setDisassembleFunction(std::function<u32(u32, char *)> func)
 {
 	disassembleFunction = func;
 }
@@ -71,7 +70,7 @@ void UIDisasm::setPC(u32 address)
 	this->pc = address;
 }
 
-void UIDisasm::setMinimumInstructionSize(int instructionSize)
+void UIDisasm::setMinimumInstructionSize(u32 instructionSize)
 {
 	this->instructionSize = instructionSize;
 	adjustSettings();
@@ -102,13 +101,12 @@ void UIDisasm::mouseDoubleClickEvent(QMouseEvent * event)
 		int const scroll_pos = verticalScrollBar()->value();
 		int const currentAddress = scroll_pos / instructionSize * instructionSize;
 
-		int offset = 0;
+		u32 offset = 0;
 		for (int i = 0; i != line; i++)
 		{
 			char text[256];
 			offset += disassembleFunction(currentAddress, text);
 		}
-
 
 		emit toggleCodeBreakpoint(currentAddress + offset);
 	}
@@ -131,15 +129,19 @@ void UIDisasm::paintEvent(QPaintEvent * event)
 	QPen const colSelected = QPen(Qt::white);
 	QPen const colSelected2 = QPen(selectionColor);
 
-	int currentAddress = pos / instructionSize * instructionSize;
+	u32 displayAtAdress = pos / instructionSize * instructionSize;
 	for (int yPos = yPosStart; yPos < bottom;)
 	{
 		int constexpr xPos = 2;
 		char text[256] = {0};
-		int const offset = disassembleFunction(currentAddress, text);
-		QString disText(text);
+		auto const offset = disassembleFunction(displayAtAdress, text);
 
-		if (currentAddress == pc && pc != 0xFFFFFFFF)
+		assert(offset == 0 || offset >= instructionSize);
+
+		QString disText;
+		disText.sprintf("0x%05X: %s", displayAtAdress, text);
+
+		if (displayAtAdress == pc && pc != 0xFFFFFFFF)
 		{
 			int const ascent = fontMetrics().ascent();
 
@@ -160,7 +162,7 @@ void UIDisasm::paintEvent(QPaintEvent * event)
 			painter.drawText(xPos, yPos, disText);
 		}
 
-		currentAddress += offset;
+		displayAtAdress += offset;
 		yPos += fontHeight;
 	}
 }

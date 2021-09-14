@@ -192,6 +192,11 @@ void UIYabause::closeEvent( QCloseEvent* e )
 	vs->setValue( "General/Geometry", saveGeometry() );
 	vs->sync();
 
+    for (auto const child : findChildren<QDialog*>())
+	{
+		child->close();
+	}
+
 	QMainWindow::closeEvent( e );
 }
 
@@ -851,26 +856,39 @@ void UIYabause::on_aViewFullscreen_triggered( bool b )
 	fullscreenRequested( b );
 }
 
-void UIYabause::on_actionShow_Captured_Errors_triggered()
+template <class T>
+T * getOrCreate(std::function<T* ()> constructFunctor)
 {
-	static UILogs * existingLogsWindow = nullptr;
+	static T* existingLogsWindow = nullptr;
 
-	if(existingLogsWindow)
+	if (existingLogsWindow)
 	{
 		existingLogsWindow->setFocus();
-		return;
+		return existingLogsWindow;
 	}
 
-	auto const window = new UILogs(this);
-	window->showNormal();
-
+	auto const window = constructFunctor();
 	existingLogsWindow = window;
 
-	connect(window, &UILogs::closing, []
+	UIYabause::connect(window, &T::finished, []
 	{
 		delete existingLogsWindow;
 		existingLogsWindow = nullptr;
 	});
+	return existingLogsWindow;
+}
+
+template <class T>
+T * getOrCreateAndShow(std::function<T*()> constructFunctor)
+{
+	auto const window = getOrCreate<T>(constructFunctor);
+    window->showNormal();
+	return window;
+}
+
+void UIYabause::on_actionShow_Captured_Errors_triggered()
+{
+	getOrCreateAndShow<UILogs>([this] { return new UILogs(this); });
 }
 
 void UIYabause::on_aHelpReport_triggered()
@@ -1011,7 +1029,7 @@ void UIYabause::breakpointHandlerMSH2(bool displayMessage)
 	YabauseLocker locker(mYabauseThread);
 	if (displayMessage)
 		CommonDialogs::information(QtYabause::translate("Breakpoint Reached"));
-	UIDebugSH2(true, mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSH2>([this] { return new UIDebugSH2(true, mYabauseThread, this); });
 }
 
 void UIYabause::breakpointHandlerSSH2(bool displayMessage)
@@ -1019,21 +1037,21 @@ void UIYabause::breakpointHandlerSSH2(bool displayMessage)
 	YabauseLocker locker(mYabauseThread);
 	if (displayMessage)
 		CommonDialogs::information(QtYabause::translate("Breakpoint Reached"));
-	UIDebugSH2(false, mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSH2>([this] { return new UIDebugSH2(false, mYabauseThread, this); });
 }
 
 void UIYabause::breakpointHandlerM68K()
 {
 	YabauseLocker locker(mYabauseThread);
 	CommonDialogs::information(QtYabause::translate("Breakpoint Reached"));
-	UIDebugM68K(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugM68K>([this] { return new UIDebugM68K(mYabauseThread, this); });
 }
 
 void UIYabause::breakpointHandlerSCUDSP()
 {
 	YabauseLocker locker(mYabauseThread);
 	CommonDialogs::information(QtYabause::translate("Breakpoint Reached"));
-	UIDebugSCUDSP(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSCUDSP>([this] { return new UIDebugSCUDSP(mYabauseThread, this); });
 }
 
 void UIYabause::breakpointHandlerSCSPDSP(bool displayMessage)
@@ -1041,60 +1059,65 @@ void UIYabause::breakpointHandlerSCSPDSP(bool displayMessage)
 	YabauseLocker locker(mYabauseThread);
 	if (displayMessage)
 		CommonDialogs::information(QtYabause::translate("Breakpoint Reached"));
-	UIDebugSCSPDSP(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSCSPDSP>([this] { return new UIDebugSCSPDSP(mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugMSH2_triggered()
 {
-	YabauseLocker locker(mYabauseThread);
-	UIDebugSH2(true, mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSH2>([this] { return new UIDebugSH2(true, mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugSSH2_triggered()
 {
-	YabauseLocker locker(mYabauseThread);
-	UIDebugSH2(false, mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSH2>([this] { return new UIDebugSH2(false, mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugVDP1_triggered()
 {
-	YabauseLocker locker(mYabauseThread);
-	UIDebugVDP1(this).exec();
+	getOrCreateAndShow<UIDebugVDP1>([this] { return new UIDebugVDP1(this); });
 }
 
 void UIYabause::on_aViewDebugVDP2_triggered()
 {
-	YabauseLocker locker(mYabauseThread);
-	UIDebugVDP2(this).exec();
+	getOrCreateAndShow<UIDebugVDP2>([this] { return new UIDebugVDP2(this); });
 }
 
 void UIYabause::on_aViewDebugM68K_triggered()
 {
-	YabauseLocker locker(mYabauseThread);
-	UIDebugM68K(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugM68K>([this] { return new UIDebugM68K(mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugSCUDSP_triggered()
 {
-	UIDebugSCUDSP(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSCUDSP>([this] { return new UIDebugSCUDSP(mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugSCSP_triggered()
 {
-	UIDebugSCSP(this).exec();
+	getOrCreateAndShow<UIDebugSCSP>([this] { return new UIDebugSCSP(this); });
 }
 
 void UIYabause::on_aViewDebugSCSPChan_triggered()
 {
-	UIDebugSCSPChan(this).exec();
+	getOrCreateAndShow<UIDebugSCSPChan>([this] { return new UIDebugSCSPChan(this); });
 }
 
 void UIYabause::on_aViewDebugSCSPDSP_triggered()
 {
-	UIDebugSCSPDSP(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIDebugSCSPDSP>([this] { return new UIDebugSCSPDSP(mYabauseThread, this); });
 }
 
 void UIYabause::on_aViewDebugMemoryEditor_triggered()
 {
-	UIMemoryEditor(mYabauseThread, this).exec();
+	getOrCreateAndShow<UIMemoryEditor>([this] { return new UIMemoryEditor(mYabauseThread, this); });
+}
+
+void UIYabause::on_aOpen_All_CPU_Debug_Views_triggered()
+{
+	on_aViewDebugSCSPDSP_triggered();
+	on_aViewDebugSCSP_triggered();
+	on_aViewDebugSCUDSP_triggered();
+	on_aViewDebugM68K_triggered();
+	on_aViewDebugSSH2_triggered();
+	on_aViewDebugMSH2_triggered();
 }

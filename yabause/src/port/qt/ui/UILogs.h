@@ -15,9 +15,6 @@ public:
     explicit UILogs(QWidget *parent = nullptr);
     ~UILogs() override;
 
-Q_SIGNALS:
-    void closing();
-
 protected:
     void closeEvent(QCloseEvent *) override;
     void populateErrors();

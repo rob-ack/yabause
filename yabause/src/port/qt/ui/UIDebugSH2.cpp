@@ -21,14 +21,18 @@
 #include "CommonDialogs.h"
 #include "UIYabause.h"
 #include "sh2iasm.h"
+#include "sh2.debug.h"
 
-int SH2Dis(u32 addr, char * string)
+u32 UIDebugSH2::SH2Dis(u32 addr, char * string)
 {
-    SH2Disasm(addr, MappedMemoryReadWord(nullptr, addr), 0, nullptr, string);
+    if(debugSH2)
+    {
+        SH2Disasm(addr, MappedMemoryReadWord(nullptr, addr), 0, nullptr, string);
+    }
     return 2;
 }
 
-void SH2BreakpointHandler(SH2_struct * context, u32 addr, void * userdata)
+void SH2BreakpointHandler(void * context, u32 addr, void * userdata)
 {
     UIYabause * ui = QtYabause::mainWindow(false);
 
@@ -40,6 +44,7 @@ void SH2BreakpointHandler(SH2_struct * context, u32 addr, void * userdata)
 
 UIDebugSH2::UIDebugSH2(bool master, YabauseThread * mYabauseThread, QWidget * p) : UIDebugCPU(mYabauseThread, p)
 {
+    m_isMaster = master;
     if (master)
     {
         this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
@@ -49,43 +54,40 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread * mYabauseThread, QWidget * p)
         this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
         debugSH2 = SSH2;
     }
+
     gbRegisters->setTitle(QtYabause::translate("SH2 Registers"));
 
-    //if (debugSH2)
-    //{
-    //   const codebreakpoint_struct *cbp;
-    //   const memorybreakpoint_struct *mbp;
-    //   int i;
+    if (debugSH2)
+    {
+        const codebreakpoint_struct * cbp = SH2GetBreakpointList(debugSH2);
+        const memorybreakpoint_struct * mbp = SH2GetMemoryBreakpointList(debugSH2);
 
-    //   cbp = SH2GetBreakpointList(debugSH2);
-    //   mbp = SH2GetMemoryBreakpointList(debugSH2);
+        for (int i = 0; i < MAX_BREAKPOINTS; i++)
+        {
+            QString text;
+            if (cbp[i].addr != 0xFFFFFFFF)
+            {
+                text.sprintf("%08X", (int)cbp[i].addr);
+                lwCodeBreakpoints->addItem(text);
+            }
 
-    //   for (i = 0; i < MAX_BREAKPOINTS; i++)
-    //   {
-    //      QString text;
-    //      if (cbp[i].addr != 0xFFFFFFFF)
-    //      {
-    //         text.sprintf("%08X", (int)cbp[i].addr);
-    //         lwCodeBreakpoints->addItem(text);
-    //      }
+            if (mbp[i].addr != 0xFFFFFFFF)
+            {
+                text.sprintf("%08X", (int)mbp[i].addr);
+                lwMemoryBreakpoints->addItem(text);
+            }
+        }
 
-    //      if (mbp[i].addr != 0xFFFFFFFF)
-    //      {
-    //         text.sprintf("%08X", (int)mbp[i].addr);
-    //         lwMemoryBreakpoints->addItem(text);
-    //      }
-    //   }
+        SH2SetBreakpointCallBack(debugSH2, SH2BreakpointHandler, nullptr);
+    }
 
-    //   lwDisassembledCode->setDisassembleFunction(SH2Dis);
-    //   lwDisassembledCode->setEndAddress(0x06100000);
-    //   lwDisassembledCode->setMinimumInstructionSize(2);
-    //   gbBackTrace->setVisible( true );
-
-    //   SH2SetBreakpointCallBack(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler, NULL);
-    //}
+    lwDisassembledCode->setDisassembleFunction([this](u32 addr, char* string) {return SH2Dis(addr, string); });
+    lwDisassembledCode->setEndAddress(0x06100000);
+    lwDisassembledCode->setMinimumInstructionSize(2);
 
     updateAll();
 
+    gbBackTrace->setVisible(true);
     pbReserved1->setEnabled(false);
 
     //   if (debugSH2 && debugSH2->trackInfLoop.enabled)
@@ -106,9 +108,19 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread * mYabauseThread, QWidget * p)
 
 void UIDebugSH2::updateRegisters()
 {
-    int i;
-    sh2regs_struct sh2regs;
-    QString str;
+    if (debugSH2 == nullptr)
+    {
+        if (m_isMaster)
+        {
+            this->setWindowTitle(QtYabause::translate("Debug Master SH2"));
+            debugSH2 = MSH2;
+        }
+        else
+        {
+            this->setWindowTitle(QtYabause::translate("Debug Slave SH2"));
+            debugSH2 = SSH2;
+        }
+    }
 
     if (debugSH2 == nullptr)
         return;
@@ -116,7 +128,9 @@ void UIDebugSH2::updateRegisters()
     SH2GetRegisters(debugSH2, &sh2regs);
     lwRegisters->clear();
 
-    for (i = 0; i < 16; i++)
+    QString str;
+
+    for (int i = 0; i < 16; i++)
     {
         str.sprintf("R%02d =  %08X", i, (int)sh2regs.R[i]);
         lwRegisters->addItem(str);
@@ -153,54 +167,54 @@ void UIDebugSH2::updateRegisters()
 
 void UIDebugSH2::updateCodeList(u32 addr)
 {
-    addr &= 0x0FFFFFFF;
-    lwDisassembledCode->goToAddress(addr);
-    lwDisassembledCode->setPC(addr);
+    UIDebugCPU::updateCodeList(addr &= 0x0FFFFFFF);
 }
 
 void UIDebugSH2::updateBackTrace()
 {
-    //   int size;
-    //   u32 *addr=SH2GetBacktraceList(debugSH2, &size);
-    //
-    //   lwBackTrace->clear();
-    //   for (int i = 0; i < size; i++)
-    //      lwBackTrace->addItem(QString("%1").arg(addr[i], 8, 16, QChar('0')).toUpper());
-    //   lwBackTrace->addItem(QString("%1").arg(debugSH2->regs.PC, 8, 16, QChar('0')).toUpper());
+    int size;
+    u32 * addr = SH2GetBacktraceList(debugSH2, &size);
+
+    lwBackTrace->clear();
+    for (int i = 0; i < size; i++)
+        lwBackTrace->addItem(QString("%1").arg(addr[i], 8, 16, QChar('0')).toUpper());
+    lwBackTrace->addItem(QString("%1").arg(debugSH2->regs.PC, 8, 16, QChar('0')).toUpper());
+}
+
+void UIDebugSH2::updateProgramCounter(u32 & pcOut, bool & changedOut)
+{
+    pcOut = sh2regs.PC;
+    changedOut = true;
 }
 
 void UIDebugSH2::updateTrackInfLoop()
 {
     if (debugSH2)
     {
-        //      tilInfo_struct *match=debugSH2->trackInfLoop.match;
-        //
-        //      twTrackInfLoop->clearContents();
-        //      twTrackInfLoop->setRowCount(0);
-        //      twTrackInfLoop->setSortingEnabled(false);
-        //      for (int i = 0; i < debugSH2->trackInfLoop.num; i++)
-        //      {
-        //         twTrackInfLoop->insertRow(i);
-        //         QTableWidgetItem *newItem = new QTableWidgetItem(QString("%1").arg(match[i].addr, 8, 16, QChar('0')).toUpper());
-        //         twTrackInfLoop->setItem(i, 0, newItem);
-        //
-        //         newItem = new QTableWidgetItem();
-        //         newItem->setData(Qt::DisplayRole, (qulonglong) match[i].count);
-        //         twTrackInfLoop->setItem(i, 1, newItem);
-        //      }
-        //      twTrackInfLoop->setSortingEnabled(true);
+        //tilInfo_struct * match = debugSH2->trackInfLoop.match;
+
+        //twTrackInfLoop->clearContents();
+        //twTrackInfLoop->setRowCount(0);
+        //twTrackInfLoop->setSortingEnabled(false);
+        //for (int i = 0; i < debugSH2->trackInfLoop.num; i++)
+        //{
+        //    twTrackInfLoop->insertRow(i);
+        //    QTableWidgetItem * newItem = new QTableWidgetItem(QString("%1").arg(match[i].addr, 8, 16, QChar('0')).toUpper());
+        //    twTrackInfLoop->setItem(i, 0, newItem);
+
+        //    newItem = new QTableWidgetItem();
+        //    newItem->setData(Qt::DisplayRole, (qulonglong)match[i].count);
+        //    twTrackInfLoop->setItem(i, 1, newItem);
+        //}
+        //twTrackInfLoop->setSortingEnabled(true);
     }
 }
 
 void UIDebugSH2::updateAll()
 {
-    updateRegisters();
+    UIDebugCPU::updateAll();
     if (debugSH2)
     {
-        sh2regs_struct sh2regs;
-
-        SH2GetRegisters(debugSH2, &sh2regs);
-        updateCodeList(sh2regs.PC);
         updateBackTrace();
         updateTrackInfLoop();
     }
@@ -208,7 +222,6 @@ void UIDebugSH2::updateAll()
 
 u32 UIDebugSH2::getRegister(int index, int * size)
 {
-    sh2regs_struct sh2regs;
     u32 value;
 
     SH2GetRegisters(debugSH2, &sh2regs);
@@ -252,8 +265,6 @@ u32 UIDebugSH2::getRegister(int index, int * size)
 
 void UIDebugSH2::setRegister(int index, u32 value)
 {
-    sh2regs_struct sh2regs;
-
     SH2GetRegisters(debugSH2, &sh2regs);
 
     if (index < 16)
@@ -292,38 +303,38 @@ void UIDebugSH2::setRegister(int index, u32 value)
 
 bool UIDebugSH2::addCodeBreakpoint(u32 addr)
 {
-    //	if (!debugSH2)
-    return false;
-    //   return SH2AddCodeBreakpoint(debugSH2, addr) == 0;     
+    if (!debugSH2)
+        return false;
+    return SH2AddCodeBreakpoint(debugSH2, addr) == 0;
 }
 
 bool UIDebugSH2::delCodeBreakpoint(u32 addr)
 {
-    //	if (!debugSH2)
-    return false;
-    //    return SH2DelCodeBreakpoint(debugSH2, addr) == 0;
+    if (!debugSH2)
+        return false;
+    return SH2DelCodeBreakpoint(debugSH2, addr) == 0;
 }
 
 bool UIDebugSH2::addMemoryBreakpoint(u32 addr, u32 flags)
 {
-    //	if (!debugSH2)
-    return false;
-    //   return SH2AddMemoryBreakpoint(debugSH2, addr, flags) == 0;     
+    if (!debugSH2)
+        return false;
+    return SH2AddMemoryBreakpoint(debugSH2, addr, flags) == 0;
 }
 
 bool UIDebugSH2::delMemoryBreakpoint(u32 addr)
 {
-    //	if (!debugSH2)
-    return false;
-    //    return SH2DelMemoryBreakpoint(debugSH2, addr) == 0;
+    if (!debugSH2)
+        return false;
+    return SH2DelMemoryBreakpoint(debugSH2, addr) == 0;
 }
 
 void UIDebugSH2::stepInto()
 {
     if (debugSH2)
     {
-        //      SH2Step(debugSH2);
-        //      updateAll();
+        SH2Step(debugSH2);
+        updateAll();
     }
 }
 
@@ -331,11 +342,11 @@ void UIDebugSH2::stepOver()
 {
     if (debugSH2)
     {
-        //      if (SH2StepOver(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler) == 0)
-        //         updateAll();
-        //      else
-        //         // Close dialog and wait
-        //         this->accept(); 
+        if (SH2StepOver(debugSH2, SH2BreakpointHandler) == 0)
+            updateAll();
+        else
+            // Close dialog and wait
+            this->accept();
     }
 }
 
@@ -343,10 +354,10 @@ void UIDebugSH2::stepOut()
 {
     if (debugSH2)
     {
-        //      SH2StepOut(debugSH2, (void (*)(void *, u32, void *))SH2BreakpointHandler);
-        //
-        //      // Close dialog and wait
-        //      this->accept(); 
+        SH2StepOut(debugSH2, SH2BreakpointHandler);
+
+        // Close dialog and wait
+        this->accept();
     }
 }
 
@@ -354,23 +365,22 @@ void UIDebugSH2::reserved1()
 {
     if (debugSH2)
     {
-        //      if (!debugSH2->trackInfLoop.enabled)
-        //      {
-        //         SH2TrackInfLoopStart(debugSH2);
-        //         pbReserved1->setText(QtYabause::translate("Loop Track Stop"));
-        //      }
-        //      else
-        //      {
-        //         SH2TrackInfLoopStop(debugSH2);
-        //         pbReserved1->setText(QtYabause::translate("Loop Track Start"));
-        //      }
+        //if (!debugSH2->trackInfLoop.enabled)
+        //{
+        //    SH2TrackInfLoopStart(debugSH2);
+        //    pbReserved1->setText(QtYabause::translate("Loop Track Stop"));
+        //} else
+        //{
+        //    SH2TrackInfLoopStop(debugSH2);
+        //    pbReserved1->setText(QtYabause::translate("Loop Track Start"));
+        //}
     }
 }
 
 void UIDebugSH2::reserved2()
 {
-    //   if (debugSH2)
-    //      SH2TrackInfLoopClear(debugSH2);
+    if (debugSH2)
+        SH2TrackInfLoopClear(debugSH2);
     updateAll();
 }
 

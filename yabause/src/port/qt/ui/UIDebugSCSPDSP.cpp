@@ -21,7 +21,7 @@
 #include "UIYabause.h"
 #include "scspdsp.h"
 
-int SCSPDSPDis(u32 addr, char * string)
+u32 SCSPDSPDis(u32 addr, char * string)
 {
     ScspDspDisasm((u8)addr, string);
     return 1;
@@ -48,9 +48,7 @@ UIDebugSCSPDSP::UIDebugSCSPDSP(YabauseThread * mYabauseThread, QWidget * p) : UI
     size.setWidth(lwRegisters->fontMetrics().averageCharWidth() * 80);
     lwDisassembledCode->setMinimumSize(size);
     lwDisassembledCode->setDisassembleFunction(SCSPDSPDis);
-    lwDisassembledCode->setEndAddress(128);
-
-    connect(&autoUpdateTimer, &QTimer::timeout, this, &UIDebugSCSPDSP::updateRegisters);
+    lwDisassembledCode->setEndAddress(0x80);
 
     this->show();
 }

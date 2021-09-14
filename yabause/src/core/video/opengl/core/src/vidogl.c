@@ -3556,7 +3556,7 @@ void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   sprite.uclipmode = (cmd->CMDPMOD >> 9) & 0x03;
 
   // Setup Zoom Point
-  switch ((cmd->CMDCTRL & 0xF00) >> 8)
+  switch (cmd->CMDCTRL.part.ZP)
   {
   case 0x0: // Only two coordinates
     if ((s16)cmd->CMDXC > (s16)cmd->CMDXA){ cmd->CMDXB += 1; cmd->CMDXC += 1;} else { cmd->CMDXA += 1; cmd->CMDXB +=1; cmd->CMDXC += 1; cmd->CMDXD += 1;}

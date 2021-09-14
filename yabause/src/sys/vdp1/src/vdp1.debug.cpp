@@ -26,6 +26,9 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <string>
+#include <vector>
+
 #include "yabause.h"
 #include "vdp1.h"
 #include "debug.h"
@@ -38,7 +41,7 @@
 #include "ygl.h"
 #endif
 
-extern void FASTCALL Vdp1ReadCommand(vdp1cmd_struct* cmd, u32 addr, u8* ram);
+extern "C" void FASTCALL Vdp1ReadCommand(vdp1cmd_struct * cmd, u32 addr, u8 * ram);
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -133,9 +136,7 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
    u32 addr = 0;
    u32 returnAddr = 0xFFFFFFFF;
    u32 commandCounter = 0;
-   u16 command;
-
-   command = T1ReadWord(Vdp1Ram, addr);
+   u16 command = T1ReadWord(Vdp1Ram, addr);
 
    while (!(command & 0x8000) && commandCounter != number)
    {
@@ -183,82 +184,89 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number)
 
 //////////////////////////////////////////////////////////////////////////////
 
-char const * const Vdp1DebugGetCommandNumberName(u32 number)
+char const * const Vdp1DebugGetCommandName(u16 const command)
+{
+    if (command & 0x8000)
+        return "Draw End";
+
+    // Figure out command name
+    switch (command & 0x000F)
+    {
+    case 0:
+        return "Normal Sprite";
+    case 1:
+        return "Scaled Sprite";
+    case 2:
+        return "Distorted Sprite";
+    case 3:
+        return "Distorted Sprite *";
+    case 4:
+        return "Polygon";
+    case 5:
+        return "Polyline";
+    case 6:
+        return "Line";
+    case 7:
+        return "Polyline *";
+    case 8:
+        return "User Clipping Coordinates";
+    case 9:
+        return "System Clipping Coordinates";
+    case 10:
+        return "Local Coordinates";
+    case 11:
+        return "User Clipping Coordinates *";
+    default:
+        return "Bad command";
+    }
+}
+
+char const* const Vdp1DebugGetCommandNumberName(u32 number)
 {
    u32 addr;
-   u16 command;
 
    if ((addr = Vdp1DebugGetCommandNumberAddr(number)) != 0xFFFFFFFF)
    {
-      command = T1ReadWord(Vdp1Ram, addr);
-
-      if (command & 0x8000)
-         return "Draw End";
-
-      // Figure out command name
-      switch (command & 0x000F)
-      {
-         case 0:
-            return "Normal Sprite";
-         case 1:
-            return "Scaled Sprite";
-         case 2:
-            return "Distorted Sprite";
-         case 3:
-            return "Distorted Sprite *";
-         case 4:
-            return "Polygon";
-         case 5:
-            return "Polyline";
-         case 6:
-            return "Line";
-         case 7:
-            return "Polyline *";
-         case 8:
-            return "User Clipping Coordinates";
-         case 9:
-            return "System Clipping Coordinates";
-         case 10:
-            return "Local Coordinates";
-         case 11:
-            return "User Clipping Coordinates *";
-         default:
-             return "Bad command";
-      }
+       u16 const command = T1ReadWord(Vdp1Ram, addr);
+       return Vdp1DebugGetCommandName(command);
    }
    else
-      return NULL;
+      return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
+void Vdp1DebugCommandToString(vdp1cmd_struct const & cmd, char * outstring);
 
-void Vdp1DebugCommand(u32 number, char *outstring)
+void Vdp1DebugCommand(u32 number, char* outstring)
 {
-   u16 command;
-   vdp1cmd_struct cmd;
-   u32 addr;
+    u32 addr;
+    if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
+        return;
 
-   if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
-      return;
+    u16 command = T1ReadWord(Vdp1Ram, addr);
 
-   command = T1ReadWord(Vdp1Ram, addr);
+    if (command & 0x8000)
+    {
+        // Draw End
+        outstring[0] = 0x00;
+        return;
+    }
 
-   if (command & 0x8000)
-   {
-      // Draw End
-      outstring[0] = 0x00;
-      return;
-   }
+    if (command & 0x4000)
+    {
+        AddString(outstring, "Command is skipped\r\n");
+        return;
+    }
 
-   if (command & 0x4000)
-   {
-      AddString(outstring, "Command is skipped\r\n");
-      return;
-   }
+    vdp1cmd_struct cmd;
+    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+    Vdp1DebugCommandToString(cmd, outstring);
+}
 
-   Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
-
-   if ((cmd.CMDCTRL & 0x000F) < 4) {
+void Vdp1DebugCommandToString(vdp1cmd_struct const & cmd_, char * outstring)
+{
+    vdp1cmd_struct cmd = cmd_;
+   if ((cmd.CMDCTRL.part.Comm) < 4) {
      int w = ((cmd.CMDSIZE >> 8) & 0x3F) * 8;
      int h = cmd.CMDSIZE & 0xFF;
    }
@@ -273,7 +281,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    if ((cmd.CMDXB & 0x400)) cmd.CMDXB |= 0xFC00; else cmd.CMDXB &= ~(0xFC00);
    if ((cmd.CMDXD & 0x400)) cmd.CMDXD |= 0xFC00; else cmd.CMDXD &= ~(0xFC00);
 
-   switch (cmd.CMDCTRL & 0x000F)
+   switch (cmd.CMDCTRL.part.Comm)
    {
       case 0:
          AddString(outstring, "Normal Sprite\r\n");
@@ -284,7 +292,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
 
          AddString(outstring, "Zoom Point: ");
 
-         switch ((cmd.CMDCTRL >> 8) & 0xF)
+         switch (cmd.CMDCTRL.part.ZP)
          {
             case 0x0:
                AddString(outstring, "Only two coordinates\r\n");
@@ -319,7 +327,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
             default: break;
          }
 
-         if (((cmd.CMDCTRL >> 8) & 0xF) == 0)
+         if (cmd.CMDCTRL.part.ZP == 0)
          {
             AddString(outstring, "xa = %d, ya = %d, xc = %d, yc = %d\r\n", (s16)cmd.CMDXA, (s16)cmd.CMDYA, (s16)cmd.CMDXC, (s16)cmd.CMDYC);
          }
@@ -376,14 +384,14 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    }
 
    // Only Sprite commands use CMDSRCA, CMDSIZE
-   if (!(cmd.CMDCTRL & 0x000C))
+   if (!(cmd.CMDCTRL.all & 0x000C))
    {
       AddString(outstring, "Texture address = %08X\r\n", ((unsigned int)cmd.CMDSRCA) << 3);
       AddString(outstring, "Texture width = %d, height = %d\r\n", MAX(1, (cmd.CMDSIZE & 0x3F00) >> 5), MAX(1,cmd.CMDSIZE & 0xFF));
       if ((((cmd.CMDSIZE & 0x3F00) >> 5)==0) || ((cmd.CMDSIZE & 0xFF)==0)) AddString(outstring, "Texture malformed \r\n");
       AddString(outstring, "Texture read direction: ");
 
-      switch ((cmd.CMDCTRL >> 4) & 0x3)
+      switch (cmd.CMDCTRL.part.Dir)
       {
          case 0:
             AddString(outstring, "Normal\r\n");
@@ -402,7 +410,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
    }
 
    // Only draw commands use CMDPMOD
-   if (!(cmd.CMDCTRL & 0x0008))
+   if (!(cmd.CMDCTRL.all & 0x0008))
    {
       if (cmd.CMDPMOD & 0x8000)
       {
@@ -440,7 +448,7 @@ void Vdp1DebugCommand(u32 number, char *outstring)
          AddString(outstring, "Transparent Pixel Enabled\r\n");
       }
 
-      if (cmd.CMDCTRL & 0x0004){
+      if (cmd.CMDCTRL.all & 0x0004){
           AddString(outstring, "Non-textured color: %04X\r\n", cmd.CMDCOLR);
       } else {
           AddString(outstring, "Color mode: ");
@@ -539,7 +547,7 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
 
-   switch (cmd.CMDCTRL & 0x000F)
+   switch (cmd.CMDCTRL.part.Comm)
    {
       case 0: // Normal Sprite
       case 1: // Scaled Sprite
@@ -802,3 +810,36 @@ void ToggleVDP1(void)
 {
    Vdp1External.disptoggle ^= 1;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+constexpr unsigned int cmdBufferSize = Vdp1CommandBufferSize;
+extern "C" vdp1cmdctrl_struct cmdBufferBeingProcessed[Vdp1CommandBufferSize];
+extern "C" int nbCmdToProcess;
+
+int Vdp1DebugCmdBufferPos()
+{
+    return nbCmdToProcess;
+}
+
+vdp1cmdctrl_struct const * debugGetCommandBuffer(int * currentCommandCounterPosInBuffer_out)
+{
+    *currentCommandCounterPosInBuffer_out = nbCmdToProcess;
+    return cmdBufferBeingProcessed;
+}
+
+void Vdp1DebugReadCommandFromCommandBufferAtOffset(int offset, char const *& out_string)
+{
+    int cmdPos;
+    auto const buffer = debugGetCommandBuffer(&cmdPos);
+    auto const & entry = buffer[(offset + cmdPos) % cmdBufferSize];
+    if (entry.completionLine == 0)
+    {
+        out_string = nullptr;
+        return;
+    }
+
+    out_string = Vdp1DebugGetCommandName(entry.cmd.CMDCTRL.all);
+}
+
+//////////////////////////////////////////////////////////////////////////////

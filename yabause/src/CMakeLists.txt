@@ -50,9 +50,7 @@ option(KRONOS_LIBRETRO_CORE "Build kronos emulator as libretro core which can be
 set(kronos_HEADERS
 	sys/bios/include/bios.h
 	sys/vdp1/include/vdp1.h
-	sys/vdp1/include/vdp1.debug.h
 	sys/vdp2/include/vdp2.h
-  sys/vdp2/include/vdp2debug.h
 	sys/sh2/include/sh2core.h
 	sys/scu/include/scu.h
 	sys/scsp/include/scsp.h
@@ -109,7 +107,6 @@ set(kronos_SOURCES
 	core/m68k/mk68Counter.c
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
-	sys/vdp1/src/vdp1.debug.c
 	sys/vdp2/src/vdp2.c
 	sys/sh2/src/sh2core.c
 	sys/scu/src/scu.c
@@ -478,10 +475,13 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			core/video/opengl/compute_shader/src/vidcs.c
 			core/video/opengl/compute_shader/src/vdp1_compute.c
 			sys/vdp2/src/vdp2debug.c
+			sys/vdp1/src/vdp1.debug.cpp
 			core/video/opengl/common/src/vidshared.c
 		)
 		set(kronos_HEADERS
 			${kronos_HEADERS}
+			sys/vdp2/include/vdp2debug.h
+			sys/vdp1/include/vdp1.debug.h
 			core/video/opengl/core/include/vidogl.h
 			core/video/opengl/common/include/vidshared.h
 			core/video/opengl/common/include/ygl.h

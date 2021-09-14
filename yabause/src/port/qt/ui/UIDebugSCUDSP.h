@@ -34,7 +34,7 @@ public:
     UIDebugSCUDSP(YabauseThread * mYabauseThread, QWidget * parent = nullptr);
     ~UIDebugSCUDSP() override;
     void updateRegisters() override;
-    void updateAll();
+    void updateProgramCounter(u32 & pc, bool & changed) override;
     u32 getRegister(int index, int * size) override;
     void setRegister(int index, u32 value) override;
     bool addCodeBreakpoint(u32 addr) override;

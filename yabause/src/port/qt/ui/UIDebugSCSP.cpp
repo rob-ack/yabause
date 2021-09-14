@@ -63,6 +63,10 @@ UIDebugSCSP::UIDebugSCSP(QWidget * p)
     // retranslate widgets
     QtYabause::retranslateWidget(this);
 
+    timer = new QTimer();
+    timer->setInterval(100);
+    timer->start();
+
     connect(timer, &QTimer::timeout, [this]
     {
         on_sbSlotNumber_valueChanged(sbSlotNumber->value());

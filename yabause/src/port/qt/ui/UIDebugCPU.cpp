@@ -52,12 +52,56 @@ UIDebugCPU::UIDebugCPU(YabauseThread * mYabauseThread, QWidget * p) : QDialog(p)
     leCodeBreakpoint->setText("");
     leMemoryBreakpoint->setText("");
 
-    connect(lwDisassembledCode, SIGNAL(toggleCodeBreakpoint(u32)), this, SLOT(toggleCodeBreakpoint(u32)));
-
     this->mYabauseThread = mYabauseThread;
 
+    pbBreakAll->setChecked(!mYabauseThread->isPaused());
+
+    connect(lwDisassembledCode, &UIDisasm::toggleCodeBreakpoint, this, &UIDebugCPU::toggleCodeBreakpoint);
+    connect(mYabauseThread, &YabauseThread::pause, this, &UIDebugCPU::on_yabThreadPause_changed);
+
+    connect(&autoUpdateTimer, &QTimer::timeout, [this]
+    {
+        updateAll();
+    });
+    
     // retranslate widgets
     QtYabause::retranslateWidget(this);
+}
+
+UIDebugCPU::~UIDebugCPU()
+{
+    disconnect(mYabauseThread, &YabauseThread::pause, this, &UIDebugCPU::on_yabThreadPause_changed);
+}
+
+void UIDebugCPU::updateDissasemblyView()
+{
+    //trick it to force redraw and trigger the internal update routine. note that paint events can not be called directly and will have no effect.
+    lwDisassembledCode->scroll(1, 0);
+    lwDisassembledCode->scroll(-1, 0);
+}
+
+void UIDebugCPU::updateAll()
+{
+    updateRegisters();
+    u32 pc;
+    bool changed = false;
+    updateProgramCounter(pc, changed);
+    if (changed)
+    {
+        updateCodeList(pc);
+    }
+    updateDissasemblyView();
+}
+
+void UIDebugCPU::updateProgramCounter(u32 & pc, bool & changed)
+{
+    changed = false;
+}
+
+void UIDebugCPU::on_yabThreadPause_changed(bool paused)
+{
+    !paused && cbAutoUpdate->isChecked() ? autoUpdateTimer.start() : autoUpdateTimer.stop();
+    pbBreakAll->setChecked(!paused);
 }
 
 void UIDebugCPU::on_lwRegisters_itemDoubleClicked(QListWidgetItem * item)
@@ -249,7 +293,20 @@ void UIDebugCPU::on_cbWriteLong_toggled(bool enable)
 void UIDebugCPU::on_pbBreakAll_clicked()
 {
     mYabauseThread->pauseEmulation(!mYabauseThread->emulationPaused(), false);
-    pbBreakAll->setBackgroundRole(QPalette::Dark);
+}
+
+void UIDebugCPU::on_pbFetch_clicked()
+{
+    updateAll();
+}
+
+void UIDebugCPU::on_pbJumpToPC_clicked()
+{
+    u32 pc;
+    bool changed = false;
+    updateProgramCounter(pc, changed);
+    lwDisassembledCode->setPC(pc);
+    lwDisassembledCode->goToAddress(pc, false);
 }
 
 void UIDebugCPU::on_pbStepInto_clicked()
@@ -304,7 +361,11 @@ void UIDebugCPU::on_pbReserved5_clicked()
 
 void UIDebugCPU::on_cbAutoUpdate_toggled(bool on)
 {
-    on ? autoUpdateTimer.start() : autoUpdateTimer.stop();
+    on && !mYabauseThread->isPaused() ? autoUpdateTimer.start() : autoUpdateTimer.stop();
+}
+
+void UIDebugCPU::on_cbAutoUpdatePc_toggled(bool on)
+{
 }
 
 void UIDebugCPU::on_spAutoUpdateIntervall_valueChanged(int newValue)
@@ -315,7 +376,7 @@ void UIDebugCPU::on_spAutoUpdateIntervall_valueChanged(int newValue)
         autoUpdateTimer.stop();
     }
     autoUpdateTimer.setInterval(newValue);
-    if (running)
+    if (running && !mYabauseThread->isPaused())
     {
         autoUpdateTimer.start();
     }
@@ -327,7 +388,10 @@ void UIDebugCPU::updateRegisters()
 
 void UIDebugCPU::updateCodeList(u32 addr)
 {
-    lwDisassembledCode->goToAddress(addr);
+    if (cbAutoUpdatePc->isChecked())
+    {
+        lwDisassembledCode->goToAddress(addr);
+    }
     lwDisassembledCode->setPC(addr);
 }
 
@@ -413,23 +477,18 @@ void UIDebugCPU::reserved5()
 {
 }
 
-void UIDebugCPU::updateDissasemblyView()
-{
-    //trick it to force redraw
-    lwDisassembledCode->scroll(1, 0);
-    lwDisassembledCode->scroll(-1, 0);
-}
-
 void UIDebugCPU::showEvent(QShowEvent * event)
 {
     Settings const settings;
     auto const ms = settings.value(QString() + "AutoUpdateInterval" + "/" + this->metaObject()->className(), 100).value<int>();
     auto const enabled = settings.value(QString() + ("AutoUpdate") + "/" + this->metaObject()->className(), false).value<bool>();
+    auto const autoJumpPc = settings.value(QString() + ("AutoJumpToPC") + "/" + this->metaObject()->className(), false).value<bool>();
     auto const windowPos = settings.value(QString() + ("WindowPos") + "/" + this->metaObject()->className(), QPoint()).value<QPoint>();
 
     autoUpdateTimer.setInterval(ms);
     spAutoUpdateIntervall->setValue(ms);
     cbAutoUpdate->setChecked(enabled);
+    cbAutoUpdatePc->setChecked(autoJumpPc);
     this->window()->move(windowPos);
 
     QDialog::showEvent(event);
@@ -440,6 +499,7 @@ void UIDebugCPU::hideEvent(QHideEvent * event)
     Settings settings;
     settings.setValue(QString() + ("AutoUpdateInterval") + "/" + this->metaObject()->className(), spAutoUpdateIntervall->value());
     settings.setValue(QString() + ("AutoUpdate") + "/" + this->metaObject()->className(), cbAutoUpdate->isChecked());
+    settings.setValue(QString() + ("AutoJumpToPC") + "/" + this->metaObject()->className(), cbAutoUpdatePc->isChecked());
     settings.setValue(QString() + ("WindowPos") + "/" + this->metaObject()->className(), this->window()->pos());
     QDialog::hideEvent(event);
 }

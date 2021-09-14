@@ -2484,7 +2484,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 	int endcodesEnabled;
 	int untexturedColor = 0;
 	int isTextured = 1;
-	int currentShape = cmd->CMDCTRL & 0x7;
+	int currentShape = cmd->CMDCTRL.part.Comm;
 	int flip;
 
    characterAddress = cmd->CMDSRCA << 3;
@@ -2492,7 +2492,7 @@ static int getpixel(int linenumber, int currentlineindex, vdp1cmd_struct *cmd, u
 	colorlut = (u32)colorbank << 3;
    SPD = ((cmd->CMDPMOD & 0x40) != 0);//show the actual color of transparent pixels if 1 (they won't be drawn transparent)
    endcodesEnabled = ((cmd->CMDPMOD & 0x80) == 0) ? 1 : 0;
-   flip = (cmd->CMDCTRL & 0x30) >> 4;
+   flip = cmd->CMDCTRL.part.Dir;
 
 	//4 polygon, 5 polyline or 6 line
 	if(currentShape == 4 || currentShape == 5 || currentShape == 6) {
@@ -3182,7 +3182,7 @@ void VIDSoftVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8* ram, Vdp1*regs, u8 * b
 	x0 = cmd->CMDXA + regs->localX;
 	y0 = cmd->CMDYA + regs->localY;
 
-	switch ((cmd->CMDCTRL >> 8) & 0xF)
+	switch (cmd->CMDCTRL.part.ZP)
 	{
 	case 0x0: // Only two coordinates
 	default:

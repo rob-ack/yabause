@@ -23,7 +23,7 @@
 
 #include <QTimer>
 
-int SCUDSPDis(u32 addr, char * string)
+u32 SCUDSPDis(u32 addr, char * string)
 {
     ScuDspDisasm((u8)addr, string);
     return 1;
@@ -35,8 +35,7 @@ void SCUDSPBreakpointHandler(u32 addr)
     emit ui->breakpointHandlerSCUDSP();
 }
 
-UIDebugSCUDSP::UIDebugSCUDSP(YabauseThread * mYabauseThread, QWidget * p)
-    : UIDebugCPU(mYabauseThread, p)
+UIDebugSCUDSP::UIDebugSCUDSP(YabauseThread * mYabauseThread, QWidget * p) : UIDebugCPU(mYabauseThread, p)
 {
     this->setWindowTitle(QtYabause::translate("Debug SCU DSP"));
     gbRegisters->setTitle(QtYabause::translate("DSP Registers"));
@@ -82,13 +81,6 @@ UIDebugSCUDSP::UIDebugSCUDSP(YabauseThread * mYabauseThread, QWidget * p)
         lwDisassembledCode->setMinimumInstructionSize(1);
         ScuDspSetBreakpointCallBack(SCUDSPBreakpointHandler);
     }
-
-    updateAll();
-
-    connect(&autoUpdateTimer, &QTimer::timeout, [this]
-    {
-        updateAll();
-    });
 
     this->show();
 }
@@ -162,14 +154,10 @@ void UIDebugSCUDSP::updateRegisters()
     lwRegisters->addItem(str);
 }
 
-void UIDebugSCUDSP::updateAll()
+void UIDebugSCUDSP::updateProgramCounter(u32 & pc, bool & changed)
 {
-    updateRegisters();
-    if (ScuRegs)
-    {
-        updateCodeList(regs.PC);
-    }
-    updateDissasemblyView();
+    pc = regs.PC;
+    changed = true;
 }
 
 u32 UIDebugSCUDSP::getRegister(int index, int * size)

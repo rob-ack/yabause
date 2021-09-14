@@ -2103,26 +2103,4 @@ int SH2LoadState(SH2_struct *context, const void * stream, UNUSED int version, i
    return size;
 }
 
-
-
-void SH2DumpHistory(SH2_struct *context){
-
-#ifdef DMPHISTORY
-	FILE * history = NULL;
-	history = fopen("history.txt", "w");
-	if (history){
-		int i;
-		int index = context->pchistory_index;
-		for (i = 0; i < (MAX_DMPHISTORY - 1); i++){
-		  char lineBuf[128];
-		  SH2Disasm(context->pchistory[(index & (MAX_DMPHISTORY - 1))], MappedMemoryReadWord(context->pchistory[(index & (MAX_DMPHISTORY - 1))]), 0, NULL /*&context->regshistory[index & 0xFF]*/, lineBuf);
-		  fprintf(history,lineBuf);
-		  fprintf(history, "\n");
-		  index--;
-	    }
-		fclose(history);
-	}
-#endif
-}
-
 //////////////////////////////////////////////////////////////////////////////

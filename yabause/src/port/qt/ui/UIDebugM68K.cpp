@@ -26,13 +26,17 @@ extern "C"
 #include "m68k.h"
 }
 
-int M68KDis(u32 addr, char * string)
+u32 M68KDis(u32 addr, char * string)
 {
-    if (m68k_is_valid_instruction(addr, M68K_CPU_TYPE_68000))
+    if (SoundRam)
     {
-        return m68k_disassemble(string, addr, M68K_CPU_TYPE_68000);
+        if (m68k_is_valid_instruction(addr, M68K_CPU_TYPE_68000))
+        {
+            return m68k_disassemble(string, addr, M68K_CPU_TYPE_68000);
+        }
+        return 2;
     }
-    return 2;
+    return 0;
 }
 
 void M68KBreakpointHandler(u32 addr)
@@ -47,16 +51,10 @@ UIDebugM68K::UIDebugM68K(YabauseThread * mYabauseThread, QWidget * p) : UIDebugC
     gbRegisters->setTitle(QtYabause::translate("M68K Registers"));
     gbMemoryBreakpoints->setVisible(false);
 
-    updateRegisters();
-    if (SoundRam)
+    if (SoundRam) //TODO: fix me breakpoint init list needs to be done when the subsystem is running at the moment. meaning this will not work when this window is opened before the emulation was started.
     {
-        m68kregs_struct m68kregs;
-        const m68kcodebreakpoint_struct * cbp;
-        int i;
-
-        cbp = M68KGetBreakpointList();
-
-        for (i = 0; i < MAX_BREAKPOINTS; i++)
+        const m68kcodebreakpoint_struct* cbp = M68KGetBreakpointList();
+        for (int i = 0; i < MAX_BREAKPOINTS; i++)
         {
             if (cbp[i].addr != 0xFFFFFFFF)
             {
@@ -65,15 +63,14 @@ UIDebugM68K::UIDebugM68K(YabauseThread * mYabauseThread, QWidget * p) : UIDebugC
                 lwCodeBreakpoints->addItem(text);
             }
         }
-
-        lwDisassembledCode->setDisassembleFunction(M68KDis);
-        lwDisassembledCode->setEndAddress(0x100000);
-        lwDisassembledCode->setMinimumInstructionSize(2);
-        M68KGetRegisters(&m68kregs);
-        updateCodeList(m68kregs.PC);
-
         M68KSetBreakpointCallBack(M68KBreakpointHandler);
     }
+
+    lwDisassembledCode->setDisassembleFunction(M68KDis);
+    lwDisassembledCode->setEndAddress(0x80000); //REVIEW: this was 0x100000 but sound ram is 0x80000 big (half the size).
+    lwDisassembledCode->setMinimumInstructionSize(2);
+    updateRegisters();
+    updateCodeList(regs.PC);
 }
 
 void UIDebugM68K::updateRegisters()
@@ -81,7 +78,6 @@ void UIDebugM68K::updateRegisters()
     if (SoundRam == nullptr)
         return;
 
-    m68kregs_struct regs = {};
     M68KGetRegisters(&regs);
     lwRegisters->clear();
 
@@ -109,16 +105,15 @@ void UIDebugM68K::updateRegisters()
     lwRegisters->addItem(str);
 }
 
-void UIDebugM68K::updateCodeList(u32 addr)
+void UIDebugM68K::updateProgramCounter(u32 & pc, bool & changed)
 {
-    lwDisassembledCode->goToAddress(addr);
-    lwDisassembledCode->setPC(addr);
+    pc = regs.PC;
+    changed = true;
 }
 
 u32 UIDebugM68K::getRegister(int index, int * size)
 {
-    m68kregs_struct m68kregs;
-    M68KGetRegisters(&m68kregs);
+    M68KGetRegisters(&regs);
 
     u32 value;
     switch (index)
@@ -131,7 +126,7 @@ u32 UIDebugM68K::getRegister(int index, int * size)
         case 5:
         case 6:
         case 7:
-            value = m68kregs.D[index];
+            value = regs.D[index];
             break;
         case 8:
         case 9:
@@ -141,13 +136,13 @@ u32 UIDebugM68K::getRegister(int index, int * size)
         case 13:
         case 14:
         case 15:
-            value = m68kregs.A[index - 8];
+            value = regs.A[index - 8];
             break;
         case 16:
-            value = m68kregs.SR;
+            value = regs.SR;
             break;
         case 17:
-            value = m68kregs.PC;
+            value = regs.PC;
             break;
         default:
             value = 0;
@@ -160,9 +155,7 @@ u32 UIDebugM68K::getRegister(int index, int * size)
 
 void UIDebugM68K::setRegister(int index, u32 value)
 {
-    m68kregs_struct m68kregs;
-    memset(&m68kregs, 0, sizeof(m68kregs));
-    M68KGetRegisters(&m68kregs);
+    M68KGetRegisters(&regs);
 
     switch (index)
     {
@@ -174,7 +167,7 @@ void UIDebugM68K::setRegister(int index, u32 value)
         case 5:
         case 6:
         case 7:
-            m68kregs.D[index] = value;
+            regs.D[index] = value;
             break;
         case 8:
         case 9:
@@ -184,20 +177,20 @@ void UIDebugM68K::setRegister(int index, u32 value)
         case 13:
         case 14:
         case 15:
-            m68kregs.A[index - 8] = value;
+            regs.A[index - 8] = value;
             break;
         case 16:
-            m68kregs.SR = value;
+            regs.SR = value;
             break;
         case 17:
-            m68kregs.PC = value;
-            updateCodeList(m68kregs.PC);
+            regs.PC = value;
+            updateCodeList(regs.PC);
             break;
         default:
             break;
     }
 
-    M68KSetRegisters(&m68kregs);
+    M68KSetRegisters(&regs);
 }
 
 bool UIDebugM68K::addCodeBreakpoint(u32 addr)
@@ -217,8 +210,7 @@ void UIDebugM68K::stepInto()
     if (M68K)
         M68KStep();
 
-    m68kregs_struct m68kregs;
-    M68KGetRegisters(&m68kregs);
-    updateCodeList(m68kregs.PC);
+    M68KGetRegisters(&regs);
+    updateCodeList(regs.PC);
     updateRegisters();
 }

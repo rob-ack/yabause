@@ -167,7 +167,8 @@ protected slots:
 	void on_aViewDebugSCSPChan_triggered();
 	void on_aViewDebugSCSPDSP_triggered();
 	void on_aViewDebugMemoryEditor_triggered();
-	void on_aViewDebugMSH2_triggered();
+    void on_aOpen_All_CPU_Debug_Views_triggered();
+    void on_aViewDebugMSH2_triggered();
 	void on_actionShow_Captured_Errors_triggered();
 	// help menu
 	void on_aHelpReport_triggered();

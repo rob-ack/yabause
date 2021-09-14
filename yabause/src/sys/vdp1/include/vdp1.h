@@ -28,6 +28,7 @@ extern "C" {
 #endif
 
 #define VIDCORE_DEFAULT         -1
+#define Vdp1CommandBufferSize 5000
 
 //#define YAB_ASYNC_RENDERING 1
 
@@ -60,8 +61,6 @@ typedef struct {
    u16 userclipY1;
    u16 userclipX2;
    u16 userclipY2;
-
-
 } Vdp1;
 
 // struct for Vdp1 part that shouldn't be saved
@@ -90,23 +89,35 @@ typedef struct
   u32 h;
   u32 flip;
   u32 type;
-  u32 CMDCTRL;
-  u32 CMDLINK;
-  u32 CMDPMOD;
-  u32 CMDCOLR;
-  u32 CMDSRCA;
-  u32 CMDSIZE;
-  s32 CMDXA;
-  s32 CMDYA;
-  s32 CMDXB;
-  s32 CMDYB;
-  s32 CMDXC;
-  s32 CMDYC;
-  s32 CMDXD;
-  s32 CMDYD;
+  //FIX me those data fields are all 16 bit not 32 accordion to documentation. signed or unsigned has been checked
+  union {
+      struct {
+          u32 Comm : 4; // Command Select
+          u32 Dir : 2; // Character Read Direction
+          u32 unused : 2; // unsued
+          u32 ZP : 4; // Zoom Point
+          u32 JP : 3; // Jump Select
+          u32 END : 1; // End Bit
+      } part;
+      u32 all : 32;
+  } CMDCTRL; // Control Words (i.e. Command Select)
+  u32 CMDLINK; // Link Specification
+  u32 CMDPMOD; // Draw Mode Word
+  u32 CMDCOLR; // Color Control Word
+  u32 CMDSRCA; // Character Address
+  u32 CMDSIZE; // Character Size
+  s32 CMDXA; // Vertex Coordinate Data (signed)
+  s32 CMDYA; // Vertex Coordinate Data (signed)
+  s32 CMDXB; // Vertex Coordinate Data (signed)
+  s32 CMDYB; // Vertex Coordinate Data (signed)
+  s32 CMDXC; // Vertex Coordinate Data (signed)
+  s32 CMDYC; // Vertex Coordinate Data (signed)
+  s32 CMDXD; // Vertex Coordinate Data (signed)
+  s32 CMDYD; // Vertex Coordinate Data (signed)
+  //END FIX me
   s32 B[4];
   u32 COLOR[4];
-  u32 CMDGRDA;
+  u32 CMDGRDA; //Gouraud Shading Table   //FIX me 16bit too
   u32 SPCTL;
   u32 nbStep;
   float uAstepx;
@@ -115,6 +126,15 @@ typedef struct
   float uBstepy;
   u32 pad[2];
 } vdp1cmd_struct;
+
+typedef struct {
+    vdp1cmd_struct cmd;
+    int ignitionLine;
+    int completionLine;
+    u32 start_addr;
+    u32 end_addr;
+    int dirty;
+} vdp1cmdctrl_struct;
 
 extern u8 * Vdp1Ram;
 

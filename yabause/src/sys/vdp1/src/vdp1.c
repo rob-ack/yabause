@@ -39,30 +39,20 @@
 #include "ygl.h"
 #endif
 
-typedef struct {
-    vdp1cmd_struct cmd;
-    int ignitionLine;
-    int completionLine;
-    int start_addr;
-    int end_addr;
-    int dirty;
-} vdp1cmdctrl_struct;
-
 u8 * Vdp1Ram = NULL;
-int vdp1Ram_update_start;
-int vdp1Ram_update_end;
+u32 vdp1Ram_update_start;
+u32 vdp1Ram_update_end;
 int VDP1_MASK = 0xFFFF;
 
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
-vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
+vdp1cmdctrl_struct cmdBufferBeingProcessed[Vdp1CommandBufferSize];
 int nbCmdToProcess = 0;
-
 int vdp1_clock = 0;
 
-static int CmdListDrawn = 0;
-static int CmdListLimit = 0x80000;
+static u32 CmdListDrawn = 0;
+static u32 CmdListLimit = 0x80000;
 
 
 static int needVdp1draw = 0;
@@ -510,7 +500,7 @@ void FASTCALL Vdp1WriteLong(SH2_struct *context, u8* mem, u32 addr, UNUSED u32 v
 
 static int emptyCmd(vdp1cmd_struct *cmd) {
   return (
-    (cmd->CMDCTRL == 0) &&
+    (cmd->CMDCTRL.all == 0) &&
     (cmd->CMDLINK == 0) &&
     (cmd->CMDPMOD == 0) &&
     (cmd->CMDCOLR == 0) &&
@@ -579,7 +569,7 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
     ret = 0;
   }
 
-  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->flip = cmd->CMDCTRL.part.Dir;
   cmd->priority = 0;
 
   CONVERTCMD(cmd->CMDXA);
@@ -594,7 +584,7 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   cmd->CMDXD = cmd->CMDXA;
   cmd->CMDYD = cmd->CMDYA + MAX(1,cmd->h);
 
-  int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
+  int const area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
   yabsys.vdp1cycles+= MIN(1000, 70 + (area));
 
   memset(cmd->G, 0, sizeof(float)*16);
@@ -616,7 +606,6 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
 static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) {
   Vdp2 *varVdp2Regs = &Vdp2Lines[0];
   s16 rw = 0, rh = 0;
-  s16 x, y;
   int ret = 1;
 
   if (emptyCmd(cmd)) {
@@ -632,7 +621,7 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
     ret = 0;
   }
 
-  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->flip = cmd->CMDCTRL.part.Dir;
   cmd->priority = 0;
 
   CONVERTCMD(cmd->CMDXA);
@@ -642,10 +631,10 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   CONVERTCMD(cmd->CMDXC);
   CONVERTCMD(cmd->CMDYC);
 
-  x = cmd->CMDXA;
-  y = cmd->CMDYA;
+  s16 x = cmd->CMDXA;
+  s16 y = cmd->CMDYA;
   // Setup Zoom Point
-  switch ((cmd->CMDCTRL & 0xF00) >> 8)
+  switch (cmd->CMDCTRL.part.ZP)
   {
   case 0x0: // Only two coordinates
     rw = cmd->CMDXC - cmd->CMDXA;
@@ -748,7 +737,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
     ret = 0;
   }
 
-  cmd->flip = (cmd->CMDCTRL & 0x30) >> 4;
+  cmd->flip = cmd->CMDCTRL.part.Dir;
   cmd->priority = 0;
 
   CONVERTCMD(cmd->CMDXA);
@@ -769,7 +758,7 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   cmd->CMDXD += regs->localX;
   cmd->CMDYD += regs->localY;
 
-  int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
+  int const area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
   yabsys.vdp1cycles+= MIN(1000, 70 + (area*3));
 
   memset(cmd->G, 0, sizeof(float)*16);
@@ -1060,7 +1049,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 
    nbCmdToProcess = 0;
    yabsys.vdp1cycles = 0;
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && commandCounter < Vdp1CommandBufferSize) {
      int ret;
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
@@ -1234,7 +1223,7 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    u32 returnAddr = 0xffffffff;
    vdp1cmd_struct cmd;
 
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && commandCounter < Vdp1CommandBufferSize) { // fix me
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
@@ -1348,7 +1337,7 @@ static void Vdp1NoDraw(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram) {
-   cmd->CMDCTRL = T1ReadWord(ram, addr);
+   cmd->CMDCTRL.all = T1ReadWord(ram, addr);
    cmd->CMDLINK = T1ReadWord(ram, addr + 0x2);
    cmd->CMDPMOD = T1ReadWord(ram, addr + 0x4);
    cmd->CMDCOLR = T1ReadWord(ram, addr + 0x6);

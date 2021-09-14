@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct* r, char* string);
+void SH2DumpHistory(SH2_struct* context);
 
 #ifdef  __cplusplus
 }

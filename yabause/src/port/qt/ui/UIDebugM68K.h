@@ -30,12 +30,16 @@ class UIDebugM68K : public UIDebugCPU
 public:
     UIDebugM68K(YabauseThread * mYabauseThread, QWidget * parent = nullptr);
     void updateRegisters() override;
-    void updateCodeList(u32 addr) override;
+	void updateProgramCounter(u32 & pc, bool & changed) override;
     u32 getRegister(int index, int * size) override;
     void setRegister(int index, u32 value) override;
     bool addCodeBreakpoint(u32 addr) override;
     bool delCodeBreakpoint(u32 addr) override;
     void stepInto() override;
+
+private :
+	m68kregs_struct regs = {};
+
 };
 
 #endif // UIDEBUGM68K_H

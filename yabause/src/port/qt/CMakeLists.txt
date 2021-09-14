@@ -34,6 +34,7 @@ if(Qt5_FOUND)
     message(STATUS "Qt5 Found - Configuring QT frontend project")
 
     add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+    add_definitions(-DQT_PORT_ENABLED=1)
 
     # Since Qt5's cmake script doesn't set it, we will have to
     SET(QT_BINARY_DIR "${_qt5Core_install_prefix}/bin")
@@ -150,6 +151,8 @@ set( kronos_qt_MOC_HEADERS
 	YabauseThread.h 
 	${CMAKE_SOURCE_DIR}/src/sys/sh2/include/sh2iasm.h
 	${CMAKE_SOURCE_DIR}/src/sys/scu/include/scu_debug.h
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/include/sh2d.h
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/include/sh2.debug.h
 )
 
 # C sources
@@ -202,6 +205,7 @@ set( kronos_qt_SOURCES
 	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2iasm.c
 	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2d.c
 	${CMAKE_SOURCE_DIR}/src/sys/scu/src/scu_debug.c
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2.debug.c
 )
 
 if( OPENGL_SUPPORTED )

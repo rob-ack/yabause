@@ -20,7 +20,8 @@
 #define UIDISASM_H
 
 #include <QScrollArea>
-#include "../QtYabause.h"
+#include "QtYabause.h"
+#include <functional>
 
 class UIDisasm : public QAbstractScrollArea
 {
@@ -29,23 +30,23 @@ public:
 	UIDisasm( QWidget* parent = 0 );
 
    void setSelectionColor(const QColor &color);
-   void setDisassembleFunction(int (*func)(u32, char *));
+   void setDisassembleFunction(std::function<u32(u32 address, char* string)> func);
    void setEndAddress(u32 address);
    void goToAddress(u32 address, bool vCenter=true);
    void setPC(u32 address);
-   void setMinimumInstructionSize(int instructionSize);
+   void setMinimumInstructionSize(u32 instructionSize);
 private:
    void adjustSettings();
 
    int fontWidth, fontHeight;
    QColor selectionColor;
 
-   int (*disassembleFunction)(u32 address, char *string);
+   std::function<u32(u32 address, char* string)> disassembleFunction;
    u32 address;
    bool vCenter;
-   u32 endAddress;
+   u32 endAddress = 0;
    u32 pc;
-   int instructionSize;
+   u32 instructionSize;
 
 protected:
    void mouseDoubleClickEvent( QMouseEvent * event ) override;

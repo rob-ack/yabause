@@ -498,31 +498,10 @@
     <layout class="QVBoxLayout" name="verticalLayout_18" stretch="0">
      <item>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="9">
-        <widget class="QPushButton" name="pbReserved4">
+       <item row="0" column="5">
+        <widget class="QPushButton" name="pbTraceLogging">
          <property name="text">
-          <string>Reserved4</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="10">
-        <widget class="QPushButton" name="pbReserved5">
-         <property name="text">
-          <string>Reserved5</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="6">
-        <widget class="QPushButton" name="pbReserved1">
-         <property name="text">
-          <string>Reserved1</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="6">
-        <widget class="QPushButton" name="pbStepOut">
-         <property name="text">
-          <string>Step Out</string>
+          <string>Trace Logging</string>
          </property>
         </widget>
        </item>
@@ -531,47 +510,23 @@
          <property name="text">
           <string>Break All</string>
          </property>
+         <property name="icon">
+          <iconset resource="../resources/resources.qrc">
+           <normaloff>:/actions/icons/actions/play.png</normaloff>
+           <normalon>:/actions/icons/actions/pause.png</normalon>:/actions/icons/actions/play.png</iconset>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
         </widget>
        </item>
        <item row="0" column="4">
         <widget class="QPushButton" name="pbMemoryEditor">
          <property name="text">
           <string>Memory Editor</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="5">
-        <widget class="QPushButton" name="pbTraceLogging">
-         <property name="text">
-          <string>Trace Logging</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="7">
-        <widget class="QPushButton" name="pbReserved2">
-         <property name="text">
-          <string>Reserved2</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="5">
-        <widget class="QPushButton" name="pbStepInto">
-         <property name="text">
-          <string>Step Into</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="7">
-        <widget class="QPushButton" name="pbStepOver">
-         <property name="text">
-          <string>Step Over</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="8">
-        <widget class="QPushButton" name="pbReserved3">
-         <property name="text">
-          <string>Reserved3</string>
          </property>
         </widget>
        </item>
@@ -587,7 +542,7 @@
          <item>
           <widget class="QCheckBox" name="cbAutoUpdate">
            <property name="text">
-            <string>Auto Update</string>
+            <string>Auto Update (sampling)</string>
            </property>
           </widget>
          </item>
@@ -612,6 +567,107 @@
          </item>
         </layout>
        </item>
+       <item row="2" column="10">
+        <widget class="QCheckBox" name="cbAutoUpdatePc">
+         <property name="text">
+          <string>Auto follow program counter (PC)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QPushButton" name="pbReserved2">
+         <property name="text">
+          <string>Reserved2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="5">
+        <widget class="QPushButton" name="pbReserved3">
+         <property name="text">
+          <string>Reserved3</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QPushButton" name="pbReserved1">
+         <property name="text">
+          <string>Reserved1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="6">
+        <widget class="QPushButton" name="pbReserved4">
+         <property name="text">
+          <string>Reserved4</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="7">
+        <widget class="QPushButton" name="pbReserved5">
+         <property name="text">
+          <string>Reserved5</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QPushButton" name="pbStepInto">
+         <property name="text">
+          <string>Step Into</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="5">
+        <widget class="QPushButton" name="pbStepOut">
+         <property name="text">
+          <string>Step Out</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="6">
+        <widget class="QPushButton" name="pbStepOver">
+         <property name="text">
+          <string>Step Over</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="10">
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QPushButton" name="pbFetch">
+           <property name="text">
+            <string>Fetch All</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources/resources.qrc">
+             <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QPushButton" name="pbJumpToPC">
+           <property name="text">
+            <string>Jump to PC</string>
+           </property>
+           <property name="icon">
+            <iconset resource="../resources/resources.qrc">
+             <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+           </property>
+           <property name="checkable">
+            <bool>false</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
       </layout>
      </item>
     </layout>
@@ -626,6 +682,8 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
- <resources/>
+ <resources>
+  <include location="../resources/resources.qrc"/>
+ </resources>
  <connections/>
 </ui>

@@ -31,8 +31,8 @@ class YabauseThread : public QObject
 	Q_OBJECT
 	
 public:
-	YabauseThread( QObject* owner = 0 );
-	virtual ~YabauseThread();
+	YabauseThread( QObject* owner = nullptr );
+    ~YabauseThread() override;
 	
 	yabauseinit_struct* yabauseConf();
 	bool emulationRunning();
@@ -55,6 +55,8 @@ protected:
 	void resetYabauseConf();
 	void timerEvent( QTimerEvent* );
 
+public:
+	bool isPaused() const { return mPause; };
 
 public slots:
 	bool pauseEmulation( bool pause, bool reset );

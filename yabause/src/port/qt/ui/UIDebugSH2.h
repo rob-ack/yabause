@@ -32,8 +32,9 @@ public:
     void updateRegisters() override;
     void updateCodeList(u32 addr) override;
     void updateBackTrace();
+    void updateProgramCounter(u32 & pc_out, bool & changed_out) override;
     void updateTrackInfLoop();
-    void updateAll();
+    void updateAll() override;
     u32 getRegister(int index, int * size) override;
     void setRegister(int index, u32 value) override;
     bool addCodeBreakpoint(u32 addr) override;
@@ -48,7 +49,11 @@ public:
     void reserved3() override;
 
 private:
+    u32 SH2Dis(u32 addr, char* string);
+
     SH2_struct * debugSH2 = nullptr;
+    sh2regs_struct sh2regs;
+    bool m_isMaster;
 };
 
 #endif // UIDEBUGSH2_H

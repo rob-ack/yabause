@@ -20,25 +20,29 @@
 #define UIDEBUGVDP1_H
 
 #include "ui_UIDebugVDP1.h"
-#include "../QtYabause.h"
+#include "QtYabause.h"
+#include <QTimer>
 
 class UIDebugVDP1 : public QDialog, public Ui::UIDebugVDP1
 {
-	Q_OBJECT
+    Q_OBJECT
 public:
-	UIDebugVDP1( QWidget* parent = 0 );
-	~UIDebugVDP1();
+    UIDebugVDP1(QWidget * parent = 0);
+    ~UIDebugVDP1() override;
 
 protected:
-   u32 *vdp1texture;
-   int vdp1texturew, vdp1textureh;
+    u32 * vdp1texture;
+    int vdp1texturew, vdp1textureh;
+    QTimer timer;
 
 protected slots:
-   void on_lwCommandList_itemSelectionChanged ();
-   void on_pbSaveBitmap_clicked ();
-   void on_dbbButtons_clicked();
-   void updateCommandList();
-
+    void on_lwCommandList_itemSelectionChanged();
+    void on_pbSaveBitmap_clicked();
+    void on_dbbButtons_clicked();
+    void updateCommandListFromBuffer();
+    void UpdateSystemStats();
+    void on_bFromCommandListBuffer_clicked();
+    void updateCommandList();
 };
 
 #endif // UIDEBUGVDP1_H

@@ -301,12 +301,6 @@ typedef struct
    u8 level;
 } interrupt_struct;
 
-enum SH2STEPTYPE
-{
-   SH2ST_STEPOVER,
-   SH2ST_STEPOUT
-};
-
 typedef struct
 {
    u32 addr;
@@ -447,11 +441,7 @@ void SH2NMI(SH2_struct *context);
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
-void SH2WriteNotify(SH2_struct *context, u32 start, u32 length);
-
-void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *r, char *string);
-void SH2DumpHistory(SH2_struct *context);
-
+void SH2WriteNotify(SH2_struct* context, u32 start, u32 length);
 
 int BackupHandled(SH2_struct * sh, u32 addr);
 int isBackupHandled(u32 addr);

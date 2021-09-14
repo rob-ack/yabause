@@ -24,8 +24,7 @@
 
 #include "vdp1.debug.h"
 
-UIDebugVDP1::UIDebugVDP1( QWidget* p )
-	: QDialog( p )
+UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
 {
 	// setup dialog
 	setupUi( this );
@@ -33,33 +32,38 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p )
    QGraphicsScene *scene=new QGraphicsScene(this);
    gvTexture->setScene(scene);
 
-   lwCommandList->clear();
-
-   if (Vdp1Ram)
-   {
-      for (int i=0;;i++)
-      {
-         char const *string;
-
-         if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
-            break;
-
-         lwCommandList->addItem(QtYabause::translate(string));
-      }
-   }
-
    vdp1texture = NULL;
    vdp1texturew = vdp1textureh = 1;
    pbSaveBitmap->setEnabled(vdp1texture ? true : false);
 
+	updateCommandList();
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+	this->show();
 }
 
 UIDebugVDP1::~UIDebugVDP1()
 {
    if (vdp1texture)
       free(vdp1texture);
+}
+
+void UIDebugVDP1::updateCommandList()
+{
+	lwCommandList->clear();
+
+	if (Vdp1Ram)
+	{
+		for (int i = 0;; i++)
+		{
+			char const* string;
+
+			if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
+				break;
+
+			lwCommandList->addItem(QtYabause::translate(string));
+		}
+	}
 }
 
 void UIDebugVDP1::on_lwCommandList_itemSelectionChanged ()
@@ -109,4 +113,9 @@ void UIDebugVDP1::on_pbSaveBitmap_clicked ()
 	if ( !s.isEmpty() )
 		if ( !img.save( s ) )
 			CommonDialogs::information( QtYabause::translate( "An error occured while writing file." ) );
+}
+
+void UIDebugVDP1::on_dbbButtons_clicked()
+{
+	updateCommandList();
 }

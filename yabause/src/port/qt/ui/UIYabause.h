@@ -113,6 +113,11 @@ public slots:
 	void hideMouse();
 	void cursorRestore();
 	void toggleEmulateMouse( bool enable );
+	void breakpointHandlerMSH2(bool displayMessage);
+	void breakpointHandlerSSH2(bool displayMessage);
+	void breakpointHandlerM68K();
+	void breakpointHandlerSCUDSP();
+	void breakpointHandlerSCSPDSP(bool displayMessage = false);
 
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
@@ -121,7 +126,7 @@ protected slots:
 	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();
-   void adjustHeight(int & height);
+    void adjustHeight(int & height);
 	// file menu
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();
@@ -152,9 +157,17 @@ protected slots:
 	void on_aViewLayerRBG0_triggered();
 	void on_aViewLayerRBG1_triggered();
 	void on_aViewFullscreen_triggered( bool b );
+	void on_aViewDebugSSH2_triggered();
 	// debug menu
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
+	void on_aViewDebugM68K_triggered();
+	void on_aViewDebugSCUDSP_triggered();
+	void on_aViewDebugSCSP_triggered();
+	void on_aViewDebugSCSPChan_triggered();
+	void on_aViewDebugSCSPDSP_triggered();
+	void on_aViewDebugMemoryEditor_triggered();
+	void on_aViewDebugMSH2_triggered();
 	void on_actionShow_Captured_Errors_triggered();
 	// help menu
 	void on_aHelpReport_triggered();

@@ -218,8 +218,16 @@
     </property>
     <addaction name="aViewDebugVDP1"/>
     <addaction name="aViewDebugVDP2"/>
+    <addaction name="aViewDebugSCSP"/>
+    <addaction name="aViewDebugSCSPChan"/>
+    <addaction name="aViewDebugSCSPDSP"/>
+    <addaction name="aViewDebugM68K"/>
+    <addaction name="aViewDebugMSH2"/>
+    <addaction name="aViewDebugSSH2"/>
+    <addaction name="aViewDebugSCUDSP"/>
     <addaction name="separator"/>
     <addaction name="actionShow_Captured_Errors"/>
+    <addaction name="aViewDebugMemoryEditor"/>
    </widget>
    <widget class="QMenu" name="mHelp">
     <property name="title">
@@ -862,8 +870,84 @@
    </property>
   </action>
   <action name="actionShow_Captured_Errors">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
    <property name="text">
     <string>Show Captured Errors</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSP">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SCSP</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPChan">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SCSP Channels</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCSPDSP">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SCSP DSP</string>
+   </property>
+  </action>
+  <action name="aViewDebugM68K">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>M68K</string>
+   </property>
+  </action>
+  <action name="aViewDebugMSH2">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SH2 Master</string>
+   </property>
+  </action>
+  <action name="aViewDebugSSH2">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SH2 Slave</string>
+   </property>
+  </action>
+  <action name="aViewDebugSCUDSP">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>SCU DSP</string>
+   </property>
+  </action>
+  <action name="aViewDebugMemoryEditor">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>Memory Editor</string>
    </property>
   </action>
  </widget>

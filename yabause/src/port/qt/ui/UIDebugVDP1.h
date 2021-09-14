@@ -36,6 +36,8 @@ protected:
 protected slots:
    void on_lwCommandList_itemSelectionChanged ();
    void on_pbSaveBitmap_clicked ();
+   void on_dbbButtons_clicked();
+   void updateCommandList();
 
 };
 

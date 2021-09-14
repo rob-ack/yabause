@@ -139,10 +139,22 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinimumSize</enum>
+     </property>
      <item>
-      <widget class="QDialogButtonBox" name="dbbButtons">
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Close</set>
+      <widget class="QPushButton" name="dbbButtons">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::RightToLeft</enum>
+       </property>
+       <property name="text">
+        <string>Update</string>
        </property>
       </widget>
      </item>
@@ -151,22 +163,5 @@
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>dbbButtons</sender>
-   <signal>rejected()</signal>
-   <receiver>UIDebugVDP1</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>347</x>
-     <y>321</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>335</x>
-     <y>376</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

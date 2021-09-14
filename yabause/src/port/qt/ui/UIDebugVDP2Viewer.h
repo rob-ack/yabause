@@ -33,7 +33,8 @@ protected:
    int width, height;
 protected slots:
    void on_cbScreen_currentIndexChanged ( int index );
-   void on_pbSaveAsBitmap_clicked ();
+    void on_pbUpdate_clicked();
+    void on_pbSaveAsBitmap_clicked ();
 };
 
 #endif // UIDEBUGVDP2VIEWER_H

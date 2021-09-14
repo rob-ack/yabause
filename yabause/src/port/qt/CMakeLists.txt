@@ -93,6 +93,9 @@ set( kronos_qt_FORMS
     ui/UIMemoryEditor.ui
     ui/UIMemorySearch.ui
 	ui/UILogs.ui
+	ui/UIDebugSCSP.ui
+	ui/UIDebugSCSPDSP.ui
+	ui/UIDebugCPU.ui
 )
 
 # pure C headers
@@ -116,7 +119,7 @@ set( kronos_qt_MOC_HEADERS
 	ui/UIPortManager.h
 	ui/UIControllerSetting.h
 	ui/UIPadSetting.h
-        ui/UISTVSetting.h
+    ui/UISTVSetting.h
 	ui/UI3DControlPadSetting.h
     ui/UIWheelSetting.h
     ui/UIMissionStickSetting.h
@@ -134,10 +137,19 @@ set( kronos_qt_MOC_HEADERS
     ui/UIMemoryEditor.h
     ui/UIMemorySearch.h
 	ui/UILogs.h 
+	ui/UIDebugSCSP.h
+	ui/UIDebugSCSPChan.h
+	ui/UIDebugSCSPDSP.h
+	ui/UIDebugCPU.h
+	ui/UIDebugM68K.h
+	ui/UIDebugSH2.h
+	ui/UIDebugSCUDSP.h
 	YabauseGL.h
 	VolatileSettings.h
 	Settings.h
 	YabauseThread.h 
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/include/sh2iasm.h
+	${CMAKE_SOURCE_DIR}/src/sys/scu/include/scu_debug.h
 )
 
 # C sources
@@ -157,7 +169,7 @@ set( kronos_qt_SOURCES
 	ui/UIPortManager.cpp
 	ui/UIControllerSetting.cpp
 	ui/UIPadSetting.cpp
-        ui/UISTVSetting.cpp
+    ui/UISTVSetting.cpp
 	ui/UI3DControlPadSetting.cpp
     ui/UIWheelSetting.cpp
     ui/UIMissionStickSetting.cpp
@@ -174,11 +186,22 @@ set( kronos_qt_SOURCES
     ui/UIHexEditor.cpp
     ui/UIMemoryEditor.cpp
     ui/UIMemorySearch.cpp
-	ui/UILogs.cpp 
+	ui/UILogs.cpp
+	ui/UIDebugSCSP.cpp
+	ui/UIDebugSCSPChan.cpp
+	ui/UIDebugSCSPDSP.cpp
+	ui/UIDebugCPU.cpp
+	ui/UIDebugM68K.cpp
+	ui/UIDebugSH2.cpp
+	ui/UIDebugSCUDSP.cpp
 	Settings.cpp
 	VolatileSettings.cpp
 	YabauseThread.cpp
-	Arguments.cpp 
+	Arguments.cpp
+	${CMAKE_SOURCE_DIR}/src/core/m68k/musashi/m68kdasm.c
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2iasm.c
+	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2d.c
+	${CMAKE_SOURCE_DIR}/src/sys/scu/src/scu_debug.c
 )
 
 if( OPENGL_SUPPORTED )

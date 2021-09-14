@@ -83,10 +83,10 @@ typedef struct
 {
   u32 scsptiming1;
   u32 scsptiming2;  // 16.16 fixed point
-//  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-//  int numcodebreakpoints;
-//  void (*BreakpointCallBack)(u32);
-//  int inbreakpoint;
+  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
+  int numcodebreakpoints;
+  void (*BreakpointCallBack)(u32);
+  int inbreakpoint;
 } ScspInternal;
 
 extern SoundInterface_struct SNDDummy;

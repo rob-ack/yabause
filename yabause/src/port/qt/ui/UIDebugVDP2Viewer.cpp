@@ -45,6 +45,8 @@ UIDebugVDP2Viewer::UIDebugVDP2Viewer( QWidget* p )
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+
+	this->show();
 }
 
 void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
@@ -76,6 +78,11 @@ void UIDebugVDP2Viewer::on_cbScreen_currentIndexChanged ( int index )
    show();
    gvScreen->fitInView(scene->sceneRect());
    gvScreen->invalidateScene();
+}
+
+void UIDebugVDP2Viewer::on_pbUpdate_clicked()
+{
+	on_cbScreen_currentIndexChanged(cbScreen->currentIndex());
 }
 
 void UIDebugVDP2Viewer::on_pbSaveAsBitmap_clicked ()

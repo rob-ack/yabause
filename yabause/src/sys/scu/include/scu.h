@@ -30,13 +30,6 @@ extern "C" {
 
 typedef struct
 {
-  u32 addr;
-} scucodebreakpoint_struct;
-
-#define MAX_BREAKPOINTS 10
-
-typedef struct
-{
    u8 vector;
    u8 level;
    u16 mask;
@@ -315,17 +308,10 @@ void ScuSendExternalInterrupt13(void);
 void ScuSendExternalInterrupt14(void);
 void ScuSendExternalInterrupt15(void);
 
-void ScuDspDisasm(u8 addr, char *outstring);
-void ScuDspStep(void);
 int ScuDspSaveProgram(const char *filename);
 int ScuDspSaveMD(const char *filename, int num);
 void ScuDspGetRegisters(scudspregs_struct *regs);
 void ScuDspSetRegisters(scudspregs_struct *regs);
-void ScuDspSetBreakpointCallBack(void (*func)(u32));
-int ScuDspAddCodeBreakpoint(u32 addr);
-int ScuDspDelCodeBreakpoint(u32 addr);
-scucodebreakpoint_struct *ScuDspGetBreakpointList(void);
-void ScuDspClearCodeBreakpoints(void);
 int ScuSaveState(void ** stream);
 int ScuLoadState(const void * stream, int version, int size);
 

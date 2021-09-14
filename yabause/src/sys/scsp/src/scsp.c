@@ -5230,34 +5230,34 @@ void new_scsp_exec(s32 cycles)
 
 //----------------------------------------------------------------------------
 
-//static s32 FASTCALL
-//M68KExecBP (s32 cycles)
-//{
-//  s32 cyclestoexec=cycles;
-//  s32 cyclesexecuted=0;
-//  int i;
-//
-//  while (cyclesexecuted < cyclestoexec)
-//    {
-//      // Make sure it isn't one of our breakpoints
-//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-//        {
-//          if ((M68K->GetPC () == ScspInternalVars->codebreakpoint[i].addr) &&
-//              ScspInternalVars->inbreakpoint == 0)
-//            {
-//              ScspInternalVars->inbreakpoint = 1;
-//              if (ScspInternalVars->BreakpointCallBack)
-//                ScspInternalVars->BreakpointCallBack (ScspInternalVars->codebreakpoint[i].addr);
-//              ScspInternalVars->inbreakpoint = 0;
-//            }
-//        }
-//
-//      // execute instructions individually
-//      cyclesexecuted += M68K->Exec(1);
-//
-//    }
-//  return cyclesexecuted;
-//}
+static s32 FASTCALL
+M68KExecBP (s32 cycles)
+{
+  s32 cyclestoexec=cycles;
+  s32 cyclesexecuted=0;
+  int i;
+
+  while (cyclesexecuted < cyclestoexec)
+    {
+      // Make sure it isn't one of our breakpoints
+      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+        {
+          if ((M68K->GetPC () == ScspInternalVars->codebreakpoint[i].addr) &&
+              ScspInternalVars->inbreakpoint == 0)
+            {
+              ScspInternalVars->inbreakpoint = 1;
+              if (ScspInternalVars->BreakpointCallBack)
+                ScspInternalVars->BreakpointCallBack (ScspInternalVars->codebreakpoint[i].addr);
+              ScspInternalVars->inbreakpoint = 0;
+            }
+        }
+
+      // execute instructions individually
+      cyclesexecuted += M68K->Exec(1);
+
+    }
+  return cyclesexecuted;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -5687,106 +5687,106 @@ ScspSetVolume (int volume)
 
 //////////////////////////////////////////////////////////////////////////////
 
-//void
-//M68KSetBreakpointCallBack (void (*func)(u32))
-//{
-//  ScspInternalVars->BreakpointCallBack = func;
-//}
+void
+M68KSetBreakpointCallBack (void (*func)(u32))
+{
+  ScspInternalVars->BreakpointCallBack = func;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
-//int
-//M68KAddCodeBreakpoint (u32 addr)
-//{
-//  int i;
-//
-//  if (ScspInternalVars->numcodebreakpoints < MAX_BREAKPOINTS)
-//    {
-//      // Make sure it isn't already on the list
-//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-//        {
-//          if (addr == ScspInternalVars->codebreakpoint[i].addr)
-//            return -1;
-//        }
-//
-//      ScspInternalVars->codebreakpoint[i].addr = addr;
-//      ScspInternalVars->numcodebreakpoints++;
-//      m68kexecptr = M68KExecBP;
-//
-//      return 0;
-//    }
-//
-//  return -1;
-//}
+int
+M68KAddCodeBreakpoint (u32 addr)
+{
+  int i;
+
+  if (ScspInternalVars->numcodebreakpoints < MAX_BREAKPOINTS)
+    {
+      // Make sure it isn't already on the list
+      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+        {
+          if (addr == ScspInternalVars->codebreakpoint[i].addr)
+            return -1;
+        }
+
+      ScspInternalVars->codebreakpoint[i].addr = addr;
+      ScspInternalVars->numcodebreakpoints++;
+      m68kexecptr = M68KExecBP;
+
+      return 0;
+    }
+
+  return -1;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
-//void
-//M68KSortCodeBreakpoints (void)
-//{
-//  int i, i2;
-//  u32 tmp;
-//
-//  for (i = 0; i < (MAX_BREAKPOINTS - 1); i++)
-//    {
-//      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
-//        {
-//          if (ScspInternalVars->codebreakpoint[i].addr == 0xFFFFFFFF &&
-//              ScspInternalVars->codebreakpoint[i2].addr != 0xFFFFFFFF)
-//            {
-//              tmp = ScspInternalVars->codebreakpoint[i].addr;
-//              ScspInternalVars->codebreakpoint[i].addr =
-//                ScspInternalVars->codebreakpoint[i2].addr;
-//              ScspInternalVars->codebreakpoint[i2].addr = tmp;
-//            }
-//        }
-//    }
-//}
+void
+M68KSortCodeBreakpoints (void)
+{
+  int i, i2;
+  u32 tmp;
+
+  for (i = 0; i < (MAX_BREAKPOINTS - 1); i++)
+    {
+      for (i2 = i+1; i2 < MAX_BREAKPOINTS; i2++)
+        {
+          if (ScspInternalVars->codebreakpoint[i].addr == 0xFFFFFFFF &&
+              ScspInternalVars->codebreakpoint[i2].addr != 0xFFFFFFFF)
+            {
+              tmp = ScspInternalVars->codebreakpoint[i].addr;
+              ScspInternalVars->codebreakpoint[i].addr =
+                ScspInternalVars->codebreakpoint[i2].addr;
+              ScspInternalVars->codebreakpoint[i2].addr = tmp;
+            }
+        }
+    }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
-//int
-//M68KDelCodeBreakpoint (u32 addr)
-//{
-//  int i;
-//  if (ScspInternalVars->numcodebreakpoints > 0)
-//    {
-//      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
-//        {
-//          if (ScspInternalVars->codebreakpoint[i].addr == addr)
-//            {
-//              ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
-//              M68KSortCodeBreakpoints ();
-//              ScspInternalVars->numcodebreakpoints--;
-//              if (ScspInternalVars->numcodebreakpoints == 0)
-//                m68kexecptr = M68K->Exec;
-//              return 0;
-//            }
-//        }
-//    }
-//
-//  return -1;
-//}
+int
+M68KDelCodeBreakpoint (u32 addr)
+{
+  int i;
+  if (ScspInternalVars->numcodebreakpoints > 0)
+    {
+      for (i = 0; i < ScspInternalVars->numcodebreakpoints; i++)
+        {
+          if (ScspInternalVars->codebreakpoint[i].addr == addr)
+            {
+              ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+              M68KSortCodeBreakpoints ();
+              ScspInternalVars->numcodebreakpoints--;
+              if (ScspInternalVars->numcodebreakpoints == 0)
+                m68kexecptr = M68K->Exec;
+              return 0;
+            }
+        }
+    }
+
+  return -1;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
-//m68kcodebreakpoint_struct *
-//M68KGetBreakpointList ()
-//{
-//  return ScspInternalVars->codebreakpoint;
-//}
+m68kcodebreakpoint_struct *
+M68KGetBreakpointList ()
+{
+  return ScspInternalVars->codebreakpoint;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
-//void
-//M68KClearCodeBreakpoints ()
-//{
-//  int i;
-//  for (i = 0; i < MAX_BREAKPOINTS; i++)
-//    ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
-//
-//  ScspInternalVars->numcodebreakpoints = 0;
-//}
+void
+M68KClearCodeBreakpoints ()
+{
+  int i;
+  for (i = 0; i < MAX_BREAKPOINTS; i++)
+    ScspInternalVars->codebreakpoint[i].addr = 0xFFFFFFFF;
+
+  ScspInternalVars->numcodebreakpoints = 0;
+}
 
 //////////////////////////////////////////////////////////////////////////////
 

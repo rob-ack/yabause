@@ -21,24 +21,28 @@
 #include "UIDebugVDP2Viewer.h"
 #include "CommonDialogs.h"
 
-UIDebugVDP2::UIDebugVDP2( QWidget* p )
-	: QDialog( p )
+UIDebugVDP2::UIDebugVDP2( QWidget* p ) : QDialog( p )
 {
 	// setup dialog
 	setupUi( this );
-
-   if (Vdp2Regs)
-   {
-      updateInfoDisplay(Vdp2DebugStatsNBG0, cbNBG0Enabled, pteNBG0Info);
-      updateInfoDisplay(Vdp2DebugStatsNBG1, cbNBG1Enabled, pteNBG1Info);
-      updateInfoDisplay(Vdp2DebugStatsNBG2, cbNBG2Enabled, pteNBG2Info);
-      updateInfoDisplay(Vdp2DebugStatsNBG3, cbNBG3Enabled, pteNBG3Info);
-      updateInfoDisplay(Vdp2DebugStatsRBG0, cbRBG0Enabled, pteRBG0Info);
-      updateInfoDisplay(Vdp2DebugStatsGeneral, cbDisplayEnabled, pteGeneralInfo);
-   }
+	updateAllInfo();
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+	this->show();
+}
+
+void UIDebugVDP2::updateAllInfo()
+{
+	if (Vdp2Regs)
+	{
+		updateInfoDisplay(Vdp2DebugStatsNBG0, cbNBG0Enabled, pteNBG0Info);
+		updateInfoDisplay(Vdp2DebugStatsNBG1, cbNBG1Enabled, pteNBG1Info);
+		updateInfoDisplay(Vdp2DebugStatsNBG2, cbNBG2Enabled, pteNBG2Info);
+		updateInfoDisplay(Vdp2DebugStatsNBG3, cbNBG3Enabled, pteNBG3Info);
+		updateInfoDisplay(Vdp2DebugStatsRBG0, cbRBG0Enabled, pteRBG0Info);
+		updateInfoDisplay(Vdp2DebugStatsGeneral, cbDisplayEnabled, pteGeneralInfo);
+	}
 }
 
 void UIDebugVDP2::updateInfoDisplay(void (*debugStats)(char *, int *), QCheckBox *cb, QPlainTextEdit *pte)
@@ -63,4 +67,9 @@ void UIDebugVDP2::updateInfoDisplay(void (*debugStats)(char *, int *), QCheckBox
 void UIDebugVDP2::on_pbViewer_clicked()
 {
 	UIDebugVDP2Viewer( this ).exec();
+}
+
+void UIDebugVDP2::on_pbUpdate_clicked()
+{
+	updateAllInfo();
 }

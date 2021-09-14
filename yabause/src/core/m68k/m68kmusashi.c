@@ -126,11 +126,20 @@ unsigned int  m68k_read_memory_16(unsigned int address)
    return rw_funcs.r_16(address);
 }
 
+unsigned int m68k_read_disassembler_16(unsigned int address)
+{
+	return m68k_read_memory_16(address);
+}
+
 unsigned int  m68k_read_memory_32(unsigned int address)
 {
-   u16 val1 = rw_funcs.r_16(address);
-
+   u16 const val1 = (u16)rw_funcs.r_16(address);
    return (((u32)val1 << 16) | rw_funcs.r_16(address + 2));
+}
+
+unsigned int m68k_read_disassembler_32(unsigned int address)
+{
+	return m68k_read_memory_32(address);
 }
 
 void m68k_write_memory_8(unsigned int address, unsigned int value)

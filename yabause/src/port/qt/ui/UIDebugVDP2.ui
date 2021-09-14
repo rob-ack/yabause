@@ -177,16 +177,16 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QPushButton" name="pbViewer">
+      <widget class="QPushButton" name="pbUpdate">
        <property name="text">
-        <string>Viewer</string>
+        <string>Update</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QDialogButtonBox" name="dbbButtons">
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Close</set>
+      <widget class="QPushButton" name="pbViewer">
+       <property name="text">
+        <string>Viewer</string>
        </property>
       </widget>
      </item>
@@ -195,22 +195,5 @@
   </layout>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>dbbButtons</sender>
-   <signal>rejected()</signal>
-   <receiver>UIDebugVDP2</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>347</x>
-     <y>321</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>335</x>
-     <y>376</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

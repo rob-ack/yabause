@@ -48,8 +48,8 @@ private:
    int instructionSize;
 
 protected:
-   void mouseDoubleClickEvent( QMouseEvent * event );
-   void paintEvent(QPaintEvent *event);
+   void mouseDoubleClickEvent( QMouseEvent * event ) override;
+   void paintEvent(QPaintEvent *event) override;
 protected slots:
 
 signals:

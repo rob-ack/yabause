@@ -259,6 +259,7 @@ int YabauseSh2Init(yabauseinit_struct *init)
    yabsys.vsyncon = init->vsyncon;
    yabsys.wireframe_mode = init->wireframe_mode;
    yabsys.isRotated = 0;
+   yabsys.usecache = 1;
    nextFrameTime = 0;
 
    // Initialize both cpu's
@@ -337,6 +338,7 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.wireframe_mode = init->wireframe_mode;
    yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
+   yabsys.usecache = 1;
    nextFrameTime = 0;
 
   q_scsp_m68counterCond = YabThreadCreateQueue(1);

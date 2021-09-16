@@ -19,6 +19,7 @@
 
 #include "UIDebugM68K.h"
 #include "CommonDialogs.h"
+#include "scsp.debug.h"
 #include "UIYabause.h"
 
 extern "C"

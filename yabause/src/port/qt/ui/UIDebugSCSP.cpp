@@ -28,6 +28,8 @@
 #include <QIODevice>
 #include <QTimer>
 
+#include "scsp.debug.h"
+
 UIDebugSCSP::UIDebugSCSP(QWidget * p)
     : QDialog(p)
 {

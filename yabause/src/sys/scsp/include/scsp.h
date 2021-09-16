@@ -68,26 +68,9 @@ typedef struct
    u32 PC;
 } m68kregs_struct;
 
-typedef struct
-{
-  u32 addr;
-} m68kcodebreakpoint_struct;
-
-#define MAX_BREAKPOINTS 10
-
 //#if defined(ARCH_IS_LINUX)
 #define ASYNC_SCSP
 //#endif
-
-typedef struct
-{
-  u32 scsptiming1;
-  u32 scsptiming2;  // 16.16 fixed point
-  m68kcodebreakpoint_struct codebreakpoint[MAX_BREAKPOINTS];
-  int numcodebreakpoints;
-  void (*BreakpointCallBack)(u32);
-  int inbreakpoint;
-} ScspInternal;
 
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
@@ -113,12 +96,6 @@ void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 void ScspReceiveCDDA(const u8 *sector);
 int SoundSaveState(void ** stream);
 int SoundLoadState(const void * stream, int version, int size);
-void ScspSlotDebugStats(u8 slotnum, char *outstring);
-void ScspCommonControlRegisterDebugStats(char *outstring);
-int ScspSlotDebugSaveRegisters(u8 slotnum, const char *filename);
-u32 ScspSlotDebugAudio (u32 *workbuf, s16 *buf, u32 len);
-void ScspSlotResetDebug(u8 slotnum);
-int ScspSlotDebugAudioSaveWav(u8 slotnum, const char *filename);
 void ScspMuteAudio(int flags);
 void ScspUnMuteAudio(int flags);
 void ScspSetVolume(int volume);
@@ -145,23 +122,11 @@ void scsp_update_timer(u32 len);
 
 u32 FASTCALL c68k_word_read(const u32 adr);
 
-void M68KStep(void);
 void M68KSync(void);
 void M68KWriteNotify(u32 address, u32 size);
 void M68KGetRegisters(m68kregs_struct *regs);
 void M68KSetRegisters(m68kregs_struct *regs);
-void M68KSetBreakpointCallBack(void (*func)(u32));
-int M68KAddCodeBreakpoint(u32 addr);
-void M68KSortCodeBreakpoints(void);
-int M68KDelCodeBreakpoint(u32 addr);
-m68kcodebreakpoint_struct *M68KGetBreakpointList(void);
-void M68KClearCodeBreakpoints(void);
 
-void scsp_debug_instrument_get_data(int i, u32 * sa, int * is_muted);
-void scsp_debug_instrument_set_mute(u32 sa, int mute);
-void scsp_debug_instrument_clear();
-void scsp_debug_get_envelope(int chan, int * env, int * state);
-void scsp_debug_set_mode(int mode);
 void new_scsp_exec(s32 cycles);
 
 void SyncScsp();

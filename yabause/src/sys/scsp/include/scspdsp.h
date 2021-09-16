@@ -64,7 +64,7 @@ typedef struct
    int last_step;
 
    s64 product;
-   u32 read_value;
+   s32 read_value;
    u32 write_value;
    int read_pending;
    int write_pending;
@@ -142,9 +142,6 @@ union ScspDspInstruction {
       u64 yrl : 1;
       u64 shift0 : 1;
       u64 shift1 : 1;
-#if 0
-      u64 shift : 2;
-#endif
       u64 frcl : 1;
       u64 adrl : 1;
       u64 ewa : 4;
@@ -167,7 +164,6 @@ union ScspDspInstruction {
 };
 #endif
 
-void ScspDspDisasm(u8 addr, char *outstring);
 void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram);
 
 extern ScspDsp scsp_dsp;

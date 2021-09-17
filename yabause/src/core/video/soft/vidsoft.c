@@ -46,6 +46,8 @@
 #include <stdlib.h>
 #include <limits.h>
 
+#include "sys/vdp1/src/vdp1.private.h"
+
 #if defined WORDS_BIGENDIAN
 static INLINE u32 COLSAT2YAB16(int priority,u32 temp)            { return (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27); }
 static INLINE u32 COLSAT2YAB32(int priority,u32 temp)            { return (((temp & 0xFF) << 24) | ((temp & 0xFF00) << 8) | ((temp & 0xFF0000) >> 8) | priority); }
@@ -3509,7 +3511,7 @@ void VidsoftDrawSprite(Vdp2 * vdp2_regs, u8 * spr_window_mask, u8* vdp1_front_fr
 
    // Figure out whether to draw vdp1 framebuffer or vdp2 framebuffer pixels
    // based on priority
-   if ((vdp2_regs->TVMD & 0x8000))
+   if (Vdp1External.disptoggle && (vdp2_regs->TVMD & 0x8000))
    {
       int SPCCCS = (vdp2_regs->SPCTL >> 12) & 0x3;
       int SPCCN = (vdp2_regs->SPCTL >> 8) & 0x7;

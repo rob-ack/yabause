@@ -1880,7 +1880,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1903,7 +1903,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1927,7 +1927,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   }
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1951,13 +1951,13 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                }
                *dmac->CHCR |= 0x2;
                *dmac->CHCRM |= 0x2;
-               SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+               if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                return;
              }
            }
            break;
       }
-      SH2WriteNotify(context, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
+      if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
    }
 
 }

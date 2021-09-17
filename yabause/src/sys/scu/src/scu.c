@@ -194,7 +194,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             }
          }
          // Inform the SH-2 core in case it was a write to main RAM.
-         SH2WriteNotify(NULL, start, WriteAddress - start);
+         if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, WriteAddress - start);
+         if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, WriteAddress - start);
       }
 
    }
@@ -252,7 +253,8 @@ static void DoDMA(u32 ReadAddress, unsigned int ReadAdd,
             counter += 4;
          }
          /* Inform the SH-2 core in case it was a write to main RAM */
-         SH2WriteNotify(NULL, start, WriteAddress - start);
+         if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, WriteAddress - start);
+         if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, WriteAddress - start);
       }
    }  // Fill / copy
 }
@@ -1002,11 +1004,13 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
           dma->WriteAddress += dma->WriteAdd;
           dma->TransferNumber -= 4;
           if (dma->TransferNumber <= 0 ) {
-            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+            if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
             return;
           }
         }
-        SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+        if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+        if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
       }
       else {
         u32 start = dma->WriteAddress;
@@ -1020,11 +1024,13 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
           dma->ReadAddress += dma->ReadAdd;
           dma->TransferNumber -= 4;
           if (dma->TransferNumber <= 0) {
-            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
+            if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
             return;
           }
         }
-        SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+        if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+        if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
       }
     }
     else {
@@ -1039,7 +1045,8 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
           dma->WriteAddress += dma->WriteAdd;
           dma->TransferNumber -= 4;
           if (dma->TransferNumber <= 0) {
-            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+            if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
             return;
           }
         }
@@ -1053,13 +1060,15 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
           dma->WriteAddress += dma->WriteAdd;
           dma->TransferNumber -= 4;
           if (dma->TransferNumber <= 0) {
-            SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+            if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+            if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
             return;
           }
         }
       }
       // Inform the SH-2 core in case it was a write to main RAM.
-      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+      if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
     }
 
   }
@@ -1079,11 +1088,13 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
         dma->ReadAddress += 2;
         dma->TransferNumber -= 2;
         if (dma->TransferNumber <= 0) {
-          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+          if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
           return;
         }
       }
-      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+      if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
     }
     else if (((dma->ReadAddress & 0x1FFFFFFF) >= 0x5A00000 && (dma->ReadAddress & 0x1FFFFFFF) < 0x5FF0000)) {
       u32 start = dma->WriteAddress;
@@ -1095,11 +1106,13 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
         dma->ReadAddress += 2;
         dma->TransferNumber -= 2;
         if (dma->TransferNumber <= 0) {
-          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+          if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
           return;
         }
       }
-      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+      if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
     }
     else {
       u32 counter = 0;
@@ -1112,12 +1125,14 @@ void SucDmaExec(scudmainfo_struct * dma, int * time ) {
         dma->WriteAddress += dma->WriteAdd;
         dma->TransferNumber -= 4;
         if (dma->TransferNumber <= 0) {
-          SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+          if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+          if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
           return;
         }
       }
       /* Inform the SH-2 core in case it was a write to main RAM */
-      SH2WriteNotify(NULL, start, dma->WriteAddress - start);
+      if (MSH2->cacheOn == 0) SH2WriteNotify(MSH2, start, dma->WriteAddress - start);
+      if (SSH2->cacheOn == 0) SH2WriteNotify(SSH2, start, dma->WriteAddress - start);
     }
 
   }  // Fill / copy

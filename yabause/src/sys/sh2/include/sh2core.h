@@ -358,8 +358,8 @@ typedef struct SH2_struct_s
 
    void * ext;
 
-#ifdef USE_CACHE
    u8 cacheOn;
+#ifdef USE_CACHE
    u8 nbCacheWay;
    u8 cacheLRU[64];
    u8 cacheData[64][4][16];

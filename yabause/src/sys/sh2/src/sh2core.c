@@ -97,10 +97,10 @@ MSH2->trace = 0;
     SSH2->dma_ch1.TCR = &SSH2->onchip.TCR1;
     SSH2->dma_ch1.VCRDMA = &SSH2->onchip.VCRDMA1;
 
-#ifdef USE_CACHE
    MSH2->cacheOn = 0;
    SSH2->cacheOn = 0;
 
+#ifdef USE_CACHE
    memset(MSH2->tagWay, 0x4, 64*0x80000);
    memset(MSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
    memset(SSH2->tagWay, 0x4, 64*0x80000);

@@ -30,8 +30,18 @@
 #define _WIN32_WINNT 0x501
 #endif
 
+#if !defined IPV6_RECVECN
+#define IPV6_RECVECN          50 // Receive ECN codepoints in the IPv6 header.
+#endif
+#if !defined IP_RECVECN
+#define IP_RECVECN            50 // Receive ECN codepoints in the IP header.
+#endif
+
 #include <WinSock2.h>
 #include <WS2tcpip.h>
+
+#undef IPV6_RECVECN
+#undef IP_RECVECN
 
 static fd_set read_fds;
 static fd_set write_fds;

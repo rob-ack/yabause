@@ -35,6 +35,7 @@
 #include "threads.h"
 #include "sh2core.h"
 #include "videoInterface.h"
+#include "vdp1.private.h"
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 #include "ygl.h"
 #endif
@@ -436,6 +437,7 @@ static void updateFBCRMode() {
 
 static void Vdp1TryDraw(void) {
   if ((needVdp1draw == 1)) {
+      if (vdp1BeforeDrawCall) vdp1BeforeDrawCall(NULL);
     needVdp1draw = Vdp1Draw();
   }
 }
@@ -1058,7 +1060,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          int ret;
          if (vdp1_clock <= 0) {
            //No more clock cycle, wait next line
-           return;
+             if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
+             return;
          }
          switch (command & 0x000F) {
          case 0: // normal sprite draw
@@ -1105,7 +1108,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
-            nbCmdToProcess += Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            Vdp1PolygonDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
             break;
@@ -1116,7 +1120,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
-            nbCmdToProcess += Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            Vdp1PolylineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
             break;
@@ -1126,7 +1131,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1ReadCommand(&ctrl->cmd, regs->addr, Vdp1Ram);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
-            nbCmdToProcess += Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            Vdp1LineDraw(&ctrl->cmd, ram, regs, back_framebuffer);
+            nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
             break;
@@ -1206,6 +1212,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
+   if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
@@ -1289,33 +1296,40 @@ void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 static int Vdp1Draw(void)
 {
-  FRAMELOG("Vdp1Draw\n");
-   if (!Vdp1External.disptoggle)
-   {
-      Vdp1Regs->EDSR >>= 1;
-      Vdp1NoDraw();
-   } else {
-    if (Vdp1External.status == VDP1_STATUS_IDLE) {
-    Vdp1Regs->EDSR >>= 1;
-     Vdp1Regs->addr = 0;
+    FRAMELOG("Vdp1Draw\n");
+    if (!Vdp1External.disptoggle)
+    {
+        Vdp1Regs->EDSR >>= 1;
+        Vdp1NoDraw();
+    } else
+    {
+        if (Vdp1External.status == VDP1_STATUS_IDLE)
+        {
+            Vdp1Regs->EDSR >>= 1;
+            Vdp1Regs->addr = 0;
 
-     // beginning of a frame
-     // BEF <- CEF
-     // CEF <- 0
-     //Vdp1Regs->EDSR >>= 1;
-     /* this should be done after a frame change or a plot trigger */
-     Vdp1Regs->COPR = 0;
-     Vdp1Regs->lCOPR = 0;
-   }
-     VIDCore->Vdp1Draw();
-   }
-   if (Vdp1External.status == VDP1_STATUS_IDLE) {
-     FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
-     Vdp1Regs->EDSR |= 2;
-     ScuSendDrawEnd();
-   }
-   if (Vdp1External.status == VDP1_STATUS_IDLE) return 0;
-   else return 1;
+            // beginning of a frame
+            // BEF <- CEF
+            // CEF <- 0
+            //Vdp1Regs->EDSR >>= 1;
+            /* this should be done after a frame change or a plot trigger */
+            Vdp1Regs->COPR = 0;
+            Vdp1Regs->lCOPR = 0;
+        }
+        VIDCore->Vdp1Draw();
+    }
+    if (Vdp1External.status == VDP1_STATUS_IDLE)
+    {
+        FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
+        Vdp1Regs->EDSR |= 2;
+        ScuSendDrawEnd();
+        if (vdp1FrameCompleted)
+            vdp1FrameCompleted(NULL);
+    }
+    if (Vdp1External.status == VDP1_STATUS_IDLE)
+        return 0;
+    else
+        return 1;
 }
 
 //////////////////////////////////////////////////////////////////////////////

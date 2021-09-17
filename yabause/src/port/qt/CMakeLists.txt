@@ -208,6 +208,8 @@ set( kronos_qt_SOURCES
 	${CMAKE_SOURCE_DIR}/src/sys/sh2/src/sh2.debug.c
 )
 
+include_directories(${CMAKE_SOURCE_DIR}/src/sys/vdp1/src)
+
 if( OPENGL_SUPPORTED )
 	set( kronos_qt_SOURCES ${kronos_qt_SOURCES} YabauseGL.cpp )
 else()

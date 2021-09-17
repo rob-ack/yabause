@@ -31,6 +31,7 @@
 
 #include "yabause.h"
 #include "vdp1.h"
+#include "vdp1.private.h"
 #include "debug.h"
 #include "scu.h"
 #include "vidsoft.h"
@@ -112,7 +113,7 @@ static INLINE int DoEndcode(int count, u32* charAddr, u32** textdata, int width,
 
 static void printCommand(vdp1cmd_struct *cmd) {
   printf("===== CMD =====\n");
-  printf("CMDCTRL = 0x%x\n",cmd->CMDCTRL );
+  printf("CMDCTRL = 0x%x\n",cmd->CMDCTRL.all );
   printf("CMDLINK = 0x%x\n",cmd->CMDLINK );
   printf("CMDPMOD = 0x%x\n",cmd->CMDPMOD );
   printf("CMDCOLR = 0x%x\n",cmd->CMDCOLR );

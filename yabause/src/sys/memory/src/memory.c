@@ -318,9 +318,9 @@ static void FASTCALL UnhandledMemoryWriteLong(SH2_struct *context, UNUSED u8* me
 
 static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *context, u8* mem, u32 addr)
 {
-  if (context != NULL){
-    context->cycles +=4; //Done
-  }
+    if (context != NULL){
+      if (addr & 0x20000000) context->cycles += 16;
+    }
    return T2ReadByte(mem, addr & 0xFFFFF);
 }
 
@@ -328,9 +328,9 @@ static u8 FASTCALL HighWramMemoryReadByte(SH2_struct *context, u8* mem, u32 addr
 
 static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *context, u8* mem, u32 addr)
 {
-  if (context != NULL){
-    context->cycles +=4; //Done
-  }
+    if (context != NULL){
+     if (addr & 0x20000000) context->cycles += 16;
+    }
    return T2ReadWord(mem, addr & 0xFFFFF);
 }
 
@@ -338,9 +338,9 @@ static u16 FASTCALL HighWramMemoryReadWord(SH2_struct *context, u8* mem, u32 add
 
 static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *context, u8* mem, u32 addr)
 {
-  if (context != NULL){
-    context->cycles +=4; //Done
-  }
+    if (context != NULL){
+      if (addr & 0x20000000) context->cycles += 16;
+    }
    return T2ReadLong(mem, addr & 0xFFFFF);
 }
 

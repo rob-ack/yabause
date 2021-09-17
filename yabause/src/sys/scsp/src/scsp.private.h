@@ -76,10 +76,6 @@ A DSP: Applies effects like echo, reverb and chorus. The docs also mention ‘filt
 #define SCSP_ATTACK_R     (u32) (8 * 44100)
 #define SCSP_DECAY_R      (u32) (12 * SCSP_ATTACK_R)
 
-//#if defined(ARCH_IS_LINUX)
-#define ASYNC_SCSP
-//#endif
-
 typedef struct
 {
   u32 scsptiming1;

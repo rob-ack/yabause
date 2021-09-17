@@ -68,6 +68,10 @@ typedef struct
    u32 PC;
 } m68kregs_struct;
 
+//#if defined(ARCH_IS_LINUX)
+#define ASYNC_SCSP
+//#endif
+
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;

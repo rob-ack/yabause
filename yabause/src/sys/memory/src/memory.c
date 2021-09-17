@@ -349,7 +349,7 @@ static u32 FASTCALL HighWramMemoryReadLong(SH2_struct *context, u8* mem, u32 add
 static void FASTCALL HighWramMemoryWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
   if (context != NULL){
-    context->cycles +=1; //Done
+    if (addr & 0x20000000) context->cycles +=4;
   }
    T2WriteByte(mem, addr & 0xFFFFF, val);
 }
@@ -359,7 +359,7 @@ static void FASTCALL HighWramMemoryWriteByte(SH2_struct *context, u8* mem, u32 a
 static void FASTCALL HighWramMemoryWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
   if (context != NULL){
-    context->cycles += 1; //Done
+    if (addr & 0x20000000) context->cycles += 4;
   }
    T2WriteWord(mem, addr & 0xFFFFF, val);
 }
@@ -369,7 +369,7 @@ static void FASTCALL HighWramMemoryWriteWord(SH2_struct *context, u8* mem, u32 a
 static void FASTCALL HighWramMemoryWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
   if (context != NULL){
-    context->cycles += 1; //Done
+    if (addr & 0x20000000) context->cycles += 5;
   }
    T2WriteLong(mem, addr & 0xFFFFF, val);
 }
@@ -378,9 +378,9 @@ static void FASTCALL HighWramMemoryWriteLong(SH2_struct *context, u8* mem, u32 a
 
 static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
-  if (context != NULL){
-    context->cycles += 4; //Done
-  }
+   if (context != NULL){
+     if (addr & 0x20000000) context->cycles += 15;
+   }
    return T2ReadByte(memory, addr & 0xFFFFF);
 }
 
@@ -389,7 +389,7 @@ static u8 FASTCALL LowWramMemoryReadByte(SH2_struct *context, UNUSED u8* memory,
 static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
   if (context != NULL){
-    context->cycles += 4; //Done
+    if (addr & 0x20000000) context->cycles += 15;
   }
    return T2ReadWord(memory, addr & 0xFFFFF);
 }
@@ -399,7 +399,7 @@ static u16 FASTCALL LowWramMemoryReadWord(SH2_struct *context, UNUSED u8* memory
 static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr)
 {
   if (context != NULL){
-    context->cycles += 12; //Done
+    if (addr & 0x20000000) context->cycles += 24;
   }
    return T2ReadLong(memory, addr & 0xFFFFF);
 }
@@ -409,7 +409,7 @@ static u32 FASTCALL LowWramMemoryReadLong(SH2_struct *context, UNUSED u8* memory
 static void FASTCALL LowWramMemoryWriteByte(SH2_struct *context, UNUSED u8* memory, u32 addr, u8 val)
 {
   if (context != NULL){
-    context->cycles += 2; //Done
+    if (addr & 0x20000000) context->cycles += 7;
   }
    T2WriteByte(memory, addr & 0xFFFFF, val);
 }
@@ -419,7 +419,7 @@ static void FASTCALL LowWramMemoryWriteByte(SH2_struct *context, UNUSED u8* memo
 static void FASTCALL LowWramMemoryWriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16 val)
 {
   if (context != NULL){
-    context->cycles += 2; //Done
+    if (addr & 0x20000000) context->cycles += 7;
   }
    T2WriteWord(memory, addr & 0xFFFFF, val);
 }
@@ -429,7 +429,7 @@ static void FASTCALL LowWramMemoryWriteWord(SH2_struct *context, UNUSED u8* memo
 static void FASTCALL LowWramMemoryWriteLong(SH2_struct *context, UNUSED u8* memory, u32 addr, u32 val)
 {
   if (context != NULL){
-    context->cycles += 9; //Done
+    if (addr & 0x20000000) context->cycles += 15;
   }
    T2WriteLong(memory, addr & 0xFFFFF, val);
 }

@@ -4319,7 +4319,7 @@ u8 FASTCALL
 scsp_r_b (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   a &= 0xFFF;
 
@@ -4359,7 +4359,7 @@ u16 FASTCALL
 scsp_r_w (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   if (a & 1)
     {
@@ -4448,7 +4448,7 @@ u32 FASTCALL
 scsp_r_d (SH2_struct *context, UNUSED u8* m, u32 a)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   if (a & 3)
     {
@@ -4801,7 +4801,7 @@ u8 FASTCALL
 SoundRamReadByte (SH2_struct *context, u8* mem, u32 addr)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   addr &= 0x7FFFF;
   u8 val = 0;
@@ -4820,7 +4820,7 @@ void FASTCALL
 SoundRamWriteByte (SH2_struct *context, u8* mem, u32 addr, u8 val)
 {
   if (context != NULL){
-    context->cycles += 2;
+    context->cycles += 7;
   }
   addr &= 0x7FFFF;
 
@@ -4870,7 +4870,7 @@ u16 FASTCALL
 SoundRamReadWord (SH2_struct *context, u8* mem, u32 addr)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   addr &= 0xFFFFF;
   u16 val = 0;
@@ -4895,7 +4895,7 @@ void FASTCALL
 SoundRamWriteWord (SH2_struct *context, u8* mem, u32 addr, u16 val)
 {
   if (context != NULL){
-    context->cycles += 2;
+    context->cycles += 7;
   }
   addr &= 0xFFFFF;
 
@@ -4916,7 +4916,7 @@ u32 FASTCALL
 SoundRamReadLong (SH2_struct *context, u8* mem, u32 addr)
 {
   if (context != NULL){
-    context->cycles += 10;
+    context->cycles += 50;
   }
   addr &= 0xFFFFF;
   u32 val;
@@ -4946,7 +4946,7 @@ void FASTCALL
 SoundRamWriteLong (SH2_struct *context, u8* mem, u32 addr, u32 val)
 {
   if (context != NULL){
-    context->cycles += 2;
+    context->cycles += 7;
   }
   addr &= 0xFFFFF;
   //u32 pre_cycle = m68kcycle;

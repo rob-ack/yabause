@@ -207,9 +207,9 @@ typedef struct {
 
 
 typedef struct {
-  vdp1cmd_struct *cmd;
-  YglTexture *texture;
-  Vdp2 *varVdp2Regs;
+  vdp1cmd_struct cmd;
+  YglTexture texture;
+  Vdp2 varVdp2Regs;
   int w,h;
 } vdp1TextureTask;
 
@@ -677,10 +677,7 @@ void Vdp1ReadTexture_in_async(void *p)
    while(vdp1text_run != 0){
      vdp1TextureTask *task = (vdp1TextureTask *)YabWaitEventQueue(vdp1q);
      if (task != NULL) {
-       Vdp1ReadTexture_in_sync(task->cmd, task->w, task->h, task->texture, task->varVdp2Regs);
-       free(task->cmd);
-       free(task->texture);
-       free(task->varVdp2Regs);
+       Vdp1ReadTexture_in_sync(&task->cmd, task->w, task->h, &task->texture, &task->varVdp2Regs);
        free(task);
      }
      YabWaitEventQueue(vdp1q_end);
@@ -690,13 +687,9 @@ void Vdp1ReadTexture_in_async(void *p)
 static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, YglTexture *texture, Vdp2 *varVdp2Regs) {
    vdp1TextureTask *task = (vdp1TextureTask*)malloc(sizeof(vdp1TextureTask));
 
-   task->cmd = (vdp1cmd_struct*)malloc(sizeof(vdp1cmd_struct));
-   task->texture = (YglTexture*)malloc(sizeof(YglTexture));
-   task->varVdp2Regs = (Vdp2*)malloc(sizeof(Vdp2));
-
-   memcpy(task->cmd, cmd, sizeof(vdp1cmd_struct));
-   memcpy(task->texture, texture, sizeof(YglTexture));
-   memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
+   memcpy(&task->cmd, cmd, sizeof(vdp1cmd_struct));
+   memcpy(&task->texture, texture, sizeof(YglTexture));
+   memcpy(&task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
 
    task->w = sprite->w;
    task->h = sprite->h;

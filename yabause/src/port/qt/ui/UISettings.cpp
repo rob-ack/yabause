@@ -645,6 +645,7 @@ void UISettings::loadSettings()
 	leBios->setText( s->value( "General/Bios" ).toString() );
 	leBiosSettings->setText( s->value( "General/BiosSettings" ).toString() );
 	cbEnableBiosEmulation->setChecked( s->value( "General/EnableEmulatedBios" ).toBool() );
+	cbUseCache->setChecked( s->value( "General/SH2Cache" ).toBool() );
 	cbCdRom->setCurrentIndex( cbCdRom->findData( s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() ) );
 	leCdRom->setText( s->value( "General/CdRomISO" ).toString() );
 	if (s->value( "General/CdRom", QtYabause::defaultCDCore().id ).toInt() == CDCORE_ARCH)
@@ -781,6 +782,7 @@ void UISettings::saveSettings()
 	s->setValue( "General/Bios", leBios->text() );
 	s->setValue( "General/BiosSettings", leBiosSettings->text() );
 	s->setValue( "General/EnableEmulatedBios", cbEnableBiosEmulation->isChecked() );
+	s->setValue( "General/SH2Cache", cbUseCache->isChecked() );
 	s->setValue( "General/CdRom", cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	CDInterface* core = QtYabause::getCDCore( cbCdRom->itemData( cbCdRom->currentIndex() ).toInt() );
 	if ( core->id == CDCORE_ARCH )

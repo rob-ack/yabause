@@ -391,6 +391,7 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
 	showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.vsyncon = vs->value("General/EnableVSync", true).toBool();
+	mYabauseConf.usecache = vs->value("General/SH2Cache", false).toBool();
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
 	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );

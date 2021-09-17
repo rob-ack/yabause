@@ -1331,8 +1331,19 @@ void enableCache(SH2_struct *context) {
   if (context->cacheOn == 0) {
     context->cacheOn = 1;
     context->nbCacheWay = 4;
-    for (i=0x10; i < 0x1000; i++)
+    for (i=0x20; i < 0x30; i++)
     {
+      //LowWRam is cached
+       CacheReadByteList[i] = CacheReadByte;
+       CacheReadWordList[i] = CacheReadWord;
+       CacheReadLongList[i] = CacheReadLong;
+       CacheWriteByteList[i] = CacheWriteByte;
+       CacheWriteWordList[i] = CacheWriteWord;
+       CacheWriteLongList[i] = CacheWriteLong;
+    }
+    for (i=0x600; i < 0x800; i++)
+    {
+      //HiWRam is cached
        CacheReadByteList[i] = CacheReadByte;
        CacheReadWordList[i] = CacheReadWord;
        CacheReadLongList[i] = CacheReadLong;
@@ -1351,8 +1362,9 @@ void disableCache(SH2_struct *context) {
   int i;
   if (context->cacheOn == 1) {
     context->cacheOn = 0;
-    for (i=0x10; i < 0x1000; i++)
+    for (i=0x20; i < 0x30; i++)
     {
+      //LowWRam is cached
       CacheReadByteList[i] = ReadByteList[i];
       CacheReadWordList[i] = ReadWordList[i];
       CacheReadLongList[i] = ReadLongList[i];
@@ -1360,7 +1372,17 @@ void disableCache(SH2_struct *context) {
       CacheWriteWordList[i] = WriteWordList[i];
       CacheWriteLongList[i] = WriteLongList[i];
     }
-    InvalidateCache(context);
+    for (i=0x600; i < 0x800; i++)
+    {
+      //HiWRam is cached
+      CacheReadByteList[i] = ReadByteList[i];
+      CacheReadWordList[i] = ReadWordList[i];
+      CacheReadLongList[i] = ReadLongList[i];
+      CacheWriteByteList[i] = WriteByteList[i];
+      CacheWriteWordList[i] = WriteWordList[i];
+      CacheWriteLongList[i] = WriteLongList[i];
+    }
+    // InvalidateCache(context);
   }
 #else
   return;

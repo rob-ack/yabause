@@ -31,19 +31,7 @@
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
       "cmakeCommandArgs": "",
       "buildCommandArgs": "-j 8",
-      "ctestCommandArgs": "",
-      "variables": [
-        {
-          "name": "YAB_WANT_DIRECTINPUT",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_WANT_DIRECTSOUND",
-          "value": "True",
-          "type": "BOOL"
-        }
-      ]
+      "ctestCommandArgs": ""
     },
     {
       "name": "x64-Debug-libretro",

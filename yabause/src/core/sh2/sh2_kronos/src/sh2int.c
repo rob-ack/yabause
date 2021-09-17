@@ -555,7 +555,7 @@ void SH2KronosInterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
    context->NumberOfInterrupts = num_interrupts;
 }
 
-void SH2KronosWriteNotify(u32 start, u32 length){
+void SH2KronosWriteNotify(SH2_struct *context, u32 start, u32 length){
   int i;
   for (i=0; i<length; i+=2) {
     int id = ((start + i) >> 20) & 0xFFF;

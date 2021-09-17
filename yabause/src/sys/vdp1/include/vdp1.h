@@ -63,24 +63,6 @@ typedef struct {
    u16 userclipY2;
 } Vdp1;
 
-// struct for Vdp1 part that shouldn't be saved
-typedef struct {
-    int disptoggle;
-    int manualerase;
-    int manualchange;
-    int onecyclemode;
-    int useVBlankErase;
-    int swap_frame_buffer;
-    int plot_trigger_line;
-    int plot_trigger_done;
-    int current_frame;
-    int updateVdp1Ram;
-    int checkEDSR;
-    int status;
-} Vdp1External_struct;
-
-extern Vdp1External_struct Vdp1External;
-
 typedef struct
 {
   float G[16];
@@ -90,6 +72,8 @@ typedef struct
   u32 flip;
   u32 type;
   //FIX me those data fields are all 16 bit not 32 accordion to documentation. signed or unsigned has been checked
+  //NOTE pls keep in mind that for now we copy the struct memory via mem copy directly over to the GPU memory where the memory has the same layout as this structure. meaning they have to match in memory layout.
+  //this is why we can not use 16 bit size filed for now.
   union {
       struct {
           u32 Comm : 4; // Command Select

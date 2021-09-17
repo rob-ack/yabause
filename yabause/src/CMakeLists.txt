@@ -107,6 +107,8 @@ set(kronos_SOURCES
 	core/m68k/mk68Counter.c
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
+	sys/vdp1/src/vdp1.private.h
+	sys/vdp1/src/vdp1.private.c
 	sys/vdp2/src/vdp2.c
 	sys/sh2/src/sh2core.c
 	sys/scu/src/scu.c

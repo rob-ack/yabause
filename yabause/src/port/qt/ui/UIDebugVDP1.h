@@ -34,6 +34,8 @@ protected:
     u32 * vdp1texture;
     int vdp1texturew, vdp1textureh;
     QTimer timer;
+    int m_drawsAFrame = 0;
+    int drawcommands = 0;
 
 protected slots:
     void on_lwCommandList_itemSelectionChanged();

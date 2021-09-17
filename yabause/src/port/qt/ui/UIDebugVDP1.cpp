@@ -24,6 +24,10 @@
 
 #include "vdp1.debug.h"
 
+#include "vdp1.private.h"
+
+UIDebugVDP1 * openWindow = nullptr; //the other end is c and thus we have to use a global here to get access to our instance. but this way it can only support one window. i dont want a complicated solution atm
+
 UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
 {
 	// setup dialog
@@ -46,11 +50,36 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
 	});
 	timer.start(100);
 
+	openWindow = this;
+
+	vdp1NewCommandsFetched = [](void * data)
+	{
+		openWindow->drawcommands += int(*(u32*)data);
+	};
+
+	vdp1BeforeDrawCall = [](void* data)
+	{
+		openWindow->m_drawsAFrame++;
+		//TODO: cache a draw buffer here
+	};
+
+	vdp1FrameCompleted = [](void* data)
+	{
+		openWindow->lcdNDrawsLastFrame->display(openWindow->drawcommands);
+		openWindow->lcdNVLine->display(openWindow->m_drawsAFrame);
+		openWindow->drawcommands = 0;
+		openWindow->m_drawsAFrame = 0;
+	};
+
 	this->show();
 }
 
 UIDebugVDP1::~UIDebugVDP1()
 {
+	vdp1NewCommandsFetched = nullptr;
+	vdp1BeforeDrawCall = nullptr;
+	vdp1FrameCompleted = nullptr;
+	openWindow = nullptr;
 	timer.stop();
    if (vdp1texture)
       free(vdp1texture);
@@ -148,8 +177,6 @@ void UIDebugVDP1::updateCommandListFromBuffer()
 
 void UIDebugVDP1::UpdateSystemStats()
 {
-	lcdNCmdBufferPos->display(Vdp1DebugCmdBufferPos());
-	lcdNVLine->display(yabsys.LineCount);
 }
 
 void UIDebugVDP1::on_bFromCommandListBuffer_clicked()

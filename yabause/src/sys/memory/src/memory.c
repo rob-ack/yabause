@@ -1005,7 +1005,7 @@ void FASTCALL MappedMemoryWriteByte(SH2_struct *context, u32 addr, u8 val)
 {
    int id = addr >> 29;
    if (context == NULL) id =1;
-   if (context->cacheOn == 0) SH2WriteNotify(context, addr, 1);
+   if ((context != NULL) && (context->cacheOn == 0)) SH2WriteNotify(context, addr, 1);
    switch (id)
    {
       case 0x0:
@@ -1111,7 +1111,7 @@ void FASTCALL MappedMemoryWriteWord(SH2_struct *context, u32 addr, u16 val)
 {
    int id = addr >> 29;
    if (context == NULL) id =1;
-   if (context->cacheOn == 0) SH2WriteNotify(context, addr, 2);
+   if ((context != NULL) && (context->cacheOn == 0)) SH2WriteNotify(context, addr, 2);
    switch (id)
    {
       case 0x0:
@@ -1219,7 +1219,7 @@ void FASTCALL MappedMemoryWriteLong(SH2_struct *context, u32 addr, u32 val)
 {
    int id = addr >> 29;
    if (context == NULL) id =1;
-   if (context->cacheOn == 0) SH2WriteNotify(context, addr, 4);
+   if ((context != NULL) && (context->cacheOn == 0)) SH2WriteNotify(context, addr, 4);
    switch (id)
    {
       case 0x0:

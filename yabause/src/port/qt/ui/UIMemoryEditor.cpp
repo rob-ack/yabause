@@ -123,7 +123,7 @@ UIMemoryEditor::UIMemoryEditor( enum UIDebugCPU::PROCTYPE proc, YabauseThread *m
       saMemoryEditor->setEnabled(false);
       pbGotoAddress->setEnabled(false);
       pbSaveSelected->setEnabled(false);
-	  pbSaveTab->setEnabled(false);
+	    pbSaveTab->setEnabled(false);
       pbSearchMemory->setEnabled(false);
    }
    else
@@ -133,6 +133,32 @@ UIMemoryEditor::UIMemoryEditor( enum UIDebugCPU::PROCTYPE proc, YabauseThread *m
 
 	// retranslate widgets
 	QtYabause::retranslateWidget( this );
+
+  saMemoryEditor->restoreCursorPosition();
+}
+
+void UIMemoryEditor::closeEvent(QCloseEvent* evt)
+{
+  saMemoryEditor->saveCursorPosition();
+  QDialog::closeEvent(evt);
+}
+
+void UIMemoryEditor::accept()
+{
+  saMemoryEditor->saveCursorPosition();
+  QDialog::accept();
+}
+
+void UIMemoryEditor::reject()
+{
+  saMemoryEditor->saveCursorPosition();
+  QDialog::reject();
+}
+
+void UIMemoryEditor::done(int r)
+{
+  saMemoryEditor->saveCursorPosition();
+  QDialog::done(r);
 }
 
 void UIMemoryEditor::on_pbGotoAddress_clicked()

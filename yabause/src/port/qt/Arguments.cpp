@@ -43,7 +43,7 @@ namespace Arguments
 
 	static std::vector<Option> const availableOptions =
 	{
-		{ NULL,  "--autoframeskip=", "0|1", "Enable or disable auto frame skipping / limiting.",  2, autoframeskip },
+		{ NULL,  "--autoframeskip=", "0|1", "Enable or disable vertical synchronization.",  2, autoframeskip },
 		{ NULL,  "--autoload=", "<SAVESTATE>", "Automatically start emulation and load a save state.",1, autoload },
 		{ "-a",  "--autostart", NULL,       "Automatically start emulation.",                      1, autostart },
 		{ NULL,  "--binary=", "<FILE>[:ADDRESS]", "Use a binary file.",                           1, binary },
@@ -188,7 +188,7 @@ namespace Arguments
 
 	void help(const QString& param)
 	{
-		std::cout << std::endl << "Yabause commands:" << std::endl;
+		std::cout << std::endl << PROJECT_NAME << " commands:" << std::endl;
 
 		for(Option const & option : availableOptions)
 		{

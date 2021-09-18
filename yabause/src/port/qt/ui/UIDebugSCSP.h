@@ -24,6 +24,9 @@
 #include "ui_UIDebugSCSP.h"
 #include "core.h"
 
+class QIODevice;
+class QTimer;
+
 #ifdef HAVE_QT_MULTIMEDIA
 #include <QAudioOutput>
 #endif
@@ -44,23 +47,24 @@ protected slots:
     void notified();
     void audioBufferRefill();
     void stateChanged(QAudio::State state);
+#endif
 
 protected:
     void initAudio();
 
 private:
-    QTimer * audioBufferTimer = nullptr;
-
+#ifdef HAVE_QT_MULTIMEDIA
     QAudioDeviceInfo audioDeviceInfo;
     QAudioOutput * audioOutput = nullptr;
-    QIODevice * outputDevice = nullptr;
     QAudioFormat audioFormat;
+#endif
+    QIODevice * outputDevice = nullptr;
     bool isPlaying;
 
     u32 * slot_workbuf = nullptr;
     s16 * slot_buf = nullptr;
-    QTimer * timer = nullptr;
-#endif
+    QTimer* timer = nullptr;
+    QTimer* audioBufferTimer = nullptr;
 };
 
 #endif // UIDEBUGSCSP_H

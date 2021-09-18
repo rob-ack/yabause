@@ -35,7 +35,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #else
-#include <windows.h>
+#include "Windows.h"
 #endif
 
 // cores

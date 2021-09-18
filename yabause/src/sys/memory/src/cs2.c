@@ -32,6 +32,7 @@
 #include "scsp.h"
 #include "scu.h"
 #include "smpc.h"
+#include "yabause.h"
 #include "yui.h"
 
 #define CDB_HIRQ_CMOK      0x0001

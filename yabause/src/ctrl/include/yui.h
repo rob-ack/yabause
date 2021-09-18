@@ -21,14 +21,6 @@
 #ifndef YUI_H
 #define YUI_H
 
-#include "cdbase.h"
-#include "sh2core.h"
-#include "sh2int.h"
-#include "scsp.h"
-#include "smpc.h"
-#include "vdp1.h"
-#include "yabause.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

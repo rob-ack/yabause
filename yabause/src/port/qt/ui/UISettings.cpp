@@ -24,6 +24,7 @@
 #include "ygl.h"
 #include "stv.h"
 #include "UIPortManager.h"
+#include "osdcore.h"
 
 #include <QDir>
 #include <QList>

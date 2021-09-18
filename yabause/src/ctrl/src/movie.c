@@ -27,6 +27,7 @@
 #include "vdp2.h"  // for DisplayMessage() prototype
 #include "yabause.h"
 #include "error.h"
+#include "osdcore.h"
 
 int RecordingFileOpened;
 int PlaybackFileOpened;

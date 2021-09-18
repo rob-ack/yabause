@@ -30,6 +30,7 @@
 #include "bicubic_shader.h"
 #include "scanline_shader.h"
 #include "common_glshader.h"
+#include "yabause.h"
 
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
 

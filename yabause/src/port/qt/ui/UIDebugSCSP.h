@@ -47,11 +47,13 @@ protected slots:
     void notified();
     void audioBufferRefill();
     void stateChanged(QAudio::State state);
+#endif
 
 protected:
     void initAudio();
 
 private:
+#ifdef HAVE_QT_MULTIMEDIA
     QAudioDeviceInfo audioDeviceInfo;
     QAudioOutput * audioOutput = nullptr;
     QAudioFormat audioFormat;

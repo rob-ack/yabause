@@ -137,6 +137,8 @@ add_definitions(-DIMPROVED_SAVESTATES)
 
 add_subdirectory(tools/libchdr)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/src)
+include_directories(${CMAKE_SOURCE_DIR}/src/sys/vdp1/src) #todo remove when we remove vidsoft
+
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
 
 if(KRONOS_LIBRETRO_CORE)

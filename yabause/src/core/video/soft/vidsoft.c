@@ -46,7 +46,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#include "sys/vdp1/src/vdp1.private.h"
+#include "vdp1.private.h"
 
 #if defined WORDS_BIGENDIAN
 static INLINE u32 COLSAT2YAB16(int priority,u32 temp)            { return (priority | (temp & 0x7C00) << 1 | (temp & 0x3E0) << 14 | (temp & 0x1F) << 27); }

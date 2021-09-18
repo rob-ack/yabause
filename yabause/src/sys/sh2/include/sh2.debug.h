@@ -37,6 +37,13 @@ extern "C"
 #define BREAK_WORDWRITE 0x10
 #define BREAK_LONGWRITE 0x20
 
+
+enum SH2STEPTYPE
+{
+    SH2ST_STEPOVER,
+    SH2ST_STEPOUT
+};
+
 typedef struct
 {
     u32 addr;
@@ -84,12 +91,6 @@ typedef struct
     u32 addr[256];
     int numbacktrace;
 } backtrace_struct;
-
-enum SH2STEPTYPE
-{
-    SH2ST_STEPOVER,
-    SH2ST_STEPOUT
-};
 
 void SH2Step(SH2_struct * context);
 int SH2StepOver(SH2_struct * context, void (*func)(void *, u32, void *));

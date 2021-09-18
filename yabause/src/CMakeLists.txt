@@ -17,6 +17,7 @@ endif()
 if (MSVC)
 	add_compile_options(/MP)
 	add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
+	add_link_options("$<$<CONFIG:Debug>:/EDITANDCONTINUE>")
 	add_compile_options("$<$<CONFIG:Debug>:/ZI>")
 endif()
 

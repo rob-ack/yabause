@@ -27,7 +27,6 @@ A DSP: Applies effects like echo, reverb and chorus. The docs also mention ‘filt
 #define SCSP_DEBUG_H
 
 #include "core.h"
-#include "sh2core.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -33,7 +33,10 @@ endif()
 if(Qt5_FOUND)
     message(STATUS "Qt5 Found - Configuring QT frontend project")
 
-    add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+	if(Qt5Multimedia_FOUND)
+	    add_definitions(-DHAVE_QT_MULTIMEDIA=1)
+	endif()
+
     add_definitions(-DQT_PORT_ENABLED=1)
 
     # Since Qt5's cmake script doesn't set it, we will have to

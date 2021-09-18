@@ -24,19 +24,14 @@
     https://antime.kapsi.fi/sega/files/ST-013-R3-061694.pdf
 */
 
-#include <stdlib.h>
-#include <math.h>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
-#include "yabause.h"
 #include "vdp1.h"
 #include "vdp1.private.h"
 #include "debug.h"
-#include "scu.h"
-#include "vidsoft.h"
 #include "threads.h"
-#include "sh2core.h"
 #include "videoInterface.h"
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
 #include "ygl.h"

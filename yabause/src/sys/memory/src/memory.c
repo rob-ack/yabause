@@ -48,15 +48,7 @@
 #include "bios.h"
 #include "peripheral.h"
 
-//#ifdef HAVE_LIBGL
-//#define USE_OPENGL
-//#endif
-
-#ifdef USE_OPENGL
-#include "ygl.h"
-#endif
-
-#include "vidsoft.h"
+#include "osdcore.h"
 #include "vidogl.h"
 
 //////////////////////////////////////////////////////////////////////////////

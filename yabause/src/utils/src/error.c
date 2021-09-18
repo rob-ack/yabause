@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include "error.h"
+#include "sh2core.h"
 #include "yui.h"
 
 int lastErrorType = 0;

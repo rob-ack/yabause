@@ -22,8 +22,6 @@
 #define VDP2_H
 
 #include "memory.h"
-/* This include is not *needed*, it's here to avoid breaking ports */
-#include "osdcore.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -419,8 +417,6 @@ int Vdp2SaveState(void ** stream);
 int Vdp2LoadState(const void * stream, int version, int size);
 
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
-
-#include "threads.h"
 
 int VideoSetFilterType( int video_filter_type );
 void vdp2ReqDump();

@@ -30,6 +30,7 @@
 #include "bicubic_shader.h"
 #include "scanline_shader.h"
 #include "common_glshader.h"
+#include "yabause.h"
 
 #define ALIGN(A,B) (((A)%(B))? A + (B - ((A)%(B))) : A)
 
@@ -1050,7 +1051,7 @@ vec2 getFBCoord(vec2 pos) { return pos; } \n \
 
 
 #define SAMPLER_TEX(ID) "\
-uniform sampler2D s_texture"Stringify(ID)";\n \
+uniform sampler2D s_texture" Stringify(ID) ";\n \
 "
 //--------------------------------------------------------------------------------------------------------------
 static const char vdp2blit_gl_start_f_6[] =

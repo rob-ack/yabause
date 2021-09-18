@@ -27,7 +27,9 @@
 #include "vidshared.h"
 #include "debug.h"
 #include "error.h"
+#include "osdcore.h"
 #include "vdp1_compute.h"
+#include "yabause.h"
 
 // #define __USE_OPENGL_DEBUG__
 

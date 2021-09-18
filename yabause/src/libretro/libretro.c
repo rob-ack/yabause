@@ -32,14 +32,17 @@
 #include "debug.h"
 
 #include "m68kcore.h"
-#include "vidsoft.h"
-#include "sh2int_kronos.h"
 #include "libretro_core_options.h"
 #include "videoInterface.h"
 #include "ygl.h"
 #include "vidogl.h"
 #include "vidcs.h"
 #include "libretro.h"
+
+#include "osdcore.h"
+#include "scsp.h"
+#include "sh2int.h"
+#include "sh2int_kronos.h"
 
 yabauseinit_struct yinit;
 

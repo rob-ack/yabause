@@ -14,6 +14,12 @@ if(UNIX AND NOT APPLE)
 	add_definitions(-DARCH_IS_LINUX=1)
 endif()
 
+if (MSVC)
+	add_compile_options(/MP)
+	add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
+	add_compile_options("$<$<CONFIG:Debug>:/ZI>")
+endif()
+
 include_directories(sys/bios/include)
 include_directories(sys/vdp1/include)
 include_directories(sys/vdp2/include)
@@ -464,9 +470,9 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 				${kronos_SOURCES}
 				tools/gllibs/glew/glew.c
 			)
-		endif (NEED_GLEW)
+		endif()
 		set(kronos_SOURCES
-				${kronos_SOURCES}
+			${kronos_SOURCES}
 			core/video/opengl/common/src/commongl.c
 			core/video/opengl/core/src/yglcache.c
 			core/video/opengl/core/src/vidogl.c
@@ -764,10 +770,6 @@ if (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-PIE -no-pie" )
 endif()
 
-if (MSVC)
-add_compile_options(/MP)
-endif()
-
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=i686 -msse")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -900,7 +902,8 @@ message(STATUS "------ FLAGS  -------")
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")
 if(MSVC)
-message(STATUS "CMAKE_SYSTEM_VERSION ${CMAKE_SYSTEM_VERSION} used")
+message(STATUS "CMAKE_SYSTEM_VERSION ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION ${CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION}")
 endif()
 
 message(STATUS "---------------------")

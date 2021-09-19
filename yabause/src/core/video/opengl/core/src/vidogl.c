@@ -303,7 +303,7 @@ static void FASTCALL Vdp2DrawCell(vdp2draw_struct *info, YglTexture *texture, Vd
      drawcell_run = 1;
      cellq = YabThreadCreateQueue(NB_MSG);
      cellq_end = YabThreadCreateQueue(NB_MSG);
-     YabThreadStart(YAB_THREAD_VDP2_NBG0, Vdp2DrawCell_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP2_NBG0, Vdp2DrawCell_in_async, NULL, "VDP2_NBG0");
    }
    YabAddEventQueue(cellq_end, NULL);
    YabAddEventQueue(cellq, task);
@@ -698,10 +698,10 @@ static void FASTCALL Vdp1ReadTexture(vdp1cmd_struct *cmd, YglSprite *sprite, Ygl
      vdp1text_run = 1;
      vdp1q = YabThreadCreateQueue(NB_MSG);
      vdp1q_end = YabThreadCreateQueue(NB_MSG);
-     YabThreadStart(YAB_THREAD_VDP1_0, Vdp1ReadTexture_in_async, 0);
-     YabThreadStart(YAB_THREAD_VDP1_1, Vdp1ReadTexture_in_async, 0);
-     YabThreadStart(YAB_THREAD_VDP1_2, Vdp1ReadTexture_in_async, 0);
-     YabThreadStart(YAB_THREAD_VDP1_3, Vdp1ReadTexture_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP1_0, Vdp1ReadTexture_in_async, 0, "YAB_THREAD_VDP1_0");
+     YabThreadStart(YAB_THREAD_VDP1_1, Vdp1ReadTexture_in_async, 0, "YAB_THREAD_VDP1_1");
+     YabThreadStart(YAB_THREAD_VDP1_2, Vdp1ReadTexture_in_async, 0, "YAB_THREAD_VDP1_2");
+     YabThreadStart(YAB_THREAD_VDP1_3, Vdp1ReadTexture_in_async, 0, "YAB_THREAD_VDP1_3");
    }
    YabAddEventQueue(vdp1q_end, NULL);
    YabAddEventQueue(vdp1q, task);
@@ -3246,7 +3246,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
      rotq = YabThreadCreateQueue(32);
      rotq_end = YabThreadCreateQueue(32);
      rotq_end_task = YabThreadCreateQueue(32);
-     YabThreadStart(YAB_THREAD_VDP2_RBG1, Vdp2DrawRotation_in_async, 0);
+     YabThreadStart(YAB_THREAD_VDP2_RBG1, Vdp2DrawRotation_in_async, 0, "YAB_THREAD_VDP2_RBG1");
    }
    YabAddEventQueue(rotq_end, NULL);
    YabAddEventQueue(rotq, task);

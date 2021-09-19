@@ -613,8 +613,8 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
 		vdp1_generate_run = 1;
 		cmdq[0] = YabThreadCreateQueue(512);
 		cmdq[1] = YabThreadCreateQueue(512);
-		YabThreadStart(YAB_THREAD_CS_CMD_0, vdp1GenerateBuffer_async_0, 0);
-		YabThreadStart(YAB_THREAD_CS_CMD_1, vdp1GenerateBuffer_async_1, 0);
+		YabThreadStart(YAB_THREAD_CS_CMD_0, vdp1GenerateBuffer_async_0, NULL, "vdp1GenerateBuffer_async_0");
+		YabThreadStart(YAB_THREAD_CS_CMD_1, vdp1GenerateBuffer_async_1, NULL, "vdp1GenerateBuffer_async_1");
 	}
 #endif
   work_groups_x = _Ygl->vdp1width / local_size_x;

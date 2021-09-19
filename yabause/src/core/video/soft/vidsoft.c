@@ -2148,14 +2148,14 @@ int VIDSoftInit(void)
 
    vidsoft_vdp1_thread_context.need_draw = 0;
    vidsoft_vdp1_thread_context.draw_finished = 1;
-   YabThreadStart(YAB_THREAD_VIDSOFT_VDP1, VidsoftVdp1Thread, 0);
+   YabThreadStart(YAB_THREAD_VIDSOFT_VDP1, VidsoftVdp1Thread, 0, "YAB_THREAD_VIDSOFT_VDP1");
 
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, VidsoftRbg0Thread, 0);
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG0, VidsoftNbg0Thread, 0);
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG1, VidsoftNbg1Thread, 0);
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG2, VidsoftNbg2Thread, 0);
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG3, VidsoftNbg3Thread, 0);
-   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_SPRITE, VidsoftSpriteThread, 0);
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, VidsoftRbg0Thread, 0, "YAB_THREAD_VIDSOFT_LAYER_RBG0");
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG0, VidsoftNbg0Thread, 0, "YAB_THREAD_VIDSOFT_LAYER_NBG0");
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG1, VidsoftNbg1Thread, 0, "YAB_THREAD_VIDSOFT_LAYER_NBG1");
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG2, VidsoftNbg2Thread, 0, "YAB_THREAD_VIDSOFT_LAYER_NBG2");
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_NBG3, VidsoftNbg3Thread, 0, "YAB_THREAD_VIDSOFT_LAYER_NBG3");
+   YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_SPRITE, VidsoftSpriteThread, 0, "YAB_THREAD_VIDSOFT_LAYER_SPRITE");
 
    return 0;
 }

@@ -57,7 +57,7 @@ static DWORD wrapper(void *hnd)
    return 0;
 }
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg) 
+int YabThreadStart(unsigned int id, void (*func)(void *), void *arg, char const * const name) 
 { 
    if (!hnd_key_once)
    {
@@ -86,6 +86,13 @@ int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
    {
       perror("CreateThread");
       return -1;
+   }
+
+   if (name)
+   {
+       wchar_t ws[200];
+       swprintf_s(ws, 200, L"%hs", name);
+       HRESULT r = SetThreadDescription(thread_handle[id].thd, ws);
    }
    
    thread_handle[id].running = 1;

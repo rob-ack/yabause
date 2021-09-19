@@ -55,7 +55,7 @@ static void thread_exit_handler(int signum_unused) {
   pthread_exit(0);
 }
 
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg)
+int YabThreadStart(unsigned int id, void (*func)(void *), void *arg, char const * const name)
 {
    // Set up a dummy signal handler for SIGUSR1 so we can return from pause()
    // in YabThreadSleep()

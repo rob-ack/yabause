@@ -5107,7 +5107,7 @@ void ScspAsynMainCpu( void * p ){
 void ScspExec(){
 	if (!thread_running){
 	  thread_running = true;
-	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
+	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL, "scsp_async");
 	}
 }
 

@@ -1,7 +1,7 @@
 message(STATUS "Your C++ compiler supports these C++ features:\n${CMAKE_CXX_COMPILE_FEATURES}")
 message(STATUS "Your C compiler supports these C features:\n${CMAKE_C_COMPILE_FEATURES}")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
 option(KRONOS_GL_DEBUG "Debug output for GL" off)

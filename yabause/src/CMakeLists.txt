@@ -71,7 +71,6 @@ set(kronos_HEADERS
 	sys/memory/include/decrypt.h
   core/osd/include/osdcore.h
   core/osd/include/font.h
-  core/m68k/mk68Counter.h
   core/m68k/m68kcore.h
 	core/sh2/sh2_simple/include/sh2int.h
 	core/peripheral/common/peripheral.h
@@ -111,7 +110,6 @@ set(kronos_SOURCES
 	utils/src/netlink.c
 	core/osd/src/osdcore.c
 	utils/src/profile.c
-	core/m68k/mk68Counter.c
 	sys/bios/src/bios.c
 	sys/vdp1/src/vdp1.c
 	sys/vdp1/src/vdp1.private.h

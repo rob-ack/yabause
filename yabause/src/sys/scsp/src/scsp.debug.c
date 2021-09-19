@@ -28,7 +28,6 @@
 #include <limits.h>
 
 #include "m68kcore.h"
-#include "mk68Counter.h"
 #include "scu.h"
 #include "scsp.h"
 #include "scsp.debug.h"

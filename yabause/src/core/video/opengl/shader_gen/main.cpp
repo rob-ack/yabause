@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
     std::cout << "Shaders: " << shaders.size() << std::endl << "Unique Shaders:" << unique_shaders.size() << std::endl;
 
-    std::string outPath = "";
+    std::string outPath;
     if (argc > 1 && std::filesystem::exists(argv[1]))
     {
         outPath = argv[1];

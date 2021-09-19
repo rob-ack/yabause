@@ -108,7 +108,6 @@ u64 tickfreq;
 ScspDsp scsp_dsp = { 0 };
 
 u32 saved_scsp_cycles = 0;//fixed point
-volatile u64 saved_m68k_cycles = 0;//fixed point
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -191,7 +190,6 @@ void YabauseChangeTiming(int freqtype) {
 
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
-YabEventQueue * q_scsp_m68counterCond;
 #ifdef xSH2_ASYNC
 YabEventQueue* q_sh2_sync;
 bool sh2AsyncThreadRunning = false;
@@ -290,7 +288,6 @@ int YabauseInit(yabauseinit_struct *init)
    YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC); //default video format initialization
    nextFrameTime = 0;
 
-  q_scsp_m68counterCond = YabThreadCreateQueue(1);
 #ifdef xSH2_ASYNC
   q_sh2_sync = YabThreadCreateQueue(1);
 #endif

@@ -155,8 +155,6 @@ Scsp new_scsp = { 0 };
 u32 m68kcycle = 0;
 #endif
 
-extern YabEventQueue * q_scsp_m68counterCond;
-
 //0x30 to 0x3f only
 const u8 attack_rate_table[][4] =
 {
@@ -4700,10 +4698,6 @@ ScspDeInit (void)
   scsp_mute_flags = 0;
   thread_running = false;
 #if defined(ASYNC_SCSP)
-  if (q_scsp_m68counterCond && YaGetQueueSize(q_scsp_m68counterCond) == 0 )
-  {
-      YabAddEventQueue(q_scsp_m68counterCond, 0);
-  } 
   YabThreadWake(YAB_THREAD_SCSP);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif

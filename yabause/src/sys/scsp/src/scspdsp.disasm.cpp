@@ -188,7 +188,7 @@ void ScspDspAssembleFromFile(char * filename, u64* output)
 
 void ScspDspDisasm(u8 addr, char *outstring)
 {
-   union ScspDspInstruction const instruction = { .all = scsp_dsp.mpro[addr] };
+    ScspDspInstruction instruction; { instruction.all = scsp_dsp.mpro[addr]; };
 
    if (instruction.all == 0)
    {

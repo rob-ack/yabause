@@ -52,18 +52,22 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
 
 	openWindow = this;
 
-	vdp1NewCommandsFetched = [](void * data)
+	vdp1NewCommandsFetchedHook = [](void * data)
 	{
 		openWindow->drawcommands += int(*(u32*)data);
 	};
 
-	vdp1BeforeDrawCall = [](void* data)
+	vdp1BeforeDrawCallHook = [](void* data)
 	{
 		openWindow->m_drawsAFrame++;
 		//TODO: cache a draw buffer here
 	};
 
-	vdp1FrameCompleted = [](void* data)
+	vdp1DrawCompletedHook = [](void* data)
+	{
+	};
+
+	vdp1FrameCompletedHook = [](void* data)
 	{
 		openWindow->lcdNDrawsLastFrame->display(openWindow->drawcommands);
 		openWindow->lcdNVLine->display(openWindow->m_drawsAFrame);
@@ -76,9 +80,9 @@ UIDebugVDP1::UIDebugVDP1( QWidget* p ) : QDialog( p )
 
 UIDebugVDP1::~UIDebugVDP1()
 {
-	vdp1NewCommandsFetched = nullptr;
-	vdp1BeforeDrawCall = nullptr;
-	vdp1FrameCompleted = nullptr;
+	vdp1NewCommandsFetchedHook = nullptr;
+	vdp1BeforeDrawCallHook = nullptr;
+	vdp1DrawCompletedHook = nullptr;
 	openWindow = nullptr;
 	timer.stop();
    if (vdp1texture)

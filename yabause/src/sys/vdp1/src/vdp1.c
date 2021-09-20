@@ -419,7 +419,7 @@ static void updateFBCRMode() {
 
 static void Vdp1TryDraw(void) {
   if ((needVdp1draw == 1)) {
-      if (vdp1BeforeDrawCall) vdp1BeforeDrawCall(NULL);
+      if (CmdListDrawn == 0 && vdp1BeforeDrawCallHook) vdp1BeforeDrawCallHook(NULL);
     needVdp1draw = Vdp1Draw();
   }
 }
@@ -951,10 +951,8 @@ static void setupSpriteLimit(vdp1cmdctrl_struct *ctrl){
 static int getVdp1CyclesPerLine(void)
 {
   int clock = 26842600;
-  int fps = 60;
   //Using p37, Table 4.2 of vdp1 official doc
   if (yabsys.IsPal) {
-    fps = 50;
     // Horizontal Resolution
     switch (Vdp2Lines[0].TVMD & 0x7)
     {
@@ -993,7 +991,7 @@ static int getVdp1CyclesPerLine(void)
       break;
     }
   }
-  return clock/(fps*yabsys.MaxLineCount);
+  return clock/(yabsys.fps * yabsys.MaxLineCount);
 }
 
 static u32 returnAddr = 0xffffffff;
@@ -1034,17 +1032,16 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    nbCmdToProcess = 0;
    yabsys.vdp1cycles = 0;
    while (!(command & 0x8000) && commandCounter < Vdp1CommandBufferSize) {
-     int ret;
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
       if (!(command & 0x4000)) { // if (!skip)
-         vdp1cmdctrl_struct *ctrl = NULL;
-         int ret;
          if (vdp1_clock <= 0) {
            //No more clock cycle, wait next line
-             if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
-             return;
+             if (vdp1NewCommandsFetchedHook) vdp1NewCommandsFetchedHook(&commandCounter);
+                 return;
          }
+         int ret;
+         vdp1cmdctrl_struct * ctrl = NULL;
          switch (command & 0x000F) {
          case 0: // normal sprite draw
             ctrl = &cmdBufferBeingProcessed[nbCmdToProcess];
@@ -1053,7 +1050,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             ret = Vdp1NormalSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
-            if (ret == 0) vdp1_clock = 0; //Incorrect command, wait next line to continue
+            if (ret == 0) 
+            {
+                vdp1_clock = 0; //Incorrect command, wait next line to continue
+            }
             if (ret == 1) nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -1065,7 +1065,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             ret = Vdp1ScaledSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
-            if (ret == 0) vdp1_clock = 0; //Incorrect command, wait next line to continue
+            if (ret == 0)
+            {
+                vdp1_clock = 0; //Incorrect command, wait next line to continue
+            }
             if (ret == 1) nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -1079,7 +1082,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             ctrl->ignitionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             ret = Vdp1DistortedSpriteDraw(&ctrl->cmd, ram, regs, back_framebuffer);
-            if (ret == 0) vdp1_clock = 0; //Incorrect command, wait next line to continue
+            if (ret == 0) 
+            {
+                vdp1_clock = 0; //Incorrect command, wait next line to continue
+            }
             if (ret == 1) nbCmdToProcess++;
             ctrl->completionLine = MIN(yabsys.LineCount + yabsys.vdp1cycles/cylesPerLine,yabsys.MaxLineCount-1);
             setupSpriteLimit(ctrl);
@@ -1194,7 +1200,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
+   if (vdp1NewCommandsFetchedHook) vdp1NewCommandsFetchedHook(&commandCounter);
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
@@ -1305,8 +1311,8 @@ static int Vdp1Draw(void)
         FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
         Vdp1Regs->EDSR |= 2;
         ScuSendDrawEnd();
-        if (vdp1FrameCompleted)
-            vdp1FrameCompleted(NULL);
+        if (vdp1DrawCompletedHook)
+            vdp1DrawCompletedHook(NULL);
     }
     if (Vdp1External.status == VDP1_STATUS_IDLE)
         return 0;
@@ -1534,5 +1540,9 @@ void Vdp1VBlankOUT(void)
 #endif
     CmdListDrawn = 0;
     VIDCore->Vdp1EraseWrite(id);
+    if (vdp1FrameCompletedHook)
+    {
+        vdp1FrameCompletedHook(NULL);
+    }
   }
 }

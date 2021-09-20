@@ -105,7 +105,7 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;
@@ -119,7 +119,7 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;
@@ -133,7 +133,7 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;
@@ -1004,6 +1004,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int cylesPerLine  = getVdp1CyclesPerLine();
 
   if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
+  CmdListLimit = 0;
 
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
     returnAddr = 0xffffffff;
@@ -1150,7 +1151,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             CmdListDrawn = 1;
-            CmdListLimit = (regs->addr & 0x7FFFF);
+            CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
             return;
          }
       } else {
@@ -1165,7 +1166,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  Vdp1External.status = VDP1_STATUS_IDLE;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       CmdListDrawn = 1;
-      CmdListLimit = (regs->addr & 0x7FFFF);
+      CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
 		  return;
 	  }
 
@@ -1175,7 +1176,17 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
          regs->addr += 0x20;
          break;
       case 1: // ASSIGN, jump to CMDLINK
-         regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+        {
+          u32 oldAddr = regs->addr;
+          regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
+          if ((regs->addr == oldAddr) && (command & 0x4000))   {
+            //The next adress is the same as the old adress and the command is skipped => Exit
+            Vdp1External.status = VDP1_STATUS_IDLE;
+            CmdListDrawn = 1;
+            CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
+            return;
+          }
+        }
          break;
       case 2: // CALL, call a subroutine
          if (returnAddr == 0xFFFFFFFF)
@@ -1194,6 +1205,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       }
 
       command = Vdp1RamReadWord(NULL,ram, regs->addr);
+      CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
       //If we change directly CPR to last value, scorcher will not boot.
       //If we do not change it, Noon will not start
       //So store the value and update COPR with last value at VBlank In
@@ -1204,9 +1216,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
-        CmdListDrawn = 1;
-        CmdListLimit = (regs->addr & 0x7FFFF);
    }
+   CmdListDrawn = 1;
+   CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
    checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
 

@@ -341,7 +341,6 @@ i_descr tab[] = {
 void SH2Disasm(u32 v_addr, u16 op, int mode, sh2regs_struct *regs, char *string)
 {
    int i;
-   sprintf(string,"0x%08X: ", (unsigned int)v_addr);
    string+=strlen(string);
 
    //TODO : Clean this up and not be lazy :)

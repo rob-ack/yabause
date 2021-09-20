@@ -885,7 +885,6 @@ int YabauseEmulate(void) {
                 Vdp1VBlankIN();
                 Vdp2VBlankIN();
                 PROFILE_STOP("vblankin");
-                SyncCPUtoSCSP();
                 CheatDoPatches(MSH2);
             }
             else if (yabsys.LineCount == yabsys.MaxLineCount)
@@ -911,6 +910,7 @@ int YabauseEmulate(void) {
         PROFILE_STOP("Total Emulation");
     }
 #endif
+    SyncCPUtoSCSP();
     M68KSync();
 
     syncVideoMode();

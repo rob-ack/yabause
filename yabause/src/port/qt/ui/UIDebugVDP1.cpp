@@ -83,6 +83,7 @@ UIDebugVDP1::~UIDebugVDP1()
 	vdp1NewCommandsFetchedHook = nullptr;
 	vdp1BeforeDrawCallHook = nullptr;
 	vdp1DrawCompletedHook = nullptr;
+	vdp1FrameCompletedHook = nullptr;
 	openWindow = nullptr;
 	timer.stop();
    if (vdp1texture)

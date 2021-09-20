@@ -1558,9 +1558,9 @@ void Vdp1VBlankOUT(void)
 #endif
     CmdListDrawn = 0;
     VIDCore->Vdp1EraseWrite(id);
-  }
     if (vdp1FrameCompletedHook)
     {
         vdp1FrameCompletedHook(NULL);
     }
+  }
 }

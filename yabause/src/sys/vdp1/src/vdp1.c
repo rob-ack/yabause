@@ -1023,6 +1023,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   int cylesPerLine  = getVdp1CyclesPerLine();
 
   if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
+  CmdListLimit = 0;
 
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
     returnAddr = 0xffffffff;
@@ -1157,7 +1158,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             CmdListDrawn = 1;
-            CmdListLimit = (regs->addr & 0x7FFFF);
+            CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
             return;
          }
       } else {
@@ -1172,7 +1173,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  Vdp1External.status = VDP1_STATUS_IDLE;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       CmdListDrawn = 1;
-      CmdListLimit = (regs->addr & 0x7FFFF);
+      CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
 		  return;
 	  }
 
@@ -1201,6 +1202,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       }
 
       command = Vdp1RamReadWord(NULL,ram, regs->addr);
+      CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
       //If we change directly CPR to last value, scorcher will not boot.
       //If we do not change it, Noon will not start
       //So store the value and update COPR with last value at VBlank In
@@ -1212,7 +1214,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
         Vdp1External.status = VDP1_STATUS_IDLE;
    }
    CmdListDrawn = 1;
-   CmdListLimit = (regs->addr & 0x7FFFF);
+   CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
    checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
 

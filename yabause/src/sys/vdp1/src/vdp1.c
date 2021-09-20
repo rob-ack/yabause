@@ -1222,9 +1222,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
-        CmdListDrawn = 1;
-        CmdListLimit = (regs->addr & 0x7FFFF);
    }
+   CmdListDrawn = 1;
+   CmdListLimit = (regs->addr & 0x7FFFF);
    checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
 

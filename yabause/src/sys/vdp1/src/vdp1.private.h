@@ -44,9 +44,10 @@ typedef struct {
 extern Vdp1External_struct Vdp1External;
 
 typedef void(*vdp1_hook_fn)(void * data);
-extern vdp1_hook_fn vdp1NewCommandsFetched;
-extern vdp1_hook_fn vdp1BeforeDrawCall;
-extern vdp1_hook_fn vdp1FrameCompleted;
+extern vdp1_hook_fn vdp1NewCommandsFetchedHook;
+extern vdp1_hook_fn vdp1BeforeDrawCallHook;
+extern vdp1_hook_fn vdp1DrawCompletedHook;
+extern vdp1_hook_fn vdp1FrameCompletedHook;
 
 #ifdef __cplusplus
 }

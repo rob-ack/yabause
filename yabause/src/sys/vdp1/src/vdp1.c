@@ -437,7 +437,7 @@ static void updateFBCRMode() {
 
 static void Vdp1TryDraw(void) {
   if ((needVdp1draw == 1)) {
-      if (vdp1BeforeDrawCall) vdp1BeforeDrawCall(NULL);
+      if (CmdListDrawn == 0 && vdp1BeforeDrawCallHook) vdp1BeforeDrawCallHook(NULL);
     needVdp1draw = Vdp1Draw();
   }
 }
@@ -1055,7 +1055,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (!(command & 0x4000)) { // if (!skip)
          if (vdp1_clock <= 0) {
            //No more clock cycle, wait next line
-             if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
+             if (vdp1NewCommandsFetchedHook) vdp1NewCommandsFetchedHook(&commandCounter);
                  return;
          }
          int ret;
@@ -1218,7 +1218,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
       commandCounter++;
    }
-   if (vdp1NewCommandsFetched) vdp1NewCommandsFetched(&commandCounter);
+   if (vdp1NewCommandsFetchedHook) vdp1NewCommandsFetchedHook(&commandCounter);
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
@@ -1329,8 +1329,8 @@ static int Vdp1Draw(void)
         FRAMELOG("Vdp1Draw end at %d line\n", yabsys.LineCount);
         Vdp1Regs->EDSR |= 2;
         ScuSendDrawEnd();
-        if (vdp1FrameCompleted)
-            vdp1FrameCompleted(NULL);
+        if (vdp1DrawCompletedHook)
+            vdp1DrawCompletedHook(NULL);
     }
     if (Vdp1External.status == VDP1_STATUS_IDLE)
         return 0;
@@ -1558,5 +1558,9 @@ void Vdp1VBlankOUT(void)
 #endif
     CmdListDrawn = 0;
     VIDCore->Vdp1EraseWrite(id);
+    if (vdp1FrameCompletedHook)
+    {
+        vdp1FrameCompletedHook(NULL);
+    }
   }
 }

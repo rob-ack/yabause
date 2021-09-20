@@ -117,7 +117,7 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
   //   context->cycles += 2;
   // }
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;
@@ -134,7 +134,7 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
   //   context->cycles += 2;
   // }
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;
@@ -151,7 +151,7 @@ void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) 
   //   context->cycles += 2;
   // }
    addr &= 0x7FFFF;
-   if (CmdListLimit <= addr) {
+   if (CmdListLimit >= addr) {
      CmdListDrawn = 0;
    }
    Vdp1External.updateVdp1Ram = 1;

@@ -111,7 +111,8 @@ static u16 FASTCALL FetchVram(SH2_struct *context, u32 addr)
   return SH2MappedMemoryReadWord(context, addr);
 }
 
-opcode_func cacheCode[7][0x80000];
+opcode_func cacheCodeMSH2[7][0x80000];
+opcode_func cacheCodeSSH2[7][0x80000];
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
@@ -122,7 +123,11 @@ static u16 FASTCALL FetchInvalid(SH2_struct *context, UNUSED u32 addr)
 void decode(SH2_struct *context) {
   int id = (context->regs.PC >> 20) & 0xFFF;
   u16 opcode = krfetchlist[id](context, context->regs.PC);
-  cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+
+  if (context == MSH2)
+    cacheCodeMSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+  else
+    cacheCodeSSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
   opcodeTable[opcode](context);
 }
 
@@ -136,16 +141,25 @@ void biosDecode(SH2_struct *context) {
 
 int SH2KronosInterpreterInit()
 {
+
    int i,j;
    for(i=1; i<6; i++)
-     for(j=0; j<0x80000; j++)
-       cacheCode[i][j] = decode;
+     for(j=0; j<0x80000; j++) {
+       cacheCodeMSH2[i][j] = decode;
+       cacheCodeSSH2[i][j] = decode;
+     }
 
-   for(j=0; j<0x80000; j++)
-     cacheCode[6][j] = SH2undecoded;
+   for(j=0; j<0x80000; j++) {
+     cacheCodeMSH2[6][j] = SH2undecoded;
+     cacheCodeSSH2[6][j] = SH2undecoded;
+   }
 
-   for(j=0; j<0x80000; j++) //Special BAckupHandled case
-     cacheCode[0][j] = biosDecode;
+   for(j=0; j<0x80000; j++) {
+     //Special BAckupHandled case
+     cacheCodeMSH2[0][j] = biosDecode;
+     cacheCodeSSH2[0][j] = biosDecode;
+   }
+
 
    for (i = 0; i < 0x1000; i++)
    {
@@ -280,8 +294,10 @@ FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct * context, u32 cycles)
    while (execInterrupt == 0)
    {
      inIt = context->isInIt;
-     // context->cycles += 1;
-     cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     if (context == MSH2)
+       cacheCodeMSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+     else
+       cacheCodeSSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
      execInterrupt |= (context->cycles >= target_cycle);
      execInterrupt |= (inIt != context->isInIt);
    }
@@ -300,37 +316,40 @@ static int enableTrace = 0;
 
 FASTCALL void SH2KronosDebugInterpreterExec(SH2_struct *context, u32 cycles)
 {
-  u32 target_cycle = context->cycles + cycles;
-  SH2HandleInterrupts(context);
-  char res[512];
-  execInterrupt = 0;
-   while (execInterrupt == 0)
-   {
-     int id = (context->regs.PC >> 20) & 0xFFF;
-
-#if 0
-     if ((context == MSH2) && (context->regs.PC & 0xFFFFFFF) == 0x60b0000) {
-       showCPUState(MSH2);
-       enableTrace = 1;
-     }
-#endif
-     if((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[krfetchlist[id](context, context->regs.PC)]))
-        if ((cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cacheCode[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode))
-          printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
-
-//     if (enableTrace) {
-//       SH2Disasm(context->regs.PC, krfetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
-//     }
-
-     cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
-     execInterrupt |= (context->cycles >= target_cycle);
-   }
+//   u32 target_cycle = context->cycles + cycles;
+//   SH2HandleInterrupts(context);
+//   char res[512];
+//   execInterrupt = 0;
+//    while (execInterrupt == 0)
+//    {
+//      int id = (context->regs.PC >> 20) & 0xFFF;
+//
+// #if 0
+//      if ((context == MSH2) && (context->regs.PC & 0xFFFFFFF) == 0x60b0000) {
+//        showCPUState(MSH2);
+//        enableTrace = 1;
+//      }
+// #endif
+//      if((cache[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF]) != (opcodeTable[krfetchlist[id](context, context->regs.PC)]))
+//         if ((cache[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != decode) && (cache[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] != biosDecode))
+//           printf("Error of interpreter cache @ 0x%x\n", context->regs.PC);
+//
+// //     if (enableTrace) {
+// //       SH2Disasm(context->regs.PC, krfetchlist[id](context, context->regs.PC), 0, &(context->regs), res);
+// //     }
+//
+//      cache[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+//      execInterrupt |= (context->cycles >= target_cycle);
+//    }
 }
 
 FASTCALL void SH2KronosInterpreterTestExec(SH2_struct *context, u32 cycles)
 {
   u32 target_cycle = context->cycles + cycles;
-  cacheCode[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+  if (context == MSH2)
+    cacheCodeMSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+  else
+    cacheCodeSSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
 }
 
 
@@ -557,16 +576,22 @@ void SH2KronosInterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
    context->NumberOfInterrupts = num_interrupts;
 }
 
-void SH2KronosWriteNotify(u32 start, u32 length){
+void SH2KronosWriteNotify(SH2_struct *context, u32 start, u32 length){
   int i;
   for (i=0; i<length; i+=2) {
     int id = ((start + i) >> 20) & 0xFFF;
     int addr = (start + i) >> 1;
     if (cacheId[id] == 0) {  //Special BAckupHandled case
-      cacheCode[cacheId[id]][addr & 0x7FFFF] = biosDecode;
+      if (context == MSH2)
+        cacheCodeMSH2[cacheId[id]][addr & 0x7FFFF] = biosDecode;
+      else
+        cacheCodeSSH2[cacheId[id]][addr & 0x7FFFF] = biosDecode;
     }
     else
-      cacheCode[cacheId[id]][(addr) & 0x7FFFF] = decode;
+      if (context == MSH2)
+        cacheCodeMSH2[cacheId[id]][(addr) & 0x7FFFF] = decode;
+      else
+        cacheCodeSSH2[cacheId[id]][(addr) & 0x7FFFF] = decode;
   }
 }
 

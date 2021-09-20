@@ -92,9 +92,9 @@ u8 Vdp2RamIsUpdated(void)
 }
 
 u8 FASTCALL Vdp2RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else
@@ -105,9 +105,9 @@ u8 FASTCALL Vdp2RamReadByte(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u16 FASTCALL Vdp2RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else
@@ -118,9 +118,9 @@ u16 FASTCALL Vdp2RamReadWord(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 u32 FASTCALL Vdp2RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else
@@ -131,9 +131,9 @@ u32 FASTCALL Vdp2RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else
@@ -158,9 +158,9 @@ void FASTCALL Vdp2RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else
@@ -185,9 +185,9 @@ void FASTCALL Vdp2RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 //////////////////////////////////////////////////////////////////////////////
 
 void FASTCALL Vdp2RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
-  if (context != NULL){
-    context->cycles += getVramCycle(addr);;
-  }
+  // if (context != NULL){
+  //   context->cycles += getVramCycle(addr);;
+  // }
   if (Vdp2Regs->VRSIZE & 0x8000)
     addr &= 0xEFFFF;
   else

@@ -98,10 +98,10 @@ MSH2->trace = 0;
     SSH2->dma_ch1.TCR = &SSH2->onchip.TCR1;
     SSH2->dma_ch1.VCRDMA = &SSH2->onchip.VCRDMA1;
 
-#ifdef USE_CACHE
    MSH2->cacheOn = 0;
    SSH2->cacheOn = 0;
 
+#ifdef USE_CACHE
    memset(MSH2->tagWay, 0x4, 64*0x80000);
    memset(MSH2->cacheTagArray, 0x0, 64*4*sizeof(u32));
    memset(SSH2->tagWay, 0x4, 64*0x80000);
@@ -277,8 +277,9 @@ void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
 //////////////////////////////////////////////////////////////////////////////
 
 void SH2WriteNotify(SH2_struct *context, u32 start, u32 length) {
+   if (context == NULL) return;
    if (SH2Core->WriteNotify)
-      SH2Core->WriteNotify(start, length);
+      SH2Core->WriteNotify(context, start, length);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1325,6 +1326,7 @@ void InvalidateCache(SH2_struct *ctx) {
   memset(ctx->cacheLRU, 0, 64);
   memset(ctx->tagWay, 0x4, 64*0x80000);
   memset(ctx->cacheTagArray, 0x0, 64*4*sizeof(u32));
+  SH2WriteNotify(ctx, 0, 0x1000);
 #endif
 }
 
@@ -1335,8 +1337,19 @@ void enableCache(SH2_struct *context) {
   if (context->cacheOn == 0) {
     context->cacheOn = 1;
     context->nbCacheWay = 4;
-    for (i=0x10; i < 0x1000; i++)
+    for (i=0x20; i < 0x30; i++)
     {
+      //LowWRam is cached
+       CacheReadByteList[i] = CacheReadByte;
+       CacheReadWordList[i] = CacheReadWord;
+       CacheReadLongList[i] = CacheReadLong;
+       CacheWriteByteList[i] = CacheWriteByte;
+       CacheWriteWordList[i] = CacheWriteWord;
+       CacheWriteLongList[i] = CacheWriteLong;
+    }
+    for (i=0x600; i < 0x800; i++)
+    {
+      //HiWRam is cached
        CacheReadByteList[i] = CacheReadByte;
        CacheReadWordList[i] = CacheReadWord;
        CacheReadLongList[i] = CacheReadLong;
@@ -1355,8 +1368,19 @@ void disableCache(SH2_struct *context) {
   int i;
   if (context->cacheOn == 1) {
     context->cacheOn = 0;
-    for (i=0x10; i < 0x1000; i++)
+    for (i=0x20; i < 0x30; i++)
     {
+      //LowWRam is cached
+      CacheReadByteList[i] = ReadByteList[i];
+      CacheReadWordList[i] = ReadWordList[i];
+      CacheReadLongList[i] = ReadLongList[i];
+      CacheWriteByteList[i] = WriteByteList[i];
+      CacheWriteWordList[i] = WriteWordList[i];
+      CacheWriteLongList[i] = WriteLongList[i];
+    }
+    for (i=0x600; i < 0x800; i++)
+    {
+      //HiWRam is cached
       CacheReadByteList[i] = ReadByteList[i];
       CacheReadWordList[i] = ReadWordList[i];
       CacheReadLongList[i] = ReadLongList[i];
@@ -1383,6 +1407,7 @@ void CacheFetch(SH2_struct *context, u8* memory, u32 addr, u8 way) {
     CacheWriteVal(context, (addr&(~0xF))|(i*4), ret, 4);
     // printf("Fetch (%x) (%d)=%x\n", (addr&(~0xF))|(i*4), i, ret);
   }
+  SH2WriteNotify(context, (addr&(~0xF)), 4);
   // for (int i =0; i<=0xF; i++) {
   //   printf("%x ", context->cacheData[line][way][i]);
   // }
@@ -1859,7 +1884,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1882,7 +1907,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1906,7 +1931,7 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                   }
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   return;
                }
             }
@@ -1930,13 +1955,13 @@ void DMATransferCycles(SH2_struct *context, Dmac * dmac, int cycles ){
                }
                *dmac->CHCR |= 0x2;
                *dmac->CHCRM |= 0x2;
-               SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+               if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                return;
              }
            }
            break;
       }
-      SH2WriteNotify(context, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
+      if (context->cacheOn == 0) SH2WriteNotify(context, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
    }
 
 }

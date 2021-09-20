@@ -274,9 +274,7 @@ u16 FASTCALL Cs2ReadWord(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                                        CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                                        return 0;
                                     }
-                                    // if (context != NULL){
-                                    //   context->cycles += 24;
-                                    // }
+
                                     val = T1ReadWord(ptr, 0);
 
                                     //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
@@ -386,7 +384,6 @@ void FASTCALL Cs2WriteWord(SH2_struct *context, UNUSED u8* memory, u32 addr, u16
 u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
   s32 i;
   u32 val = 0;
-
   addr &= 0x3F; // fix me(I should really have proper mapping)
 
   switch(addr) {
@@ -434,9 +431,7 @@ u32 FASTCALL Cs2ReadLong(SH2_struct *context, UNUSED u8* memory, u32 addr) {
                            CDLOG("cs2\t: datatranspartition->block[Cs2Area->datanumsecttrans] was NULL");
                            return 0;
                         }
-                        // if (context != NULL){
-                        //   context->cycles += 24;
-                        // }
+
                         val = T1ReadLong(ptr, 0);
                         //LOG("[CS2] get addr = %d,val = %08X", Cs2Area->datatransoffset, val);
 
@@ -1365,7 +1360,7 @@ void Cs2Execute(void) {
 
 void Cs2GetStatus(void) {
   doCDReport(Cs2Area->status);
-  Cs2SetIRQ(CDB_HIRQ_CMOK);
+  Cs2Area->reg.HIRQ |= CDB_HIRQ_CMOK;
 }
 
 //////////////////////////////////////////////////////////////////////////////

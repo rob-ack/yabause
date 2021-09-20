@@ -356,8 +356,8 @@ typedef struct SH2_struct_s
 
    void * ext;
 
-#ifdef USE_CACHE
    u8 cacheOn;
+#ifdef USE_CACHE
    u8 nbCacheWay;
    u8 cacheLRU[64];
    u8 cacheData[64][4][16];
@@ -421,7 +421,7 @@ typedef struct
    void (*SetInterrupts)(SH2_struct *context, int num_interrupts,
                          const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
-   void (*WriteNotify)(u32 start, u32 length);
+   void (*WriteNotify)(SH2_struct *context, u32 start, u32 length);
    void(*AddCycle)(SH2_struct *context, u32 value);
 } SH2Interface_struct;
 

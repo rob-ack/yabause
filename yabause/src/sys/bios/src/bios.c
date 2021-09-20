@@ -146,12 +146,10 @@ static void FASTCALL BiosSetScuInterrupt(SH2_struct * sh)
    if (sh->regs.R[5] == 0)
    {
       SH2MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), 0x06000610);
-      sh->cycles += 8;
    }
    else
    {
       SH2MappedMemoryWriteLong(sh, 0x06000900+(sh->regs.R[4] << 2), sh->regs.R[5]);
-      sh->cycles += 9;
    }
 
    sh->regs.PC = sh->regs.PR;
@@ -168,7 +166,6 @@ static void FASTCALL BiosGetScuInterrupt(SH2_struct * sh)
 //   LOG("BiosGetScuInterrupt\n");
 
    sh->regs.R[0] = SH2MappedMemoryReadLong(sh, 0x06000900+(sh->regs.R[4] << 2));
-   sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -185,12 +182,10 @@ static void FASTCALL BiosSetSh2Interrupt(SH2_struct * sh)
    if (sh->regs.R[5] == 0)
    {
       SH2MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), interruptlist[sh->isslave][sh->regs.R[4]]);
-      sh->cycles += 8;
    }
    else
    {
       SH2MappedMemoryWriteLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2), sh->regs.R[5]);
-      sh->cycles += 9;
    }
 
    sh->regs.PC = sh->regs.PR;
@@ -207,7 +202,6 @@ static void FASTCALL BiosGetSh2Interrupt(SH2_struct * sh)
 //   LOG("BiosGetSh2Interrupt\n");
 
    sh->regs.R[0] = SH2MappedMemoryReadLong(sh, sh->regs.VBR+(sh->regs.R[4] << 2));
-   sh->cycles += 5;
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -231,8 +225,6 @@ static void FASTCALL BiosSetScuInterruptMask(SH2_struct * sh)
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       SH2MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
-
-   sh->cycles += 17;
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -259,8 +251,6 @@ static void FASTCALL BiosChangeScuInterruptMask(SH2_struct * sh)
 
    if (!(sh->regs.R[4] & 0x8000)) // double check this
       SH2MappedMemoryWriteLong(sh, 0x25FE00A8, 1); // A-bus Interrupt Acknowledge
-
-   sh->cycles += 20;
 
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
@@ -303,7 +293,6 @@ static void FASTCALL BiosGetSemaphore(SH2_struct * sh)
    temp |= 0x80;
    MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], temp);
 
-   sh->cycles += 11;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -319,7 +308,6 @@ static void FASTCALL BiosClearSemaphore(SH2_struct * sh)
 
    MappedMemoryWriteByte(sh, 0x06000B00 + sh->regs.R[4], 0);
 
-   sh->cycles += 5;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -397,7 +385,6 @@ static void FASTCALL BiosChangeScuInterruptPriority(SH2_struct * sh)
          scumasklist[i] &= 0x0000FFFF;
    }
 
-   sh->cycles += 186;
    sh->regs.PC = sh->regs.PR;
    SH2SetRegisters(sh, &sh->regs);
 }
@@ -1556,7 +1543,6 @@ static void FASTCALL BiosHandleScuInterrupt(SH2_struct * sh, int vector)
    sh->regs.PC = SH2MappedMemoryReadLong(sh, 0x06000900+(vector << 2));
 //   LOG("Interrupt PC = %08X. Read from %08X\n", sh->regs.PC, 0x06000900+(vector << 2));
 
-   sh->cycles += 33;
    SH2SetRegisters(sh, &sh->regs);
 }
 
@@ -1601,7 +1587,6 @@ static void FASTCALL BiosHandleScuInterruptReturn(SH2_struct * sh)
    sh->regs.SR.all = SH2MappedMemoryReadLong(sh, sh->regs.R[15]) & 0x000003F3;
    sh->regs.R[15] += 4;
 
-   sh->cycles += 24;
    SH2SetRegisters(sh, &sh->regs);
 }
 

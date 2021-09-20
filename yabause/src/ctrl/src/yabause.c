@@ -959,7 +959,6 @@ void SyncCPUtoSCSP() {
 #endif
     YabThreadWake(YAB_THREAD_SCSP);
     YabThreadLock(g_scsp_mtx);
-//    saved_m68k_cycles = 0;
     YabThreadUnLock(g_scsp_mtx);
 #if defined CV_SUPPORT
     CvLeaveSpan(spanFrame);

@@ -238,7 +238,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    //glClearBufferfv(GL_COLOR, 0, colopaque);
    //glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-   if ((Vdp2Regs->TVMD & 0x8000) == 0) goto render_finish;
+   if (yabsys.screenOn == 0) goto render_finish;
    if (YglTM_vdp2 == NULL) goto render_finish;
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

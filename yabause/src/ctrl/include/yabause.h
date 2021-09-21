@@ -139,6 +139,7 @@ typedef struct
    int stvInputType;
    int vdp1cycles;
    u8 fps;
+   u8 screenOn;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;

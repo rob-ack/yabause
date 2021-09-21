@@ -3204,7 +3204,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glScissor(0, 0, _Ygl->width, _Ygl->height);
    glEnable(GL_SCISSOR_TEST);
 
-   if ((YglTM_vdp2 == NULL)||((Vdp2Regs->TVMD & 0x8000) == 0)) {
+   if ((YglTM_vdp2 == NULL)||(yabsys.screenOn == 0)) {
      glClearBufferfv(GL_COLOR, 0, col);
      goto render_finish;
    }

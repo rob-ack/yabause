@@ -28,6 +28,7 @@
 #include "vidshared.h"
 #include "vidsoft.h"
 #include "titan/titan.h"
+#include "yabause.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1462,8 +1463,8 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
    int i;
 
    AddString(outstring, "RAMCTL 0x%x\r\n", Vdp2Regs->RAMCTL);
-   
-   if (Vdp2Regs->TVMD & 0x8000)
+
+   if (yabsys.screenOn != 0)
    {
       // TVMD stuff
       AddString(outstring, "Border Color Mode = %s\r\n", Vdp2Regs->TVMD & 0x100 ? "Back screen" : "Black");

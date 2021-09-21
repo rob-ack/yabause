@@ -2161,6 +2161,10 @@ void ToggleVDP1(void)
    Vdp1External.disptoggle ^= 1;
 }
 
+static void RequestVdp1ToDraw() {
+  needVdp1draw = 1;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 static void startField(void) {
   int isrender = 0;
@@ -2202,13 +2206,13 @@ static void startField(void) {
       FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
       abortVdp1();
       vdp1_clock = 0;
-      needVdp1draw = 1;
+      RequestVdp1ToDraw();
     }
   }
   else {
     if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
       LOG("[VDP1] Start Drawing continue");
-      needVdp1draw = 1;
+      RequestVdp1ToDraw();
     }
   }
 
@@ -2252,7 +2256,7 @@ void Vdp1HBlankIN(void)
     if (Vdp1External.plot_trigger_line == yabsys.LineCount){
       if(Vdp1External.plot_trigger_done == 0) {
         vdp1_clock = 0;
-        needVdp1draw = 1;
+        RequestVdp1ToDraw();
         Vdp1External.plot_trigger_done = 1;
       }
     }

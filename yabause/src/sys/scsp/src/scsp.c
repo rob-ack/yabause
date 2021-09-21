@@ -4971,6 +4971,7 @@ void ScspAsynMainCpu( void * p ){
     YabThreadUnLock(g_scsp_set_cyc_mtx);
     bool const processNewSamples = m68k_inc >= scsp_samplecnt;
     // Sync 44100KHz
+    bool updateSound = false;
     YabThreadLock(g_scsp_mtx);
     while (processNewSamples)
     {
@@ -4984,12 +4985,16 @@ void ScspAsynMainCpu( void * p ){
         frame = frame - framecnt;
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
-        ScspExecAsync();
+        updateSound = true;
         break;
       }
     }
-    m68k_inc = 0;
     YabThreadUnLock(g_scsp_mtx);
+    m68k_inc = 0;
+    if(updateSound)
+    {
+      ScspExecAsync();
+    }
 #if defined(ASYNC_SCSP)
     while (scsp_mute_flags) { YabThreadUSleep((1000000 / yabsys.fps)); }
 #endif

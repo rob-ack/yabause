@@ -299,8 +299,8 @@ INCFLAGS := $(foreach dir,$(INCLUDE_DIRS),-I$(dir))
 WARNINGS := -Wno-unused-value
 FLAGS += $(INCFLAGS) $(ENDIANNESS_DEFINES) $(WARNINGS)
 
-CXXFLAGS += $(FLAGS) -std=gnu++11
-CFLAGS += $(FLAGS) -std=gnu11
+CXXFLAGS += $(FLAGS) -std=gnu++17
+CFLAGS += $(FLAGS) -std=gnu17
 
 all: $(TARGET)
 

@@ -97,7 +97,7 @@ set(YAB_PORTS "qt;linux" CACHE STRING "List of ports to build")
 endif(WIN32)
 
 if (CMAKE_COMPILER_IS_GNUCC)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -fomit-frame-pointer")
 endif (CMAKE_COMPILER_IS_GNUCC)
 
 set(kronos_SOURCES
@@ -162,7 +162,7 @@ elseif (WIN32)
 	add_definitions(-DYTSDIR=\"trans\")
 endif()
 #add translations
-include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt) 
+include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt)
 
 #-------------------------------------------------------
 
@@ -680,7 +680,7 @@ else ()
 endif ()
 
 if (CMAKE_COMPILER_IS_GNUCC)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c11 -D_DEFAULT_SOURCE -Wno-format -mfpmath=sse -m64 -march=native -funroll-loops")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c17 -D_DEFAULT_SOURCE -Wno-format -mfpmath=sse -m64 -march=native -funroll-loops")
         set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -mfpmath=sse -m64 -march=native -funroll-loops")
 endif()
 
@@ -703,11 +703,11 @@ endif()
 
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION} -march=i686 -msse")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++17")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i686")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++11")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${YAB_OPTIMIZATION} -std=c++17")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "x86_64")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv5tel")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${YAB_OPTIMIZATION}")
@@ -717,12 +717,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
     set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} -O3 -mcpu=cortex-a8 -mfpu=vfp -mfloat-abi=hard")
 endif("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7l")
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "armv7-a")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++11 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c17 -march=armv7ve -mcpu=cortex-a15 -mfpu=neon -ffast-math")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv7ve -std=c++17 -mcpu=cortex-a15 -mfpu=neon -ffast-math -fno-exceptions -fno-rtti")
 endif()
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "aarch64")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -march=armv8-a -ffast-math")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -std=c++11  -ffast-math -fno-exceptions -fno-rtti  ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a -std=c++17  -ffast-math -fno-exceptions -fno-rtti  ")
 endif()
 
 # Warnings defined to know when we're breaking compilation with MSVC

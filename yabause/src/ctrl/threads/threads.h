@@ -135,7 +135,6 @@ typedef void * YabMutex;
 void YabThreadLock( YabMutex * mtx );
 void YabThreadUnLock( YabMutex * mtx );
 YabMutex * YabThreadCreateMutex();
-void YabThreadFreeMutex( YabMutex * mtx );
 
 typedef void * YabCond;
 

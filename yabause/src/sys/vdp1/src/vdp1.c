@@ -1222,7 +1222,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       commandCounter++;
    }
    if (command & 0x8000) {
-        LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
+        LOG("VDP1: Command Finished! count = %d @ %08X", commandCounter, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
    }
    CmdListDrawn = 1;

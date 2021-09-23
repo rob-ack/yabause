@@ -1188,9 +1188,11 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
           regs->addr = T1ReadWord(ram, regs->addr + 2) * 8;
           if ((regs->addr == oldAddr) && (command & 0x4000))   {
             //The next adress is the same as the old adress and the command is skipped => Exit
-            Vdp1External.status = VDP1_STATUS_IDLE;
+            regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
+            vdp1_clock = 0;
             CmdListDrawn = 1;
             CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
+            checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             return;
           }
         }

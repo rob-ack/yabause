@@ -868,10 +868,11 @@ if (NOT $ENV{PKGMANDIR} STREQUAL "")
     set(YAB_MAN_DIR $ENV{PKGMANDIR})
 endif ()
 
-
-foreach(PORT IN LISTS YAB_PORTS)
-	add_subdirectory(port/${PORT})
-endforeach(PORT)
+if(NOT KRONOS_LIBRETRO_CORE)
+	foreach(PORT IN LISTS YAB_PORTS)
+		add_subdirectory(port/${PORT})
+	endforeach(PORT)
+endif()
 
 # this is stupid, but CMake automatic definitions are based on variables...
 if (YAB_WANT_OPENSL)

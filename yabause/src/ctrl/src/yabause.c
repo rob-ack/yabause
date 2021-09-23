@@ -769,7 +769,7 @@ PCV_PROVIDER provider;
 
 int YabauseEmulate(void) {
 #if defined CV_SUPPORT
-    static once = false;
+    static bool once = false;
     if(!once)
     {
 		CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series); 

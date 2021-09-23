@@ -50,11 +50,6 @@
           "type": "BOOL"
         },
         {
-          "name": "KRONOS_FORCE_CXX_COMPILER",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
           "name": "YAB_USE_CACHE",
           "value": "True",
           "type": "BOOL"
@@ -84,11 +79,6 @@
       "variables": [
         {
           "name": "KRONOS_LIBRETRO_CORE",
-          "value": "True",
-          "type": "BOOL"
-        },
-        {
-          "name": "KRONOS_FORCE_CXX_COMPILER",
           "value": "True",
           "type": "BOOL"
         },
@@ -169,11 +159,6 @@
           "type": "BOOL"
         },
         {
-          "name": "YAB_PORTS",
-          "value": "",
-          "type": "STRING"
-        },
-        {
           "name": "KRONOS_LIBRETRO_CORE",
           "value": "True",
           "type": "BOOL"
@@ -191,11 +176,6 @@
         {
           "name": "KRONOS_SHADER_DEBUG",
           "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_WANT_SH2_ASYNC",
-          "value": "True",
           "type": "BOOL"
         },
         {
@@ -231,21 +211,6 @@
           "type": "BOOL"
         },
         {
-          "name": "YAB_PORTS",
-          "value": "",
-          "type": "STRING"
-        },
-        {
-          "name": "OPENGLCORE_TEST",
-          "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_USE_QT5",
-          "value": "False",
-          "type": "BOOL"
-        },
-        {
           "name": "YAB_WANT_SH2_ASYNC",
           "value": "False",
           "type": "BOOL"
@@ -257,11 +222,6 @@
         },
         {
           "name": "YAB_WANT_SDL",
-          "value": "False",
-          "type": "BOOL"
-        },
-        {
-          "name": "YAB_WANT_SOFT_RENDERING",
           "value": "False",
           "type": "BOOL"
         }

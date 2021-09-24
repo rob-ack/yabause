@@ -503,13 +503,16 @@ const char prg_rbg_get_pattern_data_1w[] =
 "  charaddr *= 0x20u;\n";
 
 const char prg_rbg_get_pattern_data_2w[] =
-"  patternname = vram[addr>>2]; \n"
-"  uint tmp1 = patternname & 0x7FFFu; \n"
-"  charaddr = patternname >> 16; \n"
-"  charaddr = (((charaddr >> 8) & 0xFFu) | ((charaddr) & 0xFFu) << 8);\n"
-"  tmp1 = (((tmp1 >> 8) & 0xFFu) | ((tmp1) & 0xFFu) << 8);\n"
+"    patternname = vram[(addr&0x7FFFu)>>2]; \n"
+"  uint tmp1 = patternname & 0xFFFFu; \n"
+"  charaddr = (patternname >> 16) & 0xFFFFu; \n"
+"  tmp1 = (((tmp1 >> 8) & 0xFFu) | ((tmp1 & 0xFFu) << 8));\n"
+"  charaddr = (((charaddr >> 8) & 0xFFu) | ((charaddr & 0xFFu) << 8));\n"
 "  uint flipfunction = (tmp1 & 0xC000u) >> 14;\n"
-"  if(colornumber==0) paladdr = tmp1 & 0x7Fu; else paladdr = tmp1 & 0x70u;\n" // not in 16 colors
+"  if(colornumber==0) \n"
+"    paladdr = tmp1 & 0x7Fu;\n"
+"  else \n"
+"    paladdr = tmp1 & 0x70u;\n" // not in 16 colors
 "  uint specialfunction_in = (tmp1 & 0x2000u) >> 13;\n"
 "  uint specialcolorfunction_in = (tmp1 & 0x1000u) >> 12;\n"
 "  charaddr &= 0x3FFFu;\n"

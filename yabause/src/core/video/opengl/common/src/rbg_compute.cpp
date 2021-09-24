@@ -1657,7 +1657,7 @@ DEBUGWIP("Init\n");
 				else {
 					if (rbg->info.patterndatasize == 1) {
 						switch (rbg->info.colornumber) {
-						case 0: { // BlukSlash
+						case 0: { // BlukSlash, J League Go Go Goal
 							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_2_2w_p1_4bpp_);
 							break;
 						}

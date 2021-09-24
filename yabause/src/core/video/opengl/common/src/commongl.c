@@ -1440,7 +1440,6 @@ int YglInit(int width, int height, unsigned int depth) {
   glBindTexture(GL_TEXTURE_2D, 0);
   _Ygl->st = 0;
   _Ygl->aamode = AA_NONE;
-  _Ygl->scanline = 0;
   _Ygl->stretch = 0;
   _Ygl->wireframe_mode = 0;
 

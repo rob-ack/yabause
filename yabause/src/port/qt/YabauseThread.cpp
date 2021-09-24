@@ -412,7 +412,6 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.resolution_mode = vs->value("Video/resolution_mode", mYabauseConf.resolution_mode).toInt();
 	mYabauseConf.use_cs = vs->value("Video/compute_shader_mode", mYabauseConf.use_cs).toInt();
 	mYabauseConf.stretch = vs->value("Video/AspectRatio", mYabauseConf.stretch).toInt();
-	mYabauseConf.scanline = vs->value("Video/ScanLine", mYabauseConf.scanline).toInt();
 	mYabauseConf.wireframe_mode = vs->value("Video/Wireframe", mYabauseConf.wireframe_mode).toInt();
 	mYabauseConf.meshmode = vs->value("Video/MeshMode", mYabauseConf.meshmode).toInt();
 	mYabauseConf.bandingmode = vs->value("Video/BandingMode", mYabauseConf.bandingmode).toInt();

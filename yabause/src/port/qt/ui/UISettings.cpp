@@ -95,7 +95,8 @@ const Items mVideoFilterMode = Items()
 	<< Item("3", "Deinterlacing Bob")
 	<< Item("4", "Deinterlacing Debug Bob")
 	<< Item("5", "Deinterlacing OSSC Bob")
-	<< Item("6", "Deinterlacing OSSC Debug Bob");
+	<< Item("6", "Deinterlacing OSSC Debug Bob")
+	<< Item("7", "Deinterlacing Scanline");
 
 const Items mUpscaleFilterMode = Items()
 	<< Item("0", "None")
@@ -123,10 +124,6 @@ const Items mAspectRatio = Items()
 	<< Item("0", "Original aspect ratio")
 	<< Item("1", "Stretch to window")
 	<< Item("2", "Integer scaling");
-
-const Items mScanLine = Items()
-	<< Item("0", "Scanline off")
-	<< Item("1", "Scanline on");
 
 const Items mMeshMode = Items()
 	<< Item("0", "Original")
@@ -335,7 +332,7 @@ void UISettings::tbBrowse_clicked()
 		}
 		if (mCartridgeTypes[cbCartridge->currentIndex()].pathFlag) {
             requestSTVFolder( QtYabause::translate( "Choose a STV cartridge folder" ), leCartridge, pathProposal);
-        } 
+        }
 		else if (mCartridgeTypes[cbCartridge->currentIndex()].saveFlag)
 		{
 			requestNewFile( QtYabause::translate( "Choose a cartridge file" ), leCartridge, QString(), pathProposal);
@@ -398,11 +395,6 @@ void UISettings::on_cbClockSync_stateChanged( int state )
 void UISettings::changeAspectRatio(int id)
 {
     if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_ASPECT_RATIO, (mAspectRatio.at(id).id).toInt());
-}
-
-void UISettings::changeScanLine(int id)
-{
-    if (VIDCore != NULL) VIDCore->SetSettingValue(VDP_SETTING_SCANLINE, (mScanLine.at(id).id).toInt());
 }
 
 void UISettings::changeWireframe(int id)
@@ -576,11 +568,6 @@ void UISettings::loadCores()
     cbAspectRatio->addItem(QtYabause::translate(it.Name), it.id);
 
   connect(cbAspectRatio, SIGNAL(currentIndexChanged(int)), this, SLOT(changeAspectRatio(int)));
-
-  foreach(const Item& it, mScanLine)
-    cbScanlineFilter->addItem(QtYabause::translate(it.Name), it.id);
-
-  connect(cbScanlineFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(changeScanLine(int)));
 
 	foreach(const Item& it, mWireframe)
     cbWireframeFilter->addItem(QtYabause::translate(it.Name), it.id);
@@ -767,7 +754,6 @@ void UISettings::loadSettings()
   cbGPURBG->setCurrentIndex(cbGPURBG->findData(s->value("Video/compute_shader_mode", mCSMode.at(0).id).toInt()));
 	cbResolution->setCurrentIndex(cbResolution->findData(s->value("Video/resolution_mode", mResolutionMode.at(0).id).toInt()));
   cbAspectRatio->setCurrentIndex(cbAspectRatio->findData(s->value("Video/AspectRatio", mAspectRatio.at(0).id).toInt()));
-  cbScanlineFilter->setCurrentIndex(cbScanlineFilter->findData(s->value("Video/ScanLine", mScanLine.at(0).id).toInt()));
 	cbWireframeFilter->setCurrentIndex(cbWireframeFilter->findData(s->value("Video/Wireframe", mWireframe.at(0).id).toInt()));
 	cbMeshModeFilter->setCurrentIndex(cbMeshModeFilter->findData(s->value("Video/MeshMode", mMeshMode.at(0).id).toInt()));
 	cbBandingModeFilter->setCurrentIndex(cbBandingModeFilter->findData(s->value("Video/BandingMode", mBandingMode.at(0).id).toInt()));
@@ -867,7 +853,6 @@ void UISettings::saveSettings()
 
 	// Save new version of keys
         s->setValue("Video/AspectRatio", cbAspectRatio->itemData(cbAspectRatio->currentIndex()).toInt());
-        s->setValue("Video/ScanLine", cbScanlineFilter->itemData(cbScanlineFilter->currentIndex()).toInt());
 				s->setValue("Video/Wireframe", cbWireframeFilter->itemData(cbWireframeFilter->currentIndex()).toInt());
 				s->setValue("Video/MeshMode", cbMeshModeFilter->itemData(cbMeshModeFilter->currentIndex()).toInt());
 				s->setValue("Video/BandingMode", cbBandingModeFilter->itemData(cbBandingModeFilter->currentIndex()).toInt());

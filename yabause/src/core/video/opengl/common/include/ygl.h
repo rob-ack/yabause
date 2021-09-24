@@ -424,7 +424,8 @@ typedef enum
   AA_BOB_SECURE_FILTER,
   AA_BOB_SECURE_DEBUG_FILTER,
   AA_BOB_OSSC_FILTER,
-  AA_BOB_OSSC_DEBUG_FILTER
+  AA_BOB_OSSC_DEBUG_FILTER,
+  AA_SCANLINE
 } AAMODE;
 
 typedef enum
@@ -482,7 +483,6 @@ typedef enum {
     VDP_SETTING_RESOLUTION_MODE,
     VDP_SETTING_UPSCALMODE,
     VDP_SETTING_ASPECT_RATIO,
-    VDP_SETTING_SCANLINE,
     VDP_SETTING_MESH_MODE,
     VDP_SETTING_BANDING_MODE,
     VDP_SETTING_COMPUTE_SHADER,
@@ -649,7 +649,6 @@ typedef struct {
    POLYGONMODE polygonmode;
    MESHMODE meshmode;
    BANDINGMODE bandingmode;
-   int scanline;
    int wireframe_mode;
    RATIOMODE stretch;
    RESOLUTION_MODE resolution_mode;

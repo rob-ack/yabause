@@ -2907,6 +2907,12 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
   if (rbg->use_cs) {
 
+    if (info->isbitmap) {
+      rbg->info.cellw = cellw;
+      rbg->info.cellh = (cellh * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
+      rbg->info.celly = (cellh * info->startLine)/yabsys.VBlankLineCount;
+    }
+
     YglQuadRbg0(rbg, NULL, &rbg->c, &rbg->cline, rbg->rgb_type, YglTM_vdp2, varVdp2Regs);
    //Not optimal. Should be 0 if there is no offset used.
     _Ygl->useLineColorOffset[0] = ((varVdp2Regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[0]:0;
@@ -4674,7 +4680,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     if ((info->isbitmap = varVdp2Regs->CHCTLA & 0x2) != 0)
     {
       // Bitmap Mode
-      rgb->use_cs = 0;
+      // rgb->use_cs = 0;
 
       ReadBitmapSize(info, varVdp2Regs->CHCTLA >> 2, 0x3);
       if (vdp2_interlace) info->cellh *= 2;
@@ -5891,7 +5897,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   if ((info->isbitmap = varVdp2Regs->CHCTLB & 0x200) != 0)
   {
-    rgb->use_cs = 0;
+    // rgb->use_cs = 0;
     // Bitmap Mode
     ReadBitmapSize(info, varVdp2Regs->CHCTLB >> 10, 0x1);
 

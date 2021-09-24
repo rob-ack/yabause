@@ -2445,8 +2445,11 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
   const GLchar * fblitbilinear_img_v[] = { fblit_head, fblitnear_img, fblit_img, fblit_img_end, NULL };
   const GLchar * fblitbicubic_img_v[] = { fblit_head, fblitbicubic_img, fblit_img, fblit_img_end, NULL };
   const GLchar * fblit_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  const GLchar * fblit_img_scanline_is_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_is_f, fblit_img_end, NULL };
   const GLchar * fblitbilinear_img_scanline_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  const GLchar * fblitbilinear_img_scanline_is_v[] = { fblit_head, fblitnear_img, fblit_img, Yglprg_blit_scanline_is_f, fblit_img_end, NULL };
   const GLchar * fblitbicubic_img_scanline_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_f, fblit_img_end, NULL };
+  const GLchar * fblitbicubic_img_scanline_is_v[] = { fblit_head, fblitbicubic_img, fblit_img, Yglprg_blit_scanline_is_f, fblit_img_end, NULL };
 
   const GLchar * fblit_bob_secure_img_v[] = { fblit_head, fbobsecure_img, fblit_img, fblit_img_end, NULL };
   const GLchar * fblit_bob_secure_debug_img_v[] = { fblit_head, fbobsecure_debug_img, fblit_img, fblit_img_end, NULL };
@@ -2473,6 +2476,7 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
     1.0f, 1.0f };
 
   float nbLines = yabsys.IsPal?625.0f:525.0f;
+  if (_Ygl->stretch == 2) nbLines = h;
 
   if (_Ygl->upmode != UP_NONE) {
     int scale = 1;
@@ -2560,13 +2564,22 @@ int YglBlitFramebuffer(u32 srcTexture, float w, float h, float dispw, float disp
         case AA_BOB_OSSC_FILTER:
         case AA_BOB_OSSC_DEBUG_FILTER:
         case AA_NONE:
-          glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
+          if (_Ygl->stretch == 2)
+            glShaderSource(fshader, 5, fblit_img_scanline_is_v, NULL);
+          else
+            glShaderSource(fshader, 5, fblit_img_scanline_v, NULL);
           break;
         case AA_BILINEAR_FILTER:
-          glShaderSource(fshader, 5, fblitbilinear_img_scanline_v, NULL);
+          if (_Ygl->stretch == 2)
+            glShaderSource(fshader, 5, fblitbilinear_img_scanline_is_v, NULL);
+          else
+            glShaderSource(fshader, 5, fblitbilinear_img_scanline_v, NULL);
           break;
         case AA_BICUBIC_FILTER:
-          glShaderSource(fshader, 5, fblitbicubic_img_scanline_v, NULL);
+          if (_Ygl->stretch == 2)
+            glShaderSource(fshader, 5, fblitbicubic_img_scanline_is_v, NULL);
+          else
+            glShaderSource(fshader, 5, fblitbicubic_img_scanline_v, NULL);
           break;
       }
     }

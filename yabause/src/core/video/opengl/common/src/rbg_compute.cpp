@@ -2255,7 +2255,8 @@ DEBUGWIP("Init\n");
   		glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_vram_);
   		//glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x80000, (void*)Vdp2Ram);
   		if(mapped_vram == nullptr) mapped_vram = glMapBufferRange(GL_SHADER_STORAGE_BUFFER, 0, 0x100000, GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-  		memcpy(&((u8*)mapped_vram)[start], &Vdp2Ram[start], size);
+  		//memcpy(&((u8*)mapped_vram)[start], &Vdp2Ram[start], size); //Does not work
+  		memcpy(&((u8*)mapped_vram)[0], &Vdp2Ram[0], 0x80000<<(Vdp2Regs->VRSIZE>>15));
   		glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
   		mapped_vram = nullptr;
 		}

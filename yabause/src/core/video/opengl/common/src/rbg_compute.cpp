@@ -699,6 +699,7 @@ const GLchar * a_prg_rbg_0_2w_p1_8bpp[] = {
 	prg_generate_rbg_end };
 
 //ICI
+//Last Bronx
 const GLchar * a_prg_rbg_0_2w_p2_8bpp[] = {
 	prg_generate_rbg,
 	prg_continue_rbg,

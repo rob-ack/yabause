@@ -43,7 +43,7 @@ namespace Arguments
 
 	static std::vector<Option> const availableOptions =
 	{
-		{ NULL,  "--autoframeskip=", "0|1", "Enable or disable auto frame skipping / limiting.",  2, autoframeskip },
+		{ NULL,  "--autoframeskip=", "0|1", "Enable or disable vertical synchronization.",  2, autoframeskip },
 		{ NULL,  "--autoload=", "<SAVESTATE>", "Automatically start emulation and load a save state.",1, autoload },
 		{ "-a",  "--autostart", NULL,       "Automatically start emulation.",                      1, autostart },
 		{ NULL,  "--binary=", "<FILE>[:ADDRESS]", "Use a binary file.",                           1, binary },
@@ -53,7 +53,7 @@ namespace Arguments
 		{ "-f",  "--fullscreen", NULL,      "Start the emulator in fullscreen.",                  5, fullscreen },
 		{ "-h",  "--help", NULL,            "Show this help and exit.",                           0, help },
 		{ "-i",  "--iso=", "<ISO>",         "Choose a dump image file. supports i.e. .cue, .iso, .zip", 4, iso },
-        { "-nb", "--no-bios", NULL,         "Use the emulated bios",                              3, nobios },
+        { "-nb", "--no-bios", NULL,         "Use the emulated bios.",                              3, nobios },
         { "-ns", "--no-sound", NULL,        "Turns sound off.",                                   6, nosound },
 		{ "-v",  "--version", NULL,         "Show version and exit.",                             0, version },
 	};
@@ -68,13 +68,12 @@ namespace Arguments
 
 		while(argit.hasNext())
 		{
-			bool isFirst = !argit.hasPrevious();
 			QString const & argument = argit.next();
 
 			//if its a file its probably a game file so if so use it as such
 			if(QFile::exists(argument))
 			{
-				if (!isFirst)
+				if (!argument.endsWith(".exe"))
 				{
 					Option const & autoStartOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](Option const & e)
 					{
@@ -189,7 +188,7 @@ namespace Arguments
 
 	void help(const QString& param)
 	{
-		std::cout << std::endl << "Yabause commands:" << std::endl;
+		std::cout << std::endl << "Kronos commands:" << std::endl;
 
 		for(Option const & option : availableOptions)
 		{

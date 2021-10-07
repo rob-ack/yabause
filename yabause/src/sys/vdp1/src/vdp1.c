@@ -72,6 +72,11 @@ static void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
   if (((A)) > 1023) { DEBUG_BAD_COORD("Bad(1023) %x (%d, 0x%x)\n", (A), (A), toto);}\
 }
 
+static void RequestVdp1ToDraw() {
+  needVdp1draw = 1;
+}
+
+
 static void abortVdp1() {
   if (Vdp1External.status == VDP1_STATUS_RUNNING) {
     // The vdp1 is still running and a new draw command request has been received
@@ -422,6 +427,7 @@ static void Vdp1TryDraw(void) {
 }
 
 void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
+  u16 oldPTMR = 0;
   addr &= 0xFF;
   switch(addr) {
     case 0x0:
@@ -441,6 +447,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
         //Skeleton warriors is writing 0xFFF to PTMR. It looks like the behavior is 0x2
           val = 0x2;
       }
+      oldPTMR = Vdp1Regs->PTMR;
       Vdp1Regs->PTMR = val;
       Vdp1External.plot_trigger_line = -1;
       Vdp1External.plot_trigger_done = 0;
@@ -449,9 +456,16 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
         Vdp1External.plot_trigger_line = yabsys.LineCount;
         abortVdp1();
         vdp1_clock = 0;
-        needVdp1draw = 1;
+        RequestVdp1ToDraw();
         Vdp1TryDraw();
         Vdp1External.plot_trigger_done = 1;
+      }
+      if ((val == 0x2) && (oldPTMR == 0x0)){
+        FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
+        abortVdp1();
+        vdp1_clock = 0;
+        RequestVdp1ToDraw();
+        Vdp1TryDraw();
       }
       break;
       case 0x6:
@@ -2156,11 +2170,6 @@ void ToggleVDP1(void)
 {
    Vdp1External.disptoggle ^= 1;
 }
-
-static void RequestVdp1ToDraw() {
-  needVdp1draw = 1;
-}
-
 //////////////////////////////////////////////////////////////////////////////
 static void startField(void) {
   int isrender = 0;

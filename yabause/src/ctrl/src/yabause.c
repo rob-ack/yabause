@@ -866,8 +866,6 @@ int YabauseEmulate(void) {
       scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
       new_scsp_exec(scsp_integer_part);
       saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
- #endif
-
 #endif
       PROFILE_STOP("Total Emulation");
    }

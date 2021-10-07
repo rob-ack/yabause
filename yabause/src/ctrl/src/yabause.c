@@ -816,6 +816,7 @@ int YabauseEmulate(void) {
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
+            ScspAddCycles((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
             PROFILE_START("vblankin");
             // VBlankIN
             SmpcINTBACKEnd();
@@ -865,11 +866,9 @@ int YabauseEmulate(void) {
       scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
       new_scsp_exec(scsp_integer_part);
       saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
-#else
-      {
-          ScspAddCycles(m68k_cycles_per_deciline);
+ #endif
+
 #endif
-      }
       PROFILE_STOP("Total Emulation");
    }
    M68KSync();

@@ -84,7 +84,7 @@ typedef struct
   int inbreakpoint;
 } ScspInternal;
 
-extern const u16 scsp_frequency; 
+extern const u16 scsp_frequency;
 extern const u16 scsp_samplecnt; // 11289600/44100
 
 extern SoundInterface_struct SNDDummy;

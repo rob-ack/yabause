@@ -5385,6 +5385,7 @@ void ScspAsynMainCpu( void * p ){
 
   int frame = 0;
   u64 m68k_inc = 0; //how much remaining samples should be played
+  u64 m68k_inc_lost = 0; //how much remaining samples should be played
 
   while (thread_running)
   {
@@ -5398,13 +5399,14 @@ void ScspAsynMainCpu( void * p ){
     YabThreadSleep();
 
     YabThreadLock(g_scsp_set_cyc_mtx);
+    newCycles += m68k_inc_lost;
+    m68k_inc_lost = newCycles - ((newCycles >> SCSP_FRACTIONAL_BITS)<<SCSP_FRACTIONAL_BITS);
     m68k_inc += (newCycles >> SCSP_FRACTIONAL_BITS);
     newCycles = 0;
     YabThreadUnLock(g_scsp_set_cyc_mtx);
-    bool const processNewSamples = m68k_inc >= scsp_samplecnt;
     // Sync 44100KHz
     YabThreadLock(g_scsp_mtx);
-    while (processNewSamples)
+    while (m68k_inc >= scsp_samplecnt)
     {
       m68k_inc -= scsp_samplecnt;
       MM68KExec(scsp_samplecnt);
@@ -5416,11 +5418,11 @@ void ScspAsynMainCpu( void * p ){
         frame = frame - framecnt;
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
+        m68k_inc = 0;
         ScspExecAsync();
         break;
       }
     }
-    m68k_inc = 0;
     YabThreadUnLock(g_scsp_mtx);
 #if defined(ASYNC_SCSP)
     while (scsp_mute_flags) { YabThreadUSleep((1000000 / yabsys.fps)); }

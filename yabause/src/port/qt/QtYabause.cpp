@@ -531,10 +531,10 @@ OSD_struct QtYabause::defaultOSDCore()
 
 PerInterface_struct QtYabause::defaultPERCore()
 {
-#if defined HAVE_DIRECTINPUT
-	return PERDIRECTX;
-#elif defined HAVE_LIBSDL
+#if defined HAVE_LIBSDL
 	return PERSDLJoy;
+#elif defined HAVE_DIRECTINPUT
+		return PERDIRECTX;
 #else
 	return PERQT;
 #endif

@@ -48,10 +48,10 @@ Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
 vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
-int nbCmdToProcess = 0;
 
 int vdp1_clock = 0;
 
+static int nbCmdToProcess = 0;
 static int CmdListDrawn = 0;
 static int CmdListLimit = 0x80000;
 
@@ -1033,6 +1033,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     usrClipCmd = NULL;
     sysClipCmd = NULL;
     localCoordCmd = NULL;
+    nbCmdToProcess = 0;
   }
 
    Vdp1External.status = VDP1_STATUS_RUNNING;
@@ -1049,7 +1050,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    vdp1Ram_update_end = 0x0;
    Vdp1External.checkEDSR = 0;
 
-   nbCmdToProcess = 0;
    yabsys.vdp1cycles = 0;
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
      int ret;
@@ -2231,7 +2231,7 @@ void Vdp1HBlankIN(void)
 {
   if (nbCmdToProcess > 0) {
     for (int i = 0; i<nbCmdToProcess; i++) {
-      if (cmdBufferBeingProcessed[i].ignitionLine == yabsys.LineCount+1) {
+      if (cmdBufferBeingProcessed[i].ignitionLine == (yabsys.LineCount-1)) {
         if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
             (cmdBufferBeingProcessed[i].end_addr <= vdp1Ram_update_start))) {
           if (Vdp1External.checkEDSR == 0) {

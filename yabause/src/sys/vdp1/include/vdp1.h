@@ -168,7 +168,6 @@ typedef struct
 extern VideoInterface_struct *VIDCore;
 
 extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
-extern int nbCmdToProcess;
 
 extern u8 * Vdp1Ram;
 extern int vdp1Ram_update_start;

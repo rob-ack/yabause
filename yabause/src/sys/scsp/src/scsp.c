@@ -5397,8 +5397,8 @@ void ScspAsynMainCpu( void * p ){
 
     YabThreadSleep();
 
-    m68k_inc += (newCycles >> SCSP_FRACTIONAL_BITS);
     YabThreadLock(g_scsp_set_cyc_mtx);
+    m68k_inc += (newCycles >> SCSP_FRACTIONAL_BITS);
     newCycles = 0;
     YabThreadUnLock(g_scsp_set_cyc_mtx);
     bool const processNewSamples = m68k_inc >= scsp_samplecnt;

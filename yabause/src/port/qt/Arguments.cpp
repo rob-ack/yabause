@@ -68,12 +68,13 @@ namespace Arguments
 
 		while(argit.hasNext())
 		{
+			bool isFirst = !argit.hasPrevious();
 			QString const & argument = argit.next();
 
 			//if its a file its probably a game file so if so use it as such
 			if(QFile::exists(argument))
 			{
-				if (!argument.endsWith(".exe"))
+				if (!isFirst)
 				{
 					Option const & autoStartOption = *std::find_if(availableOptions.begin(), availableOptions.end(), [](Option const & e)
 					{

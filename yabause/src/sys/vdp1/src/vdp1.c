@@ -2197,19 +2197,18 @@ static void startField(void) {
 
     Vdp1External.swap_frame_buffer = 0;
 
-    // if Plot Trigger mode == 0x02 draw start
-    if ((Vdp1Regs->PTMR == 0x2)){
-      FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
-      abortVdp1();
-      vdp1_clock = 0;
-      RequestVdp1ToDraw();
-    }
   }
   else {
     if ( Vdp1External.status == VDP1_STATUS_RUNNING) {
       LOG("[VDP1] Start Drawing continue");
       RequestVdp1ToDraw();
     }
+  }
+  if ((Vdp1Regs->PTMR == 0x2)){
+    LOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
+    abortVdp1();
+    vdp1_clock = 0;
+    RequestVdp1ToDraw();
   }
 
   if (Vdp1Regs->PTMR == 0x1) Vdp1External.plot_trigger_done = 0;

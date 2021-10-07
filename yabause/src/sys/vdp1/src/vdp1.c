@@ -2246,6 +2246,7 @@ void Vdp1HBlankIN(void)
       }
     }
     if (cmdBufferBeingProcessed[nbCmdToProcess-1].ignitionLine == -1) {
+      nbCmdToProcess = 0;
       vdp1Ram_update_start = 0x80000;
       vdp1Ram_update_end = 0x0;
       if (VIDCore != NULL) {

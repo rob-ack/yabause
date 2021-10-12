@@ -401,7 +401,11 @@ static void updateTVMRMode() {
     Vdp1External.useVBlankErase = 1;
   } else {
     //VBE can be one only when FCM and FCT are 1
-    YuiMsg("Prohibited FBCR/TVMF values\n");
+    LOG("Prohibited FBCR/TVMR values\n");
+    // Assume prohibited modes behave like if the VBE was 0
+    Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0) || ((Vdp1Regs->FBCR & 3) == 1);
+    Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
+    Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
   }
 }
 
@@ -415,7 +419,11 @@ static void updateFBCRMode() {
       Vdp1External.useVBlankErase = 1;
     } else {
       //VBE can be one only when FCM and FCT are 1
-      YuiMsg("Prohibited FBCR/TVMF values\n");
+      LOG("Prohibited FBCR/TVMR values\n");
+      // Assume prohibited modes behave like if the VBE was 0
+      Vdp1External.onecyclemode = ((Vdp1Regs->FBCR & 3) == 0) || ((Vdp1Regs->FBCR & 3) == 1);
+      Vdp1External.manualerase |= ((Vdp1Regs->FBCR & 3) == 2);
+      Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
     }
   } else {
     //Manual erase shall not be reseted but need to save its current value

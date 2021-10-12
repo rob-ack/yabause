@@ -37,6 +37,7 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
+#include "mk68Counter.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scspdsp.h"
@@ -190,6 +191,7 @@ void YabauseChangeTiming(int freqtype) {
 
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
+extern YabBarrier * g_scsp_sync;
 YabEventQueue * q_scsp_m68counterCond;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
@@ -336,10 +338,10 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.wireframe_mode = init->wireframe_mode;
    yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
-   YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC); //default video format initialization
    nextFrameTime = 0;
 
   q_scsp_m68counterCond = YabThreadCreateQueue(1);
+  setM68kCounter(0);
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -537,10 +539,6 @@ int YabauseInit(yabauseinit_struct *init)
 
    if (Cs2GetRegionID() >= 0xA) YabauseSetVideoFormat(VIDEOFORMATTYPE_PAL);
    else YabauseSetVideoFormat(VIDEOFORMATTYPE_NTSC);
-
-#if defined(ASYNC_SCSP)
-   ScspRun();
-#endif
 
 #ifdef HAVE_GDBSTUB
    GdbStubInit(MSH2, 43434);
@@ -751,12 +749,25 @@ int YabauseEmulate(void) {
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 
-    //http://antime.kapsi.fi/sega/files/ST-103-R1-040194.pdf
-   int const lines = yabsys.MaxLineCount;
-   u8 const frames = yabsys.fps;
+   u32 m68k_cycles_per_deciline = 0;
+   u32 scsp_cycles_per_deciline = 0;
 
-   u64 const scsp_cycles_per_deciline = get_cycles_per_line_division(scsp_frequency * 512, frames, lines, DECILINE_STEP);
-   u64 const m68k_cycles_per_deciline = get_cycles_per_line_division(scsp_frequency * scsp_samplecnt, frames, lines, DECILINE_STEP);
+   int lines = 0;
+   int frames = 0;
+
+   if (yabsys.IsPal)
+   {
+     lines = 313;
+     frames = 50;
+   }
+   else
+   {
+     lines = 263;
+     frames = 60;
+   }
+   scsp_cycles_per_deciline = get_cycles_per_line_division(44100 * 512, frames, lines, DECILINE_STEP);
+   m68k_cycles_per_deciline = get_cycles_per_line_division(44100 * 256, frames, lines, DECILINE_STEP);
+
    DoMovie();
 
    MSH2->cycles = 0;
@@ -811,12 +822,15 @@ int YabauseEmulate(void) {
         // SyncScsp();
          PROFILE_STOP("hblankout");
          PROFILE_START("SCSP");
+         ScspExec();
          PROFILE_STOP("SCSP");
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
-            ScspAddCycles((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
+#if defined(ASYNC_SCSP)
+            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
+#endif
             PROFILE_START("vblankin");
             // VBlankIN
             SmpcINTBACKEnd();
@@ -866,7 +880,12 @@ int YabauseEmulate(void) {
       scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
       new_scsp_exec(scsp_integer_part);
       saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
+#else
+      {
+        saved_m68k_cycles  += m68k_cycles_per_deciline;
+        setM68kCounter(saved_m68k_cycles);
 #endif
+      }
       PROFILE_STOP("Total Emulation");
    }
    M68KSync();
@@ -904,12 +923,11 @@ int YabauseEmulate(void) {
    return ret;
 }
 
-extern YabBarrier * g_scsp_sync;
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
-    YabThreadWake(YAB_THREAD_SCSP);
     YabThreadBarrierWait(g_scsp_sync);
+    saved_m68k_cycles = 0;
   //LOG("[SH2] START SCSP");
 }
 
@@ -995,10 +1013,9 @@ u64 YabauseGetTicks(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YabauseSetVideoFormat(int type) {
-   yabsys.IsPal = (type == VIDEOFORMATTYPE_PAL);
-   yabsys.fps = yabsys.IsPal ? 50 : 60;
-   yabsys.MaxLineCount = yabsys.IsPal ? 313 : 263;
    if (Vdp2Regs == NULL) return;
+   yabsys.IsPal = (type == VIDEOFORMATTYPE_PAL);
+   yabsys.MaxLineCount = type ? 313 : 263;
 #ifdef WIN32
    QueryPerformanceFrequency((LARGE_INTEGER *)&yabsys.tickfreq);
 #elif defined(_arch_dreamcast)

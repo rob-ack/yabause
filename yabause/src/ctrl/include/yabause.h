@@ -137,7 +137,6 @@ typedef struct
    int wireframe_mode;
    int stvInputType;
    int vdp1cycles;
-   u8 fps;
    u8 screenOn;
 } yabsys_struct;
 

@@ -5424,7 +5424,7 @@ void ScspAsynMainCpu( void * p ){
       }
     }
     #if defined(ASYNC_SCSP)
-    while (scsp_mute_flags) { YabThreadUSleep((1000000 / fps));}
+    while (scsp_mute_flags) { YabThreadUSleep((1000000 / fps)); YabThreadBarrierWait(g_scsp_sync);}
     #endif
   }
   YabThreadWake(YAB_THREAD_SCSP);

@@ -95,7 +95,6 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
-#include "mk68Counter.h"
 #include "scu.h"
 #include "yabause.h"
 #include "scsp.h"
@@ -157,8 +156,10 @@ u32 m68kcycle = 0;
 #endif
 
 YabBarrier * g_scsp_sync = NULL;
+YabMutex * g_scsp_set_cyc_mtx = NULL;
+YabSem * g_scsp_set_cyc_sem = NULL;
+
 #define CLOCK_SYNC_SHIFT (4)
-extern YabEventQueue * q_scsp_m68counterCond;
 
 enum EnvelopeStates
 {
@@ -4658,6 +4659,8 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
   scsp_reset();
   thread_running = false;
   g_scsp_sync = YabThreadCreateBarrier(2);
+  g_scsp_set_cyc_mtx = YabThreadCreateMutex();
+  g_scsp_set_cyc_sem = YabThreadCreateSem(0);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5055,10 +5058,7 @@ ScspDeInit (void)
   scsp_mute_flags = 0;
   thread_running = false;
 #if defined(ASYNC_SCSP)
-  if (q_scsp_m68counterCond && YaGetQueueSize(q_scsp_m68counterCond) == 0 )
-  {
-      YabAddEventQueue(q_scsp_m68counterCond, 0);
-  }
+  YabSemPost(g_scsp_set_cyc_sem);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
 
@@ -5374,6 +5374,8 @@ void ScspExec(){
   ScspInternalVars->scsptiming1++;
 #else
 
+u64 newCycles = 0;
+
 void ScspAsynMainCpu( void * p ){
 
 
@@ -5384,7 +5386,7 @@ void ScspAsynMainCpu( void * p ){
 
   const int samplecnt = 256; // 11289600/44100
   int frame = 0;
-  u64 pre_m68k_cycle = 0;
+  u64 cycleRequest = 0;
   u64 m68k_inc = 0; //how much remaining samples should be played
   int framecnt = (44100 * samplecnt) / fps; // 11289600/60
 
@@ -5395,13 +5397,13 @@ void ScspAsynMainCpu( void * p ){
 	    YabThreadUSleep(1000);
     }
 
-  	YabWaitEventQueue(q_scsp_m68counterCond); //wait for signal set to compute new samples
+    YabSemWait(g_scsp_set_cyc_sem);
+    YabThreadLock(g_scsp_set_cyc_mtx);
+    cycleRequest = newCycles;
+    newCycles = 0;
+    YabThreadUnLock(g_scsp_set_cyc_mtx);
 
-	u64 const m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
-    u64 const m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-    m68k_inc += m68k_cycle;
-    pre_m68k_cycle = m68k_integer_part;
-
+    m68k_inc += (cycleRequest >> SCSP_FRACTIONAL_BITS);
     // Sync 44100KHz
     while (m68k_inc >= samplecnt)
     {
@@ -5418,7 +5420,6 @@ void ScspAsynMainCpu( void * p ){
         ScspExecAsync();
 
         YabThreadBarrierWait(g_scsp_sync);
-        pre_m68k_cycle = 0;
         m68k_inc = 0;
         break;
       }
@@ -5514,6 +5515,14 @@ void ScspExec(){
 	  thread_running = true;
 	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 	}
+}
+
+void ScspAddCycles(u64 cycles)
+{
+    YabThreadLock(g_scsp_set_cyc_mtx);
+    newCycles += cycles;
+    YabThreadUnLock(g_scsp_set_cyc_mtx);
+    YabSemPost(g_scsp_set_cyc_sem);
 }
 
 void ScspExecAsync() {

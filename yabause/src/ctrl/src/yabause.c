@@ -37,7 +37,6 @@
 #include "error.h"
 #include "memory.h"
 #include "m68kcore.h"
-#include "mk68Counter.h"
 #include "peripheral.h"
 #include "scsp.h"
 #include "scspdsp.h"
@@ -192,7 +191,6 @@ void YabauseChangeTiming(int freqtype) {
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
 extern YabBarrier * g_scsp_sync;
-YabEventQueue * q_scsp_m68counterCond;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -339,9 +337,6 @@ int YabauseInit(yabauseinit_struct *init)
    yabsys.skipframe = init->skipframe;
    yabsys.isRotated = 0;
    nextFrameTime = 0;
-
-  q_scsp_m68counterCond = YabThreadCreateQueue(1);
-  setM68kCounter(0);
 
    // Initialize both cpu's
    if (SH2Init(init->sh2coretype) != 0)
@@ -829,7 +824,7 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
 #if defined(ASYNC_SCSP)
-            setM68kCounter((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
+            ScspAddCycles((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
 #endif
             PROFILE_START("vblankin");
             // VBlankIN
@@ -883,7 +878,7 @@ int YabauseEmulate(void) {
 #else
       {
         saved_m68k_cycles  += m68k_cycles_per_deciline;
-        setM68kCounter(saved_m68k_cycles);
+        ScspAddCycles(m68k_cycles_per_deciline);
 #endif
       }
       PROFILE_STOP("Total Emulation");

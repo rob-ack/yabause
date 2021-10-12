@@ -190,7 +190,8 @@ void YabauseChangeTiming(int freqtype) {
 
 //////////////////////////////////////////////////////////////////////////////
 extern int tweak_backup_file_size;
-extern YabBarrier * g_scsp_sync;
+extern YabSem * g_scsp_ready;
+extern YabSem * g_cpu_ready;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
     if (req != 0) {
@@ -921,7 +922,8 @@ int YabauseEmulate(void) {
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
-    YabThreadBarrierWait(g_scsp_sync);
+    YabSemPost(g_cpu_ready);
+    YabSemWait(g_scsp_ready);
     saved_m68k_cycles = 0;
   //LOG("[SH2] START SCSP");
 }

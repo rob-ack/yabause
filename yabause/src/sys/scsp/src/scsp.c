@@ -155,7 +155,8 @@ static volatile int fps = 60;
 u32 m68kcycle = 0;
 #endif
 
-YabBarrier * g_scsp_sync = NULL;
+YabSem * g_scsp_ready = NULL;
+YabSem * g_cpu_ready = NULL;
 YabMutex * g_scsp_set_cyc_mtx = NULL;
 YabSem * g_scsp_set_cyc_sem = NULL;
 
@@ -4658,7 +4659,8 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
   scsp_reset();
   thread_running = false;
-  g_scsp_sync = YabThreadCreateBarrier(2);
+  g_scsp_ready = YabThreadCreateSem(0);
+  g_cpu_ready = YabThreadCreateSem(0);
   g_scsp_set_cyc_mtx = YabThreadCreateMutex();
   g_scsp_set_cyc_sem = YabThreadCreateSem(0);
 }
@@ -5059,6 +5061,8 @@ ScspDeInit (void)
   thread_running = false;
 #if defined(ASYNC_SCSP)
   YabSemPost(g_scsp_set_cyc_sem);
+  YabSemPost(g_cpu_ready);
+  YabSemPost(g_scsp_ready);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
 
@@ -5419,13 +5423,18 @@ void ScspAsynMainCpu( void * p ){
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
 
-        YabThreadBarrierWait(g_scsp_sync);
+        YabSemPost(g_scsp_ready);
+        YabSemWait(g_cpu_ready);
         m68k_inc = 0;
         break;
       }
     }
     #if defined(ASYNC_SCSP)
-    while (scsp_mute_flags) { YabThreadUSleep((1000000 / fps)); YabThreadBarrierWait(g_scsp_sync);}
+    while (scsp_mute_flags && thread_running) {
+      YabThreadUSleep((1000000 / fps));
+      YabSemPost(g_scsp_ready);
+      YabSemWait(g_cpu_ready);
+    }
     #endif
   }
   YabThreadWake(YAB_THREAD_SCSP);

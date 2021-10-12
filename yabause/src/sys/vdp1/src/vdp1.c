@@ -2248,20 +2248,23 @@ static void startField(void) {
 
 void Vdp1HBlankIN(void)
 {
+  int needToCompose = 0;
   if (nbCmdToProcess > 0) {
     for (int i = 0; i<nbCmdToProcess; i++) {
       if (cmdBufferBeingProcessed[i].ignitionLine == (yabsys.LineCount-1)) {
         if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
             (cmdBufferBeingProcessed[i].end_addr <= vdp1Ram_update_start))) {
+              needToCompose = 1;
           if (Vdp1External.checkEDSR == 0) {
-            if (VIDCore->Vdp1RegenerateCmd != NULL)
+            if (VIDCore->Vdp1RegenerateCmd != NULL) {
               VIDCore->Vdp1RegenerateCmd(&cmdBufferBeingProcessed[i].cmd);
+            }
           }
         }
         cmdBufferBeingProcessed[i].ignitionLine = -1;
       }
     }
-    if (cmdBufferBeingProcessed[nbCmdToProcess-1].ignitionLine == -1) {
+    if (needToCompose == 1) {
       nbCmdToProcess = 0;
       vdp1Ram_update_start = 0x80000;
       vdp1Ram_update_end = 0x0;

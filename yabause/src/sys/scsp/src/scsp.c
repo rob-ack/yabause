@@ -142,7 +142,7 @@ s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
-YabMutex * g_scsp_mtx = NULL;
+YabBarrier * g_scsp_sync = NULL;
 YabMutex * g_scsp_set_cyc_mtx = NULL;
 
 #include "sh2core.h"
@@ -4654,7 +4654,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
   scsp_reset();
   thread_running = false;
-  g_scsp_mtx = YabThreadCreateMutex();
+  g_scsp_sync = YabThreadCreateBarrier(2);
   g_scsp_set_cyc_mtx = YabThreadCreateMutex();
 }
 
@@ -5384,6 +5384,7 @@ void ScspAsynMainCpu( void * p ){
   YabThreadSetCurrentThreadAffinityMask( 0x03 );
 
   int frame = 0;
+  int cycleRequest = 0;
   u64 m68k_inc = 0; //how much remaining samples should be played
   u64 m68k_inc_lost = 0; //how much remaining samples should be played
 
@@ -5399,13 +5400,14 @@ void ScspAsynMainCpu( void * p ){
     YabThreadSleep();
 
     YabThreadLock(g_scsp_set_cyc_mtx);
-    newCycles += m68k_inc_lost;
-    m68k_inc_lost = newCycles - ((newCycles >> SCSP_FRACTIONAL_BITS)<<SCSP_FRACTIONAL_BITS);
-    m68k_inc += (newCycles >> SCSP_FRACTIONAL_BITS);
+    cycleRequest = newCycles;
     newCycles = 0;
     YabThreadUnLock(g_scsp_set_cyc_mtx);
+
+    cycleRequest += m68k_inc_lost;
+    m68k_inc_lost = cycleRequest - ((cycleRequest >> SCSP_FRACTIONAL_BITS)<<SCSP_FRACTIONAL_BITS);
+    m68k_inc += (cycleRequest >> SCSP_FRACTIONAL_BITS);
     // Sync 44100KHz
-    YabThreadLock(g_scsp_mtx);
     while (m68k_inc >= scsp_samplecnt)
     {
       m68k_inc -= scsp_samplecnt;
@@ -5418,12 +5420,12 @@ void ScspAsynMainCpu( void * p ){
         frame = frame - framecnt;
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
-        m68k_inc = 0;
         ScspExecAsync();
+        m68k_inc = 0;
+        YabThreadBarrierWait(g_scsp_sync);
         break;
       }
     }
-    YabThreadUnLock(g_scsp_mtx);
 #if defined(ASYNC_SCSP)
     while (scsp_mute_flags) { YabThreadUSleep((1000000 / yabsys.fps)); }
 #endif

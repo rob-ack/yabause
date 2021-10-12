@@ -904,13 +904,12 @@ int YabauseEmulate(void) {
    return ret;
 }
 
-extern YabMutex * g_scsp_mtx;
+extern YabBarrier * g_scsp_sync;
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
     YabThreadWake(YAB_THREAD_SCSP);
-    YabThreadLock(g_scsp_mtx);
-    YabThreadUnLock(g_scsp_mtx);
+    YabThreadBarrierWait(g_scsp_sync);
   //LOG("[SH2] START SCSP");
 }
 

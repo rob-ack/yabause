@@ -2265,6 +2265,7 @@ void Vdp1HBlankIN(void)
       }
     }
     if (needToCompose == 1) {
+      //We need to evaluate end line and not ignition line? It is improving doom if we better take care of the concurrency betwwen vdp1 update and command list"
       nbCmdToProcess = 0;
       vdp1Ram_update_start = 0x80000;
       vdp1Ram_update_end = 0x0;

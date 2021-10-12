@@ -399,6 +399,9 @@ static void updateTVMRMode() {
   Vdp1External.useVBlankErase = 0;
   if (((Vdp1Regs->FBCR & 3) == 3) && (((Vdp1Regs->TVMR >> 3) & 0x01) == 1)) {
     Vdp1External.useVBlankErase = 1;
+  } else {
+    //VBE can be one only when FCM and FCT are 1
+    YuiMsg("Prohibited FBCR/TVMF values\n");
   }
 }
 
@@ -406,9 +409,14 @@ static void updateFBCRMode() {
   Vdp1External.manualchange = 0;
   Vdp1External.onecyclemode = 0;
   Vdp1External.useVBlankErase = 0;
-  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){
-    Vdp1External.manualchange = ((Vdp1Regs->FBCR & 3) == 3);
-    Vdp1External.useVBlankErase = 1;
+  if (((Vdp1Regs->TVMR >> 3) & 0x01) == 1){ //VBE is set
+    if ((Vdp1Regs->FBCR & 3) == 3) {
+      Vdp1External.manualchange = 1;
+      Vdp1External.useVBlankErase = 1;
+    } else {
+      //VBE can be one only when FCM and FCT are 1
+      YuiMsg("Prohibited FBCR/TVMF values\n");
+    }
   } else {
     //Manual erase shall not be reseted but need to save its current value
     // Only at frame change the order is executed.

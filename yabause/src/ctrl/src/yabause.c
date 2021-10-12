@@ -744,8 +744,8 @@ int YabauseEmulate(void) {
    unsigned int m68kcycles;       // Integral M68k cycles per call
    unsigned int m68kcenticycles;  // 1/100 M68k cycles per call
 
-   u32 m68k_cycles_per_deciline = 0;
-   u32 scsp_cycles_per_deciline = 0;
+   u64 m68k_cycles_per_deciline = 0;
+   u64 scsp_cycles_per_deciline = 0;
 
    int lines = 0;
    int frames = 0;

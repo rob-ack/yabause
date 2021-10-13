@@ -1733,7 +1733,7 @@ void YglUpdateLineColorOffset(int id){
 
 extern vdp2rotationparameter_struct  Vdp1ParaA;
 
-int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GLuint* vdp1fb, int Win_s, int Win_s_mode, int Win0, int Win0_mode, int Win1, int Win1_mode, int Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
+int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur, int* isPerline, int* isShadow, int* lncl, GetFBFunc vdp1fb, int Win_s, int Win_s_mode, int Win0, int Win0_mode, int Win1, int Win1_mode, int Win_op, int* use_lncl_off, Vdp2 *varVdp2Regs) {
   int perLine = 0;
   int nbScreen = 6;
   int vdp2blit_prg;
@@ -1783,13 +1783,6 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
       use_lncl_off[i] = (use_lncl_off[i]==_Ygl->linecolorcoef_tex[0])?1:2;
     }
   }
-
-  if (vdp1fb != NULL) {
-    glActiveTexture(GL_TEXTURE9);
-    glBindTexture(GL_TEXTURE_2D, vdp1fb[0]);
-    glActiveTexture(GL_TEXTURE19);
-    glBindTexture(GL_TEXTURE_2D, vdp1fb[1]);
-  } else _Ygl->vdp1On[_Ygl->readframe] = 0;
 
   for(int i=0; i<7; i++) {
     if (lncl[i] != 0) lncl_val |= 1<<i;
@@ -1926,6 +1919,13 @@ int YglBlitTexture(int* prioscreens, int* modescreens, int* isRGB, int * isBlur,
     glActiveTexture(gltext[18]);
     if (_Ygl->rbg_use_compute_shader != 0) glBindTexture(GL_TEXTURE_2D, RBGGenerator_getLnclTexture(1));
     else glBindTexture(GL_TEXTURE_2D, _Ygl->linecolorcoef_tex[1]);
+  }
+
+  if ((vdp1fb != NULL) && (_Ygl->vdp1On[_Ygl->readframe] != 0)) {
+    glActiveTexture(GL_TEXTURE9);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb(0));
+    glActiveTexture(GL_TEXTURE19);
+    glBindTexture(GL_TEXTURE_2D, vdp1fb(1));
   }
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);

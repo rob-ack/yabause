@@ -685,6 +685,7 @@ void vdp1_setup(void) {
 }
 
 int get_vdp1_tex() {
+	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 	return compute_tex[_Ygl->readframe];
 }
 
@@ -774,12 +775,10 @@ void vdp1_compute() {
 		_Ygl->syncVdp1[_Ygl->drawframe] = 0;
 	}
 	_Ygl->syncVdp1[_Ygl->drawframe] = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
-	glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
 
 	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindImageTexture(1, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
-	//glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BI
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
 	nbCmdToProcess = 0;
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));

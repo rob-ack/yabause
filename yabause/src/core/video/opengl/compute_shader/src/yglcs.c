@@ -132,6 +132,12 @@ static void YglUpdateVDP1FB(void) {
 
 static int warning = 0;
 
+
+GLuint GetCSVDP1fb(int id) {
+  if (id == 0) return get_vdp1_tex();
+  else return get_vdp1_mesh();
+}
+
 void YglCSRender(Vdp2 *varVdp2Regs) {
 
    GLuint cprg=0;
@@ -359,8 +365,6 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
     glClearBufferfv(GL_COLOR, 0, _Ygl->clear);
   }
 
-  VDP1fb[0] = get_vdp1_tex();
-  VDP1fb[1] = get_vdp1_mesh();
 #ifdef __LIBRETRO__
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo);
 #else
@@ -368,7 +372,8 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 #endif
   glDrawBuffers(NB_RENDER_LAYER, &DrawBuffers[0]);
   glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-  YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, VDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
+
+  YglBlitTexture( prioscreens, modescreens, isRGB, isBlur, isPerline, isShadow, lncl_draw, GetCSVDP1fb, winS_draw, winS_mode_draw, win0_draw, win0_mode_draw, win1_draw, win1_mode_draw, win_op_draw, useLineColorOffset, varVdp2Regs);
   srcTexture = _Ygl->original_fbotex[0];
 #ifndef __LIBRETRO__
    glViewport(x, y, w, h);

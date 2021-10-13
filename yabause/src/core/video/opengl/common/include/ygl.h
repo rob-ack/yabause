@@ -656,7 +656,6 @@ typedef struct {
    RESOLUTION_MODE resolution_mode;
    COMPUTESHADERMODE use_cs;
    GLsync sync;
-   GLsync syncVdp1[2];
    GLuint default_fbo;
    int vpd1_running;
    int needVdp1Render;

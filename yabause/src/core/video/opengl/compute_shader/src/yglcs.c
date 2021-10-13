@@ -134,8 +134,8 @@ static int warning = 0;
 
 
 GLuint GetCSVDP1fb(int id) {
-  if (id == 0) return get_vdp1_tex();
-  else return get_vdp1_mesh();
+  if (id == 0) return get_vdp1_tex(_Ygl->readframe);
+  else return get_vdp1_mesh(_Ygl->readframe);
 }
 
 void YglCSRender(Vdp2 *varVdp2Regs) {

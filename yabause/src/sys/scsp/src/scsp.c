@@ -158,7 +158,8 @@ u32 m68kcycle = 0;
 YabSem * g_scsp_ready = NULL;
 YabSem * g_cpu_ready = NULL;
 YabMutex * g_scsp_set_cyc_mtx = NULL;
-YabSem * g_scsp_set_cyc_sem = NULL;
+YabMutex * g_scsp_set_cond_mtx = NULL;
+YabCond * g_scsp_set_cyc_cond = NULL;
 
 #define CLOCK_SYNC_SHIFT (4)
 
@@ -4662,7 +4663,8 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
   g_scsp_ready = YabThreadCreateSem(0);
   g_cpu_ready = YabThreadCreateSem(0);
   g_scsp_set_cyc_mtx = YabThreadCreateMutex();
-  g_scsp_set_cyc_sem = YabThreadCreateSem(0);
+  g_scsp_set_cond_mtx = YabThreadCreateMutex();
+  g_scsp_set_cyc_cond  = YabThreadCreateCond();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5060,7 +5062,7 @@ ScspDeInit (void)
   scsp_mute_flags = 0;
   thread_running = false;
 #if defined(ASYNC_SCSP)
-  YabSemPost(g_scsp_set_cyc_sem);
+  YabThreadCondSignal(g_scsp_set_cyc_cond);
   YabSemPost(g_cpu_ready);
   YabSemPost(g_scsp_ready);
   YabThreadWake(YAB_THREAD_SCSP);
@@ -5397,17 +5399,22 @@ void ScspAsynMainCpu( void * p ){
 
   while (thread_running)
   {
-    YabThreadYield();
     while (g_scsp_lock)
     {
 	    YabThreadUSleep(1000);
     }
-    YabThreadSleep();
-    YabSemWait(g_scsp_set_cyc_sem);
+
     YabThreadLock(g_scsp_set_cyc_mtx);
     cycleRequest = newCycles;
     newCycles = 0;
     YabThreadUnLock(g_scsp_set_cyc_mtx);
+    if (cycleRequest == 0){
+      YabThreadCondWait(g_scsp_set_cyc_cond, g_scsp_set_cond_mtx);
+      YabThreadLock(g_scsp_set_cyc_mtx);
+      cycleRequest = newCycles;
+      newCycles = 0;
+      YabThreadUnLock(g_scsp_set_cyc_mtx);
+    }
 
     m68k_inc += (cycleRequest >> SCSP_FRACTIONAL_BITS);
     // Sync 44100KHz
@@ -5424,8 +5431,9 @@ void ScspAsynMainCpu( void * p ){
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
-
         YabSemPost(g_scsp_ready);
+        YabThreadYield();
+        YabThreadSleep();
         YabSemWait(g_cpu_ready);
         m68k_inc = 0;
         break;
@@ -5533,7 +5541,7 @@ void ScspAddCycles(u64 cycles)
     YabThreadLock(g_scsp_set_cyc_mtx);
     newCycles += cycles;
     YabThreadUnLock(g_scsp_set_cyc_mtx);
-    YabSemPost(g_scsp_set_cyc_sem);
+    YabThreadCondSignal(g_scsp_set_cyc_cond);
 }
 
 void ScspExecAsync() {

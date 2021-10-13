@@ -2251,7 +2251,7 @@ void Vdp1HBlankIN(void)
   int needToCompose = 0;
   if (nbCmdToProcess > 0) {
     for (int i = 0; i<nbCmdToProcess; i++) {
-      if (cmdBufferBeingProcessed[i].ignitionLine == (yabsys.LineCount-1)) {
+      if (cmdBufferBeingProcessed[i].ignitionLine == (yabsys.LineCount+1)) {
         if (!((cmdBufferBeingProcessed[i].start_addr >= vdp1Ram_update_end) ||
             (cmdBufferBeingProcessed[i].end_addr <= vdp1Ram_update_start))) {
               needToCompose = 1;

@@ -508,29 +508,25 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  cmd->B[3] = (maxy + 1)*tex_ratioh;
 
 	}
-	if (cmd->w == 0) cmd->w = 1;
-	if (cmd->h == 0) cmd->h = 1;
 	memcpy(&cmdVdp1List[nbCmdToProcess], cmd, sizeof(vdp1cmd_struct));
-
-	// Ici le faire a l'envers. Trouver le min et la max puis ajouter dans tous les paquets compris.
-	int maxi = MIN(ceil((float)(maxx*_Ygl->vdp1wratio)/(float)(tex_width/NB_COARSE_RAST_X)), NB_COARSE_RAST_X);
-	int mini = MAX(floor((float)((minx*_Ygl->vdp1wratio)-(tex_width/NB_COARSE_RAST_X))/(float)(tex_width/NB_COARSE_RAST_X)), 0);
-	int maxj = MIN(ceil((float)(maxy*_Ygl->vdp1hratio)/(float)(tex_height/NB_COARSE_RAST_Y)), NB_COARSE_RAST_Y);
-	int minj = MAX(floor((float)((miny*_Ygl->vdp1hratio)-(tex_height/NB_COARSE_RAST_Y))/(float)(tex_height/NB_COARSE_RAST_Y)), 0);
-	if (clipcmd!=0) {
-		maxi = NB_COARSE_RAST_X;
-		maxj = NB_COARSE_RAST_Y;
-		mini = minj = 0;
-	}
-	// YuiMsg("%d %d %d %d\n", mini, maxi, minj, maxj);
-  for (int i = mini; i<maxi; i++) {
-    for (int j = minj; j<maxj; j++) {
-			cmdVdp1[(i+j*NB_COARSE_RAST_X)*QUEUE_SIZE + nbCmd[i+j*NB_COARSE_RAST_X]] = nbCmdToProcess;
-      nbCmd[i+j*NB_COARSE_RAST_X]++;
-			if (clipcmd == 0) hasDrawingCmd[i+j*NB_COARSE_RAST_X] = 1;
-			if (nbCmd[i+j*NB_COARSE_RAST_X] == QUEUE_SIZE) {
-				requireCompute = 1;
-			}
+  for (int i = 0; i<NB_COARSE_RAST_X; i++) {
+    int blkx = i * (tex_width/NB_COARSE_RAST_X);
+    for (int j = 0; j<NB_COARSE_RAST_Y; j++) {
+      int blky = j*(tex_height/NB_COARSE_RAST_Y);
+      if (!(blkx > maxx*_Ygl->vdp1wratio
+        || (blkx + (tex_width/NB_COARSE_RAST_X)) < minx*_Ygl->vdp1wratio
+        || (blky + (tex_height/NB_COARSE_RAST_Y)) < miny*_Ygl->vdp1hratio
+        || blky > maxy*_Ygl->vdp1hratio)
+			  || (clipcmd!=0)) {
+					if (cmd->w == 0) cmd->w = 1;
+					if (cmd->h == 0) cmd->h = 1;
+					cmdVdp1[(i+j*NB_COARSE_RAST_X)*QUEUE_SIZE + nbCmd[i+j*NB_COARSE_RAST_X]] = nbCmdToProcess;
+          nbCmd[i+j*NB_COARSE_RAST_X]++;
+					if (clipcmd == 0) hasDrawingCmd[i+j*NB_COARSE_RAST_X] = 1;
+					if (nbCmd[i+j*NB_COARSE_RAST_X] == QUEUE_SIZE) {
+						requireCompute = 1;
+					}
+      }
     }
   }
 	nbCmdToProcess++;

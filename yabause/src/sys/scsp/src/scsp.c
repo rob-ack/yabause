@@ -5063,6 +5063,7 @@ ScspDeInit (void)
   YabSemPost(g_scsp_set_cyc_sem);
   YabSemPost(g_cpu_ready);
   YabSemPost(g_scsp_ready);
+  YabThreadWake(YAB_THREAD_SCSP);
   YabThreadWait(YAB_THREAD_SCSP);
 #endif
 
@@ -5396,11 +5397,12 @@ void ScspAsynMainCpu( void * p ){
 
   while (thread_running)
   {
+    YabThreadYield();
     while (g_scsp_lock)
     {
 	    YabThreadUSleep(1000);
     }
-
+    YabThreadSleep();
     YabSemWait(g_scsp_set_cyc_sem);
     YabThreadLock(g_scsp_set_cyc_mtx);
     cycleRequest = newCycles;

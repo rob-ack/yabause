@@ -31,6 +31,7 @@ extern "C" {
 #define LOCAL_SIZE_Y 4
 
 #define QUEUE_SIZE 512
+#define CMD_QUEUE_SIZE 2048
 
 //#define SHOW_QUAD
 

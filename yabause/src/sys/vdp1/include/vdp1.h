@@ -30,8 +30,6 @@ extern "C" {
 
 #define VIDCORE_DEFAULT         -1
 
-#define CMD_QUEUE_SIZE 2048
-
 //#define YAB_ASYNC_RENDERING 1
 
 typedef struct {
@@ -120,7 +118,7 @@ typedef struct
 } vdp1cmd_struct;
 
 typedef struct{
-  vdp1cmd_struct *cmd;
+  vdp1cmd_struct cmd;
   int ignitionLine;
   int start_addr;
   int end_addr;
@@ -168,8 +166,7 @@ typedef struct
 
 extern VideoInterface_struct *VIDCore;
 
-extern vdp1cmd_struct cmdBufferBeingProcessed[CMD_QUEUE_SIZE];
-extern vdp1cmdctrl_struct cmdBufferBeingProcessedExtra[CMD_QUEUE_SIZE];
+extern vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
 
 extern u8 * Vdp1Ram;
 extern int vdp1Ram_update_start;

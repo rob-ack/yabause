@@ -30,11 +30,10 @@ static int struct_size;
 static int work_groups_x;
 static int work_groups_y;
 
-static vdp1cmd_struct* cmdVdp1List;
 static int* cmdVdp1;
 static int* nbCmd;
 static int* hasDrawingCmd;
-static int nbCmdToProcess = 0;
+extern int nbCmdToProcess;
 
 static int cmdRam_update_start[2] = {0x0};
 static int cmdRam_update_end[2] = {0x80000};
@@ -510,7 +509,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	}
 	if (cmd->w == 0) cmd->w = 1;
 	if (cmd->h == 0) cmd->h = 1;
-	memcpy(&cmdVdp1List[nbCmdToProcess], cmd, sizeof(vdp1cmd_struct));
 
 	// Ici le faire a l'envers. Trouver le min et la max puis ajouter dans tous les paquets compris.
 	int maxi = MIN(ceil((float)(maxx*_Ygl->vdp1wratio)/(float)(tex_width/NB_COARSE_RAST_X)), NB_COARSE_RAST_X);
@@ -533,10 +531,6 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 			}
     }
   }
-	nbCmdToProcess++;
-	if (nbCmdToProcess == CMD_QUEUE_SIZE) {
-		requireCompute = 1;
-	}
 	if (requireCompute != 0){
 		vdp1_compute();
   }
@@ -628,15 +622,11 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   	nbCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
 	if (hasDrawingCmd == NULL)
 		hasDrawingCmd = (int*)malloc(NB_COARSE_RAST *sizeof(int));
-  if (cmdVdp1List == NULL)
-		cmdVdp1List = (vdp1cmd_struct*)malloc(CMD_QUEUE_SIZE*sizeof(vdp1cmd_struct));
 	if (cmdVdp1 == NULL)
 			cmdVdp1 = (int*)malloc(NB_COARSE_RAST*QUEUE_SIZE*sizeof(int));
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
-	nbCmdToProcess = 0;
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
 	memset(cmdVdp1, 0, NB_COARSE_RAST*QUEUE_SIZE*sizeof(int));
-	memset(cmdVdp1List, 0, CMD_QUEUE_SIZE*sizeof(vdp1cmd_struct*));
 	return;
 }
 
@@ -712,7 +702,7 @@ void vdp1_compute() {
 		}
 	}
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_cmd_list_);
-	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, nbCmdToProcess*sizeof(vdp1cmd_struct), (void*)&cmdVdp1List[0]);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, nbCmdToProcess*sizeof(vdp1cmd_struct), (void*)&cmdBufferBeingProcessed[0]);
 	_Ygl->vdp1On[_Ygl->drawframe] = 1;
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_nbcmd_);
@@ -761,7 +751,6 @@ void vdp1_compute() {
 	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindImageTexture(1, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);
   memset(nbCmd, 0, NB_COARSE_RAST*sizeof(int));
-	nbCmdToProcess = 0;
 	memset(hasDrawingCmd, 0, NB_COARSE_RAST*sizeof(int));
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);

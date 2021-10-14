@@ -34,10 +34,10 @@
 &Tools|&Инструменты
 &Transfer|&Перенести
 &View|&Вид
-16 Mbit Backup Ram|16 Мбит резервная RAM 
-16 Mbit ROM|16 Мбит ROM 
+16 Mbit Backup Ram|16 Мбит резервная RAM
+16 Mbit ROM|16 Мбит ROM
 16-bit|16-бит
-16-bit Relative value(s)|16-битные относительные значения 
+16-bit Relative value(s)|16-битные относительные значения
 32 Mbit Backup Ram|32 Мбит резервная RAM
 32 Mbit Dram|32 Мбит DRAM
 32-bit|32-бит
@@ -48,7 +48,7 @@
 8 Mbit Backup Ram|8 Мбит резервная RAM
 8 Mbit Dram|8 Мбит DRAM
 8-bit|8-бит
-8-bit Relative value(s)|8-битные относительные значения 
+8-bit Relative value(s)|8-битные относительные значения
 <font color="red"><b>WARNING:</b> Master Codes are <b>NOT</b> supported.</font>|<font color="red"><b>ВНИМАНИЕ:</b> Мастер кодов <b>НЕ</b> поддерживается.</font>
 About...|Об эмуляторе...
 Action Replay Code :|Код взломщика кодов
@@ -80,7 +80,7 @@ Byte Write|Запись байт
 CD Images (*.iso *.cue *.bin)|Образы CD (*.iso *.cue *.bin)
 Cancel|Отмена
 Cannot initialize|Невозможно запустить
-Cannot initialize Windows SPTI Driver|Невозможно запустить драйвер Windows SPTI 
+Cannot initialize Windows SPTI Driver|Невозможно запустить драйвер Windows SPTI
 Cart/Memory|Картридж/Память
 Cartridge|Картридж
 Cd-Rom|CD-ROM
@@ -100,7 +100,7 @@ Choose a file to save your state|Выбрать файл для загрузки
 Choose a location for binary file|Выбрать папку для двоичного файла
 Choose a location for your screenshot|Выбрать папку для скриншота
 Choose a memory file|Выбрать файл памяти
-Choose a mpeg rom|Выбрать MPEG ROM 
+Choose a mpeg rom|Выбрать MPEG ROM
 Clear configuration|Очистить конфигурацию
 Close|Закрыть
 Code|Код
@@ -166,7 +166,6 @@ Fullscreen Resolution|Разрешение полного экрана
 General|Общее
 General Info|Общая информация
 German|Немецкий
-Glut OSD Interface|Glut ODS интерфейс
 Goto Address|Перейти по адресу
 Greater then|Больше, чем
 Hard Reset|Перезапуск
@@ -204,7 +203,7 @@ Loop Track Start|Начать отслеживание циклов
 M68K|M68K
 M68K Registers|Регистры M68K
 MSH2|MSH2
-Master SH2|Master SH2 
+Master SH2|Master SH2
 Memory|Память
 Memory &Editor|&Редактор памяти
 Memory Breakpoints|Точки останова памяти
@@ -216,7 +215,7 @@ Memory dump|Образ памяти
 Middle|Средний
 Mouse|Мышь
 Mouse Configuration|Конфигурация мыши
-Mpeg ROM|MPEG ROM 
+Mpeg ROM|MPEG ROM
 NBG0|NBG0
 NBG0/RBG1 Info|Информация о NBG0/RBG1
 NBG1|NBG1
@@ -336,7 +335,7 @@ Unable to open file for saving|Нет возможности открыть фа
 Unable to remove code|Нет возможности удалить код
 Unknow (%1)|Неизвестно (%1)
 Unsigned|Неназначено
-Unsigned 16-bit value|16-бит неназначенное значение 
+Unsigned 16-bit value|16-бит неназначенное значение
 Unsigned 32-bit value|32-бит неназначенное значение
 Unsigned 8-bit value|8-бит неназначенное значение
 Up|Вверх

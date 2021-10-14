@@ -18,7 +18,7 @@
 */
 
 /*! \file osdcore.c
-    \brief OSD dummy, glut, and software interfaces.
+    \brief OSD dummy and software interfaces.
 */
 
 #include "osdcore.h"
@@ -43,9 +43,6 @@ when we the new OSD system was added.
 */
 OSD_struct *OSDCoreList[] = {
 &OSDDummy,
-#ifdef HAVE_LIBGLUT
-&OSDGlut,
-#endif
 #if !defined(_arch_dreamcast) && !defined(NO_VIDCORE_SOFT)
 &OSDSoft,
 #endif
@@ -242,97 +239,6 @@ int OSDDummyUseBuffer(void)
 {
    return 0;
 }
-
-#ifdef HAVE_LIBGLUT
-#ifdef __APPLE__
-    #include <GLUT/glut.h>
-#else
-    #include <GL/glut.h>
-#endif
-
-static int OSDGlutInit(void);
-static void OSDGlutDeInit(void);
-static void OSDGlutReset(void);
-static void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h);
-static int OSDGlutUseBuffer(void);
-
-OSD_struct OSDGlut = {
-    OSDCORE_GLUT,
-    "Glut OSD Interface",
-    OSDGlutInit,
-    OSDGlutDeInit,
-    OSDGlutReset,
-    OSDGlutDisplayMessage,
-    OSDGlutUseBuffer,
-    NULL,
-    NULL
-};
-
-int OSDGlutInit(void)
-{
-   int fake_argc = 1;
-   char * fake_argv[] = { "yabause" };
-   static int glutinited = 0;
-
-   if (!glutinited)
-   {
-      glutInit(&fake_argc, fake_argv);
-      glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_STENCIL);
-      glutinited = 1;
-   }
-
-   return 0;
-}
-
-void OSDGlutDeInit(void)
-{
-}
-
-void OSDGlutReset(void)
-{
-}
-
-void OSDGlutDisplayMessage(OSDMessage_struct * message, pixel_t * buffer, int w, int h)
-{
-   int LeftX=9;
-   int Width=500;
-   int TxtY=11;
-   int Height=13;
-   int i, msglength;
-   int vidwidth, vidheight;
-
-   VIDCore->GetGlSize(&vidwidth, &vidheight);
-   Width = vidwidth - 2 * LeftX;
-
-   switch(message->type) {
-      case OSDMSG_STATUS:
-         TxtY = vidheight - (Height + TxtY);
-         break;
-   }
-
-   msglength = strlen(message->message);
-
-   glBegin(GL_POLYGON);
-      glColor3f(0, 0, 0);
-      glVertex2i(LeftX, TxtY);
-      glVertex2i(LeftX + Width, TxtY);
-      glVertex2i(LeftX + Width, TxtY + Height);
-      glVertex2i(LeftX, TxtY + Height);
-   glEnd();
-
-   glColor3f(1.0f, 1.0f, 1.0f);
-   glRasterPos2i(10, TxtY + 11);
-   for (i = 0; i < msglength; i++) {
-      glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, message->message[i]);
-   }
-   glColor3f(1, 1, 1);
-}
-
-int OSDGlutUseBuffer(void)
-{
-   return 0;
-}
-#endif
 
 #if !defined(_arch_dreamcast) && !defined(NO_VIDCORE_SOFT)
 

@@ -270,9 +270,6 @@ configure_file(kronos.desktop.in ${YAB_PORT_NAME}.desktop)
 
 if (WIN32)
 	install(TARGETS kronos-qt DESTINATION ".")
-	if (GLUT_FOUND)
-		install(FILES ${GLUT_INCLUDE_DIR}/../freeglut.dll DESTINATION ".")
-	endif ()
 	if (SDL_FOUND)
 		get_filename_component(SDL_BINARY_DIR ${SDL_LIBRARY} DIRECTORY)
 		install(DIRECTORY ${SDL_BINARY_DIR}/

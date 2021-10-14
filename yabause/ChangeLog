@@ -108,7 +108,7 @@
   - Vdp2 layers can be toggled from the Vdp2 debug window
  psp port:
   - Added support for Media Engine CPU
-  - Improvements to the PSP port 
+  - Improvements to the PSP port
  qt port:
   - Added command line support
  wii port:
@@ -500,7 +500,7 @@
   - Added COFF file support.
 0.8.0 -> 0.8.5
  scsp:
-  - Added functions for dumping individual slots to wav files. 
+  - Added functions for dumping individual slots to wav files.
  scu:
   - Fixed SCU execution speed
  sh2:
@@ -633,8 +633,6 @@
   - CD audio data is now written to its own buffer, which is then played by the SCSP.
  scsp:
   - CD audio data is now played by the SCSP. EFSDL and EFPAN support still needs to be added.
- opengl video core:
-  - glutInit is now called before any other glut function(except for on the windows port).
  software video core:
   - Added normal sprite flipping(copied from scaled sprites).
   - Corrected a bug with 8 bpp color calculation in scaled and distorted sprites.
@@ -912,7 +910,7 @@ general:
   - added region auto-detection.
  mpeg card:
   - added basic emulation.
-  - added mpeg rom loading support. 
+  - added mpeg rom loading support.
  scsp:
   - bug fixes.
  scu:

@@ -27,14 +27,11 @@ extern "C" {
 #include "core.h"
 
 #define OSDCORE_DUMMY    0
-#define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
 #define OSDCORE_NANOVG   3
 
 #if defined(HAVE_LIBGL)
 	#define OSDCORE_DEFAULT  OSDCORE_NANOVG
-#elif defined(HAVE_LIBGLUT)
-  #define OSDCORE_DEFAULT  OSDCORE_GLUT
 #else
   #define OSDCORE_DEFAULT  OSDCORE_SOFT
 #endif
@@ -76,9 +73,6 @@ void OSDSetVisible(int what, int visible);
 int  OSDUseBuffer(void);
 
 extern OSD_struct OSDDummy;
-#ifdef HAVE_LIBGLUT
-extern OSD_struct OSDGlut;
-#endif
 extern OSD_struct OSDSoft;
 
 /* defined for backward compatibility (used to be in vdp2.h) */

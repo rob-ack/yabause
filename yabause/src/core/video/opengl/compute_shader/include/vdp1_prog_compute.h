@@ -386,12 +386,17 @@ SHADER_VERSION_COMPUTE
 
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
+" if ((pixcmd.flip & 0x2u) == 0x2u) {\n"
+"   uv.y += 0.5f/float(pixcmd.h);\n"
+" } else {\n"
+"   uv.y -= 0.5f/float(pixcmd.h);\n"
+" }\n"
 
 " float posf = pixcmd.h*uv.y;\n"
 " if ((pixcmd.flip & 0x2u) == 0x2u) posf = floor(posf);\n"
 " else posf = ceil(posf);\n"
 
-"  uint x = uint(ceil(uv.x*(pixcmd.w-1)));\n"
+"  uint x = clamp(uint(uv.x*(pixcmd.w-1)), 0u, uint(pixcmd.w-1));\n"
 "  uint pos = clamp(uint(posf), 0u, uint(pixcmd.h-1))*pixcmd.w+x;\n"
 
 

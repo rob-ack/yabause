@@ -820,21 +820,34 @@ u32 PERDXScan(u32 flags)
 				return scan;
 
 			// Right Stick
-			if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
-				return scan;
-			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
-				return scan;
-
-      LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
-      if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
-        // Right detected
+      if ((js.lRx != 0) && (js.lRy != 0)) {
+        if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
         return scan;
+
+  			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
+  				return scan;
+      } else {
+        if ((js.lZ != 0) && (js.lRz != 0)) {
+          if ((scan = ScanXInputAxis(i, js.lZ-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
+          return scan;
+
+    			if ((scan = ScanXInputAxis(i, js.lRz-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
+    				return scan;
+        }
       }
 
-      LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
-      if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
-        // Right detected
-        return scan;
+      if (js.lZ != 0) {
+        LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+          // Right detected
+          return scan;
+        }
+
+        LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+          // Right detected
+          return scan;
+        }
       }
 
 		}
@@ -849,24 +862,40 @@ u32 PERDXScan(u32 flags)
 											XI_THUMBL+PAD_DIR_AXISUP, XI_THUMBL+PAD_DIR_AXISDOWN)) != 0)
 				return scan;
 
-			// R Thumb
-			if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0,
-											XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
-				return scan;
-			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0,
-											XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
-				return scan;
+      if ((js.lRx != 0) && (js.lRy != 0))  {
+        // R Thumb
+        if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0,
+          XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
+          return scan;
 
-      LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
-      if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
-        // Right detected
-        return scan;
+        if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0,
+          XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
+          return scan;
+      } else {
+        if ((js.lZ != 0) && (js.lRz != 0))  {
+          // R Thumb
+          if ((scan = ScanXInputAxis(i, js.lZ-0x7FFF, 0x3FFF, 0,
+            XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
+            return scan;
+
+          if ((scan = ScanXInputAxis(i, js.lRz-0x7FFF, 0x3FFF, 0,
+            XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
+            return scan;
+        }
       }
 
-      LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
-      if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
-        // Right detected
-        return scan;
+      if (js.lZ != 0) {
+        LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+          // Right detected
+          return scan;
+        }
+
+        LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+          // Right detected
+          return scan;
+        }
       }
 
 			for (j = 0; j < 4; j++)

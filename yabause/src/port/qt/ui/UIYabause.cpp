@@ -192,7 +192,6 @@ void UIYabause::closeEvent( QCloseEvent* e )
 
 void UIYabause::keyPressEvent( QKeyEvent* e )
 {
-	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape)
 	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape) {
 		mouseCaptured = false;
 		this->setCursor(Qt::ArrowCursor);

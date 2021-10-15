@@ -676,7 +676,6 @@ u32 ScanXInputAxis(int pad, LONG axis, LONG deadzone, SHORT stick, int min_id, i
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 ScanXInputTrigger(int pad, BYTE value, BYTE deadzone, SHORT stick, int id)
 u32 ScanXInputTrigger(int pad, LONG value, LONG deadzone, SHORT stick, int id)
 {
 	if (value > deadzone)

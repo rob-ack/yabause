@@ -79,11 +79,13 @@ UIYabause::UIYabause( QWidget* parent )
 	// create glcontext
 	mYabauseGL = new YabauseGL( );
 	// and set it as central application widget
-	QWidget *container = QWidget::createWindowContainer(mYabauseGL);
+	QWidget *container = QWidget::createWindowContainer(mYabauseGL, this);
 	container->setFocusPolicy( Qt::StrongFocus );
 	setFocusPolicy( Qt::StrongFocus );
 	container->setFocusProxy( this );
 	container->setAcceptDrops(false);
+	container->installEventFilter( this );
+	mYabauseGL->installEventFilter( this );
 
 	this->setAcceptDrops(true);
 
@@ -192,6 +194,8 @@ void UIYabause::keyPressEvent( QKeyEvent* e )
 {
 	if (emulateMouse && mouseCaptured && e->key() == Qt::Key_Escape)
 		mouseCaptured = false;
+		this->setCursor(Qt::ArrowCursor);
+	}
 	else
 		PerKeyDown( e->key() );
 }
@@ -317,8 +321,30 @@ void UIYabause::swapBuffers()
 
 bool UIYabause::eventFilter( QObject* o, QEvent* e )
 {
-	if ( e->type() == QEvent::Hide )
-		setFocus();
+	 if (QEvent::MouseButtonPress == e->type()) {
+		 QMouseEvent* mouseEvt = (QMouseEvent*)e;
+		 mousePressEvent(mouseEvt);
+	 }
+	 else if (QEvent::MouseButtonRelease == e->type()) {
+		 QMouseEvent* mouseEvt = (QMouseEvent*)e;
+		 mouseReleaseEvent(mouseEvt);
+	 }
+	 else if (QEvent::MouseMove == e->type()) {
+		 QMouseEvent* mouseEvt = (QMouseEvent*)e;
+		 mouseMoveEvent(mouseEvt);
+	 }
+	 else if (QEvent::KeyPress == e->type()) {
+		 QKeyEvent* keyEvt = (QKeyEvent*)e;
+		 keyPressEvent(keyEvt);
+	 }
+	 else if (QEvent::KeyRelease == e->type()) {
+		QKeyEvent* keyEvt = (QKeyEvent*)e;
+		keyReleaseEvent(keyEvt);
+	}
+	 else if ( e->type() == QEvent::Hide ) {
+		 setFocus();
+	 }
+
 	return QMainWindow::eventFilter( o, e );
 }
 

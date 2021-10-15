@@ -523,6 +523,13 @@ void PollKeys(void)
 			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
 								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
 
+
+                // Right Stick
+          			PollAxisAsButton(i, XI_TRIGGERR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
+          								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRX);
+          			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
+          								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
+
 			PollXInputButtons(i, &state);
 			continue;
 		}
@@ -556,6 +563,10 @@ void PollKeys(void)
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBLY, (u8)((js.lY) >> 8));
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBRX, (u8)((js.lRx) >> 8));
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBRY, (u8)((js.lRy) >> 8));
+    LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+    DX_PerAxisValue(i, 0x3FFF, XI_TRIGGERR, (u8)(RVal >> 8));
+    LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+    DX_PerAxisValue(i, 0x3FFF, XI_TRIGGERL, (u8)(LVal >> 8));
 
 		// Left Stick
 		PollAxisAsButton(i, XI_THUMBL+PAD_DIR_AXISLEFT, XI_THUMBL+PAD_DIR_AXISRIGHT,
@@ -666,6 +677,7 @@ u32 ScanXInputAxis(int pad, LONG axis, LONG deadzone, SHORT stick, int min_id, i
 //////////////////////////////////////////////////////////////////////////////
 
 u32 ScanXInputTrigger(int pad, BYTE value, BYTE deadzone, SHORT stick, int id)
+u32 ScanXInputTrigger(int pad, LONG value, LONG deadzone, SHORT stick, int id)
 {
 	if (value > deadzone)
 		return DX_MAKEKEY(pad, stick, id);
@@ -813,6 +825,19 @@ u32 PERDXScan(u32 flags)
 				return scan;
 			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
 				return scan;
+
+      LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+      if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+        // Right detected
+        return scan;
+      }
+
+      LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+      if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+        // Right detected
+        return scan;
+      }
+
 		}
 
 		if (flags & PERSF_HAT)
@@ -832,6 +857,18 @@ u32 PERDXScan(u32 flags)
 			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0,
 											XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
 				return scan;
+
+      LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+      if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+        // Right detected
+        return scan;
+      }
+
+      LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+      if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+        // Right detected
+        return scan;
+      }
 
 			for (j = 0; j < 4; j++)
 			{

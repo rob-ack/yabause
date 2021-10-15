@@ -97,23 +97,23 @@ YuiMsg("µSDL joy init\n");
 	{
 		return -1;
 	}
-	
+
 	// ignore joysticks event in sdl event loop
 	SDL_JoystickEventState( SDL_IGNORE );
-	
+
 	// open joysticks
 	SDL_PERCORE_JOYSTICKS_INITIALIZED = SDL_NumJoysticks();
 	SDL_PERCORE_JOYSTICKS = malloc(sizeof(PERSDLJoystick) * SDL_PERCORE_JOYSTICKS_INITIALIZED);
 	for ( i = 0; i < SDL_PERCORE_JOYSTICKS_INITIALIZED; i++ )
 	{
 		SDL_Joystick* joy = SDL_JoystickOpen( i );
-		
+
 		SDL_JoystickUpdate();
-		
+
 		SDL_PERCORE_JOYSTICKS[ i ].mJoystick = joy;
 		SDL_PERCORE_JOYSTICKS[ i ].mScanStatus = joy ? malloc(sizeof(s16) * SDL_JoystickNumAxes( joy )) : 0;
 		SDL_PERCORE_JOYSTICKS[ i ].mHatStatus = joy ? malloc(sizeof(Uint8) * SDL_JoystickNumHats( joy )) : 0;
-		
+
 		if ( joy )
 		{
 			for ( j = 0; j < SDL_JoystickNumAxes( joy ); j++ )
@@ -126,7 +126,7 @@ YuiMsg("µSDL joy init\n");
 			}
 		}
 	}
-	
+
 	// success
 	SDL_PERCORE_INITIALIZED = 1;
 	return 0;
@@ -155,10 +155,10 @@ void PERSDLJoyDeInit(void) {
 		}
 		free( SDL_PERCORE_JOYSTICKS );
 	}
-	
+
 	SDL_PERCORE_JOYSTICKS_INITIALIZED = 0;
 	SDL_PERCORE_INITIALIZED = 0;
-	
+
 	// close sdl joysticks
 	SDL_QuitSubSystem( SDL_INIT_JOYSTICK );
 }
@@ -175,27 +175,27 @@ int PERSDLJoyHandleEvents(void) {
 	Uint8 newHatState;
 	Uint8 oldHatState;
 	int hatValue;
-	
+
 	// update joysticks states
 	SDL_JoystickUpdate();
-	
+
 	// check each joysticks
 	for ( joyId = 0; joyId < SDL_PERCORE_JOYSTICKS_INITIALIZED; joyId++ )
 	{
 		joy = SDL_PERCORE_JOYSTICKS[ joyId ].mJoystick;
-		
+
 		if ( !joy )
 		{
 			continue;
 		}
-		
+
 		// check axis
 		for ( i = 0; i < SDL_JoystickNumAxes( joy ); i++ )
 		{
 			cur = SDL_JoystickGetAxis( joy, i );
 
 			PerAxisValue((joyId << 18) | SDL_PERSF_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
-			
+
 			if ( cur < 8196 ) {
 				PerKeyUp( (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i );
 			}
@@ -211,12 +211,12 @@ int PERSDLJoyHandleEvents(void) {
 				PerKeyDown( (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i );
 			}
 		}
-		
+
 		// check buttons
 		for ( i = 0; i < SDL_JoystickNumButtons( joy ); i++ )
 		{
 			buttonState = SDL_JoystickGetButton( joy, i );
-			
+
 			if ( buttonState == SDL_BUTTON_PRESSED )
 			{
 				YuiMsg("Btn press\n");
@@ -256,7 +256,7 @@ int PERSDLJoyHandleEvents(void) {
 			SDL_PERCORE_JOYSTICKS[ joyId ].mHatStatus[ i ] = newHatState;
 		}
 	}
-	
+
 	// return success
 	return 0;
 }
@@ -270,40 +270,37 @@ u32 PERSDLJoyScan( u32 flags ) {
 	SDL_Joystick* joy;
 	Sint16 cur;
 	Uint8 hatState;
-	
+
 	// update joysticks states
 	SDL_JoystickUpdate();
-	
+
 	// check each joysticks
 	for ( joyId = 0; joyId < SDL_PERCORE_JOYSTICKS_INITIALIZED; joyId++ )
 	{
 		joy = SDL_PERCORE_JOYSTICKS[ joyId ].mJoystick;
-		
+
 		if ( !joy )
 		{
 			continue;
 		}
-	
+
 		// check axis
 		for ( i = 0; i < SDL_JoystickNumAxes( joy ); i++ )
 		{
 			cur = SDL_JoystickGetAxis( joy, i );
-			
+
 			if ( cur != SDL_PERCORE_JOYSTICKS[ joyId ].mScanStatus[ i ] )
 			{
 				if (flags & PERSF_AXIS) {
 					if (( cur > 16384 ) || (cur < -16384)) {
-						YuiMsg("AXIS %d %d\n", i, cur);
 						return (joyId << 18) | SDL_PERSF_AXIS_VALUE | i;
 					}
 				}
 				if (flags & PERSF_HAT) {
 					if ( cur > 16384 ) {
-						YuiMsg("HAT %d %d\n", i, cur);
 						return (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i;
 					}
 					if ( cur < -16384 ) {
-						YuiMsg("HAT %d %d\n", i, cur);
 						return (joyId << 18) | SDL_PERSF_HAT_MIN_VALUE | i;
 					}
 				}

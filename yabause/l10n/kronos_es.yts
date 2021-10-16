@@ -86,7 +86,11 @@ Bilinear|Bilinear
 Bilinear Filtering (Restart required)|Filtro bilinear (Requiere reinicio)
 Binary Files (*.bin)|Archivos binarios (*.bin)
 Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|Archivos binarios (*.bin);;Archivos de programa COFF (*.cof *.coff);;Archivos de programa ELF (*.elf);;Todos los ficheros (*) 													
-Bios|Bios	 
+Bios|Bios
+Bios file path|Ruta del archivo de Bios
+Bios Settings|Opciones de Bios
+Bios Language|Idioma de Bios
+Bios settings file|Fichero de opciones de Bios
 Block Size :|Tamaño de bloque:
 Bug report|Reportar bug
 Byte|Byte
@@ -98,8 +102,9 @@ Can't plug in the new controller, cancelling.|No se puede conectar el nuevo mand
 Can't initialize Kronos|No se pudo iniciar Kronos
 Cart/Memory|Cartucho/Memoria
 Cartridge|Cartucho
+Cartridge Path|
 CD Images (*.iso *.cue *.bin)|Imágenes de CD (*.iso *.cue *.bin)
-Cd-Rom|Unidad de CD-Rom
+CD-ROM||Unidad de CD-Rom
 Central/South America (NTSC)|América Central y Sudamérica (NTSC)
 Central/South America (PAL)|América Central y Sudamérica (PAL)
 Cheats File|Archivo de Trucos
@@ -114,7 +119,9 @@ Choose a cdrom drive/mount point|Seleccione una unidad cdrom para montar
 Choose a cheat file to open|Seleccione un archivo de trucos para abrir
 Choose a cheat file to save to|Seleccione el archivo de trucos para guardar
 Choose a file to save your state|Seleccione un archivo para guardar tu estado
+Choose a file to store bios settings|Seleccione un fichero para guardar las opciones de Bios
 Choose a folder to store save states|Seleccione una carpeta para guardar estados
+Choose a folder to store screenshots|Seleccione una carpeta para guardar las capturas de pantalla
 Choose a location for binary file|Seleccione ubicación para el archivo binario
 Choose a location for your binary file|Seleccione ubicación para su archivo binario
 Choose a location for your bitmap|Seleccione ubicación para su mapa de bits
@@ -122,6 +129,7 @@ Choose a location for your screenshot|Seleccione ubicación para su captura
 Choose a location for your wav file|Seleccione ubicación para su archivo wav
 Choose a memory file|Seleccione un archivo de memoria
 Choose a mpeg rom|Seleccione un rom mpeg
+Choose a STV cartridge folder|Elige una carpeta para los cartuchos STV
 Clear|Limpiar
 Clear configuration|Limpiar configuración
 Close|Cerrar
@@ -148,10 +156,18 @@ Debug Slave SH2|Depurar SH2 Esclavo
 Debug VDP1|Depurar VDP1
 Debug VDP2Viewer|Depurar Visualizador VDP2
 Default Dial IP|Dial IP por defecto
+Default System Language|Idioma por defecto del sistema
+Deinterlacing Bob|Bob desentrelazado
+Deinterlacing Debug Bob|Desarrollador de Bob desentrelazado
+Deinterlacing OSSC Bob|Bob OSSC desentrelazado
+Deinterlacing OSSC Debug Bob|Desarrollador de Bob OSSC desentrelazado
+Deinterlacing Scanline|Línea de escaneado desentrelazado
 Del|Eliminar
 Delete|Eliminar
 Description|Descripción
+Deutsch|Alemán
 Device List|Lista de Dispositivos
+Directory|Directorio
 DirectX Input Interface|Interfaz de entrada de DirectX
 DirectX Sound Interface|Interfaz de Sonido de DirectX
 Disabled|Deshabilitado		 
@@ -160,6 +176,7 @@ Display on Hover|Habilitar video al pasar por encima
 Double Mission Stick|Stick doble mando de avión
 Double Mission Stick Configuration|	Configuración de stick doble mando de avión							   
 Down|Abajo
+Down_P2|P2 Abajo
 Download|Descargar
 DSP Control Registers|Registros de control del DSP
 DSP Registers|Registros del DSP
@@ -185,19 +202,19 @@ Enabled|Activado
 Enter new assembly code|Inserte el nuevo código ensamblador
 Enter New Value|Inserte el nuevo valor
 Error|Error
-Extend Internal backup memory to 8MB|Expandir la memoria interna de backup a 8MB
 Europe + others (PAL)|Europa + otros (PAL)
 Exact|Exacto
+Extend Internal backup memory to 8MB|Expandir la memoria interna de backup a 8MB
 File:|Archivo :
 File Name :|Nombre de archivo :
 Finished searching up to end of memory, continue from the beginning?|Finalizó la búsqueda hasta el final de la memoria, ¿Continuar desde el principio?
+FPS|Cuadros por segundo
 French|Francés
 From File...|Desde archivo...
 General|General
 General Info|Información general
 German|Alemán
 Goto Address|Ir a dirección
-Gouraud Mode :|Modo Gouraud
 GPU RBG :| GPU RGB (OpenGL 4.3)
 GPU Tesselation|Teselado GPU
 Greater then|Mayor a
@@ -208,9 +225,11 @@ Hex value(s)|Valor(es) Hexadecimal(es)
 Hide Menubar|Esconder barra de menú
 Hide Toolbar|Esconder barra de herramientas
 Information...|Información...
+Image format|Formato de la imagen
 Improved|Mejorado
 Inline Assembly|Ensamblado en línea
 Input|Entrada
+Integer scaling|Escalado de imagen entero
 Internal Backup RAM|Backup de RAM interna
 Invalid Address|Dirección inválida
 Invalid Start/End Address Combination|Dirección de Inicio/Fin inválida
@@ -239,6 +258,7 @@ Load8|Cargar8
 Load9|Cargar9															
 L&oad State|Cargar Estad&o
 Left|Izquierda
+Left_P2|P2 Izquierda
 Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick izq:\nGatillo:      X\nBotón izq:  Y\nBotón der: Z
 Left Stick Axis X|Eje X Stick izq 		  
 Left Stick Axis Y|Eje Y Stick iqz
@@ -281,7 +301,6 @@ Never|Nunca
 &No|&No
 No matches found.|No se encontraron coincidencias
 None|Ninguno
-None|Ninguno
 Normal format not available, trying alternative|Formato normal no disponible, probando alternativa
 North America (NTSC)|América del Norte (NTSC)
 Number of Threads|Número de hilos
@@ -289,9 +308,9 @@ On fullscreen|En pantalla completa
 On message|En mensaje
 Open &CD Rom...|Abrir unidad de &CD Rom
 Open &ISO...|Abrir &ISO...
+Open a cartridge file|Abrir un fichero de cartucho
+Open a mpeg rom|Abrir una rom mpeg
 Open CD Rom|Abrir CD Rom
-Open SSF|Abrir SSF
-Open&Tray|Abrir&Bandeja
 OpenGL size :|Tamaño OpenGL
 OpenGL Video Interface|Interfaz de video OpenGL
 Options|Opciones
@@ -301,9 +320,10 @@ Original aspect ratio|Ratio de aspecto original
 OSD Core|Núcleo OSD
 Pad|Mando
 Pad Configuration|Configuración del mando
-Play Slot|Ejecutar Slot
+Pause|Pausa
 Port|Puerto
 Press Esc key to cancel|Presione la tecla ESC para cancelar
+Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interfaz de entrada de teclado Qt
 &Question...|Pregunta...
 RBG0|RBG0
@@ -313,6 +333,7 @@ Region|Región
 Remove Peripheral|Quitar periférico
 Restart|Reiniciar
 Right|Derecha
+Right_P2|P2 derecha
 Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|Stick der:\nGatillo:      A\nBotón izq:  B\nBotón der: C|
 Right Stick Axis X|Eje X Stick der			   
 Right Stick Axis Y|Eje Y Stick der
@@ -340,16 +361,15 @@ Save MD2|Guardar MD2
 Save MD3|Guardar MD3
 Save Selected|Guardado seleccionado
 Save Program|Guardar programa
+Save Slot Registers|Guardar Registros de ranuras	
 S&ave State|Gu&ardar Estado
 Save States|Guardar Estados
-Save Slot Registers|Guardar Registros de ranuras					
-Save Tab|Guardar Tab
-Screen Enabled|Pantalla habilitada
-Screen Select:|Seleccionar pantalla
-Sc&reenshot|Captu&rar pantalla
 Scanline filter|Filtro de escaneo
 Scanline off|Escaneo off
 Scanline on|Escaneo on
+Screen Enabled|Pantalla habilitada
+Screen Select:|Seleccionar pantalla
+Screenshots|Capturas de pantalla
 SCSP|SCSP
 SCSP Channels|Canales SCSP
 SDL Joystick Interface|Interfaz Joystick SDL
@@ -359,10 +379,8 @@ Search/Add Cheats|Buscar/Añadir Trucos
 Search Criteria|Criterio de búsqueda
 Search Memory|Buscar en memoria
 Search Value:|Valor a buscar:
-Sega Saturn Sound Format files (*.ssf *.minissf)|Formato de archivos de sonido de Sega Saturn  (*.ssf *.minissf)
 Select a file to load your state|Selecciona el archivo para cargar tu estado
 Select your iso/cue/bin/zip/chd file|Selecciona tu archivo iso/cue/bin/zip/chd
-Select your ssf file|Selecciona tu archivo ssf
 Set PC to Start Address|Establecer PC a posición de inicio
 Settings|Configuración
 SH2 Debugger Interpreter|Intérprete Depurador SH2
@@ -417,7 +435,7 @@ Trigger|Detonante
 TV effect :|Efecto TV
 Type:|Tipo:
 Unable to add code|Imposible añadir código
-Unable to change description|Imposible cambiar la descripción
+Unable to change description| 
 Unable to open file for loading|Imposible abrir archivo para cargar
 Unable to open file for saving|Imposible abrir archivo para guardar
 Unable to remove code|Imposible eliminar código
@@ -430,7 +448,9 @@ Up|Arriba
 Upload|Subir
 Upscale Filter :|Filtro de escalado
 Use Vdp1 Cache|Usar caché Vdp1
-Use System Locale|
+Use SH2 cache - Experimental|Usar caché SH2 - Experimental
+Use System Locale|Usar local del sistema
+User Interface Translation|Traducción de la interfaz de usuario
 Value|Valor
 Value :|Valor :
 Value :|Valor :
@@ -450,7 +470,7 @@ Wheel|Volante
 Wheel Configuration|Configuración Volante
 Window Resolution|Resolución de ventana
 Windows SPTI Driver|Driver SPTI para Windows
-Window size :|Tamaño de ventana
+Window size :|Tamaño de ventana :
 Wireframe :| Estructura de diseño
 Word|Palabra(word)
 Word Write|Escribir WORD

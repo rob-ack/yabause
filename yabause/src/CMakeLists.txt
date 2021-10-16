@@ -449,8 +449,8 @@ if (YAB_WANT_SDL)
 endif()
 
 if (WIN32)
-	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available" ON)
-	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available" ON)
+	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available" OFF)
+	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available" OFF)
 	# Direct X
 	if (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
 		find_package(DirectX)

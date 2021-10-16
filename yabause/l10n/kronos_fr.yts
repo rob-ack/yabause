@@ -72,8 +72,8 @@ Asia (NTSC)|Asie (NTSC)
 Asia (PAL)|Asie (PAL)
 Assembly code|Code Assembleur
 Auto-detect|Détection Auto
-Awaiting input for|Attente de l'entrée pour
 Autostart|Démarrage Automatique
+Awaiting input for|Attente de l'entrée pour
 Axis|Axes
 Axis Throttle|Accélèrer l'Axe
 Axis X|Axe X
@@ -87,6 +87,10 @@ Bilinear Filtering (Restart required)|Filtrage Bilinéaire (Redémarrer l'émula
 Binary Files (*.bin)|Fichiers Binaire (*.bin)
 Binary Files (*.bin);;COFF Program Files (*.cof *.coff);;ELF Program Files (*.elf);;All Files (*)|Fichiers Binaire (*.bin);;Fichiers Programme COFF (*.cof *.coff);;Fichiers Programme ELF (*.elf);;Tous les Fichiers (*)
 Bios|Bios :
+Bios file path|Chemin du Fichier Bios :
+Bios Settings|Paramètres du Bios :
+Bios Language|Langue du Bios :
+Bios settings file|Fichier des Paramètres du Bios :
 Block Size :|Taille du Bloc :
 Bug report|Rapport de Bug
 Byte|Byte
@@ -98,8 +102,9 @@ Can't plug in the new controller, cancelling.|Ne peut pas brancher dans le nouve
 Can't initialize Kronos|Ne peut pas intialiser Kronos.
 Cart/Memory|Cartouche/Mémoire
 Cartridge|Cartouche :
+Cartridge Path|Chemin de la Cartouche :
 CD Images (*.iso *.cue *.bin *.mds *.ccd *.zip)|Images CD (*.iso *.cue *.bin *.mds *.ccd *.zip)
-Cd-Rom|CD-Rom :
+CD-ROM|CD-ROM :
 Central/South America (NTSC)|Amérique du Sud/Centrale (NTSC)
 Central/South America (PAL)|Amérique du Sud/Centrale (PAL)
 Cheats File|Fichier Cheat
@@ -114,7 +119,9 @@ Choose a cdrom drive/mount point|Choisir un Lecteur CD ou un Point de Montage
 Choose a cheat file to open|Choisir un fichier de Cheat à ouvrir
 Choose a cheat file to save to|Choisir un fichier de Cheat à enregistrer vers
 Choose a file to save your state|Choisir un Fichier où Enregistrer l'Etat
+Choose a file to store bios settings|Choisir un fichier pour stocker les paramètres du bios
 Choose a folder to store save states|Choisir un Dossier pour stocker les Sauvegardes d'Etats
+Choose a folder to store screenshots|Choisir un Dossier pour stocker les Captures d'Ecrans
 Choose a location for binary file|Choisir le Chemin du Fichier Binaire
 Choose a location for your binary file|Choisir le Chemin pour votre Fichier Binaire
 Choose a location for your bitmap|Choisir le Chemin pour le Fichier Bitmap
@@ -122,6 +129,7 @@ Choose a location for your screenshot|Choisir un Chemin pour votre Capture d'Ecr
 Choose a location for your wav file|Choisir le Chemin pour votre Fichier WAV
 Choose a memory file|Choisir un Fichier Mémoire
 Choose a mpeg rom|Choisir une Rom MPEG
+Choose a STV cartridge folder|Choisir un dossier pour la Cartouche ST-V
 Clear|Vider
 Clear configuration|Vider la Configuration
 Close|Fermer
@@ -129,8 +137,8 @@ Code Breakpoints|Interruptions du Code :
 COFF Program Files (*.cof *.coff)|Fichiers Programmes COFF (*.cof *.coff)
 Comment :|Commentaire :
 Common Control Registers|Registres de Contrôle Commun
-Compatibility List|Liste de Compatibilité
 Compare Type|Type de Comparaison
+Compatibility List|Liste de Compatibilité
 Compute Shader Video Interface|Interface Vidéo Compute Shader
 Couldn't save state file|Ne peut pas sauvegarder un fichier d'état
 Couldn't load state file|Ne peut pas charger un fichier d'état
@@ -148,18 +156,27 @@ Debug Slave SH2|Débug SH2 Esclave
 Debug VDP1|Débug VDP1
 Debug VDP2Viewer|Débug VDP2Viewer
 Default Dial IP|Composer l'Ip par Défaut
+Default System Language|Langage Système par Défaut :
+Deinterlacing Bob|Désentrelacement Bob
+Deinterlacing Debug Bob|Désentrelacement Débug Bob
+Deinterlacing OSSC Bob|Désentrelacement OSSC Bob
+Deinterlacing OSSC Debug Bob|Désentrelacement Débug OSSC Bob
+Deinterlacing Scanline|Désentrelacement du Scanline
 Del|Effacer
 Delete|Effacer
 Description|Description
+Deutsch|Allemand
 Device List|Liste des Périphériques
+Directory|Répertoire :
 DirectX Input Interface|Interface Contrôleur DirectX
-DirectX Sound Interface|Interface DirectX Sound
+DirectX Sound Interface|Interface Son DirectX
 Disabled|Désactivé
 Disassembled Code|Code Désassemblé :
 Display on Hover|Afficher en Passant le Curseur
 Double Mission Stick|Double Mission Stick
 Double Mission Stick Configuration|Configuration du Double Mission Stick
 Down|Bas
+Down_P2|Bas Joueur 2
 Download|Télécharger
 DSP Control Registers|Registres de Contrôle DSP
 DSP Registers|Registres DSP
@@ -176,7 +193,6 @@ Embellishment filter :|Filtre d'Embellissement :
 Enable|Activer
 Enable Bios Emulation|Activer l'Emulation du Bios
 Enable Code : %1 %2|Activer le Code : %1 %2
-Enable Frame Skip/Limiter|Active le Saut  d'Image/Limitateur
 Enable Multithreading|Activer les Processus Multiples
 Enable vertical synchronization|Activer la Synchronisation Verticale
 Enabled|Activé
@@ -185,12 +201,13 @@ English|Anglais
 Enter new assembly code|Entrer un Nouveau Code Assembleur
 Enter New Value|Entrer une Nouvelle Valeur
 Error|Erreur
-Extend Internal backup memory to 8MB|Etendre la Mémoire de Sauvegarde Interne à 8MB
 Europe + others (PAL)|Europe + Autres (PAL)
 Exact|Identique
+Extend Internal backup memory to 8MB|Etendre la Mémoire de Sauvegarde Interne à 8MB
 File:|Fichier :
 File Name :|Nom du Fichier :
 Finished searching up to end of memory, continue from the beginning?|Fin de la recherche terminé, recommencez depuis le début du fichier ?
+FPS|FPS
 French|Français
 From File...|A Partir d'un Fichier...
 General|Général
@@ -207,10 +224,12 @@ Gun/Mouse Sensitivity|Sensibilité de la Souris/Pistolet
 Hex value(s)|Valeur(s) Héx
 Hide Menubar|Cacher la Barre de Menu
 Hide Toolbar|Cacher la Barre d'Outil
+Image format|Format de l'Image :
 Improved|Amélioré
 Information...|Information...
 Inline Assembly|Assembleur En Ligne
 Input|Contrôleur
+Integer scaling|Résolution adaptative par entier
 Internal Backup RAM|Copie de Sauvegarde Interne
 Invalid Address|Adresse Invalide
 Invalid Start/End Address Combination|Adresse de début/fin invalide
@@ -239,6 +258,7 @@ Load8|Chargement8
 Load9|Chargement9	
 L&oad State|&Charger un Etat
 Left|Gauche
+Left_P2|Gauche Joueur 2
 Left stick:\nTrigger:      X\nLeft button:  Y\nRight button: Z|Stick Gauche :\ Gâchette : X\nBouton Gauche : Y\nBouton Droite : Z
 Left Stick Axis X|Axe X du Stick Gauche
 Left Stick Axis Y|Axe Y du Stick Gauche
@@ -278,10 +298,9 @@ NBG3|NBG3
 NBG3 Info|Info NBG3
 Netlink|Réseau
 Never|Jamais
-&No|Non
+&No|&Non
 No matches found.|Aucune correspondance trouvé.
 None|Aucun
-None|Aucune
 Normal format not available, trying alternative|Le format normal n'est pas disponible, essayez en un autre
 North America (NTSC)|Amérique du Nord (NTSC)
 Number of Threads|Nombre de Processus
@@ -289,9 +308,9 @@ On fullscreen|Plein Ecran
 On message|Sur le Message
 Open &CD Rom...|Ouvrir un Lecteur &CD Rom...
 Open &ISO...|Ouvrir un Fichier &ISO...
+Open a cartridge file|Ouvrir un fichier Cartouche
+Open a mpeg rom|Ouvrir une Rom MPEG
 Open CD Rom|Ouvrir un Lecteur CD ROM
-Open SSF|Ouvrir le Lecteur SSF
-Open&Tray|Ouvrir le Plateau
 OpenGL Video Interface|Interface Vidéo OpenGL
 Options|Options
 Original|Original
@@ -300,9 +319,10 @@ Original aspect ratio|Proportions d'Origine
 OSD Core|Noyau OSD :
 Pad|Manette
 Pad Configuration|Configuration de la Manette
-Play Slot|Lancer l'Emplacement
+Pause|Pause
 Port|Port
 Press Esc key to cancel|Pressez Echap pour annuler
+Pro Action Replay|Pro Action Replay
 Qt Keyboard Input Interface|Interface Qt du Clavier
 &Question...|Questions...
 RBG0|RGB0
@@ -313,6 +333,7 @@ Region|Région :
 Remove Peripheral|Supprimer le Périphérique
 Restart|Redémarrer
 Right|Droite
+Right_P2|Droite Joueur 2
 Right Stick:\nTrigger:      A\nLeft button:  B\nRight button: C|Stick Droit :\nGâchette : A\nBouton Gauche :  B\nBouton Droit: C
 Right Stick Axis X|Axe X du Stick Droit
 Right Stick Axis Y|Axe Y du Stick Droit
@@ -329,7 +350,7 @@ Save6|Sauvegarde6
 Save7|Sauvegarde7
 Save8|Sauvegarde8
 Save9|Sauvegarde9
-Save As Bitmap|Sauvegarder en Bitmap
+Sauvegarder en Bitmap
 Save As WAV|Sauvegarder en  WAV
 Save Bitmap|Sauvegarder en Bitmap
 Save Information|Informations sur la Sauvegarde
@@ -338,18 +359,17 @@ Save MD0|Sauvegarde MD0
 Save MD1|Sauvegarde MD1
 Save MD2|Sauvegarde MD2
 Save MD3|Sauvegarde MD3
-Save Selected|Sauvegarde Sélectionné
 Save Program|Sauvegarde Programme
+Save Selected|Sauvegarde Sélectionné
+Save Slot Registers|Sauvegarder Emplacement Registres
 S&ave State|S&auvegarder un Etat
 Save States|Sauvegardes d'Etats :
-Save Slot Registers|Sauvegarder Emplacement Registres
-Save Tab|Sauv. Onglet
-Screen Enabled|Ecran Activé
-Screen Select:|Choix de l'Ecran :
-Sc&reenshot|Copie d'Ec&ran
 Scanline filter|Filtre Scanline
 Scanline off|Scanline Off
 Scanline on|Scanline On
+Screen Enabled|Ecran Activé
+Screen Select:|Choix de l'Ecran :
+Screenshots|Captures d'Ecrans :
 SCSP|SCSP
 SCSP Channels|Canaux SCSP
 SDL Joystick Interface|Interface SDL du Joystick
@@ -359,14 +379,12 @@ Search/Add Cheats|Rechercher/Ajouter un Cheat
 Search Criteria|Critère de Recherche
 Search Memory|Fouiller dans la Mémoire
 Search Value:|Rechercher une Valeur :
-Sega Saturn Sound Format files (*.ssf *.minissf)|Fichiers au Format Son Sega Saturn (*.ssf *.minissf)
 Select a file to load your state|Choisissez un Fichier pour Charger l'Etat
 Select your iso/cue/bin/zip/chd file|Choisissez votre fichier ISO/CUE/BIN/ZIP/CHD
-Select your ssf file|Sélectionner votre fichier SSF
 Set PC to Start Address|Sélection PC vers l'Adresse de Démarrage
 Settings|Paramètres
 SH2 Debugger Interpreter|Interpréteur de Débugeur SH2
-SH2 Interpreter|Interpréteur SH2
+SH2 Interpreter|Interpréteur SH2 :
 SH2 Kronos Interpreter|Interpréteur SH2 Kronos
 SH2 Registers|Registres SH2 :
 Shortcuts|Raccourcis
@@ -427,10 +445,13 @@ Unsigned 8-bit value|Valeur Non Signé 8-bit
 Unsigned 16-bit value|Valeur Non Signé 16-bit
 Unsigned 32-bit value|Valeur Non Signé 32-bit
 Up|Haut
+Up_P2|Haut Joueur 2
 Upload|Upload
 Upscale Filter :|Filtre D'Interpolation :
-Use Vdp1 Cache|Utiliser le Cache VDP1
+Use SH2 cache - Experimental|Utiliser le Cache SH2 - Expérimental
 Use System Locale|Utiliser les paramètres régionaux
+Use Vdp1 Cache|Utiliser le Cache VDP1
+User Interface Translation|Traduction de l'Interface Utilisateur :
 Value|Valeur
 Value:|Valeur :
 Value :|Valeur :

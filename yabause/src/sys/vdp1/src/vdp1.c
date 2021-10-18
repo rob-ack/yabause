@@ -1038,8 +1038,8 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (!(command & 0x4000)) { // if (!skip)
          if (vdp1_clock <= 0) {
            //No more clock cycle, wait next line
-             if (vdp1NewCommandsFetchedHook) vdp1NewCommandsFetchedHook(&commandCounter);
-                 return;
+            if (vdp1NewCommandsFetchedHook) { vdp1NewCommandsFetchedHook(&commandCounter); }
+            return;
          }
          int ret;
          vdp1cmdctrl_struct * ctrl = NULL;
@@ -1152,6 +1152,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
             CmdListDrawn = 1;
             CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
+            if (vdp1NewCommandsFetchedHook) { vdp1NewCommandsFetchedHook(&commandCounter); }
             return;
          }
       } else {
@@ -1165,9 +1166,10 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 		  Vdp1External.status = VDP1_STATUS_IDLE;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-      CmdListDrawn = 1;
-      CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
-		  return;
+          CmdListDrawn = 1;
+          CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
+          if (vdp1NewCommandsFetchedHook) { vdp1NewCommandsFetchedHook(&commandCounter); }
+          return;
 	  }
 
       // Next, determine where to go next
@@ -1184,6 +1186,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             Vdp1External.status = VDP1_STATUS_IDLE;
             CmdListDrawn = 1;
             CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
+            if (vdp1NewCommandsFetchedHook) { vdp1NewCommandsFetchedHook(&commandCounter); }
             return;
           }
         }

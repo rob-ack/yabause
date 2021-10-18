@@ -201,7 +201,7 @@ vdp2rotationparameter_struct  Vdp1ParaA;
 
 typedef struct {
   RBGDrawInfo *rbg;
-  Vdp2 *varVdp2Regs;
+  Vdp2 varVdp2Regs;
 } rotationTask;
 
 
@@ -3223,9 +3223,8 @@ void Vdp2DrawRotation_in_async(void *p)
    while(rotation_run != 0){
      rotationTask *task = (rotationTask *)YabWaitEventQueue(rotq);
      if (task != NULL) {
-       Vdp2DrawRotation_in_sync(task->rbg, task->varVdp2Regs);
+       Vdp2DrawRotation_in_sync(task->rbg, &task->varVdp2Regs);
        YabAddEventQueue(rotq_end_task, task->rbg);
-       free(task->varVdp2Regs);
        free(task);
      }
      YabWaitEventQueue(rotq_end);
@@ -3237,9 +3236,7 @@ static void Vdp2DrawRotation_in(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
    task->rbg = (RBGDrawInfo*)malloc(sizeof(RBGDrawInfo));
    memcpy(task->rbg, rbg, sizeof(RBGDrawInfo));
-
-   task->varVdp2Regs = (Vdp2*)malloc(sizeof(Vdp2));
-   memcpy(task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
+   memcpy(&task->varVdp2Regs, varVdp2Regs, sizeof(Vdp2));
 
    if (rotation_run == 0) {
      rotation_run = 1;

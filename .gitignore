@@ -29,3 +29,4 @@ yabause/src/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Release/LzmaA
 yabause/src/tools/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Release/.NETFramework,Version=v4.0.AssemblyAttributes.cs
 yabause/src/tools/libchdr/deps/lzma-16.04/CS/7zip/Compress/LzmaAlone/obj/Debug/.NETFramework,Version=v4.0.AssemblyAttributes.cs
 out/
+*.autosave

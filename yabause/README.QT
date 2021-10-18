@@ -1,5 +1,5 @@
         _   _
-       / \_/ \            ___  _      ____ 
+       / \_/ \            ___  _      ____
        \     /___  ___   /   || | __ /    \ ____
         \   //   ||   \ /    || | \ \\  \_//    \
         /  //    ||   //  _  || |__\ \\  \    __/
@@ -28,11 +28,6 @@ these libraries, runtime and development packages:
 Yabause can also use the SDL library:
 
   * http://www.libsdl.org/
-
-Yabause can also use the GLUT library:
-
-  * Check google, I haven't been able to find a good
-    source for it.
 
 Once these libraries installed, you should be ready to
 install Yabause.
@@ -121,8 +116,8 @@ possible.
 4 Disclaimer__________________________________________________
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of
 the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be

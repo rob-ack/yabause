@@ -27,7 +27,6 @@ extern OSD_struct OSDNnovg;
 #include "core.h"
 
 #define OSDCORE_DUMMY    0
-#define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
 #define OSDCORE_NANOVG   3
 
@@ -70,9 +69,6 @@ void OSDSetVisible(int what, int visible);
 void OSDAddFrameProfileData( char * label, u32 data );
 
 extern OSD_struct OSDDummy;
-#ifdef HAVE_LIBGLUT
-extern OSD_struct OSDGlut;
-#endif
 extern OSD_struct OSDSoft;
 
 /* defined for backward compatibility (used to be in vdp2.h) */

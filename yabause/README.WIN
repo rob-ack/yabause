@@ -1,5 +1,5 @@
         _   _
-       / \_/ \            ___  _      ____ 
+       / \_/ \            ___  _      ____
        \     /___  ___   /   || | __ /    \ ____
         \   //   ||   \ /    || | \ \\  \_//    \
         /  //    ||   //  _  || |__\ \\  \    __/
@@ -19,8 +19,8 @@
 
 1 Compiling instructions______________________________________
 
-Yabause is written in C using the DirectX 8.0, OpenGL, GLUT, and
-mini18n libraries, so you need a working C compiler(such as gcc) 
+Yabause is written in C using the DirectX 8.0, OpenGL, and
+mini18n libraries, so you need a working C compiler(such as gcc)
 and these libraries, runtime and development packages:
 
   * You can find DirectX headers and libraries(for mingw) at
@@ -31,9 +31,6 @@ and these libraries, runtime and development packages:
 
   * OpenGL should be included with your compiler, if it isn't,
     check on your compiler's website for links.
-
-  * Check google for GLUT. I haven't been able to find a good
-    source for it.
 
   * You can get mini18n from Yabause's sourceforge download page
     here: http://sourceforge.net/project/showfiles.php?group_id=89991&package_id=304859
@@ -49,7 +46,7 @@ yabause, and type: "./configure". Once that's done(and there
 was no errors), type: "make". It should now take some time to
 compile so go grab yourself a sandwich or beer - whatever suits
 your fancy and it should be done in a few minutes. Now all you
-have to do is type "./src/yabause" in order to run it. 
+have to do is type "./src/yabause" in order to run it.
 
 Compiling using Visual C++____________________________________
 
@@ -79,7 +76,7 @@ use a real cdrom or a cdrom image of the game you're trying to
 run.
 
 The Cue/Iso File setting allows you to specify the location
-of your Saturn game's cdrom image. 
+of your Saturn game's cdrom image.
 
 The Drive Letter setting is for you to be able to choose which
 cdrom drive you want yabause to use when trying to boot a game.
@@ -102,7 +99,7 @@ The Backup RAM File setting allows you to specify the location
 of the Backup RAM file. This file allows yabause to store and
 load save games.
 
-The MPEG ROM File setting allows you to specify the location 
+The MPEG ROM File setting allows you to specify the location
 of a MPEG Card's ROM image. While not necessary, it does allow
 you to test out the saturn's vcd capabilities.
 
@@ -113,7 +110,7 @@ write to. You can enter that information in the field below it.
 
 When you're done, just click on the "OK" button. If the bios
 location was specified correctly, emulation should start and
-you will see a brief animation of the saturn logo being formed. 
+you will see a brief animation of the saturn logo being formed.
 
 Special Note: Some settings require a restart of the program.
 
@@ -233,8 +230,8 @@ possible.
 4 Disclaimer__________________________________________________
 
 This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License as 
-published by the Free Software Foundation; either version 2 of 
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2 of
 the License, or (at your option) any later version.
 
 This program is distributed in the hope that it will be

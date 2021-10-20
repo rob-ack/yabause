@@ -124,6 +124,8 @@ static const GLchar * a_prg_vdp1[NB_PRG][5] = {
 	},
 };
 
+static int progMask = 0;
+
 static int getProgramId() {
 	if (_Ygl->meshmode == ORIGINAL_MESH){
 	  if (_Ygl->bandingmode == ORIGINAL_BANDING)
@@ -507,6 +509,12 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  cmd->B[2] = miny*tex_ratioh;
 	  cmd->B[3] = (maxy + 1)*tex_ratioh;
 
+		progMask |= 1 << (cmd->CMDPMOD & 0x7u);
+		if ((cmd->CMDPMOD & 0x8000u) == 0x8000u) progMask |= 0x100;
+		if ((cmd->CMDPMOD & 0x40u) != 0) progMask |= 0x200; //SPD
+		if ((cmd->CMDPMOD & 0x80u) != 0) progMask |= 0x400; //END
+		progMask |= 0x1000 << ((cmd->CMDPMOD >> 3) & 0x7u);
+
 	}
 	memcpy(&cmdVdp1List[nbCmdToProcess], cmd, sizeof(vdp1cmd_struct));
   for (int i = 0; i<NB_COARSE_RAST_X; i++) {
@@ -608,6 +616,7 @@ void vdp1_compute_init(int width, int height, float ratiow, float ratioh)
   if (am != 0) {
     struct_size += 16 - am;
   }
+	progMask = 0;
 #ifdef VDP1RAM_CS_ASYNC
 	if (vdp1_generate_run == 0) {
 		vdp1_generate_run = 1;
@@ -692,6 +701,9 @@ void vdp1_compute() {
 
 	if (prg_vdp1[progId] == 0)
 	prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
+
+YuiMsg("Use program 0x%x\n", progMask);
+
 	glUseProgram(prg_vdp1[progId]);
 
 	VDP1CPRINT("Draw VDP1\n");
@@ -753,6 +765,7 @@ void vdp1_compute() {
 
   glDispatchCompute(work_groups_x, work_groups_y, 1); //might be better to launch only the right number of workgroup
   ErrorHandle("glDispatchCompute");
+	progMask = 0;
 
 	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 	glBindImageTexture(1, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RG8);

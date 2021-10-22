@@ -255,10 +255,8 @@ void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 
    if (val != T2ReadWord(mem, addr)) {
      T2WriteWord(mem, addr, val);
 
-     //A EXTRAIRE
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
     addrToUpdate[nbAddrToUpdate++] = addr;
-     // YglOnUpdateColorRamWord(addr);
 #endif
    }
 }
@@ -269,17 +267,13 @@ void FASTCALL Vdp2ColorRamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 
    addr &= 0xFFF;
    // printf("[VDP2] Update Coloram Long %08X:%08X\n", addr, val);
    T2WriteLong(Vdp2ColorRam, addr, val);
-   //A EXTRAIRE
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
    if (Vdp2Internal.ColorMode == 2) {
      addrToUpdate[nbAddrToUpdate++] = addr;
-     // YglOnUpdateColorRamWord(addr);
    }
    else {
      addrToUpdate[nbAddrToUpdate++] = addr;
      addrToUpdate[nbAddrToUpdate++] = addr + 2;
-     // YglOnUpdateColorRamWord(addr + 2);
-     // YglOnUpdateColorRamWord(addr);
    }
 #endif
 }
@@ -1378,7 +1372,6 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
            for (int i = 0; i < 0x1000; i += 2) {
              addrToUpdate[nbAddrToUpdate++] = i;
-             // YglOnUpdateColorRamWord(i);
            }
 #endif
          }

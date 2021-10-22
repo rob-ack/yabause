@@ -890,7 +890,7 @@ int YabauseEmulate(void) {
    FPSDisplay();
 
 #ifdef YAB_STATICS
-   printf("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
+   YuiMsg("CPUTIME = %" PRId64 " @ %d \n", cpu_emutime, yabsys.frame_count );
 #if 1
    if (yabsys.frame_count >= 4000 ) {
      static FILE * pfm = NULL;

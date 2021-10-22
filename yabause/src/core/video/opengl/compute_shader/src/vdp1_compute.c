@@ -702,7 +702,7 @@ void vdp1_compute() {
 	if (prg_vdp1[progId] == 0)
 	prg_vdp1[progId] = createProgram(sizeof(a_prg_vdp1[progId]) / sizeof(char*), (const GLchar**)a_prg_vdp1[progId]);
 
-YuiMsg("Use program 0x%x\n", progMask);
+// YuiMsg("Use program 0x%x\n", progMask);
 
 	glUseProgram(prg_vdp1[progId]);
 

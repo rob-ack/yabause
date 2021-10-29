@@ -6024,6 +6024,19 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 //////////////////////////////////////////////////////////////////////////////
 #define BG_PROFILE 0
 
+#ifdef YAB_VDP2_STATS
+#define START_STATS \
+  u64 cpu_emutime = 0; \
+  u64 current_cpu_clock = YabauseGetTicks();
+#define PRINT_STAT(A) \
+  cpu_emutime = (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq; \
+  current_cpu_clock = YabauseGetTicks(); \
+  YuiMsg("%s = %ld @ %d \n", A, cpu_emutime, yabsys.frame_count );
+#else
+#define START_STATS
+#define PRINT_STAT(A)
+#endif
+
 #define VDP2_DRAW_LINE 0
 static void VIDOGLVdp2DrawScreens(void)
 {
@@ -6049,12 +6062,19 @@ LOG_ASYN("===================================\n");
   Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
   Vdp2DrawLineColorScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
 
+START_STATS
   Vdp2DrawRBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("RGB0")
   Vdp2DrawNBG3(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("NBG3")
   Vdp2DrawNBG2(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("NBG2")
   Vdp2DrawNBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("NBG1")
   Vdp2DrawNBG0(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("NBG0")
   Vdp2DrawRBG1(&Vdp2Lines[VDP2_DRAW_LINE]);
+PRINT_STAT("RBG1")
 
 LOG_ASYN("*********************************\n");
   vdp2busy = 1;

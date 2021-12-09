@@ -2926,7 +2926,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   for (k = vstart; k < vstart+vres; k++)
   {
-
+    info->alpha = (~Vdp2Lines[k].CCRR & 0x1F) << 3;
     if (rgb_type == 0) {
       rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * k) - rbg->paraA.Px) +
         rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +
@@ -5978,8 +5978,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     info->specialcode = varVdp2Regs->SFCODE & 0xFF;
 
   info->blendmode = VDP2_CC_NONE;
-
-  info->alpha = (~varVdp2Regs->CCRR & 0x1F) << 3;
 
   info->coloroffset = (varVdp2Regs->CRAOFB & 0x7) << 8;
 

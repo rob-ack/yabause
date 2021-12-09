@@ -151,3 +151,16 @@ $ sudo make install
     <theme>saturn</theme>
   </system> 
 ```
+
+### RetroPie Setup 
+
+You can also use RetroPie setup command.
+
+```markdown
+cd ~/RetroPie-Setup/scriptmodules/
+wget https://raw.githubusercontent.com/devmiyax/yabause/b96dbd2393a3f9482d37344fd5d1c60fa68cac35/yabause/src/retro_arena/yabasanshiro.sh
+chmod 755 yabasanshiro.sh
+cd ~/RetroPie-Setup/
+sudo ./retropie_setup.sh
+```
+

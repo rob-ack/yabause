@@ -4803,13 +4803,12 @@ int sameVDP2RegRBG0(Vdp2 *a, Vdp2 *b)
 //  if ((a->CHCTLB & 0x7700) != (b->CHCTLB & 0x7700)) return 0;
 //  if ((a->WCTLC & 0xFF) != (b->WCTLC & 0xFF)) return 0;
   if ((a->RPTA.all) != (b->RPTA.all)) return 0;
-  if ((a->CCRR) != (b->CCRR)) return 0;
 //  if ((a->VRSIZE & 0x8000) != (b->VRSIZE & 0x8000)) return 0;
 //  if ((a->RAMCTL & 0x80FF) != (b->RAMCTL & 0x80FF)) return 0;
 //  if ((a->KTCTL & 0xFFFF) != (b->KTCTL & 0xFFFF)) return 0;
 //  if ((a->PLSZ & 0xFF00) != (b->PLSZ & 0xFF00)) return 0;
 //  if ((a->KTAOF & 0x707) != (b->KTAOF & 0x707)) return 0;
- if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
+//  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
   if ((a->RPMD & 0x3) != (b->RPMD & 0x3)) return 0;
 //  if ((a->WCTLD & 0xF) != (b->WCTLD & 0xF)) return 0;
 //  if ((a->BMPNB & 0x7) != (b->BMPNB & 0x7)) return 0;
@@ -4837,7 +4836,7 @@ int sameVDP2RegRBG1(Vdp2 *a, Vdp2 *b)
   if ((a->PRINA & 0x7) != (b->PRINA & 0x7)) return 0;
 //  if ((a->CCCTL & 0xFF01) != (b->CCCTL & 0xFF01)) return 0;
 //  if ((a->BMPNA & 0x7) != (b->BMPNA & 0x7)) return 0;
- if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
+//  if ((a->MPOFR & 0x77) != (b->MPOFR & 0x77)) return 0;
 //  if ((a->VRSIZE & 0x8000) != (b->VRSIZE & 0x8000)) return 0;
 //  if ((a->RAMCTL & 0x80FF) != (b->RAMCTL & 0x80FF)) return 0;
 //  if ((a->KTCTL & 0xFFFF) != (b->KTCTL & 0xFFFF)) return 0;

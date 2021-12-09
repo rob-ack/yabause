@@ -713,7 +713,6 @@ extern int opengl_mode; // 0 => gles3 , 1 => gl3.3
 
 typedef struct {
   int useb;
-  vdp2draw_struct info;
   YglTexture texture;
   int rgb_type;
   int pagesize;
@@ -729,6 +728,8 @@ typedef struct {
   vdp2rotationparameter_struct  paraB;
   Vdp2 *varVdp2Regs;
   int use_cs;
+  int alpha[270];
+  vdp2draw_struct info;
 } RBGDrawInfo;
 
 int YglInit(int, int, unsigned int);

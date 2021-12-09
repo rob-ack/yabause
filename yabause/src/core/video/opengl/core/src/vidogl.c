@@ -4671,7 +4671,11 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
    free(rgb);
    return;
   }
-  for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
+  for (int i=info->startLine; i<info->endLine; i++) {
+    info->display[i] = info->enable;
+    // Color calculation ratio
+    rgb->alpha[i] = (~Vdp2Lines[i].CCRNA & 0x1F)<<3;
+  }
 
     // Read in Parameter B
     Vdp2ReadRotationTable(1, &rgb->paraB, varVdp2Regs, Vdp2Ram);
@@ -4757,9 +4761,6 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   int dest_alpha = ((varVdp2Regs->CCCTL >> 9) & 0x01);
 
   info->blendmode = 0;
-
-  // Color calculation ratio
-  info->alpha = (~varVdp2Regs->CCRNA & 0x1F)<<3;
 
   info->coloroffset = (varVdp2Regs->CRAOFA & 0x7) << 8;
 
@@ -5716,7 +5717,11 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     return;
   }
 
-  for (int i=info->startLine; i<info->endLine; i++) info->display[i] = info->enable;
+  for (int i=info->startLine; i<info->endLine; i++) {
+    info->display[i] = info->enable;
+    // Color calculation ratio
+    rgb->alpha[i] = (~(Vdp2Lines[i].CCRR & 0x1F)) << 3;
+  }
 
   info->priority = varVdp2Regs->PRIR & 0x7;
 

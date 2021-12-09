@@ -122,7 +122,6 @@ SHADER_VERSION_COMPUTE
 "  uint specialcode;\n"
 "  int colornumber;\n"
 "  int window_area_mode;"
-"  uint alpha;\n"
 "  uint priority;\n"
 "  int startLine;\n"
 "  int endLine;\n"
@@ -135,6 +134,7 @@ SHADER_VERSION_COMPUTE
 "layout(std430, binding = 5) readonly buffer VDP2C { uint cram[]; };\n"
 "layout(std430, binding = 6) readonly buffer ROTW { uint  rotWin[]; };\n"
 "layout(rgba8, binding = 7) writeonly uniform image2D lnclSurface;\n"
+"layout(std430, binding = 8) readonly buffer ALPHA { uint  alpha[]; };\n"
 " int GetKValue( int paramid, vec2 pos, out float ky, out uint lineaddr ){ \n"
 "  uint kdata;\n"
 "  int kindex = int(para[paramid].deltaKAst*pos.y)+int(para[paramid].deltaKAx*pos.x); \n"
@@ -209,7 +209,7 @@ SHADER_VERSION_COMPUTE
 " vec4 vdp2color(uint alpha_, uint prio, uint cc_on, uint index) {\n"
 " uint ret = (((alpha_ & 0xF8u) | prio) << 24 | ((cc_on & 0x1u)<<16) | (index& 0xFEFFFFu));\n"
 " return vec4(float((ret >> 0)&0xFFu)/255.0,float((ret >> 8)&0xFFu)/255.0, float((ret >> 16)&0xFFu)/255.0, float((ret >> 24)&0xFFu)/255.0);"
-"\n}"
+"}\n"
 
 "int PixelIsSpecialPriority( uint specialcode, uint dot ) { \n"
 "  dot &= 0xfu; \n"
@@ -252,7 +252,7 @@ SHADER_VERSION_COMPUTE
 "	   if (get_cram_msb(index) == 0u) { cc_ = 0; }\n"
 "	   break;\n"
 "    }\n"
-"    return cc_\n;"
+"    return cc_;\n"
 "}\n"
 
 "vec4 Vdp2ColorRamGetColorOffset(uint offset) { \n"
@@ -289,6 +289,7 @@ const char prg_continue_rbg[] =
 "  vec2 original_pos = floor(vec2(texel) / vec2(hres_scale, vres_scale));\n";
 
 const char prg_rbg_rpmd0_2w[] =
+"//prg_rbg_rpmd0_2w\n"
 "  paramid = 0; \n"
 "  ky = para[paramid].ky; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
@@ -301,6 +302,7 @@ const char prg_rbg_rpmd0_2w[] =
 "  }\n";
 
 const char prg_rbg_rpmd1_2w[] =
+"//prg_rbg_rpmd1_2w\n"
 "  paramid = 1; \n"
 "  ky = para[paramid].ky; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
@@ -313,6 +315,7 @@ const char prg_rbg_rpmd1_2w[] =
 "  }\n";
 
 const char prg_rbg_rpmd2_2w[] =
+"//prg_rbg_rpmd2_2w\n"
 "  paramid = 0; \n"
 "  ky = para[paramid].ky; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
@@ -345,6 +348,7 @@ const char prg_rbg_rpmd2_2w[] =
 
 
 const char prg_get_param_mode03[] =
+"//prg_get_param_mode03\n"
 "  if( isWindowInside( uint(pos.x), uint(pos.y) ) ) { "
 "    paramid = 0; \n"
 "    if( para[paramid].coefenab != 0 ){ \n"
@@ -388,6 +392,7 @@ const char prg_get_param_mode03[] =
 
 
 const char prg_rbg_xy[] =
+"//prg_rbg_xy\n"
 "  float Xsp = para[paramid].A * ((para[paramid].Xst + para[paramid].deltaXst * original_pos.y) - para[paramid].Px) +\n"
 "  para[paramid].B * ((para[paramid].Yst + para[paramid].deltaYst * original_pos.y) - para[paramid].Py) +\n"
 "  para[paramid].C * (para[paramid].Zst - para[paramid].Pz);\n"
@@ -398,6 +403,7 @@ const char prg_rbg_xy[] =
 "  float fv = floor(ky * (Ysp + para[paramid].dy * original_pos.x) + para[paramid].Yp);\n";
 
 const char prg_rbg_get_bitmap[] =
+"//prg_rbg_get_bitmap\n"
 "  cellw = cellw_;\n"
 "  charaddr = para[paramid].charaddr;\n"
 "  paladdr = paladdr_;\n"
@@ -430,6 +436,7 @@ const char prg_rbg_get_bitmap[] =
 "  }\n";
 
 const char prg_rbg_overmode_repeat[] =
+"//prg_rbg_overmode_repeat\n"
 "  switch( para[paramid].screenover){ \n "
 "  case 0: // OVERMODE_REPEAT \n"
 "    x = int(fh) & (para[paramid].MaxH-1);\n"
@@ -466,6 +473,7 @@ const char prg_rbg_overmode_repeat[] =
 
 
 const char prg_rbg_get_patternaddr[] =
+"//prg_rbg_get_patternaddr\n"
 "  int planenum = (x >> para[paramid].ShiftPaneX) + ((y >> para[paramid].ShiftPaneY) << 2);\n"
 "  x &= (para[paramid].MskH);\n"
 "  y &= (para[paramid].MskV);\n"
@@ -477,6 +485,7 @@ const char prg_rbg_get_patternaddr[] =
 "  addr &= 0x7FFFFu;\n";
 
 const char prg_rbg_get_pattern_data_1w[] =
+"//prg_rbg_get_pattern_data_1w\n"
 "  if( patternname == 0xFFFFFFFFu){\n"
 "    patternname = vram[addr>>2]; \n" // WORD mode( patterndatasize == 1 )
 "    if( (addr & 0x02u) != 0u ) { patternname >>= 16; } \n"
@@ -515,6 +524,7 @@ const char prg_rbg_get_pattern_data_1w[] =
 "  charaddr *= 0x20u;\n";
 
 const char prg_rbg_get_pattern_data_2w[] =
+"//prg_rbg_get_pattern_data_2w\n"
 "  patternname = vram[addr>>2]; \n"
 "  uint tmp1 = patternname & 0x7FFFu; \n"
 "  charaddr = patternname >> 16; \n"
@@ -528,6 +538,7 @@ const char prg_rbg_get_pattern_data_2w[] =
 "  charaddr *= 0x20u;\n";
 
 const char prg_rbg_get_charaddr[] =
+"//prg_rbg_get_charaddr\n"
 "  cellw = 8; \n"
 "  if (patternwh == 1) { \n" // Figure out which pixel in the tile we want
 "    x &= 0x07;\n"
@@ -568,6 +579,7 @@ const char prg_rbg_get_charaddr[] =
 // 4 BPP
 
 const char prg_rbg_getcolor_4bpp[] =
+"//prg_rbg_getcolor_4bpp\n"
 //Aligner avec Vdp2GetPixel4bpp
 //Jeu de test Dead or Alive
 "  uint dot = 0u;\n"
@@ -590,6 +602,7 @@ const char prg_rbg_getcolor_4bpp[] =
 
 // 8BPP
 const char prg_rbg_getcolor_8bpp[] =
+"//prg_rbg_getcolor_8bpp\n"
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  uint dotaddr = (charaddr + uint((y*cellw)+x))&0x7FFFFu;\n"
@@ -609,6 +622,7 @@ const char prg_rbg_getcolor_8bpp[] =
 
 
 const char prg_rbg_getcolor_16bpp_palette[] =
+"//prg_rbg_getcolor_16bpp_palette\n"
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  uint dotaddr = (charaddr + uint((y*cellw)+x) * 2u)&0x7FFFFu;\n"
@@ -624,6 +638,7 @@ const char prg_rbg_getcolor_16bpp_palette[] =
 "  }\n";
 
 const char prg_rbg_getcolor_16bpp_rbg[] =
+"//prg_rbg_getcolor_16bpp_rbg\n"
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  uint dotaddr = (charaddr + uint((y*cellw)+x) * 2u)&0x7FFFFu;\n"
@@ -639,6 +654,7 @@ const char prg_rbg_getcolor_16bpp_rbg[] =
 
 
 const char prg_rbg_getcolor_32bpp_rbg[] =
+"//prg_rbg_getcolor_32bpp_rbg\n"
 "  uint dot = 0u;\n"
 "  uint cramindex = 0u;\n"
 "  uint dotaddr = (charaddr + uint((y*cellw)+x) * 4u)&0x7FFFFu;\n"
@@ -656,7 +672,7 @@ const char prg_generate_rbg_end[] =
 "  if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "  else imageStore(lnclSurface,texel,vec4(0.0));\n"
 "  if (discarded != 0) imageStore(outSurface,texel,vec4(0.0));\n"
-"  else imageStore(outSurface,texel,vdp2color(alpha, priority_, cc, cramindex));\n"
+"  else imageStore(outSurface,texel,vdp2color(alpha[int(original_pos.y)], priority_, cc, cramindex));\n"
 "}\n";
 
 //Powerslave
@@ -968,7 +984,6 @@ struct RBGUniform {
     specialcolorfunction=0;
     specialcode=0;
 		window_area_mode = 0;
-		alpha = 0;
 		priority = 0;
 		startLine = 0;
 		endLine = 0;
@@ -1081,6 +1096,7 @@ class RBGGenerator{
 	GLuint ssbo_rotwin_ = 0;
   GLuint ssbo_window_ = 0;
   GLuint ssbo_paraA_ = 0;
+	GLuint ssbo_alpha_ = 0;
   int tex_width_ = 0;
   int tex_height_ = 0;
   static RBGGenerator * instance_;
@@ -2280,7 +2296,17 @@ DEBUGWIP("Init\n");
                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_rotwin_);
                glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 0x800, (void*)rbg->info.RotWin);
                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 6, ssbo_rotwin_);
-  }
+  				 }
+
+			 if (ssbo_alpha_ == 0) {
+				 glGenBuffers(1, &ssbo_alpha_);
+				 glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_alpha_);
+				 glBufferData(GL_SHADER_STORAGE_BUFFER, 270*sizeof(int), NULL, GL_DYNAMIC_DRAW);
+			 }
+
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_alpha_);
+	glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 270*sizeof(int), (void*)&rbg->alpha[0]);
+	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 8, ssbo_alpha_);
 
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo_paraA_);
 	if ( rbg->info.idScreen == RBG0 ) {
@@ -2313,7 +2339,6 @@ DEBUGWIP("Init\n");
   uniform.specialcode = rbg->info.specialcode;
        uniform.colornumber = rbg->info.colornumber;
        uniform.window_area_mode = rbg->info.RotWinMode;
-       uniform.alpha = rbg->info.alpha;
        uniform.priority = rbg->info.priority;
        uniform.startLine = rbg->info.startLine;
        uniform.endLine = rbg->info.endLine;

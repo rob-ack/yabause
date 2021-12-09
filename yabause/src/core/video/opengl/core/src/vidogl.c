@@ -3453,7 +3453,6 @@ void VIDOGLVdp1Draw()
 
   YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
 
-  int firstalpha = (Vdp2External.perline_alpha_draw[0] & 0x40);
   int prioChanged = 0;
   int max = (yabsys.VBlankLineCount<270)?yabsys.VBlankLineCount:270;
 

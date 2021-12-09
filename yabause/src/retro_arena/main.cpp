@@ -149,6 +149,7 @@ static SDL_Window* wnd;
 static SDL_GLContext glc;
 int g_EnagleFPS = 0;
 int g_resolution_mode = 0;
+int g_rotate_resolution_mode = 0;
 int g_keep_aspect_rate = 0;
 int g_scsp_sync = 1;
 int g_frame_skip = 1;
@@ -250,7 +251,7 @@ int yabauseinit()
 #else
   yinit.scsp_main_mode = 1;
 #endif
-  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,0);
+  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,g_rotate_resolution_mode);
 #if defined(__JETSON__)
   yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , true);
 #else
@@ -299,6 +300,7 @@ int main(int argc, char** argv)
       printf("  -b STRING  --bios STRING                 bios file\n");
       printf("  -i STRING  --iso STRING                  iso/cue file\n");
       printf("  -r NUMBER  --resolution_mode NUMBER      0 .. Native, 1 .. 4x, 2 .. 2x, 3 .. Original\n");
+      printf("  -rr NUMBER  --rotate_resolution_mode NUMBER      0 .. Original, 1 .. 2x, 2 .. 720p, 3 .. 1080p, 4 .. Native\n");
       printf("  -a         --keep_aspect_rate\n");
       printf("  -s NUMBER  --scps_sync_per_frame NUMBER\n");
       printf("  -nf         --no_frame_skip              disable frame skip\n");    
@@ -306,6 +308,8 @@ int main(int argc, char** argv)
       exit(0);
     }
   }
+
+
 
   for( int i=0; i<all_args.size(); i++ ){
     string x = all_args[i];
@@ -318,6 +322,9 @@ int main(int argc, char** argv)
     }
 		else if(( x == "-r" || x == "--resolution_mode") && (i+1<all_args.size() ) ) {
       g_resolution_mode = std::stoi( all_args[i+1] );
+    }
+		else if(( x == "-rr" || x == "--rotate_resolution_mode") && (i+1<all_args.size() ) ) {
+      g_rotate_resolution_mode = std::stoi( all_args[i+1] );
     }
 		else if(( x == "-a" || x == "--keep_aspect_rate") ) {
       g_keep_aspect_rate = 1;
@@ -333,6 +340,21 @@ int main(int argc, char** argv)
       return 0;
     }
 	}
+
+  
+  // Init Preference
+  Preference * p = new Preference(cdpath);
+  p->getInt("Resolution",g_resolution_mode);
+  p->getInt("Rotate screen resolution",g_rotate_resolution_mode);
+  p->getInt("Aspect rate",g_keep_aspect_rate);
+  p->getBool("Rotate screen",false);
+#if defined(__JETSON__)
+  p->getBool( "Use compute shader" , true);
+#else
+  p->getBool( "Use compute shader" , false);
+#endif
+  delete p;
+
 
   if( SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) != 0 ) {
     printf("Fail to init SDL Bye! (%s)", SDL_GetError() );
@@ -407,7 +429,7 @@ int main(int argc, char** argv)
       return -1;
   }
 
-  Preference * p = new Preference(cdpath);
+  p = new Preference(cdpath);
   VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
   delete p;
   

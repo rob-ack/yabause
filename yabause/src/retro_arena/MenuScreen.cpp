@@ -54,6 +54,15 @@ using namespace std;
 #define MENU_LOG printf
 
 
+extern int g_EnagleFPS;
+extern int g_resolution_mode;
+extern int g_keep_aspect_rate;
+extern int g_rotate_resolution_mode;
+extern int g_scsp_sync;
+extern int g_frame_skip;
+extern int g_emulated_bios;
+
+
 int MenuScreen::onShow(){
   //setupPlayerPsuhButton( 0, player1, "Player1 Input Settings", &p1cb );
   //setupPlayerPsuhButton( 1, player2, "Player2 Input Settings", &p2cb );
@@ -296,7 +305,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Resolution",0) );
+  cb->setSelectedIndex( preference->getInt("Resolution",g_resolution_mode) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Resolution",idx);
@@ -316,7 +325,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Aspect rate",0) );
+  cb->setSelectedIndex( preference->getInt("Aspect rate",g_keep_aspect_rate) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Aspect rate",idx);
@@ -336,7 +345,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Rotate screen resolution",0) );
+  cb->setSelectedIndex( preference->getInt("Rotate screen resolution",g_rotate_resolution_mode) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Rotate screen resolution",idx);

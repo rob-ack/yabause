@@ -42,9 +42,10 @@ int Preference::getInt( const std::string & key , int defaultv = 0  ){
     LOG("Preference: getInt %s:%d\n", key.c_str() ,j[key].get<int>() );
     return j[key].get<int>();
   }catch ( json::type_error & e ){
+    setInt( key , defaultv );
   }
 
-  LOG("Preference: fail to getInt %s\n", key.c_str());
+  LOG("Preference: fail to getInt %s and use defalut value %d\n", key.c_str(), defaultv);
   return defaultv;
 }
 
@@ -53,9 +54,10 @@ bool Preference::getBool( const std::string & key , bool defaultv = false ){
     LOG("Preference: getBool %s:%d\n", key.c_str(),j[key].get<bool>() );
     return j[key].get<bool>();
   }catch ( json::type_error & e ){
+    setBool( key , defaultv );
   }
 
-  LOG("Preference: fail to getBool %s\n", key.c_str());
+  LOG("Preference: fail to getBool %s and use defalut value %d\n", key.c_str(), defaultv);
   return defaultv;
 }
 

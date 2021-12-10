@@ -46,7 +46,7 @@ Vdp2 * Vdp2Regs;
 Vdp2Internal_struct Vdp2Internal;
 Vdp2External_struct Vdp2External;
 
-int addrToUpdate[0x800];
+int addrToUpdate[0x1000];
 int nbAddrToUpdate = 0;
 
 INLINE int getVramCycle(u32 addr) {
@@ -257,7 +257,7 @@ void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 
      T2WriteWord(mem, addr, val);
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
-    addrToUpdate[addr>>1] = 1;
+    addrToUpdate[addr] = 1;
     nbAddrToUpdate = 1;
 #endif
    }
@@ -271,12 +271,12 @@ void FASTCALL Vdp2ColorRamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 
    T2WriteLong(Vdp2ColorRam, addr, val);
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
    if (Vdp2Internal.ColorMode == 2) {
-     addrToUpdate[addr>>1] = 1;
+     addrToUpdate[addr] = 1;
      nbAddrToUpdate = 1;
    }
    else {
-     addrToUpdate[addr>>1] = 1;
-     addrToUpdate[addr>>1+1] = 1;
+     addrToUpdate[addr] = 1;
+     addrToUpdate[addr+2] = 1;
      nbAddrToUpdate = 1;
    }
 #endif
@@ -619,9 +619,9 @@ void Vdp2HBlankIN(void) {
 
   #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
   if (nbAddrToUpdate != 0){
-    for (int i=0; i<0x800; i++)
+    for (int i=0; i<0x1000; i++)
       if (addrToUpdate[i] != 0) {
-        YglOnUpdateColorRamWord(i<<1);
+        YglOnUpdateColorRamWord(i);
         addrToUpdate[i] = 0;
       }
     nbAddrToUpdate = 0;

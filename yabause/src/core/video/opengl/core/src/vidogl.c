@@ -2903,17 +2903,16 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
   rbg->info.cellw = rbg->hres;
   rbg->info.cellh = (rbg->vres * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
-  rbg->info.celly = (rbg->vres * info->startLine)/yabsys.VBlankLineCount;
 
   if (rbg->use_cs) {
 
     if (info->isbitmap) {
       rbg->info.cellw = cellw;
-      rbg->info.cellh = (cellh * (info->endLine - info->startLine))/yabsys.VBlankLineCount;
-      rbg->info.celly = (cellh * info->startLine)/yabsys.VBlankLineCount;
+      rbg->info.cellh = cellh ;
     }
 
     YglQuadRbg0(rbg, NULL, &rbg->c, &rbg->cline, rbg->rgb_type, YglTM_vdp2, varVdp2Regs);
+
    //Not optimal. Should be 0 if there is no offset used.
     _Ygl->useLineColorOffset[0] = ((varVdp2Regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[0]:0;
     _Ygl->useLineColorOffset[1] = ((varVdp2Regs->KTCTL & 0x1010)!=0)?_Ygl->linecolorcoef_tex[1]:0;
@@ -2973,11 +2972,9 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         }
         break;
       case 2:
-        if (!(rbg->paraA.coefenab)) {
-          parameter = &rbg->paraA;
-        } else {
+        parameter = &rbg->paraA;
+        if (rbg->paraA.coefenab) {
           if (rbg->paraB.coefenab) {
-            parameter = &rbg->paraA;
             if (vdp2rGetKValue(parameter, l) == 0) {
               parameter = &rbg->paraB;
               if( vdp2rGetKValue(parameter, l) == 0) {
@@ -2987,7 +2984,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
             }
           }
           else {
-            parameter = &rbg->paraA;
             if (vdp2rGetKValue(parameter, l) == 0) {
               rbg->paraB.lineaddr = rbg->paraA.lineaddr;
               parameter = &rbg->paraB;
@@ -3229,7 +3225,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
 
     rbg->info.flipfunction = 0;
 
-    LOG_AREA("%d %d %d\n", rbg->info.cellw, rbg->info.cellh, rbg->info.celly);
+    LOG_AREA("%d %d\n", rbg->info.cellw, rbg->info.cellh);
   }
 
 #ifdef RGB_ASYNC
@@ -5740,6 +5736,8 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
 
   info->colornumber = (varVdp2Regs->CHCTLB & 0x7000) >> 12;
 
+  LOG_AREA("RGB0 colornumber = %d\n", info->colornumber);
+
   info->islinescroll = 0;
   info->linescrolltbl = 0;
   info->lineinc = 0;
@@ -5774,7 +5772,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
       info->GetKValueA = vdp2rGetKValue2Wm3;
     }
   }
-
   if (rgb->paraB.coefdatasize == 2)
   {
     if (rgb->paraB.coefmode < 3)
@@ -5819,7 +5816,6 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
   }
   else if (varVdp2Regs->RPMD == 0x02)
   {
-    //printf("RPMD 0x2\n");
     if (!(rgb->paraA.coefenab))
     {
       info->GetRParam = (Vdp2GetRParam_func)vdp2RGetParamMode02NoK;
@@ -5897,14 +5893,13 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     break;
   }
 
+  info->isbitmap = ((varVdp2Regs->CHCTLB & 0x200) != 0);
 
-
-  if ((info->isbitmap = varVdp2Regs->CHCTLB & 0x200) != 0)
+  if (info->isbitmap)
   {
     // rgb->use_cs = 0;
     // Bitmap Mode
     ReadBitmapSize(info, varVdp2Regs->CHCTLB >> 10, 0x1);
-
     if (info->rotatenum == 0)
       // Parameter A
       info->charaddr = (varVdp2Regs->MPOFR & 0x7) * 0x20000;

@@ -135,7 +135,7 @@ SHADER_VERSION_COMPUTE
 "layout(std430, binding = 6) readonly buffer ROTW { uint  rotWin[]; };\n"
 "layout(rgba8, binding = 7) writeonly uniform image2D lnclSurface;\n"
 "layout(std430, binding = 8) readonly buffer ALPHA { uint  alpha[]; };\n"
-" int GetKValue( int paramid, vec2 pos, out float ky, out uint lineaddr ){ \n"
+" int GetKValue( int paramid, vec2 pos, out float ky, out float kx, out uint lineaddr ){ \n"
 "  uint kdata;\n"
 "  int kindex = int(para[paramid].deltaKAst*pos.y)+int(para[paramid].deltaKAx*pos.x); \n"
 "  if (para[paramid].coefdatasize == 2) { \n"
@@ -151,7 +151,17 @@ SHADER_VERSION_COMPUTE
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
 "    }\n"
 "    if ( (kdata & 0x8000u) != 0u) { return -1; }\n"
-"	   if((kdata&0x4000u)!=0u) ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; else ky=float(kdata&0x7FFFu)/1024.0;\n"
+"    float kval = 0;\n"
+"	   if((kdata&0x4000u)!=0u) kval=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0;\n"
+"    else kval=float(kdata&0x7FFFu)/1024.0;\n"
+"    if (para[paramid].coefmode == 0) {\n"
+"			 kx = kval;\n"
+"			 ky = kval;\n"
+"    } else if (para[paramid].coefmode == 1) {\n"
+"      kx = kval;\n"
+"    } else if (para[paramid].coefmode == 2) {\n"
+"      ky = kval;\n"
+"    } \n"
 "  }else{\n"
 //powerslave
 "    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<2))&0x7FFFFu); \n"
@@ -165,7 +175,17 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "	 if( para[paramid].linecoefenab != 0) lineaddr = (kdata >> 24) & 0x7Fu; else lineaddr = 0u;\n"
 "	 if((kdata&0x80000000u)!=0u){ return -1;}\n"
-"	 if((kdata&0x00800000u)!=0u) ky=float( int(kdata&0x00FFFFFFu)| int(0xFF800000u) )/65536.0; else ky=float(kdata&0x00FFFFFFu)/65536.0;\n"
+"    float kval = 0;\n"
+"	 if((kdata&0x00800000u)!=0u) kval=float( int(kdata&0x00FFFFFFu)| int(0xFF800000u) )/65536.0;\n"
+"  else kval=float(kdata&0x00FFFFFFu)/65536.0;\n"
+"    if (para[paramid].coefmode == 0) {\n"
+"			 kx = kval;\n"
+"			 ky = kval;\n"
+"    } else if (para[paramid].coefmode == 1) {\n"
+"      kx = kval;\n"
+"    } else if (para[paramid].coefmode == 2) {\n"
+"      ky = kval;\n"
+"    } \n"
 "  }\n"
 "  return 0;\n"
 " }\n"
@@ -208,7 +228,7 @@ SHADER_VERSION_COMPUTE
 
 " vec4 vdp2color(uint alpha_, uint prio, uint cc_on, uint index) {\n"
 " uint ret = (((alpha_ & 0xF8u) | prio) << 24 | ((cc_on & 0x1u)<<16) | (index& 0xFEFFFFu));\n"
-" return vec4(float((ret >> 0)&0xFFu)/255.0,float((ret >> 8)&0xFFu)/255.0, float((ret >> 16)&0xFFu)/255.0, float((ret >> 24)&0xFFu)/255.0);"
+" return vec4(float((ret >> 0)&0xFFu)/255.0,float((ret >> 8)&0xFFu)/255.0, float((ret >> 16)&0xFFu)/255.0, float((ret >> 24)&0xFFu)/255.0);\n"
 "}\n"
 
 "int PixelIsSpecialPriority( uint specialcode, uint dot ) { \n"
@@ -276,6 +296,7 @@ const char prg_continue_rbg[] =
 "  uint charaddr; \n"
 "  uint lineaddr = 0u; \n"
 "  float ky; \n"
+"  float kx; \n"
 "  uint kdata;\n"
 "  uint cc = 1u;\n"
 "  int discarded = 0;\n"
@@ -292,9 +313,10 @@ const char prg_rbg_rpmd0_2w[] =
 "//prg_rbg_rpmd0_2w\n"
 "  paramid = 0; \n"
 "  ky = para[paramid].ky; \n"
+"  kx = para[paramid].kx; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
 "  if( para[paramid].coefenab != 0 ){ \n"
-"   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"   if( GetKValue(paramid,pos,ky,kx, lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
 "   	imageStore(outSurface,texel,vec4(0.0)); return; \n"
@@ -305,9 +327,10 @@ const char prg_rbg_rpmd1_2w[] =
 "//prg_rbg_rpmd1_2w\n"
 "  paramid = 1; \n"
 "  ky = para[paramid].ky; \n"
+"  kx = para[paramid].kx; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
 "  if( para[paramid].coefenab != 0 ){ \n"
-"   if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"   if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "     if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "     else imageStore(lnclSurface,texel,vec4(0.0));\n"
 "   	imageStore(outSurface,texel,vec4(0.0)); return;\n"
@@ -318,14 +341,16 @@ const char prg_rbg_rpmd2_2w[] =
 "//prg_rbg_rpmd2_2w\n"
 "  paramid = 0; \n"
 "  ky = para[paramid].ky; \n"
+"  kx = para[paramid].kx; \n"
 "  lineaddr = para[paramid].lineaddr; \n"
-"  if( para[paramid].coefenab != 0 ){ \n"
+"  if( para[0].coefenab != 0 ){ \n"
 "    if( para[1].coefenab != 0 ){ \n"
-"      if( GetKValue(0,pos,ky,lineaddr ) == -1 ) { \n"
+"      if( GetKValue(paramid,pos,ky, kx,lineaddr ) == -1 ) { \n"
 "        paramid = 1; \n"
 "  			 ky = para[paramid].ky; \n"
+"        kx = para[paramid].kx; \n"
 "  			 lineaddr = para[paramid].lineaddr; \n"
-"        if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"        if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "          if ( para[paramid].linecoefenab != 0) \n"
 "            imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "          else \n"
@@ -335,13 +360,11 @@ const char prg_rbg_rpmd2_2w[] =
 "        } \n"
 "      } \n"
 "    } else {\n"
-"        if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
-"          if ( para[paramid].linecoefenab != 0) \n"
-"            imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
-"          else \n"
-"            imageStore(lnclSurface,texel,vec4(0.0));\n"
-"   	     imageStore(outSurface,texel,vec4(0.0));\n"
-"          return;\n"
+"        if( GetKValue(paramid,pos,ky,kx,lineaddr) == -1 ) { \n"
+"          paramid = 1;\n"
+"          ky = para[paramid].ky; \n"
+"          kx = para[paramid].kx; \n"
+"          lineaddr = para[paramid].lineaddr; \n"
 "        } \n"
 "    }\n"
 "  }\n";
@@ -352,40 +375,44 @@ const char prg_get_param_mode03[] =
 "  if( isWindowInside( uint(pos.x), uint(pos.y) ) ) { "
 "    paramid = 0; \n"
 "    if( para[paramid].coefenab != 0 ){ \n"
-"      if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"      if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "        paramid=1;\n"
 "        if( para[paramid].coefenab != 0 ){ \n"
-"          if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"          if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "            if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "             imageStore(lnclSurface,texel,vec4(0.0));\n"
 "   	       imageStore(outSurface,texel,vec4(0.0)); return;} \n"
 "          }else{ \n"
 "            ky = para[paramid].ky; \n"
+"            kx = para[paramid].kx; \n"
 "            lineaddr = para[paramid].lineaddr; \n"
 "          }\n"
 "        }\n"
 "      }else{\n"
 "        ky = para[paramid].ky; \n"
+"        kx = para[paramid].kx; \n"
 "        lineaddr = para[paramid].lineaddr; \n"
 "      }\n"
 "    }else{\n"
 "      paramid = 1; \n"
 "      if( para[paramid].coefenab != 0 ){ \n"
-"        if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"        if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "          paramid=0;\n"
 "          if( para[paramid].coefenab != 0 ){ \n"
-"            if( GetKValue(paramid,pos,ky,lineaddr ) == -1 ) { \n"
+"            if( GetKValue(paramid,pos,ky,kx,lineaddr ) == -1 ) { \n"
 "              if ( para[paramid].linecoefenab != 0) imageStore(lnclSurface,texel,Vdp2ColorRamGetColorOffset(lineaddr));\n"
 "              else imageStore(lnclSurface,texel,vec4(0.0));\n"
 "   	         imageStore(outSurface,texel,vec4(0.0)); return;\n"
 "            } \n"
 "          }else{ \n"
 "            ky = para[paramid].ky; \n"
+"            kx = para[paramid].kx; \n"
 "            lineaddr = para[paramid].lineaddr; \n"
 "          }\n"
 "        }\n"
 "      }else{\n"
 "        ky = para[paramid].ky; \n"
+"        kx = para[paramid].kx; \n"
 "        lineaddr = para[paramid].lineaddr; \n"
 "      }\n"
 "   }\n";
@@ -399,7 +426,7 @@ const char prg_rbg_xy[] =
 "  float Ysp = para[paramid].D * ((para[paramid].Xst + para[paramid].deltaXst *original_pos.y) - para[paramid].Px) +\n"
 "  para[paramid].E * ((para[paramid].Yst + para[paramid].deltaYst * original_pos.y) - para[paramid].Py) +\n"
 "  para[paramid].F * (para[paramid].Zst - para[paramid].Pz);\n"
-"  float fh = floor(ky * (Xsp + para[paramid].dx * original_pos.x) + para[paramid].Xp);\n"
+"  float fh = floor(kx * (Xsp + para[paramid].dx * original_pos.x) + para[paramid].Xp);\n"
 "  float fv = floor(ky * (Ysp + para[paramid].dy * original_pos.x) + para[paramid].Yp);\n";
 
 const char prg_rbg_get_bitmap[] =
@@ -1008,7 +1035,6 @@ struct RBGUniform {
   unsigned int specialcode;
   int colornumber;
   int window_area_mode;
-  unsigned int alpha;
   unsigned int priority;
 	int startLine;
 	int endLine;
@@ -1642,7 +1668,7 @@ DEBUGWIP("Init\n");
 							break;
 						}
 						case 1: {
-							//Mass destruction
+							//Mass destruction, //Nissan GTR
 							DEBUGWIP("prog %d\n", __LINE__);glUseProgram(prg_rbg_2_2w_bitmap_8bpp_);
 							break;
 						}
@@ -2369,6 +2395,9 @@ DEBUGWIP("Init\n");
   glDispatchCompute(work_groups_x, work_groups_y, 1);
        // glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
   ErrorHandle("glDispatchCompute");
+
+	glBindImageTexture(0, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	glBindImageTexture(7, 0, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
   glBindBuffer(GL_UNIFORM_BUFFER, 0);
   }

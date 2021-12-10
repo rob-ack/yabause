@@ -123,7 +123,6 @@ typedef struct
    /* The above fields MUST NOT BE CHANGED (including inserting new fields)
     * unless YglSprite is also updated in ygl.h */
 
-   int celly;
    int cellw_bits, cellh_bits;
    int mapwh;
    int planew, planew_bits, planeh, planeh_bits;

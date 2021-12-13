@@ -61,8 +61,8 @@ static const GLchar * a_prg_vdp1[NB_PRG][5] = {
   //VDP1_MESH_STANDARD - BANDING
 	{
 		vdp1_start_f,
-		vdp1_banding_f,
 		vdp1_standard_mesh_f,
+		vdp1_banding_f,
 		vdp1_continue_no_mesh_f,
 		vdp1_end_f
 	},
@@ -77,8 +77,8 @@ static const GLchar * a_prg_vdp1[NB_PRG][5] = {
 	//VDP1_MESH_STANDARD - NO BANDING
 	{
 		vdp1_start_f,
-		vdp1_no_banding_f,
 		vdp1_standard_mesh_f,
+		vdp1_no_banding_f,
 		vdp1_continue_no_mesh_f,
 		vdp1_end_f
 	},

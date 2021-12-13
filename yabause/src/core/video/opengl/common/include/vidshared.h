@@ -139,6 +139,7 @@ typedef struct
    u16 supplementdata;
    int auxmode;
    int enable;
+   //Display shall be used per line to render NBG more accurately
    u8 display[270];
    int x, y;
    int sh,sv;

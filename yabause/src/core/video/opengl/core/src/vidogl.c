@@ -449,7 +449,6 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
   u8 MSB_SHADOW = 0;
   u32 alpha = 0xF8;
   int SPCCCS = (varVdp2Regs->SPCTL >> 12) & 0x3;
-  VDP1LOG("Making new sprite %08X\n", charAddr);
 
   if (/*varVdp2Regs->SDCTL != 0 &&*/ MSB != 0) {
     MSB_SHADOW = 1;
@@ -2717,7 +2716,6 @@ static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs)
     if (_Ygl->rheight >= 448) rbg->vres = (_Ygl->rheight >> 1); else rbg->vres = _Ygl->rheight;
     if (_Ygl->rwidth >= 640) rbg->hres = (_Ygl->rwidth >> 1); else rbg->hres = _Ygl->rwidth;
 
-
   if (rbg->use_cs) {
     rbg->hres *= _Ygl->widthRatio;
     rbg->vres *= _Ygl->heightRatio;
@@ -2867,7 +2865,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   u8 alpha = 0x00;
   if (_Ygl->rheight >= 448) lineInc <<= 1;
   vres = rbg->vres * (rbg->info.endLine - rbg->info.startLine)/yabsys.VBlankLineCount;
-  vstart = rbg->vres * rbg->info.startLine/yabsys.VBlankLineCount;
+  vstart = rbg->info.startLine;
   hres = rbg->hres;
 
   cellw = rbg->info.cellw;

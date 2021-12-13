@@ -147,7 +147,7 @@ int MSBhl = (col"Stringify(A)" & 0x8000) >> 8;\n \
 "Stringify(A)".g = float((Ghl>>3) | (Bhl<<2) | MSBhl)/255.0;\n"
 
 #define HALF_TRANPARENT_MIX(A, B) \
-"if ((col"Stringify(B)" & 0x8000) != 0) { \
+"if ((col"Stringify(B)" & 0x8000) != 0) { \n\
   int Rht = int(clamp(((float((col"Stringify(A)" >> 00) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 00) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
   int Ght = int(clamp(((float((col"Stringify(A)" >> 05) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 05) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
   int Bht = int(clamp(((float((col"Stringify(A)" >> 10) & 0x1F)/31.0) + (float((col"Stringify(B)" >> 10) & 0x1F)/31.0))*0.5, 0.0, 1.0)*31.0);\n \
@@ -328,7 +328,7 @@ SHADER_VERSION_COMPUTE
 "uint pixIsInside (vec2 Pin, uint idx, out vec2 uv){\n"
 "  vec2 Quad[4];\n"
 "  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
-//Bounding box test
+"//Bounding box test\n"
 "  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
 "  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA)*upscale;\n"
 "  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB)*upscale;\n"
@@ -407,7 +407,7 @@ SHADER_VERSION_COMPUTE
 "  {\n"
 "    case 0:\n"
 "    {\n"
-      // 4 bpp Bank mode
+"      // 4 bpp Bank mode\n"
 "      uint colorBank = pixcmd.CMDCOLR & 0xFFF0u;\n"
 "      uint i;\n"
 "      charAddr = pixcmd.CMDSRCA * 8 + pos/2;\n"
@@ -425,7 +425,7 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "    case 1:\n"
 "    {\n"
-      // 4 bpp LUT mode
+"      // 4 bpp LUT mode\n"
 "       uint temp;\n"
 "       charAddr = pixcmd.CMDSRCA * 8 + pos/2;\n"
 "       uint colorLut = pixcmd.CMDCOLR * 8;\n"
@@ -446,7 +446,7 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "    case 2:\n"
 "    {\n"
-      // 8 bpp(64 color) Bank mode
+"      // 8 bpp(64 color) Bank mode\n"
 "      uint colorBank = pixcmd.CMDCOLR & 0xFFC0u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
 "      if ((dot == 0xFFu) && (!END)) {\n"
@@ -462,7 +462,7 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "    case 3:\n"
 "    {\n"
-      // 8 bpp(128 color) Bank mode
+"      // 8 bpp(128 color) Bank mode\n"
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF80u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
 "      if ((dot == 0xFFu) && (!END)) {\n"
@@ -478,7 +478,7 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "    case 4:\n"
 "    {\n"
-      // 8 bpp(256 color) Bank mode
+"      // 8 bpp(256 color) Bank mode\n"
 "      uint colorBank = pixcmd.CMDCOLR & 0xFF00u;\n"
 "      dot = Vdp1RamReadByte(charAddr);\n"
 "      if ((dot == 0xFFu) && (!END)) {\n"
@@ -494,7 +494,7 @@ SHADER_VERSION_COMPUTE
 "    }\n"
 "    case 5:\n"
 "    {\n"
-      // 16 bpp Bank mode
+"      // 16 bpp Bank mode\n"
 "      uint temp;\n"
 "      charAddr += pos;\n"
 "      temp = Vdp1RamReadWord(charAddr);\n"
@@ -574,11 +574,11 @@ SHADER_VERSION_COMPUTE
 "      continue;\n"
 "    }"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 2u) {\n"
-//Draw inside
+"//Draw inside\n"
 "      if (any(lessThan(pos,userlimit.xy*scaleRot*upscale)) || any(greaterThan(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
 "    }\n"
 "    if (((pixcmd.CMDPMOD >> 9) & 0x3u) == 3u) {\n"
-//Draw outside
+"//Draw outside\n"
 "      if (all(greaterThanEqual(pos,userlimit.xy*scaleRot*upscale)) && all(lessThanEqual(pos,userlimit.zw*scaleRot*upscale))) continue;\n"
 "    }\n"
 "    texcoord = uv;\n"
@@ -597,44 +597,44 @@ SHADER_VERSION_COMPUTE
      COLINDEX(newColor);
 static const char vdp1_banding_f[] =
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-       //MSB shadow
+"       //MSB shadow\n"
        MSB_SHADOW(finalColor)
 "      outColor = finalColor;\n"
 "    } else {"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
-           // replace_mode
+"           // replace_mode\n"
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 1u: {\n"
-           //shadow_mode,
+"           //shadow_mode,\n"
            SHADOW(finalColor)
 "          outColor = finalColor;\n"
 "          }; break;\n"
 "        case 2u: {\n"
-           //half_luminance_mode,
+"           //half_luminance_mode,\n"
            HALF_LUMINANCE(newColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 3u: {\n"
-           //half_trans_mode,
+"           //half_trans_mode,\n"
            HALF_TRANPARENT_MIX(newColor, finalColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 4u: {\n"
-           //gouraud_mode,
+"           //gouraud_mode,\n"
            GOURAUD_PROCESS(newColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 6u: {\n"
-           //gouraud_half_luminance_mode,
+"           //gouraud_half_luminance_mode,\n"
            GOURAUD_PROCESS(newColor)
            RECOLINDEX(newColor)
            HALF_LUMINANCE(newColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 7u: {\n"
-           //gouraud_half_trans_mode,
+"           //gouraud_half_trans_mode,\n"
            GOURAUD_PROCESS(newColor)
            RECOLINDEX(newColor)
            HALF_TRANPARENT_MIX(newColor, finalColor)
@@ -648,37 +648,37 @@ static const char vdp1_banding_f[] =
 
 static const char vdp1_no_banding_f[] =
 "    if ((pixcmd.CMDPMOD & 0x8000u) == 0x8000u) {\n"
-       //MSB shadow
+"     //MSB shadow\n"
        MSB_SHADOW(finalColor)
 "      outColor = finalColor;\n"
 "    } else {"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
-           // replace_mode
+"           // replace_mode\n"
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 1u: {\n"
-           //shadow_mode,
+"           //shadow_mode,\n"
            SHADOW(finalColor)
 "          outColor = finalColor;\n"
 "          }; break;\n"
 "        case 2u: {\n"
-           //half_luminance_mode,
+"           //half_luminance_mode,\n"
            HALF_LUMINANCE(newColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 3u: {\n"
-           //half_trans_mode,
+"           //half_trans_mode,\n"
            HALF_TRANPARENT_MIX(newColor, finalColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 4u: {\n"
-           //gouraud_mode,
+"           //gouraud_mode,\n"
            GOURAUD_PROCESS_EXTENDED(newColor)
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 6u: {\n"
-           //gouraud_half_luminance_mode,
+"           //gouraud_half_luminance_mode,\n"
            GOURAUD_PROCESS_EXTENDED(newColor)
            RECOLINDEX(newColor)
            //MSB bits in .ba has to be divided by two also...
@@ -686,7 +686,7 @@ static const char vdp1_no_banding_f[] =
 "          outColor = newColor;\n"
 "          }; break;\n"
 "        case 7u: {\n"
-           //gouraud_half_trans_mode,
+"           //gouraud_half_trans_mode,\n"
            GOURAUD_PROCESS_EXTENDED(newColor)
            RECOLINDEX(newColor)
            //MSB bits in .ba has to be divided by two also...
@@ -700,7 +700,7 @@ static const char vdp1_no_banding_f[] =
 "    }\n";
 
 static const char vdp1_standard_mesh_f[] =
-//Normal mesh
+"//Normal mesh\n"
 "  tag = vec2(0.0);\n"
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
 "    if( (int(texel.y) & 0x01) == 0 ){ \n"
@@ -717,7 +717,7 @@ static const char vdp1_standard_mesh_f[] =
 "  }\n";
 
 static const char vdp1_improved_mesh_f[] =
-//Improved mesh
+"//Improved mesh\n"
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
 "    tag = outColor.rg;\n"
 "    outColor = finalColor;\n"

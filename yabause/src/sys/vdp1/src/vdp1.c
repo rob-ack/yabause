@@ -607,12 +607,12 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   cmd->CMDXA += regs->localX;
   cmd->CMDYA += regs->localY;
 
-  cmd->CMDXB = cmd->CMDXA + MAX(1,cmd->w) - 1;
+  cmd->CMDXB = cmd->CMDXA + MAX(1,cmd->w);
   cmd->CMDYB = cmd->CMDYA;
-  cmd->CMDXC = cmd->CMDXA + MAX(1,cmd->w) - 1;
-  cmd->CMDYC = cmd->CMDYA + MAX(1,cmd->h) -1;
+  cmd->CMDXC = cmd->CMDXA + MAX(1,cmd->w);
+  cmd->CMDYC = cmd->CMDYA + MAX(1,cmd->h);
   cmd->CMDXD = cmd->CMDXA;
-  cmd->CMDYD = cmd->CMDYA + MAX(1,cmd->h) - 1;
+  cmd->CMDYD = cmd->CMDYA + MAX(1,cmd->h);
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
   yabsys.vdp1cycles+= MIN(1000, 70 + (area));

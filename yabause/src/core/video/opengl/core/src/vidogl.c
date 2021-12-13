@@ -5002,18 +5002,22 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
 
       //If RBG0 is used and the VRAM is used for it, check that NBGx is not using reserved area, otherwise, do not display
       int charAddrBk = (((info.charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
-      info.enable = 0;
+      int needUpdate = 0;
       for (int i=0; i<yabsys.VBlankLineCount; i++) {
         if ((Vdp2Lines[i].BGON & 0x10)!=0) {
           //RBG0 is enabled for this line. Check we can display the NBGx
           if(((Vdp2Lines[i].RAMCTL>>(charAddrBk<<1))&0x3) != 0x0){
             //VRAM on the dedicated bank is used by RBG0, it can not be used by NBGx
+            needUpdate = 1;
             info.display[i] = 0;
-            info.enable |= info.display[i];
           }
         }
       }
-      if (!info.enable) return;
+      if (needUpdate != 0) {
+        info.enable = 0;
+        for (int i=0; i<yabsys.VBlankLineCount; i++) info.enable |= info.display[i];
+        if (!info.enable) return;
+      }
     }
     else
     {
@@ -5293,21 +5297,24 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     info.specialfunction = 0;
     info.specialcolorfunction = (varVdp2Regs->BMPNA & 0x1000) >> 4;
 
-
     //If RBG0 is used and the VRAM is used for it, check that NBGx is not using reserved area, otherwise, do not display
     int charAddrBk = (((info.charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
-    info.enable = 0;
+    int needUpdate = 0;
     for (int i=0; i<yabsys.VBlankLineCount; i++) {
       if ((Vdp2Lines[i].BGON & 0x10)!=0) {
         //RBG0 is enabled for this line. Check we can display the NBGx
         if(((Vdp2Lines[i].RAMCTL>>(charAddrBk<<1))&0x3) != 0x0){
           //VRAM on the dedicated bank is used by RBG0, it can not be used by NBGx
+          needUpdate = 1;
           info.display[i] = 0;
-          info.enable |= info.display[i];
         }
       }
     }
-    if (!info.enable) return;
+    if (needUpdate != 0) {
+      info.enable = 0;
+      for (int i=0; i<yabsys.VBlankLineCount; i++) info.enable |= info.display[i];
+      if (!info.enable) return;
+    }
   }
   else
   {

@@ -315,7 +315,7 @@ SHADER_VERSION_COMPUTE
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n"
 "    if (distance(d.xy, P+vec2(0.5)) <= (length(upscale)/2.0)) {\n"
 "      float ux= d.z;\n"
-"      float uy= (float(i))/float(step);\n"
+"      float uy = (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"

@@ -600,7 +600,7 @@ static const char vdp1_banding_f[] =
 "       //MSB shadow\n"
        MSB_SHADOW(finalColor)
 "      outColor = finalColor;\n"
-"    } else {"
+"    } else {\n"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
 "           // replace_mode\n"
@@ -651,7 +651,7 @@ static const char vdp1_no_banding_f[] =
 "     //MSB shadow\n"
        MSB_SHADOW(finalColor)
 "      outColor = finalColor;\n"
-"    } else {"
+"    } else {\n"
 "      switch (pixcmd.CMDPMOD & 0x7u){\n"
 "        case 0u: {\n"
 "           // replace_mode\n"

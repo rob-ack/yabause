@@ -44,6 +44,7 @@ static const GLchar Yglprg_vdp2_sprite_getCode_8_16[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_0[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 0\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -66,6 +67,7 @@ static const GLchar Yglprg_vdp2_sprite_type_0[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_1[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 1\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -88,6 +90,7 @@ static const GLchar Yglprg_vdp2_sprite_type_1[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_2[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 2\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -117,6 +120,7 @@ static const GLchar Yglprg_vdp2_sprite_type_2[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_3[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 3\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -146,6 +150,7 @@ static const GLchar Yglprg_vdp2_sprite_type_3[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_4[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 4\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -175,6 +180,7 @@ static const GLchar Yglprg_vdp2_sprite_type_4[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_5[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 5\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -204,6 +210,7 @@ static const GLchar Yglprg_vdp2_sprite_type_5[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_6[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 6\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -233,6 +240,7 @@ static const GLchar Yglprg_vdp2_sprite_type_6[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_7[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 7\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -265,6 +273,7 @@ static const GLchar Yglprg_vdp2_sprite_type_7[] =
 // Then the color code has to be considered as transparent color
 static const GLchar Yglprg_vdp2_sprite_type_8[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 8\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -279,6 +288,7 @@ static const GLchar Yglprg_vdp2_sprite_type_8[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_9[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type 9\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -294,6 +304,7 @@ static const GLchar Yglprg_vdp2_sprite_type_9[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_A[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type A\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -308,6 +319,7 @@ static const GLchar Yglprg_vdp2_sprite_type_A[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_B[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type B\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -322,6 +334,7 @@ static const GLchar Yglprg_vdp2_sprite_type_B[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_C[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type C\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -336,6 +349,7 @@ static const GLchar Yglprg_vdp2_sprite_type_C[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_D[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type D\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -351,6 +365,7 @@ static const GLchar Yglprg_vdp2_sprite_type_D[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_E[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type E\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -365,6 +380,7 @@ static const GLchar Yglprg_vdp2_sprite_type_E[] =
 
 static const GLchar Yglprg_vdp2_sprite_type_F[] =
 "FBCol getVDP1PixelCode(vec2 col) {\n"
+"//Sprite type F\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"

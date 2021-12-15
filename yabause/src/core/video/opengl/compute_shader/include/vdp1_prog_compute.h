@@ -394,7 +394,7 @@ SHADER_VERSION_COMPUTE
 " if ((pixcmd.flip & 0x2u) == 0x2u) posf = floor(posf);\n"
 " else posf = ceil(posf);\n"
 
-"  uint x = clamp(uint(uv.x*(pixcmd.w-1)), 0u, uint(pixcmd.w-1));\n"
+"  uint x = uint(ceil(uv.x*(pixcmd.w-1)));\n"
 "  uint pos = clamp(uint(posf), 0u, uint(pixcmd.h-1))*pixcmd.w+x;\n"
 
 

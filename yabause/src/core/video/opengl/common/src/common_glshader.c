@@ -532,12 +532,12 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  ivec2 fbCoord = addr + ivec2(x*vdp1Ratio.x, 0);\n"
 "  fbCoord = ivec2(getFBCoord(vec2(fbCoord)));\n"
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
-"  vec2 meshpix = texelFetch(s_vdp1Mesh, fbCoord, 0).rg;\n"
+"  vec4 meshpix = texelFetch(s_vdp1Mesh, fbCoord, 0);\n"
 "  FBTest = col;\n"
 "  ret = getVDP1PixelCode(col.rg);\n"
 //Support of extended mesh mode
-"  mesh = getVDP1PixelCode(meshpix);\n"
-"  if (any(notEqual(meshpix,vec2(0.0)))) { \n"
+"  mesh = getVDP1PixelCode(meshpix.rg);\n"
+"  if (meshpix.b != 0.0) { \n"
 "    vec4 meshcol=vec4(0.0,0.0,0.0,1.0);\n"
 "    int meshdepth = getVDP2Reg(mesh.prio+8, line);\n"
 "    if (mesh.valid == 0) {\n"
@@ -1224,7 +1224,6 @@ for (int i = 7; i>0; i--) { \n \
             if (FBMesh == 1) {\n \
               mesh = 1;\n \
               meshCol = FBShadow.rgb;\n \
-              if (all(equal(FBColor.rgb,vec3(0.0)))) continue;\n \
             }\n \
             if (FBNormalShadow) {\n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \

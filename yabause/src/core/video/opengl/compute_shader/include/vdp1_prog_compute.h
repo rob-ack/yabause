@@ -86,7 +86,7 @@ SHADER_VERSION_COMPUTE
 "#endif\n"
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-"layout(rg8, binding = 1) writeonly uniform image2D outMesh;\n"
+"layout(rgba8, binding = 1) writeonly uniform image2D outMesh;\n"
 "layout(location = 2) uniform vec4 col;\n"
 "void main()\n"
 "{\n"
@@ -103,8 +103,8 @@ SHADER_VERSION_COMPUTE
 "precision highp float;\n"
 "#endif\n"
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
-"layout(rg8, binding = 0) writeonly uniform image2D outMesh0;\n"
-"layout(rg8, binding = 1) writeonly uniform image2D outMesh1;\n"
+"layout(rgba8, binding = 0) writeonly uniform image2D outMesh0;\n"
+"layout(rgba8, binding = 1) writeonly uniform image2D outMesh1;\n"
 "void main()\n"
 "{\n"
 "  ivec2 size = imageSize(outMesh0);\n"
@@ -223,7 +223,7 @@ SHADER_VERSION_COMPUTE
 
 "layout(local_size_x = "Stringify(LOCAL_SIZE_X)", local_size_y = "Stringify(LOCAL_SIZE_Y)") in;\n"
 "layout(rgba8, binding = 0) writeonly uniform image2D outSurface;\n"
-"layout(rg8, binding = 1) writeonly uniform image2D meshSurface;\n"
+"layout(rgba8, binding = 1) writeonly uniform image2D meshSurface;\n"
 "layout(std430, binding = 3) readonly buffer VDP1RAM { uint Vdp1Ram[]; };\n"
 "layout(std430, binding = 4) readonly buffer NB_CMD { uint nbCmd[]; };\n"
 "layout(std430, binding = 5) readonly buffer CMD { \n"
@@ -526,7 +526,7 @@ SHADER_VERSION_COMPUTE
 "  vec4 meshColor = vec4(0.0);\n"
 "  vec4 newColor = vec4(0.0);\n"
 "  vec4 outColor = vec4(0.0);\n"
-"  vec2 tag = vec2(0.0);\n"
+"  vec3 tag = vec3(0.0);\n"
 "  cmdparameter_struct pixcmd;\n"
 "  bool discarded = false;\n"
 "  bool drawn = false;\n"
@@ -701,7 +701,7 @@ static const char vdp1_no_banding_f[] =
 
 static const char vdp1_standard_mesh_f[] =
 "//Normal mesh\n"
-"  tag = vec2(0.0);\n"
+"  tag = vec3(0.0);\n"
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
 "    if( (int(texel.y) & 0x01) == 0 ){ \n"
 "      if( (int(texel.x) & 0x01) == 0 ){ \n"
@@ -719,15 +719,16 @@ static const char vdp1_standard_mesh_f[] =
 static const char vdp1_improved_mesh_f[] =
 "//Improved mesh\n"
 "  if ((pixcmd.CMDPMOD & 0x100u)==0x100u){\n"//IS_MESH
-"    tag = outColor.rg;\n"
+"    tag.rg = outColor.rg;\n"
+"    tag.b = 1.0;\n"
 "    outColor = finalColor;\n"
 "  } else {\n"
-"    tag = vec2(0.0);\n"
+"    tag = vec3(0.0);\n"
 "  }\n";
 
 static const char vdp1_continue_mesh_f[] =
 "    if (drawn) {"
-"      meshColor.rg = tag;\n"
+"      meshColor.rgb = tag;\n"
 "      finalColor = outColor;\n"
 "    }\n";
 

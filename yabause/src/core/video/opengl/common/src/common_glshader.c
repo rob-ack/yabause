@@ -615,12 +615,12 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  int eW0 = endW0.x;\n"
 "  if (id == 6) { sW0 = startW0.y; eW0 = endW0.y;}\n"
 "  if (((win0_mode>>id)&0x1) != 0) { \n"
-" //ouside is valid\n"
+" //outside is valid so inside has to be reported as false\n"
+"    if ((sW0 < eW0) && ((pos >= sW0) && (pos < eW0))) valid = false;\n"
+"  } else { \n"
+" //inside is valid so outside has to be reported as false\n"
 "    if (sW0 > eW0) valid = false;\n"
 "    if ((sW0 < eW0) && ((pos < sW0) || (pos > eW0))) valid = false;\n"
-"  } else { \n"
-" //inside is valid\n"
-"    if ((sW0 < eW0) && ((pos >= sW0) && (pos < eW0))) valid = false;\n"
 "  }\n"
 "  return valid;\n"
 "}\n"
@@ -630,10 +630,12 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "  int eW1 = endW1.x;\n"
 "  if (id == 6) { sW1 = startW1.y; eW1 = endW1.y;}\n"
 "  if (((win1_mode>>id)&0x1) != 0) { \n"
+" //outside is valid so inside has to be reported as false\n"
+"    if ((sW1 < eW1) && ((pos >= sW1) && (pos < eW1))) valid = false;\n"
+"  } else { \n"
+" //inside is valid so outside has to be reported as false\n"
 "    if (sW1 > eW1) valid = false;\n"
 "    if ((sW1 < eW1) && ((pos < sW1) || (pos > eW1))) valid = false;\n"
-"  } else { \n"
-"    if ((sW1 < eW1) && ((pos >= sW1) && (pos < eW1))) valid = false;\n"
 "  }\n"
 "  return valid;\n"
 "}\n"
@@ -641,23 +643,29 @@ static const GLchar Yglprg_vdp2_common_part[] =
 " if (((win_s_mode>>id)&0x1) == 0) return FBSPwin;\n"
 " else return !FBSPwin;\n"
 "}\n"
+
+
 "bool inWindow(int id) {\n"
 "  int pos = int(PosX);\n"
-"  bool valid = true;\n"
+"  bool valid = false;\n"
 "  if (((win_op>>id)&0x1) != 0) {\n"
     //And
+"    if ((((win1>>id)&0x1) != 0) || (((win0>>id)&0x1) != 0) || ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0))) valid = true;\n"
 "    if (((win0>>id)&0x1) != 0) valid = valid && inNormalWindow0(id,pos);\n"
 "    if (((win1>>id)&0x1) != 0) valid = valid && inNormalWindow1(id,pos);\n"
-"    if ((((win_s_mode>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid && inSpriteWindow(id);\n"
+"    if ((((win_s_mode>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid && !inSpriteWindow(id);\n"
 "  } else {\n"
     //Or
-"    if ((((win1>>id)&0x1) != 0) || (((win0>>id)&0x1) != 0) || ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0))) valid = false;\n"
 "    if (((win0>>id)&0x1) != 0) valid = valid || inNormalWindow0(id,pos);\n"
 "    if (((win1>>id)&0x1) != 0) valid = valid || inNormalWindow1(id,pos);\n"
 "    if ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid || inSpriteWindow(id);\n"
 "  }\n"
 "  return valid;\n"
 "}\n"
+
+"bool inTransparentWindow(int id) {\n"
+"  return inWindow(id)\n;"
+"}\n;"
 "bool inCCWindow() {\n"
 "  if ((((win1>>7)&0x1) != 0) || (((win0>>7)&0x1) != 0) || (((win_s>>7)&0x1)!= 0)) {\n"
 "    return inWindow(7);\n"
@@ -666,7 +674,7 @@ static const GLchar Yglprg_vdp2_common_part[] =
 
 //Thios can be still optimized. Sprite related variables are doubled
 #define VDP2_SPRITE_SCREN_SETUP "\
-if ((prio == FBPrio) && inWindow(6)) {\n \
+if ((prio == FBPrio) && (!inTransparentWindow(6))) {\n \
   ret.Color = FBColor; \n \
   ret.mode = int(FBColor.a*255.0)&0x7; \n \
   ret.normalShadow = FBNormalShadow;\n \
@@ -686,7 +694,7 @@ ret.mesh = 0;\n \
 
 #define VDP2_SCREEN_SETUP(ID) "\
 ret.offset_color = offcol"Stringify(ID)".rgb;\n \
-if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && inWindow("Stringify(ID)")) {\n \
+if (((int(vdp2col"Stringify(ID)".a*255.0)&0x7) == prio) && (!inTransparentWindow("Stringify(ID)"))) {\n \
 remPrio = remPrio - 1;\n \
 ret.Color = vdp2col"Stringify(ID)"; \n \
 ret.mode = mode["Stringify(ID)"]; \n \

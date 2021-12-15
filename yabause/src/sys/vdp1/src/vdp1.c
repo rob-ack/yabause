@@ -1453,11 +1453,14 @@ int Vdp1LoadState(const void * stream, UNUSED int version, int size)
      } else {
        YuiMsg("Too old savestate, can not restore Vdp1External\n");
        memset((void *)(&Vdp1External), 0, sizeof(Vdp1External_struct));
+       Vdp1External.disptoggle = 1;
      }
    } else {
      YuiMsg("Too old savestate, can not restore Vdp1External\n");
      memset((void *)(&Vdp1External), 0, sizeof(Vdp1External_struct));
+     Vdp1External.disptoggle = 1;
    }
+   Vdp1External.updateVdp1Ram = 1;
 
    return size;
 }

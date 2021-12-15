@@ -1401,7 +1401,7 @@ int Vdp1SaveState(void ** stream)
    u8 back_framebuffer[0x40000] = { 0 };
 #endif
 
-   offset = MemStateWriteHeader(stream, "VDP1", 1);
+   offset = MemStateWriteHeader(stream, "VDP1", 2);
 
    // Write registers
    MemStateWrite((void *)Vdp1Regs, sizeof(Vdp1), 1, stream);
@@ -1415,6 +1415,11 @@ int Vdp1SaveState(void ** stream)
 
    MemStateWrite((void *)back_framebuffer, 0x40000, 1, stream);
 #endif
+
+    // VDP1 status
+   int size = sizeof(Vdp1External_struct);
+   MemStateWrite((void *)(&size), sizeof(int),1,stream);
+   MemStateWrite((void *)(&Vdp1External), sizeof(Vdp1External_struct),1,stream);
    return MemStateFinishHeader(stream, offset);
 }
 
@@ -1440,6 +1445,20 @@ int Vdp1LoadState(const void * stream, UNUSED int version, int size)
    for (i = 0; i < 0x40000; i++)
       Vdp1FrameBufferWriteByte(NULL, NULL, i, back_framebuffer[i]);
 #endif
+   if (version > 1) {
+     int size = 0;
+     MemStateRead((void *)(&size), 0x40000, 1, stream);
+     if (size == sizeof(Vdp1External_struct)) {
+        MemStateRead((void *)(&Vdp1External), sizeof(Vdp1External_struct),1,stream);
+     } else {
+       YuiMsg("Too old savestate, can not restore Vdp1External\n");
+       memset((void *)(&Vdp1External), 0, sizeof(Vdp1External_struct));
+     }
+   } else {
+     YuiMsg("Too old savestate, can not restore Vdp1External\n");
+     memset((void *)(&Vdp1External), 0, sizeof(Vdp1External_struct));
+   }
+
    return size;
 }
 

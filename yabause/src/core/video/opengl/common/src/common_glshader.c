@@ -1208,6 +1208,7 @@ for (int i = 7; i>0; i--) { \n \
             if (FBMesh == 1) {\n \
               mesh = 1;\n \
               meshCol = FBShadow.rgb;\n \
+              if (all(equal(FBColor.rgb,vec3(0.0)))) continue;\n \
             }\n \
             if (FBNormalShadow) {\n \
 //Normal shadow is always a transparent shadow. It does not have to be processed \n \

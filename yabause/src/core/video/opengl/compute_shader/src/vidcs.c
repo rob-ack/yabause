@@ -63,7 +63,7 @@ static Vdp2 baseVdp2Regs;
 //#define PERFRAME_LOG
 #ifdef PERFRAME_LOG
 int fount = 0;
-FILE *ppfp = NULL;YglGenFrameBuffer
+FILE *ppfp = NULL;
 #endif
 
 #define YGL_THREAD_DEBUG

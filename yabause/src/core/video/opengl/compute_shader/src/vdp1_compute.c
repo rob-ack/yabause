@@ -477,9 +477,11 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 				break;
 		}
 	}
-	if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
-		//MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
-		cmd->CMDPMOD &= ~0x8000;
+	if (_Ygl->meshmode != ORIGINAL_MESH) {
+		if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
+			//MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
+			cmd->CMDPMOD &= ~0x8000;
+		}
 	}
 	if (clipcmd == 0) {
 		vdp1GenerateBuffer(cmd);

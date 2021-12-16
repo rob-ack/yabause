@@ -1447,7 +1447,7 @@ int Vdp1LoadState(const void * stream, UNUSED int version, int size)
 #endif
    if (version > 1) {
      int size = 0;
-     MemStateRead((void *)(&size), 0x40000, 1, stream);
+     MemStateRead((void *)(&size), sizeof(int), 1, stream);
      if (size == sizeof(Vdp1External_struct)) {
         MemStateRead((void *)(&Vdp1External), sizeof(Vdp1External_struct),1,stream);
      } else {

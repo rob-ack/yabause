@@ -85,12 +85,6 @@ extern Vdp1External_struct Vdp1External;
 
 typedef struct
 {
-  float G[16];
-  u32 priority;
-  u32 w;
-  u32 h;
-  u32 flip;
-  u32 type;
   u32 CMDCTRL;
   u32 CMDLINK;
   u32 CMDPMOD;
@@ -105,10 +99,16 @@ typedef struct
   s32 CMDYC;
   s32 CMDXD;
   s32 CMDYD;
-  s32 B[4];
-  u32 COLOR[4];
   u32 CMDGRDA;
+  u32 COLOR[4];
+  float G[16];
+  u32 priority;
+  u32 w;
+  u32 h;
+  u32 flip;
+  u32 type;
   u32 SPCTL;
+  s32 B[4];
   u32 nbStep;
   float uAstepx;
   float uAstepy;

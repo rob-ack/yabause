@@ -337,6 +337,8 @@ static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vd
 static int getCCProgramId(int CMDPMOD) {
   int cctype = (CMDPMOD & 0x7);
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
+  if ((_Ygl->meshmode != ORIGINAL_MESH) && (MSB != 0))
+    MSB = (((Vdp2Regs->SPCTL & 0x20)!=0)?0:1);
   int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
   int SPD = IS_SPD(CMDPMOD)?1:0;
   int END = IS_END(CMDPMOD)?1:0;

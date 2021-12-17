@@ -2304,6 +2304,7 @@ static void startField(void) {
   if (Vdp1External.swap_frame_buffer == 1)
   {
     FRAMELOG("Swap Line %d\n", yabsys.LineCount);
+    lastHash = -1;
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))
     {
       int id = 0;

@@ -36,6 +36,9 @@
 #include "sh2core.h"
 #include "ygl.h"
 
+
+// #define DEBUG_CMD_LIST
+
 u8 * Vdp1Ram;
 int vdp1Ram_update_start;
 int vdp1Ram_update_end;
@@ -1048,14 +1051,87 @@ static vdp1cmd_struct * usrClipCmd = NULL;
 static vdp1cmd_struct * sysClipCmd = NULL;
 static vdp1cmd_struct * localCoordCmd = NULL;
 
+#ifdef DEBUG_CMD_LIST
+void debugCmdList() {
+  YuiMsg("Draw %d\n", yabsys.LineCount);
+  for (int i=0;;i++)
+  {
+     char *string;
+
+     if ((string = Vdp1DebugGetCommandNumberName(i)) == NULL)
+        break;
+
+     YuiMsg("\t%s\n", string);
+  }
+}
+#endif
+static u32 Vdp1DebugGetCommandNumberAddr(u32 number);
+
+int EvaluateCmdListHash(Vdp1 * regs){
+  int hash = 0;
+  u32 addr;
+  for (int i=0;;i++)
+  {
+     u16 command;
+     vdp1cmd_struct cmd;
+     if ((addr = Vdp1DebugGetCommandNumberAddr(i)) == 0xFFFFFFFF)
+        break;
+
+     command = T1ReadWord(Vdp1Ram, addr);
+
+     if (command & 0x8000)
+     {
+        break;
+     }
+
+     if (command & 0x4000)
+     {
+        continue;
+     }
+
+     Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+     hash ^= cmd.CMDCTRL;
+     hash ^= cmd.CMDLINK;
+     hash ^= cmd.CMDPMOD;
+     hash ^= cmd.CMDCOLR;
+     hash ^= cmd.CMDSRCA;
+     hash ^= cmd.CMDSIZE;
+     hash ^= cmd.CMDXA;
+     hash ^= cmd.CMDYA;
+     hash ^= cmd.CMDXB;
+     hash ^= cmd.CMDYB;
+     hash ^= cmd.CMDXC;
+     hash ^= cmd.CMDYC;
+     hash ^= cmd.CMDXD;
+     hash ^= cmd.CMDYD;
+     hash ^= cmd.CMDGRDA;
+     hash ^= _Ygl->drawframe;
+  }
+  return hash;
+}
+
+static int lastHash = -1;
+
 void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   int cylesPerLine  = getVdp1CyclesPerLine();
 
   if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
-  CmdListLimit = 0;
 
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
+    int newHash = EvaluateCmdListHash(regs);
+    if (newHash == lastHash) {
+      #ifdef DEBUG_CMD_LIST
+      YuiMsg("Abort same command %x %x\n", newHash, lastHash);
+      #endif
+      CmdListDrawn = 1;
+      return;
+    }
+    lastHash = newHash;
+    #ifdef DEBUG_CMD_LIST
+    debugCmdList();
+    #endif
+
     returnAddr = 0xffffffff;
     if (usrClipCmd != NULL) free(usrClipCmd);
     if (sysClipCmd != NULL) free(sysClipCmd);
@@ -1065,6 +1141,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     localCoordCmd = NULL;
     nbCmdToProcess = 0;
   }
+  CmdListLimit = 0;
 
    Vdp1External.status = VDP1_STATUS_RUNNING;
    if (regs->addr > 0x7FFFF) {
@@ -2209,6 +2286,11 @@ void ToggleVDP1(void)
    Vdp1External.disptoggle ^= 1;
 }
 //////////////////////////////////////////////////////////////////////////////
+
+static void Vdp1EraseWrite(int id){
+  lastHash = -1;
+  if ((VIDCore != NULL) && (VIDCore->Vdp1EraseWrite != NULL))VIDCore->Vdp1EraseWrite(id);
+}
 static void startField(void) {
   int isrender = 0;
   yabsys.wait_line_count = -1;
@@ -2226,7 +2308,7 @@ static void startField(void) {
     {
       int id = 0;
       if (_Ygl != NULL) id = _Ygl->readframe;
-      VIDCore->Vdp1EraseWrite(id);
+      Vdp1EraseWrite(id);
       CmdListDrawn = 0;
       Vdp1External.manualerase = 0;
     }
@@ -2340,6 +2422,6 @@ void Vdp1VBlankOUT(void)
     int id = 0;
     if (_Ygl != NULL) id = _Ygl->readframe;
     CmdListDrawn = 0;
-    VIDCore->Vdp1EraseWrite(id);
+    Vdp1EraseWrite(id);
   }
 }

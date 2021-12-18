@@ -1096,6 +1096,7 @@ void OnchipReset(SH2_struct *context) {
    context->onchip.DRCR0 = 0x00;
    context->onchip.DRCR1 = 0x00;
    context->onchip.WTCSR = 0x18;
+   context->onchip.WTCSRM = 0x0;
    context->onchip.WTCNT = 0x00;
    context->onchip.RSTCSR = 0x1F;
    context->onchip.SBYCR = 0x60;
@@ -1212,7 +1213,8 @@ u8 FASTCALL OnchipReadByte(u32 addr) {
       case 0x068:
          return CurrentSH2->onchip.VCRD >> 8;
       case 0x080:
-         return CurrentSH2->onchip.WTCSR;
+         //CurrentSH2->onchip.WTCSR = 0;
+        return CurrentSH2->onchip.WTCSR;// &0x18;
       case 0x081:
          return CurrentSH2->onchip.WTCNT;
       case 0x092:
@@ -1245,6 +1247,13 @@ u16 FASTCALL OnchipReadWord(u32 addr) {
          
    switch(addr)
    {
+      case 0x012:         
+         return CurrentSH2->onchip.FRC.all;      
+      case 0x014:
+         if (!(CurrentSH2->onchip.TOCR & 0x10))
+            return CurrentSH2->onchip.OCRA;
+         else
+            return CurrentSH2->onchip.OCRB;
       case 0x060:
          return CurrentSH2->onchip.IPRB;
       case 0x062:
@@ -1603,12 +1612,23 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
             CurrentSH2->wdt.isenable = (val & 0x20);
             CurrentSH2->wdt.isinterval = (~val & 0x40);
 
-            CurrentSH2->onchip.WTCSR = (u8)val | 0x18;
+            //CurrentSH2->onchip.WTCSR = (u8)(val | 0x18);
+
+            CurrentSH2->onchip.WTCSR = (CurrentSH2->onchip.WTCSR & (CurrentSH2->onchip.WTCSRM | val) & 0x80) | (val & 0x67);
+            CurrentSH2->onchip.WTCSR &= ~0x80;
+            if(CurrentSH2->onchip.WTCSR & 0x20){
+               CurrentSH2->onchip.SBYCR &= 0x7F;
+            }else {
+               CurrentSH2->onchip.WTCSR &= ~0x80;
+               CurrentSH2->onchip.WTCNT = 0;
+            }
+
          }
          else if (val >> 8 == 0x5A)
          {
             // WTCNT
-            CurrentSH2->onchip.WTCNT = (u8)val;
+            if(CurrentSH2->onchip.WTCSR & 0x20)
+               CurrentSH2->onchip.WTCNT = (u8)val;
          }
          return;
       case 0x082:
@@ -1638,6 +1658,7 @@ void FASTCALL OnchipWriteWord(u32 addr, u16 val) {
          CurrentSH2->onchip.IPRA = val & 0xFFF0;
          return;
       case 0x0E4:
+      case 0x0E5:
          CurrentSH2->onchip.VCRWDT = val & 0x7F7F;
          return;
       case 0x108:
@@ -2178,11 +2199,15 @@ int DMAProc(int cycles) {
 #else
 int DMAProc( int cycles ){
 
+
    if (CurrentSH2->onchip.DMAOR & 0x6)
       return 0;
+
    
    if ( ((CurrentSH2->onchip.CHCR0 & 0x3)==0x01)  && ((CurrentSH2->onchip.CHCR1 & 0x3)==0x01) ) { // both channel wants DMA
       if (CurrentSH2->onchip.DMAOR & 0x8) { // round robin priority
+
+        if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
 
         DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
         DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
@@ -2191,17 +2216,22 @@ int DMAProc( int cycles ){
       else { // channel 0 > channel 1 priority
 
          if( (CurrentSH2->onchip.CHCR0 & 0x03) == 0x01 ){
+           if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
          }else if( (CurrentSH2->onchip.CHCR1 &0x03) == 0x01 ) {
+           if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
            DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          }
       }
    }
    else { // only one channel wants DMA
 	   if (((CurrentSH2->onchip.CHCR0 & 0x3) == 0x01)) { // DMA for channel 0
+
+       if ((CurrentSH2->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1;  } //Dual Chanel
        DMATransferCycles(&CurrentSH2->dma_ch0, cycles);
        return 0;
       }else if (((CurrentSH2->onchip.CHCR1 & 0x3) == 0x01)) { // DMA for channel 1
+        if ((CurrentSH2->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
          DMATransferCycles(&CurrentSH2->dma_ch1, cycles);
          return 0;
       }
@@ -2310,7 +2340,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
    u32 i = 0;
    int count;
 
-   //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *SAR, *DAR, *TCR, ((*CHCR & 0x0C00) >> 10), cycles);
+   //LOG("sh2 dma src=%08X,dst=%08X,%d type:%d cycle:%d\n", *dmac->SAR, *dmac->DAR, *dmac->TCR, ((*dmac->CHCR & 0x0C00) >> 10), cycles);
 
    if (!(*dmac->CHCR & 0x2)) { // TE is not set
       int srcInc;
@@ -2619,10 +2649,10 @@ int SH2SaveState(SH2_struct *context, FILE *fp)
 
    // Write header
    if (context->isslave == 0)
-      offset = StateWriteHeader(fp, "MSH2", 3);
+      offset = StateWriteHeader(fp, "MSH2", 4);
    else
    {
-      offset = StateWriteHeader(fp, "SSH2", 3);
+      offset = StateWriteHeader(fp, "SSH2", 4);
       ywrite(&check, (void *)&yabsys.IsSSH2Running, 1, 1, fp);
    }
 
@@ -2682,9 +2712,10 @@ int SH2LoadState(SH2_struct *context, FILE *fp, UNUSED int version, int size)
 
    // Read onchip registers
    if (version < 2) {
-     yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*CHCR0M*/, 1, fp);
-   }
-   else {
+     yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*CHCR0M*/-sizeof(u32)/*WTCSRM*/ , 1, fp);
+   }else if (version == 3) {
+      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct)-sizeof(u32)/*WTCSRM*/, 1, fp);
+   }else {
      yread(&check, (void *)&context->onchip, sizeof(Onchip_struct), 1, fp);
    }
 

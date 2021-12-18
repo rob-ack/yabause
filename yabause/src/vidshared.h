@@ -44,6 +44,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "vdp2.h"
 #include "debug.h"
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #define YGL_TESS_COUNT (8)
 #define YGL_MAX_NEED_BUFFER (12*YGL_TESS_COUNT*YGL_TESS_COUNT)
 
@@ -171,6 +175,7 @@ typedef struct
    int titan_shadow_type;
    int titan_shadow_enabled;
 
+   int cx, cy;
    float coordincx, coordincy;
    void FASTCALL (* PlaneAddr)(void *, int, Vdp2*);
    u32 FASTCALL (*Vdp2ColorRamGetColor)(void *, u32 , int, u8 );
@@ -184,7 +189,7 @@ typedef struct
    int mosaicymask;
    int islinescroll;
    u32 linescrolltbl;
-   u32 lineTexture;
+   u64 lineTexture;
    u32 lineinc;
    vdp2Lineinfo * lineinfo;
    int wctl;
@@ -222,6 +227,10 @@ typedef struct
    u16 char_bank[4];
    u16 pname_bank[4];
 
+   void * pipeline;
+
+   int priorityOffset;
+   
 } vdp2draw_struct;
 
 
@@ -1008,5 +1017,11 @@ static INLINE void Vdp1ProcessSpritePixel(int type, u16 *pixel, int *shadow, int
 
 int Vdp2GetBank(Vdp2* regs, u32 addr);
 int PixelIsSpecialPriority(int specialcode, int dot);
+
+void VDP2genVRamCyclePattern();
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

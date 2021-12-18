@@ -409,6 +409,8 @@ typedef struct {
    int perline_alpha_b;
    int cpu_cycle_a;
    int cpu_cycle_b;
+   u8 AC_VRAM[4][8];
+   int frame_render_flg;
 } Vdp2External_struct;
 
 extern Vdp2External_struct Vdp2External;
@@ -444,10 +446,12 @@ void EnableAutoFrameSkip(void);
 void DisableAutoFrameSkip(void);
 void VdpResume(void);
 
+void VDP2SetFrameLimit(int mode);
+
 Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines);
 
 #include "threads.h"
-void VdpProc( void *arg );
+void * VdpProc( void *arg );
 
 // Ansyc VDP
 #define VDPEV_VBLANK_IN 0x000

@@ -38,7 +38,7 @@ extern u8 * Vdp1FrameBuffer[];
 static int rebuild_frame_buffer = 0;
 
 static int YglIsNeedFrameBuffer();
-static int YglCalcTextureQ( float   *pnts,float *q);
+int YglCalcTextureQ( float   *pnts,float *q);
 static void YglRenderDestinationAlpha(void);;
 u32 * YglGetColorRamPointer();
 void YglRenderFrameBufferShadow();
@@ -310,7 +310,7 @@ int FASTCALL YglIntersectionOppsiteEdge(float * a1, float * a2, float * b1, floa
 int YglCalcTextureQ(
    float   *pnts,
    float *q
-)
+)  
 {
    float p1[2],p2[2],p3[2],p4[2],o[2];
    float   q1, q3, q4, qw;
@@ -1016,7 +1016,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
 
   const int Line = y;
   const int Pix = x;
-  if (_Ygl->cpu_framebuffer_write[_Ygl->drawframe] || (Pix > Vdp1Regs->systemclipX2 || Line >= Vdp1Regs->systemclipY2)){
+  if (_Ygl->cpu_framebuffer_write[_Ygl->drawframe] || (Pix >= Vdp1Regs->systemclipX2 || Line >= Vdp1Regs->systemclipY2)){
     switch (type)
     {
     case 0:
@@ -1117,7 +1117,7 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->smallfbo);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, _Ygl->vdp1pixelBufferID);
     glReadPixels(0, 0, _Ygl->rwidth, _Ygl->rheight, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth * _Ygl->rheight* 4, GL_MAP_READ_BIT);
+    _Ygl->pFrameBuffer = (unsigned int *)glMapBufferRange(GL_PIXEL_PACK_BUFFER, 0, _Ygl->rwidth * (_Ygl->rheight)* 4, GL_MAP_READ_BIT);
     glBindFramebuffer(GL_FRAMEBUFFER,_Ygl->default_fbo);
     glViewport(params[0], params[1], params[2], params[3]);
 
@@ -1136,7 +1136,12 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
     FrameProfileAdd("ReadFrameBuffer end");
   }
 
-  int index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;
+  int index;
+  if( _Ygl->rwidth >= 640 ){
+    index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + (Pix<<1) * 4;  
+  }else{
+    index = (_Ygl->rheight-1-Line) *(_Ygl->rwidth * 4) + Pix * 4;  
+  }
  
   // 16bit mode
   if ((Vdp2Regs->SPCTL & 0xF) < 8) {
@@ -1152,6 +1157,9 @@ void VIDOGLVdp1ReadFrameBuffer(u32 type, u32 addr, void * out) {
       }else{
         u8 sptype = Vdp2Regs->SPCTL & 0x0F;
         switch(sptype){
+        case 0:
+          *(u16*)out = ((a<<(5+8))&0xE000) | (((a>>3)&0x03)<<11) | (((g<<8)|r)&0x7FF);
+          break;
         case 1:
           *(u16*)out = ((a<<(5+8))&0xE000) | (((a>>3)&0x03)<<11) | (((g<<8)|r)&0x7FF);
           break;
@@ -1554,7 +1562,7 @@ int YglInit(int width, int height, unsigned int depth) {
 
   if (YglProgramInit() != 0) {
     YGLDEBUG("Fail to YglProgramInit\n");
-    abort();
+    return -1;
   }
   
   glBindFramebuffer(GL_FRAMEBUFFER, _Ygl->default_fbo );
@@ -3360,6 +3368,9 @@ void YglRenderFrameBuffer(int from, int to) {
     rotate.m[1][0] = paraA.deltaXst;
     rotate.m[1][1] = paraA.deltaYst;
     YglTranslatef(&rotate, -paraA.Xst, -paraA.Yst, 0.0f);
+    if( (Vdp2Regs->TVMD&0xC0) == 0x80 ){
+      YglScalef(&rotate, 1.0f, 0.5f, 1.0f);
+    }
     YglMatrixMultiply(&result, &_Ygl->mtxModelView, &rotate);
     cwidth = Vdp1Regs->systemclipX2;
     cheight = Vdp1Regs->systemclipY2;
@@ -4339,7 +4350,7 @@ u32 * YglGetColorRamPointer() {
   return _Ygl->cram_tex_buf;
 }
 
-void YglOnUpdateColorRamWord(u32 addr) {
+void VIDOGLOnUpdateColorRamWord(u32 addr) {
 
   if (_Ygl == NULL) return;
 

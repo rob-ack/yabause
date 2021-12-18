@@ -101,10 +101,10 @@ class BasicInputDevice {
     public void loadSettings( String setting_filename ) {
         try {
 
-            File yabroot = new File(Environment.getExternalStorageDirectory(), "yabause");
+            File yabroot = new File(YabauseStorage.getStorage().getRootPath());
             if (!yabroot.exists()) yabroot.mkdir();
 
-            InputStream inputStream = new FileInputStream(Environment.getExternalStorageDirectory() + "/" + "yabause/" + setting_filename);
+            InputStream inputStream = new FileInputStream(YabauseStorage.getStorage().getRootPath() + setting_filename);
             int size = inputStream.available();
             byte[] buffer = new byte[size];
             inputStream.read(buffer);
@@ -262,11 +262,17 @@ class BasicInputDevice {
 
                 currentButtonState |= (1<<PadKey);
                 if( showMenuCode == currentButtonState ){
-                    _pdm.showMenu();
+                    for( int i =0; i< 32; i++ ) {
+                        if( (currentButtonState & (0x1<<i) ) != 0 ) {
+                            YabauseRunnable.release(i, _playerindex);
+                        }
+                    }
                     currentButtonState = 0; // clear
+                    _pdm.showMenu();
+                    return 1;
                 }
 
-                Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
+                //Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
 
                 event.startTracking();
                 if (_testmode)
@@ -302,7 +308,7 @@ class BasicInputDevice {
                 if( PadKey != null ) {
 
                     currentButtonState &= ~(1<<PadKey);
-                    Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
+                    //Log.d(this.getClass().getSimpleName(),"currentButtonState = " + Integer.toHexString(currentButtonState) );
 
                     if( _testmode)
                         _pdm.addDebugString("onKeyUp: " + keyCode + " Satpad: " + PadKey.toString());

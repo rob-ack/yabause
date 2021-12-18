@@ -49,6 +49,7 @@ extern "C" {
 #define OSDCORE_GLUT     1
 #define OSDCORE_SOFT     2
 #define OSDCORE_NANOVG   3
+#define OSDCORE_NANOVG_VULKAN 4
 
 #if defined(HAVE_LIBGL)
 	#define OSDCORE_DEFAULT  OSDCORE_NANOVG
@@ -61,7 +62,9 @@ extern "C" {
 #define OSDMSG_FPS       0
 #define OSDMSG_STATUS    1
 #define OSDMSG_DEBUG     2
-#define OSDMSG_COUNT     3
+#define OSDMSG_RECORD    3
+#define OSDMSG_COUNT     4
+
 
 typedef struct {
    int type;

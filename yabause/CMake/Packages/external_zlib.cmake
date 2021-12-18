@@ -26,7 +26,7 @@ if(WIN32)
       optimized ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/zlibstatic.lib)
 else()
   set(zlib_STATIC_LIBRARIES
-      ${ZLIB_BUILD}/libz.a)
+      ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/lib/libz.a)
 endif()
 
 if(ANDROID)
@@ -39,6 +39,14 @@ set( ADDITIONAL_CMAKE_ARGS
  -DANDROID_NATIVE_API_LEVEL=${ANDROID_NATIVE_API_LEVEL}
  -DCMAKE_TOOLCHAIN_FILE=${TOOL_CHAIN_ABSOLUTE_PATH}
 )
+
+elseif(IOS)
+
+  get_filename_component(TOOL_CHAIN_ABSOLUTE_PATH "${CMAKE_TOOLCHAIN_FILE}"
+                       REALPATH BASE_DIR "${CMAKE_BINARY_DIR}")
+  set( ADDITIONAL_CMAKE_ARGS 
+    -DCMAKE_TOOLCHAIN_FILE=${TOOL_CHAIN_ABSOLUTE_PATH}
+  )
 
 else()
   set(ADDITIONAL_CMAKE_ARGS "")

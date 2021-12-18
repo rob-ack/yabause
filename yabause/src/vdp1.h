@@ -47,6 +47,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 //#define YAB_ASYNC_RENDERING 1
 
+#if defined (__cplusplus)
+extern "C"{
+#endif
+
 typedef struct {
    u16 TVMR;
    u16 FBCR;
@@ -112,6 +116,8 @@ typedef struct
    void(*Sync)();
    void (*GetNativeResolution)(int *width, int *height, int * interlace);
    void(*Vdp2DispOff)(void);
+   void(*OnUpdateColorRamWord)(u32 addr);
+   void (*GetScreenshot)(void ** outbuf, int * width, int * height);
 } VideoInterface_struct;
 
 extern VideoInterface_struct *VIDCore;
@@ -202,5 +208,8 @@ void Vdp1DebugCommand(u32 number, char *outstring);
 u32 *Vdp1DebugTexture(u32 number, int *w, int *h);
 void ToggleVDP1(void);
 
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

@@ -46,6 +46,7 @@ import java.util.List;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.input.InputManager;
@@ -58,8 +59,11 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceCategory;
-import android.preference.PreferenceManager;
+
+import androidx.preference.DialogPreference;
+import androidx.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
+import android.util.AttributeSet;
 import android.util.Log;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -71,11 +75,12 @@ import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.app.Dialog;
 
+import org.devmiyax.yabasanshiro.R;
 import org.uoyabause.android.tv.GameSelectFragment;
-import org.uoyabause.uranus.R;
+
 
 public class YabauseSettings extends PreferenceActivity
-    implements SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceClickListener, InputManager.InputDeviceListener {
+        implements SharedPreferences.OnSharedPreferenceChangeListener, Preference.OnPreferenceClickListener, InputManager.InputDeviceListener {
 
     boolean dirlist_status = false;
 
@@ -127,6 +132,41 @@ public class YabauseSettings extends PreferenceActivity
     }
 
     public static class WarningDialogFragment extends DialogFragment {
+    @Override
+    public boolean onPreferenceClick(Preference preference) {
+        tap_count_++;
+        if( tap_count_ > 5 ){
+            tap_count_ = 0;
+            //Intent intent = new Intent(this, CheckPaymentActivity.class );
+            //startActivity(intent);
+            //startActivityForResult(intent, CHECK_PAYMENT);
+        }
+        return false;
+    }
+
+    InputManager mInputManager;
+    @Override
+    public void onInputDeviceAdded(int i) {
+        PadManager.updatePadManager();
+        SyncInputDevice();
+        SyncInputDeviceForPlayer2();
+    }
+
+    @Override
+    public void onInputDeviceRemoved(int i) {
+        PadManager.updatePadManager();
+        SyncInputDevice();
+        SyncInputDeviceForPlayer2();
+    }
+
+    @Override
+    public void onInputDeviceChanged(int i) {
+        PadManager.updatePadManager();
+        SyncInputDevice();
+        SyncInputDeviceForPlayer2();
+    }
+
+    public static class WarningDialogFragment extends DialogFragment {
         @Override
         public Dialog onCreateDialog(Bundle savedInstanceState) {
             // Use the Builder class for convenient dialog construction
@@ -143,78 +183,79 @@ public class YabauseSettings extends PreferenceActivity
             return builder.create();
         }
     }
+  }
 
-    void setUpDonateInfo(){
-        PreferenceScreen preferenceScreen = this.getPreferenceScreen();
-        // create preferences manually
-        PreferenceCategory preferenceCategory = new PreferenceCategory(preferenceScreen.getContext());
-        preferenceCategory.setTitle("Donation Status");
-        //do anything you want with the preferencecategory here
-        preferenceScreen.addPreference(preferenceCategory);
+  void setUpDonateInfo(){
+      PreferenceScreen preferenceScreen = this.getPreferenceScreen();
+      // create preferences manually
+      PreferenceCategory preferenceCategory = new PreferenceCategory(preferenceScreen.getContext());
+      preferenceCategory.setTitle("Donation Status");
+      //do anything you want with the preferencecategory here
+      preferenceScreen.addPreference(preferenceCategory);
 
-        Preference preference = new Preference(preferenceScreen.getContext());
-        preference.setTitle("Donated");
-        preference.setOnPreferenceClickListener(this);
-        SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
-        Boolean hasDonated = prefs.getBoolean("donated", false);
-        if( hasDonated ) {
-            preference.setSummary("Yes");
-        }else{
-            preference.setSummary("No");
-        }
-        //do anything you want with the preferencey here
-        preferenceCategory.addPreference(preference);
+      Preference preference = new Preference(preferenceScreen.getContext());
+      preference.setTitle("Donated");
+      preference.setOnPreferenceClickListener(this);
+      SharedPreferences prefs = getSharedPreferences("private", Context.MODE_PRIVATE);
+      Boolean hasDonated = prefs.getBoolean("donated", false);
+      if( hasDonated ) {
+          preference.setSummary("Yes");
+      }else{
+          preference.setSummary("No");
+      }
+      //do anything you want with the preferencey here
+      preferenceCategory.addPreference(preference);
 
-        if( hasDonated ){
-            //editor.putString("donate_payload", purchase.getDeveloperPayload());
-            //editor.putString( "donate_item", purchase.getSku());
+      if( hasDonated ){
+          //editor.putString("donate_payload", purchase.getDeveloperPayload());
+          //editor.putString( "donate_item", purchase.getSku());
 
-            Boolean uoyabause_donation = prefs.getBoolean("uoyabause_donation", false);
-            if(uoyabause_donation){
-                String payload = prefs.getString("donate_payload","");
-                Preference prefPayload = new Preference(preferenceScreen.getContext());
-                prefPayload.setTitle("Payment ID");
-                prefPayload.setSummary( "uoYabause" );
-                preferenceCategory.addPreference(prefPayload);
-                return;
-            }
+          Boolean uoyabause_donation = prefs.getBoolean("uoyabause_donation", false);
+          if(uoyabause_donation){
+              String payload = prefs.getString("donate_payload","");
+              Preference prefPayload = new Preference(preferenceScreen.getContext());
+              prefPayload.setTitle("Payment ID");
+              prefPayload.setSummary( "uoYabause" );
+              preferenceCategory.addPreference(prefPayload);
+              return;
+          }
 
-            String payload = prefs.getString("donate_payload","");
-            Preference prefPayload = new Preference(preferenceScreen.getContext());
-            prefPayload.setTitle("Payment ID");
-            try {
-                String id = payload.substring(0, 6);
-                if (id != null) {
-                    prefPayload.setSummary(id);
-                } else {
-                    prefPayload.setSummary("REDEEM");
-                }
-            }catch(Exception e){
-                prefPayload.setSummary("REDEEM");
-            }
-            preferenceCategory.addPreference(prefPayload);
+          String payload = prefs.getString("donate_payload","");
+          Preference prefPayload = new Preference(preferenceScreen.getContext());
+          prefPayload.setTitle("Payment ID");
+          try {
+              String id = payload.substring(0, 6);
+              if (id != null) {
+                  prefPayload.setSummary(id);
+              } else {
+                  prefPayload.setSummary("REDEEM");
+              }
+          }catch(Exception e){
+              prefPayload.setSummary("REDEEM");
+          }
+          preferenceCategory.addPreference(prefPayload);
 
-            String donate_item = prefs.getString("donate_item","");
-            int count = prefs.getInt("donate_activate_count",-1);
-            String activate_status = "";
-            if (donate_item.equals(DonateActivity.SKU_DONATE_SMALL)) {
-                activate_status = count + "/1";
-            }
-            if (donate_item.equals(DonateActivity.SKU_DONATE_MEDIUM)) {
-                activate_status = count + "/5";
-            }
-            if (donate_item.equals(DonateActivity.SKU_DONATE_LARGE)  ) {
-                activate_status = count + "/Infinity";
-            }
+          String donate_item = prefs.getString("donate_item","");
+          int count = prefs.getInt("donate_activate_count",-1);
+          String activate_status = "";
+          if (donate_item.equals(DonateActivity.SKU_DONATE_SMALL)) {
+              activate_status = count + "/1";
+          }
+          if (donate_item.equals(DonateActivity.SKU_DONATE_MEDIUM)) {
+              activate_status = count + "/5";
+          }
+          if (donate_item.equals(DonateActivity.SKU_DONATE_LARGE)  ) {
+              activate_status = count + "/Infinity";
+          }
 
-            Preference pref_activate_status = new Preference(preferenceScreen.getContext());
-            pref_activate_status.setTitle("Activate Count");
-            pref_activate_status.setSummary( activate_status );
-            preferenceCategory.addPreference(pref_activate_status);
-        }
+          Preference pref_activate_status = new Preference(preferenceScreen.getContext());
+          pref_activate_status.setTitle("Activate Count");
+          pref_activate_status.setSummary( activate_status );
+          preferenceCategory.addPreference(pref_activate_status);
+      }
 
-    }
-
+  }
+  
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -238,9 +279,11 @@ public class YabauseSettings extends PreferenceActivity
             myCheckbox.setOnPreferenceChangeListener(myCheckboxListener);
         }
 
-        GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
+        //GameDirectoriesDialogPreference dires = (GameDirectoriesDialogPreference)findPreference("pref_game_directory");
+
+        GameDirectoriesDialogPreference dires = null;
         if(dires != null)
-            dires.setActivity(this);
+         dires.setActivity(this);
 /*
         Preference filePicker = (Preference) findPreference("pref_game_download_directory");
         filePicker.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
@@ -285,10 +328,47 @@ public class YabauseSettings extends PreferenceActivity
             download.setSummary(download.getEntry());
         }
 
-        InputSettingPreference inputsetting1 = (InputSettingPreference)findPreference("pref_inputdef_file");
-        inputsetting1.setPlayerAndFilename(0,"keymap");
-        InputSettingPreference inputsetting2 = (InputSettingPreference)findPreference("pref_player2_inputdef_file");
-        inputsetting2.setPlayerAndFilename(1,"keymap_player2");
+    	//InputSettingPreference inputsetting1 = (InputSettingPreference)findPreference("pref_inputdef_file");
+        //inputsetting1.setPlayerAndFilename(0,"keymap");
+    	//InputSettingPreference inputsetting2 = (InputSettingPreference)findPreference("pref_player2_inputdef_file");
+        //inputsetting2.setPlayerAndFilename(1,"keymap_player2");
+
+        ListPreference download = (ListPreference) getPreferenceManager().findPreference("pref_game_download_directory");
+        if( download != null ) {
+            YabauseStorage ys = YabauseStorage.getStorage();
+            if (ys.hasExternalSD() == false) {
+                download.setEnabled(false);
+            } else {
+                download.setEnabled(true);
+            }
+
+            StatFs stat = new StatFs(ys.getGamePath());
+            long bytesAvailable = stat.getBlockSizeLong() * stat.getAvailableBlocksLong();
+            double gAvailable = (double)bytesAvailable / (double)(1024*1024*1024);
+            String gbyte_str = String.format("%1$.2fGB", gAvailable);
+
+            List<CharSequence> labels = new ArrayList<CharSequence>();
+            labels.add( getString( R.string.internal) + "\n  " + getString(R.string.free_space) + " " + gbyte_str + "" );
+
+            if (ys.hasExternalSD() == true ) {
+                stat = new StatFs(ys.getExternalGamePath());
+                bytesAvailable = stat.getBlockSizeLong() * stat.getAvailableBlocksLong();
+                gAvailable = (double)bytesAvailable / (double)(1024*1024*1024);
+                gbyte_str = String.format("%1$.2fGB", gAvailable);
+                labels.add( getString( R.string.external) + "\n  " + getString(R.string.free_space) + " " + gbyte_str + "" );
+            }
+
+            CharSequence[] entries = new CharSequence[labels.size()];
+            labels.toArray(entries);
+
+            download.setEntries(entries);
+            download.setSummary(download.getEntry());
+        }
+
+    	//InputSettingPreference inputsetting1 = (InputSettingPreference)findPreference("pref_inputdef_file");
+        //inputsetting1.setPlayerAndFilename(0,"keymap");
+    	//InputSettingPreference inputsetting2 = (InputSettingPreference)findPreference("pref_player2_inputdef_file");
+        //inputsetting2.setPlayerAndFilename(1,"keymap_player2");
 
 
         Resources res = getResources();
@@ -419,7 +499,7 @@ public class YabauseSettings extends PreferenceActivity
         //ListPreference cpu_sync_setting = (ListPreference) getPreferenceManager().findPreference("pref_cpu_sync_per_line");
         //cpu_sync_setting.setSummary(cpu_sync_setting.getEntry());
 
-        /* Polygon Generation */
+         /* Polygon Generation */
         ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
         polygon_setting.setSummary(polygon_setting.getEntry());
         if( video_cart.getValue().equals("1") ){
@@ -452,7 +532,7 @@ public class YabauseSettings extends PreferenceActivity
                 return true;
             }
         });
-
+/*
         Preference select_image = findPreference("select_image");
         select_image.setOnPreferenceClickListener(new OnPreferenceClickListener() {
             @Override
@@ -467,7 +547,7 @@ public class YabauseSettings extends PreferenceActivity
                 return true;
             }
         });
-
+*/
         ListPreference soundengine_setting = (ListPreference) getPreferenceManager().findPreference("pref_sound_engine");
         soundengine_setting.setSummary(soundengine_setting.getEntry());
 
@@ -483,12 +563,12 @@ public class YabauseSettings extends PreferenceActivity
         ListPreference scsp_time_sync_setting = (ListPreference) getPreferenceManager().findPreference("scsp_time_sync_mode");
         scsp_time_sync_setting.setSummary(scsp_time_sync_setting.getEntry());
 
-    }
+      }
 
     public String getRealPathFromURI(Uri image_path) {
         grantUriPermission("org.uoyabause.android",
-            image_path,
-            Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                image_path,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
         try {
             InputStream inputStream = getContentResolver().openInputStream(image_path);
@@ -549,13 +629,14 @@ public class YabauseSettings extends PreferenceActivity
 
     protected void onActivityResult(int requestCode, int resultCode, Intent imageReturnedIntent) {
         super.onActivityResult(requestCode, resultCode, imageReturnedIntent);
-
+/*
         if (resultCode == RESULT_OK) {
             Uri selectedImage = imageReturnedIntent.getData();
             SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
             String s = getRealPathFromURI(selectedImage);
             sp.edit().putString("select_image", s).commit();
         }
+ */
     }
 
     private void SyncInputDevice(){
@@ -593,6 +674,7 @@ public class YabauseSettings extends PreferenceActivity
         plyaer1_input_device.setEntryValues(input_entryValues);
         plyaer1_input_device.setSummary(plyaer1_input_device.getEntry());
 
+/*
         InputSettingPreference inputsetting= (InputSettingPreference)findPreference("pref_inputdef_file");
         PreferenceScreen onscreen_pad = (PreferenceScreen) findPreference("on_screen_pad");
         if( inputsetting != null ){
@@ -612,6 +694,7 @@ public class YabauseSettings extends PreferenceActivity
                 e.printStackTrace();
             }
         }
+ */
     }
 
     private void SyncInputDeviceForPlayer2(){
@@ -648,7 +731,7 @@ public class YabauseSettings extends PreferenceActivity
         plyaer2_input_device.setEntryValues(input_entryValues_p2);
         plyaer2_input_device.setSummary(plyaer2_input_device.getEntry());
 
-
+/*
         InputSettingPreference inputsetting= (InputSettingPreference)findPreference("pref_player2_inputdef_file");
         if( inputsetting != null ){
             try {
@@ -664,33 +747,34 @@ public class YabauseSettings extends PreferenceActivity
                 e.printStackTrace();
             }
         }
+ */
     }
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals("pref_bios") ||
-            key.equals("scsp_time_sync_mode") ||
-            key.equals("pref_cart") ||
-            key.equals("pref_video") ||
-            key.equals("pref_cpu") ||
-            key.equals("pref_filter") ||
-            key.equals("pref_polygon_generation") ||
+                key.equals("scsp_time_sync_mode") ||
+                key.equals("pref_cart") ||
+            key.equals("pref_video") || 
+            key.equals("pref_cpu") || 
+            key.equals("pref_filter") || 
+            key.equals("pref_polygon_generation") || 
             key.equals("pref_sound_engine" ) ||
             key.equals("pref_resolution") ||
             key.equals("pref_rbg_resolution") ||
             key.equals("pref_cpu_sync_per_line") ||
             key.equals("pref_aspect_rate")
 
-        ) {
-            ListPreference pref = (ListPreference) findPreference(key);
-            pref.setSummary(pref.getEntry());
+            ) {
+                ListPreference pref = (ListPreference) findPreference(key);
+                pref.setSummary(pref.getEntry());
 
-            if (key.equals("pref_video")) {
-                ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
-                if (pref.getValue().equals("1")) {
-                    filter_setting.setEnabled(true);
-                } else {
-                    filter_setting.setEnabled(false);
-                }
+                if (key.equals("pref_video")) {
+                    ListPreference filter_setting = (ListPreference) getPreferenceManager().findPreference("pref_filter");
+                    if (pref.getValue().equals("1")) {
+                        filter_setting.setEnabled(true);
+                    } else {
+                        filter_setting.setEnabled(false);
+                    }
 
                 ListPreference polygon_setting = (ListPreference) getPreferenceManager().findPreference("pref_polygon_generation");
                 polygon_setting.setSummary(polygon_setting.getEntry());
@@ -700,37 +784,26 @@ public class YabauseSettings extends PreferenceActivity
                     polygon_setting.setEnabled(false);
                 }
             }
-        } else if (key.equals("pref_player1_inputdevice")) {
-            ListPreference pref = (ListPreference) findPreference(key);
-            pref.setSummary(pref.getEntry());
-            SyncInputDevice();
-            SyncInputDeviceForPlayer2();
-        } else if (key.equals("pref_player2_inputdevice")) {
-            ListPreference pref = (ListPreference) findPreference(key);
-            pref.setSummary(pref.getEntry());
-            SyncInputDevice();
-            SyncInputDeviceForPlayer2();
-        }
-        ListPreference download = (ListPreference) getPreferenceManager().findPreference("pref_game_download_directory");
-        if( download != null) {
-            download.setSummary(download.getEntry());
-        }
-
-        if( key.equals("pref_scsp_sync_per_frame") ){
-            EditTextPreference ep = (EditTextPreference)findPreference(key);
-            String sval = ep.getText();
-            int val =  Integer.parseInt(sval);
-            if( val <= 0 ){
-                val = 1;
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
-            }else if( val > 255 ){
-                val = 255;
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
+            ListPreference download = (ListPreference) getPreferenceManager().findPreference("pref_game_download_directory");
+            if( download != null) {
+                download.setSummary(download.getEntry());
             }
-            ep.setSummary( String.valueOf(val) );
-        }
+
+            if( key.equals("pref_scsp_sync_per_frame") ){
+                EditTextPreference ep = (EditTextPreference)findPreference(key);
+                String sval = ep.getText();
+                int val =  Integer.parseInt(sval);
+                if( val <= 0 ){
+                    val = 1;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                    sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
+                }else if( val > 255 ){
+                    val = 255;
+                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+                    sp.edit().putString("pref_scsp_sync_per_frame", String.valueOf(val)).commit();
+                }
+                ep.setSummary( String.valueOf(val) );
+            }
 
         if (key.equals("pref_force_androidtv_mode") ){
             if(restart_level<=1 ) restart_level = 2;
@@ -738,7 +811,7 @@ public class YabauseSettings extends PreferenceActivity
         }
 
 
-    }
+      }
 
     void updateResultCode(){
         Intent resultIntent = new Intent();
@@ -759,27 +832,26 @@ public class YabauseSettings extends PreferenceActivity
             return true;
         }
     };
-    @Override
-    protected void onResume () {
-        super.onResume();
-        mInputManager.registerInputDeviceListener(this, null);
-        getPreferenceScreen().getSharedPreferences()
-            .registerOnSharedPreferenceChangeListener(this);
+        @Override
+        protected void onResume () {
+            super.onResume();
+            mInputManager.registerInputDeviceListener(this, null);
+            getPreferenceScreen().getSharedPreferences()
+                    .registerOnSharedPreferenceChangeListener(this);
 
-    }
+        }
 
-    @Override
-    protected void onPause () {
-        super.onPause();
-        mInputManager.unregisterInputDeviceListener(this);
-        getPreferenceScreen().getSharedPreferences()
-            .unregisterOnSharedPreferenceChangeListener(this);
-    }
+        @Override
+        protected void onPause () {
+            super.onPause();
+            mInputManager.unregisterInputDeviceListener(this);
+            getPreferenceScreen().getSharedPreferences()
+                    .unregisterOnSharedPreferenceChangeListener(this);
+        }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
+        @Override
+        public void onDestroy() {
+            super.onDestroy();
 
-    }
-
+        }
 }

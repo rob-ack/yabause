@@ -9,17 +9,10 @@ LIST(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/CMake/Packages
 )
 
-option(YAB_FORCE_GLES20 "force to use OpenGLES 2.0" ON)
-if (YAB_FORCE_GLES20)
-set(GLSystem "OpenGL ES 2.0")
-else(YAB_FORCE_GLES20)
-set(GLSystem "Desktop OpenGL")
-endif(YAB_FORCE_GLES20)
-
 set(YAB_PACKAGE yabause)
-set(YAB_VERSION_MAJOR 3)
+set(YAB_VERSION_MAJOR 1)
 set(YAB_VERSION_MINOR 3)
-set(YAB_VERSION_PATCH 1)
+set(YAB_VERSION_PATCH 2)
 set(YAB_VERSION "${YAB_VERSION_MAJOR}.${YAB_VERSION_MINOR}.${YAB_VERSION_PATCH}")
 
 include(GetGitRevisionDescription)
@@ -27,12 +20,12 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 string(SUBSTRING ${GIT_SHA1} 0 6 GIT_SHA1_MINI )
 
 set(CPACK_SOURCE_GENERATOR TGZ)
-set(CPACK_PACKAGE_VERSION_MAJOR ${YAB_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MAJOR 2${YAB_VERSION_MAJOR})
 set(CPACK_PACKAGE_VERSION_MINOR ${YAB_VERSION_MINOR})
 set(CPACK_PACKAGE_VERSION_PATCH ${YAB_VERSION_PATCH})
 set(CPACK_PACKAGE_VENDOR "devMiyax")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/EULA.txt")
-set(CPACK_PACKAGE_FILE_NAME "yabasanshiro-${YAB_VERSION}-${GIT_SHA1_MINI}")
+set(CPACK_PACKAGE_FILE_NAME "yabasanshiro2-${YAB_VERSION}-${GIT_SHA1_MINI}")
 set(CPACK_PACKAGE_CONTACT "smiyaxdev@gmail.com" )
 
 
@@ -60,6 +53,19 @@ if (WIN32)
 endif ()
 
 include(CPack)
+
+function(assign_source_group)
+    foreach(_source IN ITEMS ${ARGN})
+        if (IS_ABSOLUTE "${_source}")
+            file(RELATIVE_PATH _source_rel "${CMAKE_CURRENT_SOURCE_DIR}" "${_source}")
+        else()
+            set(_source_rel "${_source}")
+        endif()
+        get_filename_component(_source_path "${_source_rel}" PATH)
+        string(REPLACE "/" "\\" _source_path_msvc "${_source_path}")
+        source_group("${_source_path_msvc}" FILES "${_source}")
+    endforeach()
+endfunction(assign_source_group)
 
 add_subdirectory(doc)
 add_subdirectory(l10n)

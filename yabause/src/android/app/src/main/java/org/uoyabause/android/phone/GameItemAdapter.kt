@@ -18,10 +18,6 @@
 */
 package org.uoyabause.android.phone
 
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.view.ContextMenu
@@ -36,16 +32,14 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
-import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import java.io.File
+import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
 import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
-import org.uoyabause.uranus.BuildConfig
-import org.uoyabause.uranus.R
-import java.io.File
 
-class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
+class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
     RecyclerView.Adapter<GameViewHolder>() {
 
     class GameViewHolder(var rootview: View) :
@@ -103,7 +97,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
 
     interface OnItemClickListener {
         fun onItemClick(position: Int, item: GameInfo?, v: View?)
-        fun onGameRemoved( item: GameInfo? )
+        fun onGameRemoved(item: GameInfo?)
     }
 
     override fun onBindViewHolder(holder: GameViewHolder, position: Int) {
@@ -112,9 +106,9 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
         val imageView = holder.imageViewIcon
         val ctx = holder.rootview.context
         val game = dataSet?.get(position)
-        if( game != null ) {
+        if (game != null) {
             textViewName.text = game.game_title
-            //textViewVersion.setText(game.product_number);
+            // textViewVersion.setText(game.product_number);
             var rate = ""
             for (i in 0 until game.rating) {
                 rate += "★"
@@ -124,7 +118,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
                 rate += " " + game.device_infomation
             }
             textViewVersion.text = rate
-            if (game.image_url != "") { //try {
+            if (game.image_url != "") { // try {
                 if (game.image_url.startsWith("http")) {
                     Glide.with(ctx)
                         .load(game.image_url)
@@ -140,8 +134,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
                 if (null != mListener) {
                     mListener!!.onItemClick(position, dataSet?.get(position), null)
                 }
-
-        }
+            }
         }
 
         holder.menuButton.setOnClickListener(View.OnClickListener {
@@ -159,10 +152,11 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
         val popup = PopupMenu(view.context, view)
         val inflater: MenuInflater = popup.getMenuInflater()
         inflater.inflate(R.menu.game_item_popup_menu, popup.getMenu())
-        //popup.setOnMenuItemClickListener(MyMenuItemClickListener(position))
+        // popup.setOnMenuItemClickListener(MyMenuItemClickListener(position))
         popup.setOnMenuItemClickListener(PopupMenu.OnMenuItemClickListener {
             when (it.itemId) {
                 R.id.delete -> {
+/*
                     val prefs = view.context.getSharedPreferences("private", Context.MODE_PRIVATE)
                     val hasDonated = prefs.getBoolean("donated", false)
 
@@ -177,40 +171,37 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
                                     intent.setPackage("com.android.vending")
                                     view.context.startActivity(intent)
                                 }.setNegativeButton(R.string.cancel) { _, _ ->
-
                                 }
                                 .show()
-
                     } else {
-                        Log.d("textext", "R.id.delete is selected")
-                        AlertDialog.Builder(view.context)
-                                .setTitle(R.string.delete_confirm_title)
-                                .setMessage(R.string.delete_confirm)
-                                .setPositiveButton(R.string.ok) { dialog, which ->
 
-                                    var game_info = dataSet?.get(position)!!
+ */
+                    Log.d("textext", "R.id.delete is selected")
+                    AlertDialog.Builder(view.context)
+                        .setTitle(R.string.delete_confirm_title)
+                        .setMessage(R.string.delete_confirm)
+                        .setPositiveButton(R.string.ok) { dialog, which ->
 
-                                    dataSet?.removeAt(position)
+                            var game_info = dataSet?.get(position)!!
 
-                                    if (game_info != null) {
-                                        mListener?.onGameRemoved(game_info)
-                                        game_info.removeInstance()
-                                    }
+                            dataSet?.removeAt(position)
 
-                                    notifyItemRemoved(position)
-                                }
-                                .setNegativeButton(R.string.no) { dialog, which ->
+                            if (game_info != null) {
+                                mListener?.onGameRemoved(game_info)
+                                game_info.removeInstance()
+                            }
 
-                                }
-                                .show()
-                    }
+                            notifyItemRemoved(position)
+                        }
+                        .setNegativeButton(R.string.no) { dialog, which ->
+                        }
+                        .show()
                 }
                 else -> {
                     Log.d("textext", "Unknown value (value = $it.itemId)")
                 }
             }
             true
-
         })
         popup.show()
     }
@@ -219,10 +210,10 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
         return dataSet!!.size
     }
 
-    fun removeItem( id: Long ){
-        val index = dataSet?.indexOfFirst({it!!.id == id} )
+    fun removeItem(id: Long) {
+        val index = dataSet?.indexOfFirst({ it!!.id == id })
         if (index != null && index != -1) {
-            dataSet?.removeAt( index )
+            dataSet?.removeAt(index)
             notifyItemRemoved(index)
         }
     }
@@ -231,5 +222,4 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>? ) :
         private const val CARD_WIDTH = 320
         private const val CARD_HEIGHT = 224
     }
-
 }

@@ -21,8 +21,7 @@ package org.uoyabause.android;
 
 import android.app.Activity;
 import android.content.Context;
-import android.preference.DialogPreference;
-import androidx.annotation.NonNull;
+import androidx.preference.DialogPreference;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -34,92 +33,39 @@ import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 
 import org.uoyabause.android.tv.GameSelectFragment;
-import org.uoyabause.uranus.R;
+import org.devmiyax.yabasanshiro.R;
 
 import java.io.File;
 import java.util.ArrayList;
 
-class DirectoryListAdapter extends BaseAdapter implements ListAdapter{
-
-    private Context context;
-    private ArrayList<String> _directoryList = new ArrayList<String>();
-
-    ArrayList<String> getList(){ return _directoryList; }
-
-    public DirectoryListAdapter(Context context) {
-        this.context = context;
-    }
-
-    public void setDirectorytList(ArrayList<String> directoryList) {
-        this._directoryList = directoryList;
-    }
-
-    @Override
-    public int getCount() {
-        return _directoryList.size();
-    }
-
-    @Override
-    public Object getItem(int position) {
-        return _directoryList.get(position);
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return position; //_directoryList.get(position).getId();
-    }
-
-    public void addDirectory( String path ){
-        _directoryList.add(path);
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        View view = convertView;
-        if (view == null) {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.game_directories_listitem, null);
-        }
-        ((TextView)view.findViewById(R.id.game_directory_item)).setText(_directoryList.get(position));
-
-        Button deleteBtn = (Button)view.findViewById(R.id.button_delete);
-        deleteBtn.setTag(position);
-        deleteBtn.setOnClickListener(new View.OnClickListener(){
-
-            @Override
-            public void onClick(View v) {
-                Integer position = (Integer)v.getTag();
-                if( position != null ){
-                    _directoryList.remove(position.intValue()); //or some other task
-                    notifyDataSetChanged();
-                    GameSelectFragment.refresh_level = 3;
-                }
-            }
-        });
-
-        return view;
-    }
-}
 /**
  * Created by shinya on 2016/01/07.
  */
-public class GameDirectoriesDialogPreference extends DialogPreference implements View.OnClickListener , FileDialog.DirectorySelectedListener {
+public class GameDirectoriesDialogPreference extends DialogPreference {
 
-    private YabauseSettings _context = null;
-    DirectoryListAdapter adapter;
-    ListView listView;
-   // File currentRootDirectory = Environment.getExternalStorageDirectory();
+//    private YabauseSettings _context = null;
 
     //public GameDirectoriesDialogPreference(Context context) {
     //    super(context);
     //    InitObjects(context);
     //}
 
-    public GameDirectoriesDialogPreference(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        InitObjects(context);
+    interface DirListChangeListener {
+        void onChangeDir( Boolean isChange );
     }
 
+    DirListChangeListener listener = null;
+
+    void setDirListChangeListener( DirListChangeListener l ){
+        listener = l;
+    }
+
+    public GameDirectoriesDialogPreference(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        //InitObjects(context);
+    }
+
+/*
     @Override
     protected void onDialogClosed(boolean positiveResult) {
         if(positiveResult){
@@ -137,38 +83,60 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
         }
         super.onDialogClosed(positiveResult);
     }
+*/
+
+    public void save(String resultstring ){
+        String data = getPersistedString ("err");
+        if( !data.equals(resultstring)){
+            //_context.setDireListChangeStatus(true);
+        }
+        persistString(resultstring);
+        if( listener != null ){
+            listener.onChangeDir(true);
+        }
+    }
+
+    public String getData(){
+        return getPersistedString("err");
+    }
 
     public GameDirectoriesDialogPreference(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
-        InitObjects(context);
+        //InitObjects(context);
+        if( listener != null ){
+            listener.onChangeDir(false);
+        }
     }
 
     public void setActivity( Activity a){
-        _context = (YabauseSettings)a;
-        _context.setDireListChangeStatus(false);
+        //_context = (YabauseSettings)a;
+        //_context.setDireListChangeStatus(false);
     }
 
-    void InitObjects( Context context) {
+    //void InitObjects( Context context) {
 
-        setDialogLayoutResource(R.layout.game_directories);
-    }
-
+        //setDialogLayoutResource(R.layout.game_directories);
+    //}
+/*
     @Override
-    protected void onBindDialogView(View view){
+    protected void onBindDialogView(View view) {
+        super.onBindDialogView(view);
         ArrayList<String> list;
         list = new ArrayList<String>();
-        String data = getPersistedString ("err");
-        if( data.equals("err")){
+        String data = getPersistedString("err");
+        if (data.equals("err")) {
+            //YabauseStorage yb = YabauseStorage.storage;
+            //list.add(yb.getGamePath());
             YabauseStorage yb = YabauseStorage.getStorage();
             list.add(yb.getGamePath());
-        }else {
+        } else {
             String[] paths = data.split(";", 0);
-            for( int i=0; i<paths.length; i++ ){
+            for (int i = 0; i < paths.length; i++) {
                 list.add(paths[i]);
             }
         }
 
-        listView = (ListView)view.findViewById(R.id.listView);
+        listView = (ListView) view.findViewById(R.id.listView);
         adapter = new DirectoryListAdapter(_context);
         adapter.setDirectorytList(list);
         listView.setAdapter(adapter);
@@ -177,8 +145,8 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
         button.setOnClickListener(this);
 
     }
-
-
+*/
+/*
     public void onClick(View v) {
         FileDialog fd = new FileDialog(_context,"");
         fd.setSelectDirectoryOption(true);
@@ -192,5 +160,5 @@ public class GameDirectoriesDialogPreference extends DialogPreference implements
         adapter.notifyDataSetChanged();
         GameSelectFragment.refresh_level = 3;
     }
-
+*/
 }

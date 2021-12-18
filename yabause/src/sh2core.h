@@ -309,6 +309,7 @@ typedef struct
    u16 RTCOR;  // 0xFFFFFFF8
    cache_enty cache;
    u32 CHCR0M;
+   u32 WTCSRM;   // 0xFFFFFE80 mirror
 } Onchip_struct;
 
 typedef struct
@@ -577,7 +578,7 @@ extern SH2Interface_struct SH2DynDebug;
 void FASTCALL SH2OnFrame(SH2_struct *context);
 
 void SH2RemoveInterrupt(SH2_struct *context, u8 vector, u8 level);
-
+void SH2HandleInterrupts(SH2_struct *context);
 
 void FASTCALL SH2OnFrame(SH2_struct *context);
 

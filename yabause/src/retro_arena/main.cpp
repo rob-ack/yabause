@@ -26,8 +26,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#if GCC_VERSION < 9
 #include <experimental/filesystem>
-namespace fs = std::experimental::filesystem ;
+namespace fs = std::experimental::filesystem;
+#else
+#include <filesystem>
+namespace fs = std::filesystem;
+#endif
 
 #include <sys/resource.h>
 #include <errno.h>
@@ -638,7 +643,7 @@ int main(int argc, char** argv)
         usleep( 16*1000 );
       }
     }else{
-      //printf("\033[%d;%dH Frmae = %d \n", 0, 0, frame_cont);
+      //printf("Frmae = %d \n", 0, 0, frame_cont);
       //frame_cont++;
       YabauseExec(); // exec one frame
     }

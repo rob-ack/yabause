@@ -68,7 +68,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <GLES3/gl3ext.h>
 #include <pthread.h>
 
-#include "sndaudiotrack.h"
+//#include "sndaudiotrack.h"
 #ifdef HAVE_OPENSL
 #include "sndopensl.h"
 #endif
@@ -77,9 +77,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "PlayRecorder.h"
 
+#if HAVE_VULKAN
+#include "../vulkan/VIDVulkanCInterface.h"
+#include "../vulkan/VIDVulkan.h"
+#include "../vulkan/Renderer.h"
+#include "../vulkan/Window.h"
+#else
+#define VIDCORE_VULKAN 0xFF
+#endif
+
 JavaVM * yvm;
 static jobject yabause = NULL;
-
 
 
 static char mpegpath[256] = "\0";
@@ -121,6 +129,7 @@ static int g_scsp_sync_count = 1;
 static int g_cpu_sync_shift = 1;
 static int g_scsp_sync_time_mode = 1;
 static int g_aspect_rate_mode = 0;
+int frameLimitMode = 0;
 
 static int s_status = 0;
 pthread_mutex_t g_mtxGlLock = PTHREAD_MUTEX_INITIALIZER;
@@ -146,6 +155,9 @@ int s_carttype;
 char s_savepath[256] ="\0";
 int s_vidcoretype = VIDCORE_OGL;
 int s_player2Enable = -1;
+
+int surface_width = 0;
+int surface_height = 0;
 
 #define MAKE_PAD(a,b) ((a<<24)|(b))
 void update_pad_mode();
@@ -211,7 +223,7 @@ NULL
 
 SoundInterface_struct *SNDCoreList[] = {
 &SNDDummy,
-&SNDAudioTrack,
+//&SNDAudioTrack,
 #ifdef HAVE_OPENSL
 &SNDOpenSL,
 #endif
@@ -222,6 +234,9 @@ VideoInterface_struct *VIDCoreList[] = {
 &VIDDummy,
 &VIDSoft,
 &VIDOGL,
+#if HAVE_VULKAN                    
+&CVIDVulkan,
+#endif
 NULL
 };
 
@@ -229,6 +244,9 @@ NULL
 #include "nanovg/nanovg_osdcore.h"
 OSD_struct *OSDCoreList[] = {
 &OSDNnovg,
+#if HAVE_VULKAN     
+&OSDNnovgVulkan,
+#endif
 NULL
 };  
 #endif
@@ -437,6 +455,70 @@ int GetPlayer2Device(){
     return env->CallIntMethod( yabause, getPlayer2InputDevice);
 }
 
+
+void onBackupWrite( char * before, char * after, int size ){
+	
+    __android_log_print(ANDROID_LOG_INFO, "yabause", "onBackupWrite is called");
+
+    jclass yclass;
+    jmethodID jniOnBackupWrite;
+    JNIEnv * env;
+
+    if(yvm->AttachCurrentThread(&env,NULL) != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to AttachCurrentThread");
+        return;
+    }
+
+/*
+    if (yvm->GetEnv( (void**) &env, JNI_VERSION_1_6) != JNI_OK){
+
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetEnv");
+
+        return;
+    }
+*/
+    jbyteArray jniBefore = env->NewByteArray(size);
+    if( jniBefore == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for before");
+        return;
+    }
+
+    jbyte * dst = env->GetByteArrayElements(jniBefore, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = before[i];
+    }
+    env->ReleaseByteArrayElements(jniBefore,dst,0);
+
+    jbyteArray jniAfter = env->NewByteArray(size);
+    if( jniAfter == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to NewByteArray for after");
+        return;
+    }
+
+    dst = env->GetByteArrayElements(jniAfter, NULL);
+    for(int i = 0; i < size; i++){
+        dst[i] = after[i];
+    }
+    env->ReleaseByteArrayElements(jniAfter,dst,0);
+ 
+    yclass = env->GetObjectClass( yabause);
+    jniOnBackupWrite = env->GetMethodID( yclass, "onBackupWrite", "([B[B)V");
+    if( jniOnBackupWrite == NULL ){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to GetMethodID for onBackupWrite");
+        return;
+    }
+    env->CallVoidMethod( yabause, jniOnBackupWrite, jniBefore, jniAfter);
+
+    if(yvm->DetachCurrentThread() != JNI_OK){
+        __android_log_print(ANDROID_LOG_ERROR, "yabause", "Failed to DetachCurrentThread");
+        return;
+    }
+
+    return;
+}
+
+
+
 extern "C" void YuiErrorMsg(const char *string)
 {
 	//YUI_LOG("YuiErrorMsg %s",string);
@@ -461,6 +543,13 @@ void* threadStartCallback(void *myself);
 
 extern "C" void YuiSwapBuffers(void)
 {
+#if HAVE_VULKAN    
+   if( s_vidcoretype == VIDCORE_VULKAN ){
+       VIDVulkan::getInstance()->present();
+       SetOSDToggle(g_EnagleFPS);   
+       return;
+   }
+#endif   
    if( g_Display == EGL_NO_DISPLAY ){
       return;
    }
@@ -668,13 +757,18 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_init
         
         if( g_Surface == EGL_NO_SURFACE ){
             g_window = ANativeWindow_fromSurface(jenv, surface);
-            YUI_LOG("Got window %08X %d,%d", g_window, g_msg,width,height );
-            g_msg = MSG_WINDOW_SET;         
+            surface_width = width;
+            surface_height = height;
+            YUI_LOG("Got window %08X %d,%d", g_window, width,height );
+            g_msg = MSG_WINDOW_SET;   
+            g_Surface = (EGLSurface)1;      
         }else{
             if( g_window != ANativeWindow_fromSurface(jenv, surface) ){
                 g_window = ANativeWindow_fromSurface(jenv, surface);
             }
             YUI_LOG("Chg window %08X %d,%d ", g_window, g_msg,width,height);
+            surface_width = width;
+            surface_height = height;
             g_msg = MSG_WINDOW_CHG;
             //YUI_LOG("Got window ignore %p %d,%d", g_window, g_msg,width,height );
         }
@@ -686,6 +780,13 @@ extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_init
     
    return 0;
 }
+
+extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_enableBackupWriteHook(){
+    BiosSetOnBackupWrite(onBackupWrite);
+    return 0;
+}
+
+
 
 extern "C" JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_lockGL()
 {
@@ -759,6 +860,13 @@ extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_tog
     else
        DisableAutoFrameSkip();
     
+    return 0;
+}
+
+extern "C"  JNIEXPORT int JNICALL Java_org_uoyabause_android_YabauseRunnable_setFrameLimitMode( JNIEnv* env, jobject obj, int mode  )
+{
+    frameLimitMode = mode;
+    VDP2SetFrameLimit(mode);
     return 0;
 }
 
@@ -987,6 +1095,11 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init( JNIEnv* env, jo
 }
 
 extern "C" int YuiRevokeOGLOnThisThread(){
+     
+     if( s_vidcoretype == VIDCORE_VULKAN ){
+         return 0;
+     }
+
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Pbuffer, g_Pbuffer, g_Context_Sub)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
@@ -1020,6 +1133,11 @@ extern "C" int YuiRevokeOGLOnThisThread(){
 }
 
 extern "C" int YuiUseOGLOnThisThread(){
+
+     if( s_vidcoretype == VIDCORE_VULKAN ){
+         return 0;
+     }
+
 #if defined(YAB_ASYNC_RENDERING)
     if (!eglMakeCurrent(g_Display, g_Surface, g_Surface, g_Context)) {
         YUI_LOG("eglMakeCurrent() returned error %X", eglGetError());
@@ -1234,6 +1352,7 @@ int YabauseInit(){
     eglQuerySurface(g_Display,g_Surface,EGL_WIDTH,&width);
     eglQuerySurface(g_Display,g_Surface,EGL_HEIGHT,&height);
 
+    //s_vidcoretype = VIDCORE_VULKAN;
 	memset(&yinit,0,sizeof(yinit));
     //yinit.m68kcoretype = M68KCORE_C68K;
 	yinit.m68kcoretype = M68KCORE_MUSASHI;
@@ -1264,6 +1383,7 @@ int YabauseInit(){
     yinit.mpegpath = mpegpath;
     yinit.videoformattype = VIDEOFORMATTYPE_NTSC;
     yinit.frameskip = 0;
+    yinit.framelimit = ::frameLimitMode;
     yinit.usethreads = 0;
     yinit.skip_load = 0;
     yinit.video_filter_type = g_VideoFilter;
@@ -1309,6 +1429,16 @@ int YabauseInit(){
     		break;
 		  }
 	   }
+    }else if(s_vidcoretype == VIDCORE_VULKAN ){
+        OSDChangeCore(OSDCORE_NANOVG_VULKAN);
+        for (i = 0; VIDCoreList[i] != NULL; i++){
+		  if (VIDCoreList[i]->id == s_vidcoretype)
+		  {
+			 VIDCoreList[i]->Resize(0,0,surface_width,surface_height,1,g_aspect_rate_mode);
+             break;
+     	  }
+        }
+
     }else{
         OSDChangeCore(OSDCORE_SOFT);
         if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
@@ -1416,18 +1546,40 @@ Java_org_uoyabause_android_YabauseRunnable_exec( JNIEnv* env )
 void
 Java_org_uoyabause_android_YabauseRunnable_reset( JNIEnv* env )
 {
-    yprintf("sending MSG_OPEN_TRAY");
+    yprintf("sending MSG_RESET");
     pthread_mutex_lock(&g_mtxGlLock);
     g_msg = MSG_RESET;
     pthread_mutex_unlock(&g_mtxGlLock);    
 }
 
+class Command{
+public:    
+    Command( int press, int pad ){
+        this->press = press;
+        this->pad = pad;
+    }
+    int press;
+    int pad;
+};
+
+typedef vector<Command> vecCommand;
+
+vecCommand commands;
+
 void
 Java_org_uoyabause_android_YabauseRunnable_press( JNIEnv* env, jobject obj, jint key, jint player )
 {
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(1,MAKE_PAD(player,key));
+        commands.push_back(a);
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
+   
 	//yprintf("press: %d,%d",player,key);
     PerKeyDown(MAKE_PAD(player,key));
+
 }
 
 void
@@ -1442,8 +1594,13 @@ Java_org_uoyabause_android_YabauseRunnable_axis( JNIEnv* env, jobject obj, jint 
 void
 Java_org_uoyabause_android_YabauseRunnable_release( JNIEnv* env, jobject obj, jint key, jint player )
 {
-	//yprintf("release: %d,%d",player,key);
-    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) return;  
+    if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::RECORDING ) {
+        Command a(0,MAKE_PAD(player,key));
+        commands.push_back(a);    
+        return;
+    }else if( PlayRecorder::getInstance()->getStatus() == PlayRecorder::PLAYING ) {
+        return;
+    }
     PerKeyUp(MAKE_PAD(player,key));
 }
 
@@ -1793,13 +1950,31 @@ void renderLoop()
 {
     int renderingEnabled = 1;
     int pause = 0;
-	
+
+#if HAVE_VULKAN    
+	Renderer * r = NULL;
+#endif
+   
+    int initResult=0;
+
 	YabThreadSetCurrentThreadAffinityMask(0x00);
 
     while (renderingEnabled != 0) {
 
-        if (g_Display && pause == 0 && g_window != NULL) {
-           YabauseExec();
+        if( initResult == 0 ){
+            if (g_Display && pause == 0 && g_window != NULL) {
+                if( commands.size() > 0 ){
+                    for( int i=0; i< commands.size(); i++ ){
+                        if( commands[i].press == 0 ){
+                            PerKeyUp(commands[i].pad);
+                        }else{
+                            PerKeyDown(commands[i].pad);
+                        }
+                    }
+                    commands.clear();
+                }
+            YabauseExec();
+            }
         }
 
         pthread_mutex_lock(&g_mtxGlLock);        
@@ -1808,20 +1983,47 @@ void renderLoop()
 
             case MSG_WINDOW_SET:
                 YUI_LOG("MSG_WINDOW_SET");
-                if( initEgl( g_window ) != 0 ){
-                  destroy();
-                  pthread_mutex_unlock(&g_mtxGlLock);
-                  return;
+                if( s_vidcoretype == VIDCORE_VULKAN ){
+#if HAVE_VULKAN                    
+                    if( r == NULL ){
+                        r = new Renderer();
+                        r->setNativeWindow(g_window);
+                        VIDVulkan::getInstance()->setRenderer(r);
+                    }
+#endif                    
+                    g_Display = (void*)1;
+                }else{
+                    if( initEgl( g_window ) != 0 ){
+                      destroy();
+                      pthread_mutex_unlock(&g_mtxGlLock);
+                      return;
+                    }
                 }
-                YabauseInit();
+                initResult = YabauseInit();
                 break;
             case MSG_WINDOW_CHG:
                 YUI_LOG("MSG_WINDOW_CHG");
-                if( switchWindow(g_window) != 0 ){
-                  destroy();
-                  pthread_mutex_unlock(&g_mtxGlLock);
-                  return;
+                if( s_vidcoretype == VIDCORE_VULKAN ){
+#if HAVE_VULKAN                                        
+                    for (int i = 0; VIDCoreList[i] != NULL; i++)
+                    {
+                        if (VIDCoreList[i]->id == s_vidcoretype)
+                        {
+                            YUI_LOG("Resize %d,%s %d,%d",s_vidcoretype,VIDCoreList[i]->Name,surface_width,surface_height);
+                            r->setNativeWindow(g_window);
+                            VIDCoreList[i]->Resize(0,0,surface_width,surface_height,1,g_aspect_rate_mode);
+                            break;
+                        }
+                    }
+#endif                    
+                }else{
+                    if( switchWindow(g_window) != 0 ){
+                        destroy();
+                        pthread_mutex_unlock(&g_mtxGlLock);
+                        return;
+                    }
                 }
+
                 break;
             case MSG_RENDER_LOOP_EXIT:
                 YUI_LOG("MSG_RENDER_LOOP_EXIT");            
@@ -2016,40 +2218,53 @@ int saveScreenshot( const char * filename ){
     png_infop info_ptr;
     int number_of_passes;
     int rtn = -1;
-    
-    eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-    
-    VdpRevoke(); 
-    if( YuiUseOGLOnThisThread() == -1 ){
-        VdpResume();
-        return -1;
-    }
-    
-    YUI_LOG("saveScreenshot %s", filename);
-    
-    eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
-    eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
-    
-    YUI_LOG("screen %d,%d",width,height);
-    
-    buf = (unsigned char *)malloc(width*height*4);
-    if( buf == NULL ) {
-        YUI_LOG("not enough memory\n");
-        goto FINISH;
-    }
 
-    glReadBuffer(GL_BACK);
-    pmode = GL_RGBA;
-    glGetError();
-    glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-    if( (glerror = glGetError()) != GL_NO_ERROR ){
-        YUI_LOG("glReadPixels %04X\n",glerror);
-         goto FINISH;
+    YUI_LOG("saveScreenshot %s", filename);
+
+    if(s_vidcoretype == VIDCORE_VULKAN ){
+
+        for (int i = 0; VIDCoreList[i] != NULL; i++){
+		  if (VIDCoreList[i]->id == s_vidcoretype)
+		  {
+			 VIDCoreList[i]->GetScreenshot((void**)&buf,&width,&height);
+             break;
+     	  }
+        }
+
+    }else{
+    
+        eglMakeCurrent(g_Display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        
+        VdpRevoke(); 
+        if( YuiUseOGLOnThisThread() == -1 ){
+            VdpResume();
+            return -1;
+        }
+        
+        eglQuerySurface(g_Display, g_Surface, EGL_WIDTH, &width);
+        eglQuerySurface(g_Display, g_Surface, EGL_HEIGHT, &height);
+        
+        YUI_LOG("screen %d,%d",width,height);
+        
+        buf = (unsigned char *)malloc(width*height*4);
+        if( buf == NULL ) {
+            YUI_LOG("not enough memory\n");
+            goto FINISH;
+        }
+
+        glReadBuffer(GL_BACK);
+        pmode = GL_RGBA;
+        glGetError();
+        glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
+        if( (glerror = glGetError()) != GL_NO_ERROR ){
+            YUI_LOG("glReadPixels %04X\n",glerror);
+            goto FINISH;
+        }
+        for( u = 3; u <width*height*4; u+=4 ){
+            buf[u]=0xFF;
+        }
     }
 	
-	for( u = 3; u <width*height*4; u+=4 ){
-		buf[u]=0xFF;
-	}
     row_pointers = (png_bytep*)malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];

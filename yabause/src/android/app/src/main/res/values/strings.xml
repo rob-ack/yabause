@@ -82,8 +82,9 @@
     <string name="dynrec_cpu_interface">Old Dynamic Recompiler(fast but less accurate)</string>
     <string name="software_cpu_interface">Interpreter(slow but more accurate)</string>
 
-    <string name="opengl_video_interface">OpenGL Video Interface</string>
-    <string name="software_video_interface">Software Video Interface</string>
+    <string name="opengl_video_interface">OpenGL</string>
+    <string name="software_video_interface">Software</string>
+    <string name="vulkan_video_interface">Vulkan(Experimental)</string>
     <string name="onscreen_pad">On-Screen Pad</string>
     <string name="select_from_other_directory">Select from other directory.</string>
 
@@ -151,7 +152,6 @@
     <string name="close_cd_tray">Close CD Tray</string>
     <string name="menu_analog">Enable Analog Control</string>
     <string name="menu_set_as_gametitle">Set As Title Icon</string>
-    <string name="menu_cheat">Cheat</string>
     <string name="add_new_code">Add New Code</string>
     <string name="str_use_compute_shader">Use Compute Shader</string>
     <string name="enable">Enable</string>
@@ -241,9 +241,7 @@
     <string name="sign_out">Sign out</string>
     <string name="sign_in">Sign in</string>
     <string name="siginin_message">
-        Signing in will enable the following functions.\n
-        * Back up saved data to the cloud\n
-        * Share cheat code with other users\n\n
+        Signing in enable to backup save data and state data to the cloud and share them between devices.\n
         However, these functions are experimental, so they do not work as expected, specifications may be changed or terminated without prior notice.
     </string>
     <string name="agree">I agree</string>
@@ -296,7 +294,7 @@
         4. Tap the game title you want to play.\n
         5. Enjoy!\n
         \n
-        For more detail checkout our [website](https://www.uoyabause.org/static_pages/guide).\n
+        For more detail checkout this [Youtube video](https://www.youtube.com/watch?v=Ch6_KhhAg10).\n
         ]]>
     </string>
     <string name="delete_confirm_title">DELETE CONFIRM</string>
@@ -306,5 +304,35 @@
     <string name="enter_pinin">Enter this PIN to your device</string>
     <string name="sign_in_to_other_devices">Sign in to other devices</string>
     <string name="hide_status_bar_and_navigation_bar">Hide Status bar and Navigation bar</string>
+    <string name="title_activity_yaba_snashiro_settings">YabaSnashiroSettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="do_you_want_to_install">Do you want to install?</string>
+    <string name="only_chd_is_supported_for_load_game">You can choose chd,zip,7z file.</string>
+    <string name="install_game_message">If you install, you can play from this game list directly. It takes up  </string>
+    <string name="install_game_message_after">MB of storage space.</string>
+
+    <string name="menu_acp">Action Replay Code</string>
+    <string name="updating">Updating...</string>
+    <string name="add_a_game">Add a game</string>
+    <string name="frameLimit">Speed Limit</string>
+    <string name="chooseFrameLimit">Choose frame limit mode</string>
+    <string name="frameLimitNormal">Normal</string>
+    <string name="frameLimitDouble">Double</string>
+    <string name="frameLimitUnLimited">No Limit</string>
+
 </resources>
 	

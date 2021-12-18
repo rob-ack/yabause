@@ -953,11 +953,11 @@ void dsp_dma08(scudspregs_struct *sc, u32 inst)
 
 void step_dsp_dma(scudspregs_struct *sc) {
 
-  if (sc->ProgControlPort.part.T0 == 0) return;
-
   sc->dsp_dma_wait--;
   if (sc->dsp_dma_wait > 0) return;
 
+  if (sc->ProgControlPort.part.T0 == 0) return;
+  
   if (((sc->dsp_dma_instruction >> 10) & 0x1F) == 0x00)
   {
     dsp_dma01(ScuDsp, sc->dsp_dma_instruction);
@@ -1799,7 +1799,7 @@ void ScuExec(u32 timing) {
                    }
 
                    ScuDsp->dsp_dma_size = Counter;
-                   ScuDsp->dsp_dma_wait = 2; // DMA operation will be start when this count is zero
+                   ScuDsp->dsp_dma_wait = Counter >> 12; // DMA operation will be start when this count is zero
                    ScuDsp->WA0M = ScuDsp->WA0;
                    ScuDsp->RA0M = ScuDsp->RA0;
                    //LOG("Start DSP DMA RA=%08X WA=%08X inst=%08X count=%d wait = %d", ScuDsp->RA0M, ScuDsp->WA0M, ScuDsp->dsp_dma_instruction, Counter, ScuDsp->dsp_dma_wait );

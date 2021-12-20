@@ -1135,6 +1135,9 @@ int EvaluateCmdListHash(Vdp1 * regs){
 }
 
 static int sameCmd(vdp1cmd_struct* a, vdp1cmd_struct* b) {
+  if (a == NULL) return 0;
+  if (b == NULL) return 0;
+  if (emptyCmd(a)) return 0;
   int cmp = memcmp(a, b, 15*sizeof(int));
   if (cmp == 0) {
     return 1;

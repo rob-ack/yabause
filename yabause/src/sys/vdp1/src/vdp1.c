@@ -1069,43 +1069,67 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number);
 
 int EvaluateCmdListHash(Vdp1 * regs){
   int hash = 0;
-  u32 addr;
-  for (int i=0;i<2000;i++)
+  u32 addr = 0;
+  u32 returnAddr = 0xFFFFFFFF;
+  u32 commandCounter = 0;
+  u16 command;
+
+  command = T1ReadWord(Vdp1Ram, addr);
+
+  while (!(command & 0x8000) && (commandCounter < 2000))
   {
-     u16 command;
-     vdp1cmd_struct cmd;
-     if ((addr = Vdp1DebugGetCommandNumberAddr(i)) == 0xFFFFFFFF)
-        break;
+      vdp1cmd_struct cmd;
+     // Make sure we're still dealing with a valid command
+     if ((command & 0x000C) == 0x000C)
+        // Invalid, abort
+        return hash;
+      Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
+      hash ^= cmd.CMDCTRL;
+      hash ^= cmd.CMDLINK;
+      hash ^= cmd.CMDPMOD;
+      hash ^= cmd.CMDCOLR;
+      hash ^= cmd.CMDSRCA;
+      hash ^= cmd.CMDSIZE;
+      hash ^= cmd.CMDXA;
+      hash ^= cmd.CMDYA;
+      hash ^= cmd.CMDXB;
+      hash ^= cmd.CMDYB;
+      hash ^= cmd.CMDXC;
+      hash ^= cmd.CMDYC;
+      hash ^= cmd.CMDXD;
+      hash ^= cmd.CMDYD;
+      hash ^= cmd.CMDGRDA;
+      hash ^= _Ygl->drawframe;
 
+     // Determine where to go next
+     switch ((command & 0x3000) >> 12)
+     {
+        case 0: // NEXT, jump to following table
+           addr += 0x20;
+           break;
+        case 1: // ASSIGN, jump to CMDLINK
+           addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+           break;
+        case 2: // CALL, call a subroutine
+           if (returnAddr == 0xFFFFFFFF)
+              returnAddr = addr + 0x20;
+
+           addr = T1ReadWord(Vdp1Ram, addr + 2) * 8;
+           break;
+        case 3: // RETURN, return from subroutine
+           if (returnAddr != 0xFFFFFFFF) {
+              addr = returnAddr;
+              returnAddr = 0xFFFFFFFF;
+           }
+           else
+              addr += 0x20;
+           break;
+     }
+
+     if (addr > 0x7FFE0)
+        return hash;
      command = T1ReadWord(Vdp1Ram, addr);
-
-     if (command & 0x8000)
-     {
-        break;
-     }
-
-     if (command & 0x4000)
-     {
-        continue;
-     }
-
-     Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
-     hash ^= cmd.CMDCTRL;
-     hash ^= cmd.CMDLINK;
-     hash ^= cmd.CMDPMOD;
-     hash ^= cmd.CMDCOLR;
-     hash ^= cmd.CMDSRCA;
-     hash ^= cmd.CMDSIZE;
-     hash ^= cmd.CMDXA;
-     hash ^= cmd.CMDYA;
-     hash ^= cmd.CMDXB;
-     hash ^= cmd.CMDYB;
-     hash ^= cmd.CMDXC;
-     hash ^= cmd.CMDYC;
-     hash ^= cmd.CMDXD;
-     hash ^= cmd.CMDYD;
-     hash ^= cmd.CMDGRDA;
-     hash ^= _Ygl->drawframe;
+     commandCounter++;
   }
   return hash;
 }

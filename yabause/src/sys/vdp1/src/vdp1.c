@@ -1070,7 +1070,7 @@ static u32 Vdp1DebugGetCommandNumberAddr(u32 number);
 int EvaluateCmdListHash(Vdp1 * regs){
   int hash = 0;
   u32 addr;
-  for (int i=0;;i++)
+  for (int i=0;i<2000;i++)
   {
      u16 command;
      vdp1cmd_struct cmd;

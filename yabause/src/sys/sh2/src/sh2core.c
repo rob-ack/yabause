@@ -1693,7 +1693,7 @@ void WDTExec(SH2_struct *context) {
 //////////////////////////////////////////////////////////////////////////////
 
 void DMAExec(SH2_struct *context) {
-  DMAProc(context, 200);
+  DMAProc(context, 180);
 }
 
 int DMAProc(SH2_struct *context, int cycles ){
@@ -1705,7 +1705,7 @@ int DMAProc(SH2_struct *context, int cycles ){
    if ( ((context->onchip.CHCR0 & 0x3)==0x01)  && ((context->onchip.CHCR1 & 0x3)==0x01) ) { // both channel wants DMA
       if (context->onchip.DMAOR & 0x8) { // round robin priority
 
-        if ((context->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
+        if ((context->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
 
         DMATransferCycles(context, &context->dma_ch0, cycles);
         DMATransferCycles(context, &context->dma_ch1, cycles);
@@ -1714,10 +1714,10 @@ int DMAProc(SH2_struct *context, int cycles ){
       else { // channel 0 > channel 1 priority
 
          if( (context->onchip.CHCR0 & 0x03) == 0x01 ){
-           if ((context->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
+           if ((context->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
            DMATransferCycles(context, &context->dma_ch0, cycles);
          }else if( (context->onchip.CHCR1 &0x03) == 0x01 ) {
-           if ((context->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
+           if ((context->onchip.CHCR1 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
            DMATransferCycles(context, &context->dma_ch1, cycles);
          }
       }
@@ -1725,11 +1725,11 @@ int DMAProc(SH2_struct *context, int cycles ){
    else { // only one channel wants DMA
 	   if (((context->onchip.CHCR0 & 0x3) == 0x01)) { // DMA for channel 0
 
-       if ((context->onchip.CHCR0 & 0x08) == 0) { cycles <<= 1;  } //Dual Chanel
+       if ((context->onchip.CHCR0 & 0x08) == 0) { cycles *= 1.3f;  } //Dual Chanel
        DMATransferCycles(context, &context->dma_ch0, cycles);
        return 0;
       }else if (((context->onchip.CHCR1 & 0x3) == 0x01)) { // DMA for channel 1
-        if ((context->onchip.CHCR1 & 0x08) == 0) { cycles <<= 1; } //Dual Chanel
+        if ((context->onchip.CHCR1 & 0x08) == 0) { cycles *= 1.3f; } //Dual Chanel
          DMATransferCycles(context, &context->dma_ch1, cycles);
          return 0;
       }

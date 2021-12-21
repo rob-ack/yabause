@@ -687,8 +687,9 @@ endif()
 
 option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
 if (YAB_WANT_UBSAN_DEBUG)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
-   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lubsan")
+		add_compile_options("-fsanitize=undefined")
+		link_libraries("-fsanitize=undefined")
+	  set(YAB_OPTIMIZATION "-g" CACHE STRING "Override optimization level")
 endif()
 
 if (MSVC)

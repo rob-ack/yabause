@@ -50,7 +50,7 @@ extern VideoInterface_struct *VIDCoreList[];
 Vdp1 * Vdp1Regs;
 Vdp1External_struct Vdp1External;
 
-vdp1cmdctrl_struct cmdBufferBeingProcessed[2000];
+vdp1cmdctrl_struct cmdBufferBeingProcessed[CMD_QUEUE_SIZE];
 
 int vdp1_clock = 0;
 
@@ -1194,7 +1194,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    vdp1cmd_struct oldCmd;
 
    yabsys.vdp1cycles = 0;
-   while (!(command & 0x8000) && commandCounter < 2000) { // fix me
+   while (!(command & 0x8000) && nbCmdToProcess < CMD_QUEUE_SIZE) { // fix me
      int ret;
       regs->COPR = (regs->addr & 0x7FFFF) >> 3;
       // First, process the command
@@ -1374,7 +1374,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       //If we do not change it, Noon will not start
       //So store the value and update COPR with last value at VBlank In
       regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
-      commandCounter++;
    }
    if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", commandCounter, regs->addr);
@@ -2423,9 +2422,9 @@ void Vdp1HBlankIN(void)
         cmdBufferBeingProcessed[i].ignitionLine = -1;
       }
     }
+    nbCmdToProcess = 0;
     if (needToCompose == 1) {
       //We need to evaluate end line and not ignition line? It is improving doom if we better take care of the concurrency betwwen vdp1 update and command list"
-      nbCmdToProcess = 0;
       vdp1Ram_update_start = 0x80000;
       vdp1Ram_update_end = 0x0;
       if (VIDCore != NULL) {

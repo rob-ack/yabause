@@ -702,6 +702,7 @@ void vdp1_compute() {
 		}
   }
   if (needRender == 0) {
+		nbCmdToProcess = 0;
 		return;
 	}
 

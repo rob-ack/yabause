@@ -3446,7 +3446,7 @@ void VIDOGLVdp1Draw()
   fount++;
 #endif
 
-  YglTmPull(YglTM_vdp1[_Ygl->drawframe], 0);
+  YglTmPull(YglTM_vdp1[_Ygl->drawframe], 1);
 
   int prioChanged = 0;
   int max = (yabsys.VBlankLineCount<270)?yabsys.VBlankLineCount:270;

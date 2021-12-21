@@ -210,18 +210,6 @@ if (YAB_WANT_SOFT_RENDERING)
    add_definitions(-DUSE_SOFT_RENDER=1)
 endif()
 
-option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
-if (YAB_WANT_ASAN_DEBUG)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address")
-   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-L/lib/x86_64-linux-gnu -lpthread -lasan")
-endif()
-
-option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
-if (YAB_WANT_UBSAN_DEBUG)
-   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
-   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lubsan")
-endif()
-
 # Enable SCSP MIDI hooks in sound interface
 option(YAB_USE_SCSPMIDI "Enable SCSP Midi support")
 if (YAB_USE_SCSPMIDI)
@@ -688,6 +676,20 @@ if (MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /Ox")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Ox")
 endif ()
+
+
+option(YAB_WANT_ASAN_DEBUG "Enable ASAN compilation sanitizer" OFF)
+if (YAB_WANT_ASAN_DEBUG)
+	 add_compile_options("-fsanitize=address")
+	 link_libraries("-fsanitize=address")
+	 set(YAB_OPTIMIZATION "-g" CACHE STRING "Override optimization level")
+endif()
+
+option(YAB_WANT_UBSAN_DEBUG "Enable UBSAN compilation sanitizer" OFF)
+if (YAB_WANT_UBSAN_DEBUG)
+   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=undefined")
+   set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} "-lubsan")
+endif()
 
 if (MSVC)
 add_compile_options(/MP)

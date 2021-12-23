@@ -167,7 +167,7 @@ string g_keymap_filename;
 
 void hideMenuScreen();
 
-//----------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
 NVGcontext * getGlobalNanoVGContext(){
   return menu->nvgContext();
 }
@@ -371,6 +371,8 @@ int main(int argc, char** argv)
     printf("Fail to SDL_GetCurrentDisplayMode Bye! (%s)", SDL_GetError() );
     return -1;
   }
+
+  SDL_ShowCursor(SDL_DISABLE);
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
   //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
@@ -529,6 +531,8 @@ int main(int argc, char** argv)
           glDisable(GL_SCISSOR_TEST);
           glDisable(GL_STENCIL_TEST);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);   
+
+           SDL_ShowCursor(SDL_ENABLE);
           menu->setBackGroundImage( tmpfilename );
         }
       }
@@ -654,6 +658,7 @@ int main(int argc, char** argv)
 }
 
 void hideMenuScreen(){
+  SDL_ShowCursor(SDL_DISABLE);
   menu_show = false;
   inputmng->setMenuLayer(nullptr);
   glClearColor(0.0f, 0.0f, 0.0f, 1);

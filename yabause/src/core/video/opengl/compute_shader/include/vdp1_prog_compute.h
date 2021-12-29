@@ -252,25 +252,6 @@ SHADER_VERSION_COMPUTE
 "  return vec3(Pb,b);\n"
 "}\n"
 
-"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
-"  vec2 A = V0 + vec2(0.5)*upscale;\n"
-"  vec2 B = V1 + vec2(0.5)*upscale;\n"
-"  for (uint i=0; i<step; i++) {\n"
-//A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
-//This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec3 d = antiAliasedPoint(P+vec2(0.5), A, B);\n" //Get the projection of the point P to the line segment
-"    if (distance(d.xy, P+vec2(0.5)) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
-"      float ux = d.z;\n" //u is the relative distance from first point to projected position
-"      float uy = (float(i)+0.5*upscale.y)/float(step);\n" //v is the ratio between the current line and the total number of lines
-"      uv = vec2(ux,uy);\n"
-"      return 1u;\n"
-"    }\n"
-"    A += sA;\n"
-"    B += sB;\n"
-"  }\n"
-"  return 0u;\n"
-"}\n"
-
 "vec3 aliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
 // dist_Point_to_Segment(): get the distance of a point to a segment
 //     Input:  a Point P and a Segment S (P0, P1) (in any dimension)
@@ -303,6 +284,26 @@ SHADER_VERSION_COMPUTE
 "    return 1u;\n"
 "  }\n"
 "  return 0u;\n"
+"}\n"
+
+"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
+"  uint ret = 0u;\n"
+"  vec2 A = V0;\n"
+"  vec2 B = V1;\n"
+"  for (uint i=0; i<step; i++) {\n"
+//A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
+//This represent the behavior of antialiasing as displayed in vdp1 spec.
+"    vec3 d = antiAliasedPoint(P, A, B);\n" //Get the projection of the point P to the line segment
+"    if (distance(d.xy, P) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
+"      float ux = d.z;\n" //u is the relative distance from first point to projected position
+"      float uy = (float(i) + 0.5)/float(step);\n" //v is the ratio between the current line and the total number of lines
+"      uv = vec2(ux,uy);\n"
+"      return 1u;\n"
+"    }\n"
+"    A += sA;\n"
+"    B += sB;\n"
+"  }\n"
+"  return ret;\n"
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
@@ -382,19 +383,9 @@ SHADER_VERSION_COMPUTE
 
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
-" if ((pixcmd.flip & 0x2u) == 0x2u) {\n"
-"   uv.y += 0.5f/float(pixcmd.h);\n"
-" } else {\n"
-"   uv.y -= 0.5f/float(pixcmd.h);\n"
-" }\n"
-
-" float posf = pixcmd.h*uv.y;\n"
-" if ((pixcmd.flip & 0x2u) == 0x2u) posf = floor(posf);\n"
-" else posf = ceil(posf);\n"
-
+" float posf = (pixcmd.h)*uv.y;\n"
 "  uint x = uint(ceil(uv.x*(pixcmd.w-1)));\n"
-"  uint pos = clamp(uint(posf), 0u, uint(pixcmd.h-1))*pixcmd.w+x;\n"
-
+"  uint pos = uint(posf)*pixcmd.w+x;\n"
 
 "  uint charAddr = ((pixcmd.CMDSRCA * 8)& 0x7FFFFu) + pos;\n"
 "  uint dot;\n"

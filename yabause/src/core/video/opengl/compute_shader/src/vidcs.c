@@ -173,6 +173,11 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
   unsigned int lA;
   unsigned int lB;
 
+  Ax += (Ax!=0)?(Ax>0)?1:-1:0;
+  Ay += (Ay!=0)?(Ay>0)?1:-1:0;
+  Bx += (Bx!=0)?(Bx>0)?1:-1:0;
+  By += (By!=0)?(By>0)?1:-1:0;
+
   lA = ceil(sqrt(Ax*Ax+Ay*Ay));
   lB = ceil(sqrt(Bx*Bx+By*By));
 

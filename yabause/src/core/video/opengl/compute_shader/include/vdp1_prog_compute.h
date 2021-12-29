@@ -249,7 +249,7 @@ SHADER_VERSION_COMPUTE
 "  float c2 = dot(v,v);\n"
 "  float b = clamp(c1 / c2, 0.0, 1.0);\n"
 "  vec2 Pb = P0 + b * v;\n"
-"  return vec3(Pb,b);\n"
+"  return vec3(Pb,b + upscale/c2);\n"
 "}\n"
 
 "vec3 aliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
@@ -384,7 +384,7 @@ SHADER_VERSION_COMPUTE
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
 " float posf = (pixcmd.h)*uv.y;\n"
-"  uint x = uint(ceil(uv.x*(pixcmd.w-1)));\n"
+"  uint x = uint(uv.x*(pixcmd.w-1));\n"
 "  uint pos = uint(posf)*pixcmd.w+x;\n"
 
 "  uint charAddr = ((pixcmd.CMDSRCA * 8)& 0x7FFFFu) + pos;\n"

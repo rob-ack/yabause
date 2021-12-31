@@ -1174,13 +1174,13 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     // Breaks megamanX4
     if (newHash == lastHash) {
       #ifdef DEBUG_CMD_LIST
-      YuiMsg("Abort same command %x %x (%d)\n", newHash, lastHash, _Ygl->drawframe);
+      YuiMsg("Abort same command %x %x (%d) (%d)\n", newHash, lastHash, _Ygl->drawframe, yabsys.LineCount);
       #endif
       CmdListDrawn = 1;
       return;
     }
     lastHash = newHash;
-    YuiMsg("The last list is 0x%x (%d)\n", newHash, _Ygl->drawframe);
+    YuiMsg("The last list is 0x%x (%d) (%d)\n", newHash, _Ygl->drawframe, yabsys.LineCount);
     #endif
     #ifdef DEBUG_CMD_LIST
     debugCmdList();

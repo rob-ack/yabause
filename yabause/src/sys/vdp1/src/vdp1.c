@@ -1077,7 +1077,7 @@ static vdp1cmd_struct * localCoordCmd = NULL;
 
 #ifdef DEBUG_CMD_LIST
 void debugCmdList() {
-  YuiMsg("Draw %d\n", yabsys.LineCount);
+  YuiMsg("Draw %d (%d)\n", yabsys.LineCount, _Ygl->drawframe);
   for (int i=0;;i++)
   {
      char *string;
@@ -1108,22 +1108,14 @@ int EvaluateCmdListHash(Vdp1 * regs){
         // Invalid, abort
         return hash;
       Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
-      hash ^= cmd.CMDCTRL;
-      hash ^= cmd.CMDLINK;
-      hash ^= cmd.CMDPMOD;
-      hash ^= cmd.CMDCOLR;
-      hash ^= cmd.CMDSRCA;
-      hash ^= cmd.CMDSIZE;
-      hash ^= cmd.CMDXA;
-      hash ^= cmd.CMDYA;
-      hash ^= cmd.CMDXB;
-      hash ^= cmd.CMDYB;
-      hash ^= cmd.CMDXC;
-      hash ^= cmd.CMDYC;
-      hash ^= cmd.CMDXD;
-      hash ^= cmd.CMDYD;
-      hash ^= cmd.CMDGRDA;
-      hash ^= _Ygl->drawframe;
+      hash ^= (cmd.CMDCTRL << 16) | cmd.CMDLINK;
+      hash ^= (cmd.CMDPMOD << 16) | cmd.CMDCOLR;
+      hash ^= (cmd.CMDSRCA << 16) | cmd.CMDSIZE;
+      hash ^= (cmd.CMDXA << 16) | cmd.CMDYA;
+      hash ^= (cmd.CMDXB << 16) | cmd.CMDYB;
+      hash ^= (cmd.CMDXC << 16) | cmd.CMDYC;
+      hash ^= (cmd.CMDXD << 16) | cmd.CMDYD;
+      hash ^= (cmd.CMDGRDA << 16) | _Ygl->drawframe;
 
      // Determine where to go next
      switch ((command & 0x3000) >> 12)
@@ -1177,15 +1169,19 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
   if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
 
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
+    #if 0
     int newHash = EvaluateCmdListHash(regs);
+    // Breaks megamanX4
     if (newHash == lastHash) {
       #ifdef DEBUG_CMD_LIST
-      YuiMsg("Abort same command %x %x\n", newHash, lastHash);
+      YuiMsg("Abort same command %x %x (%d)\n", newHash, lastHash, _Ygl->drawframe);
       #endif
       CmdListDrawn = 1;
       return;
     }
     lastHash = newHash;
+    YuiMsg("The last list is 0x%x (%d)\n", newHash, _Ygl->drawframe);
+    #endif
     #ifdef DEBUG_CMD_LIST
     debugCmdList();
     #endif

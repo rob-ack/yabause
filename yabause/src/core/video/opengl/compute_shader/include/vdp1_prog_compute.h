@@ -383,9 +383,9 @@ SHADER_VERSION_COMPUTE
 
 "vec4 ReadSpriteColor(cmdparameter_struct pixcmd, vec2 uv, vec2 texel, out bool discarded){\n"
 "  vec4 color = vec4(0.0);\n"
-" float posf = (pixcmd.h)*uv.y;\n"
+"  uint posf = uint(floor((pixcmd.h)*uv.y));\n"
 "  uint x = uint(uv.x*(pixcmd.w-1));\n"
-"  uint pos = uint(posf)*pixcmd.w+x;\n"
+"  uint pos = posf*pixcmd.w+x;\n"
 
 "  uint charAddr = ((pixcmd.CMDSRCA * 8)& 0x7FFFFu) + pos;\n"
 "  uint dot;\n"

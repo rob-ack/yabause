@@ -653,7 +653,7 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "    if ((((win1>>id)&0x1) != 0) || (((win0>>id)&0x1) != 0) || ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0))) valid = true;\n"
 "    if (((win0>>id)&0x1) != 0) valid = valid && inNormalWindow0(id,pos);\n"
 "    if (((win1>>id)&0x1) != 0) valid = valid && inNormalWindow1(id,pos);\n"
-"    if ((((win_s_mode>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid && !inSpriteWindow(id);\n"
+"    if ((((win_s>>id)&0x1) != 0)&&(use_sp_win != 0)) valid = valid && !inSpriteWindow(id);\n"
 "  } else {\n"
     //Or
 "    if (((win0>>id)&0x1) != 0) valid = valid || inNormalWindow0(id,pos);\n"

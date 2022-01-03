@@ -1067,11 +1067,11 @@ int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
   Win_op[RBG0] = (varVdp2Regs->WCTLC >> 7) & 0x01;
   Win_op[SPRITE] = (varVdp2Regs->WCTLC >> 15) & 0x01;
 
-  Win0_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 8) & 0x01) == 0);
+  Win0_mode[SPRITE+1] = (varVdp2Regs->WCTLD >> 8) & 0x01;
   Win0[SPRITE+1] = (varVdp2Regs->WCTLD >> 9) & 0x01;
-  Win1_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 10) & 0x01) == 0);
+  Win1_mode[SPRITE+1] = (varVdp2Regs->WCTLD >> 10) & 0x01;
   Win1[SPRITE+1] = (varVdp2Regs->WCTLD >> 11) & 0x01;
-  WinS_mode[SPRITE+1] = (((varVdp2Regs->WCTLD >> 12) & 0x01) == 0);
+  WinS_mode[SPRITE+1] = (varVdp2Regs->WCTLD >> 12) & 0x01;
   WinS[SPRITE+1] = (varVdp2Regs->WCTLD >> 13) & 0x01;
   Win_op[SPRITE+1] = (varVdp2Regs->WCTLD >> 15) & 0x01;
 

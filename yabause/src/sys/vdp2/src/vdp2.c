@@ -258,6 +258,7 @@ void FASTCALL Vdp2ColorRamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 
 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
     addrToUpdate[addr] = 1;
+    addrToUpdate[addr+1] = 1;
     nbAddrToUpdate = 1;
 #endif
    }
@@ -272,11 +273,14 @@ void FASTCALL Vdp2ColorRamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 
 #if defined(HAVE_LIBGL) || defined(__ANDROID__) || defined(IOS)
    if (Vdp2Internal.ColorMode == 2) {
      addrToUpdate[addr] = 1;
+     addrToUpdate[addr+1] = 1;
      nbAddrToUpdate = 1;
    }
    else {
      addrToUpdate[addr] = 1;
+     addrToUpdate[addr+1] = 1;
      addrToUpdate[addr+2] = 1;
+     addrToUpdate[addr+3] = 1;
      nbAddrToUpdate = 1;
    }
 #endif

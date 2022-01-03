@@ -669,7 +669,9 @@ static const GLchar Yglprg_vdp2_common_part[] =
 "bool inCCWindow() {\n"
 "  if ((((win1>>7)&0x1) != 0) || (((win0>>7)&0x1) != 0) || (((win_s>>7)&0x1)!= 0)) {\n"
 "    return inWindow(7);\n"
-"  } else {return false;}\n"
+"  } else {\n"
+"    return false;\n"
+"  }\n"
 "}\n";
 
 //Thios can be still optimized. Sprite related variables are doubled

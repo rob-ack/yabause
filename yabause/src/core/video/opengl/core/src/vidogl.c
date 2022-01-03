@@ -199,6 +199,7 @@ static int nbg3priority = 0;
 static int rbg0priority = 0;
 
 static int vdp2busy = 0;
+static int screenDirty = 0;
 
 vdp2rotationparameter_struct  Vdp1ParaA;
 
@@ -4352,6 +4353,12 @@ void VIDOGLVdp2Draw(void)
 
   if (Vdp2Regs->TVMD & 0x8000) {
     VIDOGLVdp2DrawScreens();
+    screenDirty = 1;
+    vdp2busy = 1;
+  } else {
+    if (screenDirty != 0)
+      vdp2busy = 1;
+    screenDirty = 0;
   }
 
   /* It would be better to reset manualchange in a Vdp1SwapFrameBuffer
@@ -6088,8 +6095,6 @@ PRINT_STAT("NBG0")
 PRINT_STAT("RBG1")
 
 LOG_ASYN("*********************************\n");
-  vdp2busy = 1;
-
 
 
 #if BG_PROFILE

@@ -335,6 +335,7 @@ static void requestDrawCellOrder(vdp2draw_struct * info, YglTexture *texture, Vd
 #define IS_MSB_SHADOW(a) ((a&0x8000)!=0)
 
 static int getCCProgramId(int CMDPMOD) {
+  // Evaluate shader program index based on mesh and other parameters. Used on openGL core only
   int cctype = (CMDPMOD & 0x7);
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
   if ((_Ygl->meshmode != ORIGINAL_MESH) && (MSB != 0))

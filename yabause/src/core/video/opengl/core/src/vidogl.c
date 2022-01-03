@@ -145,6 +145,9 @@ static int isEnabled(int id, Vdp2* varVdp2Regs);
 extern int YglGenFrameBuffer(int force);
 extern void YglComposeVdp1(void);
 
+#define VDP2_DRAW_LINE 0
+static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs);
+
 
 VideoInterface_struct VIDOGL = {
 VIDCORE_OGL,
@@ -4356,8 +4359,10 @@ void VIDOGLVdp2Draw(void)
     screenDirty = 1;
     vdp2busy = 1;
   } else {
-    if (screenDirty != 0)
+    if (screenDirty != 0) {
+      Vdp2DrawBackScreen(&Vdp2Lines[VDP2_DRAW_LINE]);
       vdp2busy = 1;
+    }
     screenDirty = 0;
   }
 
@@ -4385,6 +4390,11 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
     scrAddr = (((varVdp2Regs->BKTAU & 0x3) << 16) | varVdp2Regs->BKTAL) * 2;
 
 #if defined(__ANDROID__) || defined(_OGLES3_) || defined(_OGLES31_) || defined(_OGL3_)
+// Only draw black if TVMD's DISP and BDCLMD bits are cleared
+if ((Vdp2Regs->TVMD & 0x8000) == 0)
+{
+  YglSetClearColor(0.0, 0.0, 0.0);
+} else {
   if ((varVdp2Regs->BKTAU & 0x8000) != 0 ) {
     // per line background color
     u32* back_pixel_data = YglGetBackColorPointer();
@@ -4417,6 +4427,7 @@ static void Vdp2DrawBackScreen(Vdp2 *varVdp2Regs)
       (float)((((dot & 0x7C00) >> 10) << 3) + info.cob) / (float)(0xFF)
     );
   }
+}
 #else
   if (varVdp2Regs->BKTAU & 0x8000)
   {
@@ -6055,7 +6066,6 @@ static void Vdp2DrawRBG0(Vdp2* varVdp2Regs)
 #define PRINT_STAT(A)
 #endif
 
-#define VDP2_DRAW_LINE 0
 static void VIDOGLVdp2DrawScreens(void)
 {
   u64 before;

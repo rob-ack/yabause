@@ -5018,7 +5018,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     }
 
     if ((varVdp2Regs->ZMXN0.all & 0x7FF00) == 0)
-      info.coordincx = 1.0f;
+      //invalid zoom value
+      return;
     else
       info.coordincx = (float)65536 / (varVdp2Regs->ZMXN0.all & 0x7FF00);
 
@@ -5039,7 +5040,8 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
     }
 
     if ((varVdp2Regs->ZMYN0.all & 0x7FF00) == 0)
-      info.coordincy = 1.0f;
+      //Invalid zoom value
+      return;
     else
       info.coordincy = (float)65536 / (varVdp2Regs->ZMYN0.all & 0x7FF00);
 

@@ -55,7 +55,7 @@ vdp1cmdctrl_struct cmdBufferBeingProcessed[CMD_QUEUE_SIZE];
 int vdp1_clock = 0;
 
 static int nbCmdToProcess = 0;
-static int CmdListDrawn = 0;
+static int CmdListInLoop = 0;
 static int CmdListLimit = 0x80000;
 
 
@@ -85,7 +85,10 @@ static void abortVdp1() {
     // The vdp1 is still running and a new draw command request has been received
     // Abort the current command list
     Vdp1External.status = VDP1_STATUS_IDLE;
+    CmdListInLoop = 0;
     vdp1_clock = 0;
+    nbCmdToProcess = 0;
+    needVdp1draw = 0;
   }
 }
 //////////////////////////////////////////////////////////////////////////////
@@ -113,9 +116,6 @@ u32 FASTCALL Vdp1RamReadLong(SH2_struct *context, u8* mem, u32 addr) {
 
 void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit >= addr) {
-     CmdListDrawn = 0;
-   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 1;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -127,9 +127,6 @@ void FASTCALL Vdp1RamWriteByte(SH2_struct *context, u8* mem, u32 addr, u8 val) {
 
 void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit >= addr) {
-     CmdListDrawn = 0;
-   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 2;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -141,9 +138,6 @@ void FASTCALL Vdp1RamWriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) 
 
 void FASTCALL Vdp1RamWriteLong(SH2_struct *context, u8* mem, u32 addr, u32 val) {
    addr &= 0x7FFFF;
-   if (CmdListLimit >= addr) {
-     CmdListDrawn = 0;
-   }
    Vdp1External.updateVdp1Ram = 1;
    if( Vdp1External.status == VDP1_STATUS_RUNNING) vdp1_clock -= 4;
    if (vdp1Ram_update_start > addr) vdp1Ram_update_start = addr;
@@ -498,7 +492,7 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
          break;
       case 0xC:
          Vdp1Regs->ENDR = val;
-      	 Vdp1External.status = VDP1_STATUS_IDLE;
+         abortVdp1();
          break;
       default:
          LOG("trying to write a Vdp1 read-only register - %08X\n", addr);
@@ -1166,8 +1160,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   int cylesPerLine  = getVdp1CyclesPerLine();
 
-  if (CmdListDrawn != 0) return; //The command list has already been drawn for the current frame
-
   if (Vdp1External.status == VDP1_STATUS_IDLE) {
     #if 0
     int newHash = EvaluateCmdListHash(regs);
@@ -1176,7 +1168,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       #ifdef DEBUG_CMD_LIST
       YuiMsg("Abort same command %x %x (%d) (%d)\n", newHash, lastHash, _Ygl->drawframe, yabsys.LineCount);
       #endif
-      CmdListDrawn = 1;
       return;
     }
     lastHash = newHash;
@@ -1194,6 +1185,9 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sysClipCmd = NULL;
     localCoordCmd = NULL;
     nbCmdToProcess = 0;
+  } else {
+    //Check if previous call where looping. In that case, directly abort
+    if (CmdListInLoop == 1) return;
   }
   CmdListLimit = 0;
 
@@ -1332,7 +1326,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       	    Vdp1External.status = VDP1_STATUS_IDLE;
             regs->EDSR |= 2;
             regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-            CmdListDrawn = 1;
             CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
             return;
          }
@@ -1347,7 +1340,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 		  checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 		  Vdp1External.status = VDP1_STATUS_IDLE;
 		  regs->COPR = (regs->addr & 0x7FFFF) >> 3;
-      CmdListDrawn = 1;
       CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
 		  return;
 	  }
@@ -1366,7 +1358,7 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             //The next adress is the start of the command list. It means the list has an infinte loop => Exit (used by Burning Rangers)
             regs->lCOPR = (regs->addr & 0x7FFFF) >> 3;
             vdp1_clock = 0;
-            CmdListDrawn = 1;
+            CmdListInLoop = 1;
             CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
             checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
             return;
@@ -1400,7 +1392,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
         LOG("VDP1: Command Finished! count = %d @ %08X", commandCounter, regs->addr);
         Vdp1External.status = VDP1_STATUS_IDLE;
    }
-   CmdListDrawn = 1;
    CmdListLimit = MAX((regs->addr & 0x7FFFF), regs->addr);
    checkClipCmd(&sysClipCmd, &usrClipCmd, &localCoordCmd, ram, regs);
 }
@@ -2384,12 +2375,10 @@ static void startField(void) {
       int id = 0;
       if (_Ygl != NULL) id = _Ygl->readframe;
       Vdp1EraseWrite(id);
-      CmdListDrawn = 0;
       Vdp1External.manualerase = 0;
     }
 
     VIDCore->Vdp1FrameChange();
-    CmdListDrawn = 0;
     FRAMELOG("Change readframe %d to %d (%d)\n", _Ygl->drawframe, _Ygl->readframe, yabsys.LineCount);
     Vdp1External.current_frame = !Vdp1External.current_frame;
     Vdp1Regs->LOPR = Vdp1Regs->COPR;
@@ -2496,7 +2485,6 @@ void Vdp1VBlankOUT(void)
   if (needVBlankErase()) {
     int id = 0;
     if (_Ygl != NULL) id = _Ygl->readframe;
-    CmdListDrawn = 0;
     Vdp1EraseWrite(id);
   }
 }

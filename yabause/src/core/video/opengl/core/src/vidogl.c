@@ -339,8 +339,6 @@ static int getCCProgramId(int CMDPMOD) {
   // Evaluate shader program index based on mesh and other parameters. Used on openGL core only
   int cctype = (CMDPMOD & 0x7);
   int MSB = IS_MSB_SHADOW(CMDPMOD)?1:0;
-  if ((_Ygl->meshmode != ORIGINAL_MESH) && (MSB != 0))
-    MSB = (((Vdp2Regs->SPCTL & 0x20)!=0)?0:1);
   int Mesh = IS_MESH(CMDPMOD)?((_Ygl->meshmode == ORIGINAL_MESH)?1:2):0;
   int SPD = IS_SPD(CMDPMOD)?1:0;
   int END = IS_END(CMDPMOD)?1:0;
@@ -447,6 +445,7 @@ static void FASTCALL Vdp1ReadTexture_in_sync(vdp1cmd_struct *cmd, int spritew, i
   int normal_shadow = 0;
   u32 charAddr = cmd->CMDSRCA * 8;
   u32 dot;
+
   u8 SPD = ((cmd->CMDPMOD & 0x40) != 0);
   u8 END = ((cmd->CMDPMOD & 0x80) != 0);
   u8 MSB = ((cmd->CMDPMOD & 0x8000) != 0);
@@ -3515,6 +3514,19 @@ void VIDOGLVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   tmp <<= 16;
   tmp |= cmd->CMDSIZE;
 
+  if (_Ygl->meshmode != ORIGINAL_MESH) {
+    //Hack for Improved MESH
+    //Games like J.League Go Go Goal or Sailor Moon are using MSB shadow with VDP2 in RGB/Palette mode
+    //In that case, the pixel is considered as RGB by the VDP2 displays it a black surface
+    // To simualte a transparent shadow, on improved mesh, we force the shadow mode and the usage of mesh
+    if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
+      //MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
+      //Use shadow mode with Mesh to simulate the final effect
+      cmd->CMDPMOD &= ~0x8007;
+      cmd->CMDPMOD |= 0x101; //Use shadow mode and mesh then
+    }
+  }
+
   sprite.uclipmode = (cmd->CMDPMOD >> 9) & 0x03;
 
   if ((cmd->CMDPMOD & 0x8000) != 0)
@@ -3578,6 +3590,20 @@ void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   tmp |= cmd->CMDCOLR;
   tmp <<= 16;
   tmp |= cmd->CMDSIZE;
+
+  if (_Ygl->meshmode != ORIGINAL_MESH) {
+    //Hack for Improved MESH
+    //Games like J.League Go Go Goal or Sailor Moon are using MSB shadow with VDP2 in RGB/Palette mode
+    //In that case, the pixel is considered as RGB by the VDP2 displays it a black surface
+    // To simualte a transparent shadow, on improved mesh, we force the shadow mode and the usage of mesh
+    if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
+      //MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
+      //Use shadow mode with Mesh to simulate the final effect
+      cmd->CMDPMOD &= ~0x8007;
+      cmd->CMDPMOD |= 0x101; //Use shadow mode and mesh then
+    }
+  }
+
   // MSB
   if ((cmd->CMDPMOD & 0x8000) != 0)
   {
@@ -3727,7 +3753,18 @@ void VIDOGLVdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   tmp <<= 16;
   tmp |= cmd->CMDSIZE;
 
-
+  if (_Ygl->meshmode != ORIGINAL_MESH) {
+    //Hack for Improved MESH
+    //Games like J.League Go Go Goal or Sailor Moon are using MSB shadow with VDP2 in RGB/Palette mode
+    //In that case, the pixel is considered as RGB by the VDP2 displays it a black surface
+    // To simualte a transparent shadow, on improved mesh, we force the shadow mode and the usage of mesh
+    if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
+      //MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
+      //Use shadow mode with Mesh to simulate the final effect
+      cmd->CMDPMOD &= ~0x8007;
+      cmd->CMDPMOD |= 0x101; //Use shadow mode and mesh then
+    }
+  }
 
   // MSB
   if ((cmd->CMDPMOD & 0x8000) != 0)

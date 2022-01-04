@@ -331,13 +331,13 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 					else if (((dot & 0xF0) == 0xF0) && (!END)) {
           	endcnt++;
         	} else {
-						if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
-							//ColorLut
-							u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
-							if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
-							if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
-							T1WriteWord(buf, addr1, val);
-						}
+							if (((cmd->CMDPMOD >> 3) & 0x7)==1) {
+								//ColorLut
+								u16 val = Vdp1RamReadWord(NULL, Vdp1Ram, addr1);
+								if (cmdRam_update_start[id] > addr1) cmdRam_update_start[id] = addr1;
+								if (cmdRam_update_end[id] < (addr1 + 2)) cmdRam_update_end[id] = addr1 + 2;
+								T1WriteWord(buf, addr1, val);
+							}
 					}
 					if ((!END) && (endcnt >= 2)) {
           	dot |= 0xF;
@@ -477,14 +477,20 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 				break;
 		}
 	}
-	if (_Ygl->meshmode != ORIGINAL_MESH) {
-		if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
-			//MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
-			cmd->CMDPMOD &= ~0x8000;
-		}
-	}
 	if (clipcmd == 0) {
 		vdp1GenerateBuffer(cmd);
+		if (_Ygl->meshmode != ORIGINAL_MESH) {
+			//Hack for Improved MESH
+			//Games like J.League Go Go Goal or Sailor Moon are using MSB shadow with VDP2 in RGB/Palette mode
+			//In that case, the pixel is considered as RGB by the VDP2 displays it a black surface
+			// To simualte a transparent shadow, on improved mesh, we force the shadow mode and the usage of mesh
+			if ((cmd->CMDPMOD & 0x8000) && ((Vdp2Regs->SPCTL & 0x20)!=0)) {
+				//MSB is set to be used but VDP2 do not use it. Consider as invalid and remove the MSB
+				//Use shadow mode with Mesh to simulate the final effect
+				cmd->CMDPMOD &= ~0x8007;
+				cmd->CMDPMOD |= 0x101; //Use shadow mode and mesh then
+			}
+		}
 
 	  float Ax = cmd->CMDXA;
 		float Ay = cmd->CMDYA;

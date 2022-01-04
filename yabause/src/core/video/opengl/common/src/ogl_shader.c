@@ -1269,9 +1269,9 @@ void initDrawShaderCode() {
               prg_input_f[index][1] = vdp1drawstart[j];
               prg_input_f[index][2] = vdp1drawcheckend[k1];
               prg_input_f[index][3] = vdp1drawcheck[k];
-              prg_input_f[index][4] = vdp1drawmsb[i];
-              prg_input_f[index][5] = vdp1drawmode[l];
-              prg_input_f[index][6] = vdp1drawmesh[j];
+              prg_input_f[index][4] = vdp1drawmode[l];
+              prg_input_f[index][5] = vdp1drawmesh[j];
+              prg_input_f[index][6] = vdp1drawmsb[i];
               prg_input_f[index][7] = vdp1drawend[j];
               prg_input_f[index][8] =  NULL;
 

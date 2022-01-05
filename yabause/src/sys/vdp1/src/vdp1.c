@@ -468,7 +468,6 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
         FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
         Vdp1External.plot_trigger_line = yabsys.LineCount;
         abortVdp1();
-        vdp1_clock = 0;
         RequestVdp1ToDraw();
         Vdp1TryDraw();
         Vdp1External.plot_trigger_done = 1;
@@ -476,7 +475,6 @@ void FASTCALL Vdp1WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
       if ((val == 0x2) && (oldPTMR == 0x0)){
         FRAMELOG("[VDP1] PTMR == 0x2 start drawing immidiatly\n");
         abortVdp1();
-        vdp1_clock = 0;
         RequestVdp1ToDraw();
         Vdp1TryDraw();
       }

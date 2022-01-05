@@ -612,6 +612,21 @@ static int Vdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   cmd->CMDYD = cmd->CMDYA + MAX(1,cmd->h);
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
+  switch ((cmd->CMDPMOD >> 3) & 0x7) {
+    case 0:
+    case 1:
+      // 4 pixels per 16 bits
+      area  = area >> 2;
+      break;
+    case 2:
+    case 3:
+    case 4:
+      // 2 pixels per 16 bits
+      area = area >> 1;
+      break;
+    default:
+      break;
+  }
   yabsys.vdp1cycles+= MIN(1000, 70 + (area));
 
   memset(cmd->G, 0, sizeof(float)*16);
@@ -753,6 +768,21 @@ static int Vdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   }
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
+  switch ((cmd->CMDPMOD >> 3) & 0x7) {
+    case 0:
+    case 1:
+      // 4 pixels per 16 bits
+      area  = area >> 2;
+      break;
+    case 2:
+    case 3:
+    case 4:
+      // 2 pixels per 16 bits
+      area = area >> 1;
+      break;
+    default:
+      break;
+  }
   yabsys.vdp1cycles+= MIN(1000, 70 + area);
 
   //gouraud
@@ -811,6 +841,21 @@ static int Vdp1DistortedSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u
   cmd->CMDYD += regs->localY;
 
   int area = abs((cmd->CMDXA*cmd->CMDYB - cmd->CMDXB*cmd->CMDYA) + (cmd->CMDXB*cmd->CMDYC - cmd->CMDXC*cmd->CMDYB) + (cmd->CMDXC*cmd->CMDYD - cmd->CMDXD*cmd->CMDYC) + (cmd->CMDXD*cmd->CMDYA - cmd->CMDXA *cmd->CMDYD))/2;
+  switch ((cmd->CMDPMOD >> 3) & 0x7) {
+    case 0:
+    case 1:
+      // 4 pixels per 16 bits
+      area  = area >> 2;
+      break;
+    case 2:
+    case 3:
+    case 4:
+      // 2 pixels per 16 bits
+      area = area >> 1;
+      break;
+    default:
+      break;
+  }
   yabsys.vdp1cycles+= MIN(1000, 70 + (area*3));
 
   memset(cmd->G, 0, sizeof(float)*16);

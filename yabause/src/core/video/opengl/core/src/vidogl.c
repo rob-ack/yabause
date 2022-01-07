@@ -2506,7 +2506,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
 
 }
 
-static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs) {
+static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, int delayed, Vdp2 *varVdp2Regs) {
 
   int lineindex = 0;
 
@@ -2562,7 +2562,6 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
     else {
       cell_count = 0;
     }
-
     for (h = -info->patternpixelwh; h < info->draww + info->patternpixelwh; h += info->patternpixelwh) {
 
       if (info->isverticalscroll) {
@@ -2603,14 +2602,17 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, Vdp2 *va
       if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
+      if (delayed) pagex = (pagex + plane_mask) % (plane_mask+1);
       if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) != 0) {
-
         //Only draw if there is a valid character pattern VRAM access for the current layer
         int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
-        if (info->char_bank[charAddrBk] == 1)
-          Vdp2DrawPatternPos(info, texture, h - charx, v - chary, 0, 0, info->lineinc, varVdp2Regs);
+        if (info->char_bank[charAddrBk] == 1) {
+          int x = h - charx;
+          int y = v - chary;
+          Vdp2DrawPatternPos(info, texture, x, y, 0, 0, info->lineinc, varVdp2Regs);
         }
       }
+    }
     lineindex++;
   }
 
@@ -5238,15 +5240,15 @@ static void Vdp2DrawNBG0(Vdp2* varVdp2Regs) {
         Vdp2DrawMapPerLine(&info, &texture, varVdp2Regs);
       }
       else {
-        int xoffset = 0;
+        int delayed = 0;
         // Setting miss of cycle patten need to plus 8 dot vertical
         // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
         if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-          xoffset = -8;
+          delayed = 1;
         }
-        info.x = (varVdp2Regs->SCXIN0 & 0x7FF) + xoffset;
+        info.x = varVdp2Regs->SCXIN0 & 0x7FF;
         info.y = varVdp2Regs->SCYIN0 & 0x7FF;
-        Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+        Vdp2DrawMapTest(&info, &texture, delayed, varVdp2Regs);
       }
     }
   executeDrawCell();
@@ -5536,16 +5538,17 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
     }
     else {
       //Vdp2DrawMap(&info, &texture);
-      int xoffset = 0;
+      int delayed = 0;
       // Setting miss of cycle patten need to plus 8 dot vertical
       // If pattern access is defined on T0 for NBG0 or NBG1, there is no limitation
       //If there is no access to pattern data, do not display the layer
       if (((ptn_access & 0x1)==0) && Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-        xoffset = -8;
+        delayed = 1;
+        // YuiMsg("Penalty %x %x\n", char_access, ptn_access);
       }
-      info.x = (varVdp2Regs->SCXIN1 & 0x7FF) + xoffset;
+      info.x = varVdp2Regs->SCXIN1 & 0x7FF;
       info.y = varVdp2Regs->SCYIN1 & 0x7FF;
-      Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+      Vdp2DrawMapTest(&info, &texture, delayed, varVdp2Regs);
     }
   }
   executeDrawCell();
@@ -5613,7 +5616,7 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
   info.lineinc = 0;
   info.isverticalscroll = 0;
 
-  int xoffset = 0;
+  int delayed = 0;
   {
     int char_access = 0;
     int ptn_access = 0;
@@ -5636,14 +5639,14 @@ static void Vdp2DrawNBG2(Vdp2* varVdp2Regs)
     if (ptn_access == 0) return;
     // Setting miss of cycle patten need to plus 8 dot vertical
     if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-      xoffset = -8;
+      delayed = 1;
     }
   }
 
 
-  info.x = (varVdp2Regs->SCXN2 & 0x7FF) + xoffset;
+  info.x = varVdp2Regs->SCXN2 & 0x7FF;
   info.y = varVdp2Regs->SCYN2 & 0x7FF;
-  Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+  Vdp2DrawMapTest(&info, &texture, delayed, varVdp2Regs);
   executeDrawCell();
 
 }
@@ -5712,7 +5715,7 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   info.isverticalscroll = 0;
 
 
-  int xoffset = 0;
+  int delayed = 0;
 {
   int char_access = 0;
   int ptn_access = 0;
@@ -5734,13 +5737,13 @@ static void Vdp2DrawNBG3(Vdp2* varVdp2Regs)
   if (ptn_access == 0) return;
   // Setting miss of cycle patten need to plus 8 dot vertical
   if (Vdp2CheckCharAccessPenalty(char_access, ptn_access) != 0) {
-    xoffset = -8;
+    delayed = 1;
   }
 }
 
-  info.x = (varVdp2Regs->SCXN3 & 0x7FF) + xoffset;
+  info.x = varVdp2Regs->SCXN3 & 0x7FF;
   info.y = varVdp2Regs->SCYN3 & 0x7FF;
-  Vdp2DrawMapTest(&info, &texture, varVdp2Regs);
+  Vdp2DrawMapTest(&info, &texture, delayed, varVdp2Regs);
   executeDrawCell();
 }
 

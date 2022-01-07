@@ -194,7 +194,6 @@ typedef struct
 
    u16 char_bank[4];
    u16 pname_bank[4];
-   int xdelay;
 
 } vdp2draw_struct;
 

@@ -154,6 +154,7 @@ static SDL_Window* wnd;
 static SDL_GLContext glc;
 int g_EnagleFPS = 0;
 int g_resolution_mode = 0;
+int g_rotate_resolution_mode = 0;
 int g_keep_aspect_rate = 0;
 int g_scsp_sync = 1;
 int g_frame_skip = 1;
@@ -166,7 +167,7 @@ string g_keymap_filename;
 
 void hideMenuScreen();
 
-//----------------------------------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------
 NVGcontext * getGlobalNanoVGContext(){
   return menu->nvgContext();
 }
@@ -255,7 +256,7 @@ int yabauseinit()
 #else
   yinit.scsp_main_mode = 1;
 #endif
-  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,0);
+  yinit.rbg_resolution_mode = pre.getInt( "Rotate screen resolution" ,g_rotate_resolution_mode);
 #if defined(__JETSON__)
   yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , true);
 #else
@@ -304,6 +305,7 @@ int main(int argc, char** argv)
       printf("  -b STRING  --bios STRING                 bios file\n");
       printf("  -i STRING  --iso STRING                  iso/cue file\n");
       printf("  -r NUMBER  --resolution_mode NUMBER      0 .. Native, 1 .. 4x, 2 .. 2x, 3 .. Original\n");
+      printf("  -rr NUMBER  --rotate_resolution_mode NUMBER      0 .. Original, 1 .. 2x, 2 .. 720p, 3 .. 1080p, 4 .. Native\n");
       printf("  -a         --keep_aspect_rate\n");
       printf("  -s NUMBER  --scps_sync_per_frame NUMBER\n");
       printf("  -nf         --no_frame_skip              disable frame skip\n");    
@@ -311,6 +313,8 @@ int main(int argc, char** argv)
       exit(0);
     }
   }
+
+
 
   for( int i=0; i<all_args.size(); i++ ){
     string x = all_args[i];
@@ -323,6 +327,9 @@ int main(int argc, char** argv)
     }
 		else if(( x == "-r" || x == "--resolution_mode") && (i+1<all_args.size() ) ) {
       g_resolution_mode = std::stoi( all_args[i+1] );
+    }
+		else if(( x == "-rr" || x == "--rotate_resolution_mode") && (i+1<all_args.size() ) ) {
+      g_rotate_resolution_mode = std::stoi( all_args[i+1] );
     }
 		else if(( x == "-a" || x == "--keep_aspect_rate") ) {
       g_keep_aspect_rate = 1;
@@ -339,6 +346,21 @@ int main(int argc, char** argv)
     }
 	}
 
+  
+  // Init Preference
+  Preference * p = new Preference(cdpath);
+  p->getInt("Resolution",g_resolution_mode);
+  p->getInt("Rotate screen resolution",g_rotate_resolution_mode);
+  p->getInt("Aspect rate",g_keep_aspect_rate);
+  p->getBool("Rotate screen",false);
+#if defined(__JETSON__)
+  p->getBool( "Use compute shader" , true);
+#else
+  p->getBool( "Use compute shader" , false);
+#endif
+  delete p;
+
+
   if( SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO) != 0 ) {
     printf("Fail to init SDL Bye! (%s)", SDL_GetError() );
     return -1;
@@ -349,15 +371,30 @@ int main(int argc, char** argv)
     printf("Fail to SDL_GetCurrentDisplayMode Bye! (%s)", SDL_GetError() );
     return -1;
   }
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
-  SDL_GL_SetSwapInterval(0);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-  SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-  SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-  SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
-	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+
+  SDL_ShowCursor(SDL_DISABLE);
+  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+  //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+  //SDL_GL_SetSwapInterval(0);
+  //SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  //SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+  //SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+  //SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
+	//SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
+	//SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
+
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK,  SDL_GL_CONTEXT_PROFILE_ES);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+		SDL_GL_SetAttribute(SDL_GL_RED_SIZE,           8);
+		SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,         8);
+		SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,          8);
+		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE,        24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,       1);
+		SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
 
 #if defined(__PC__)
   int width = 1280;
@@ -399,7 +436,7 @@ int main(int argc, char** argv)
       return -1;
   }
 
-  Preference * p = new Preference(cdpath);
+  p = new Preference(cdpath);
   VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
   delete p;
   
@@ -441,12 +478,12 @@ int main(int argc, char** argv)
 
   std::string tmpfilename = home_dir + "tmp.png";
 
-  struct sched_param thread_param;
-  thread_param.sched_priority = 15; //sched_get_priority_max(SCHED_FIFO);
-  if ( pthread_setschedparam(pthread_self(), SCHED_FIFO, &thread_param) < -1 ) {
-    LOG("sched_setscheduler");
-  }
-  setpriority( PRIO_PROCESS, 0, -8);
+  //struct sched_param thread_param;
+  //thread_param.sched_priority = 15; //sched_get_priority_max(SCHED_FIFO);
+  //if ( pthread_setschedparam(pthread_self(), SCHED_FIFO, &thread_param) < -1 ) {
+  //  LOG("sched_setscheduler");
+  //}
+  //setpriority( PRIO_PROCESS, 0, -8);
   int frame_cont = 0;
   int event_count = 0;
   while(true) {
@@ -494,6 +531,8 @@ int main(int argc, char** argv)
           glDisable(GL_SCISSOR_TEST);
           glDisable(GL_STENCIL_TEST);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);   
+
+           SDL_ShowCursor(SDL_ENABLE);
           menu->setBackGroundImage( tmpfilename );
         }
       }
@@ -619,6 +658,7 @@ int main(int argc, char** argv)
 }
 
 void hideMenuScreen(){
+  SDL_ShowCursor(SDL_DISABLE);
   menu_show = false;
   inputmng->setMenuLayer(nullptr);
   glClearColor(0.0f, 0.0f, 0.0f, 1);

@@ -55,6 +55,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <string>
 
 #if GCC_VERSION < 9
 #include <experimental/filesystem>
@@ -340,7 +341,7 @@ int YabThreadGetCurrentThreadAffinityMask()
 int YabMakeCleanDir( const char * dirname ){
 #if defined(IOS)
   return 0;
-#elif defined(ANDROID)
+#elif defined(ANDROID) || defined(__PI4__)
   std::string cmd;
   cmd = "exec rm -r " + std::string(dirname) + "/*";
   system(cmd.c_str());
@@ -358,7 +359,7 @@ int YabMakeCleanDir( const char * dirname ){
 int YabCopyFile( const char * src, const char * dst) {
 #if defined(IOS)
   return 0;
-#elif defined(ANDROID)
+#elif defined(ANDROID) || defined(__PI4__)
   std::string cmd;
   cmd = "exec cp -f " + std::string(src) + " " + std::string(dst);
   system(cmd.c_str());

@@ -5591,11 +5591,11 @@ void ScspAsynMainRealtime(void * p) {
 #if defined(ARCH_IS_LINUX)
   struct timespec tm;
   struct sched_param thread_param;
-  thread_param.sched_priority = 15; //sched_get_priority_max(SCHED_FIFO);
-  if ( pthread_setschedparam(pthread_self(), SCHED_FIFO, &thread_param) < -1 ) {
-    LOG("sched_setscheduler");
-  }
-  setpriority( PRIO_PROCESS, 0, -10);
+  //thread_param.sched_priority = 15; //sched_get_priority_max(SCHED_FIFO);
+  //if ( pthread_setschedparam(pthread_self(), SCHED_FIFO, &thread_param) < -1 ) {
+  //  LOG("sched_setscheduler");
+  //}
+  //setpriority( PRIO_PROCESS, 0, -10);
 #endif
 
   // Special for Thunder Force V

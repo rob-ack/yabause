@@ -3565,30 +3565,6 @@ void VIDOGLVdp1ScaledSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* 
   float* col = cmd->G;
   int i;
 
-  // Setup Zoom Point
-  switch ((cmd->CMDCTRL & 0xF00) >> 8)
-  {
-  case 0x0: // Only two coordinates
-    if ((s16)cmd->CMDXC > (s16)cmd->CMDXA){ cmd->CMDXB += 1; cmd->CMDXC += 1;} else { cmd->CMDXA += 1; cmd->CMDXB +=1; cmd->CMDXC += 1; cmd->CMDXD += 1;}
-    if ((s16)cmd->CMDYC > (s16)cmd->CMDYA){ cmd->CMDYC += 1; cmd->CMDYD += 1;} else { cmd->CMDYA += 1; cmd->CMDYB += 1; cmd->CMDYC += 1; cmd->CMDYD += 1;}
-    break;
-  case 0x5: // Upper-left
-  case 0x6: // Upper-Center
-  case 0x7: // Upper-Right
-  case 0x9: // Center-left
-  case 0xA: // Center-center
-  case 0xB: // Center-right
-  case 0xD: // Lower-left
-  case 0xE: // Lower-center
-  case 0xF: // Lower-right
-    cmd->CMDXB += 1;
-    cmd->CMDXC += 1;
-    cmd->CMDYC += 1;
-    cmd->CMDYD += 1;
-    break;
-  default: break;
-  }
-
   sprite.dst = 0;
   sprite.blendmode = 0;
   sprite.w = cmd->w;

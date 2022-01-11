@@ -191,12 +191,14 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
     cmd->uBstepy = 0.0;
   }
 #ifdef DEBUG_VDP1_CMD
-  printf("%d %f [%d %d][%d %d][%d %d][%d %d]\n", cmd->nbStep, (float)cmd->h / (float)cmd->nbStep,
-    cmd->CMDXA, cmd->CMDYA,
-    cmd->CMDXB, cmd->CMDYB,
-    cmd->CMDXC, cmd->CMDYC,
-    cmd->CMDXD, cmd->CMDYD
-  );
+  YuiMsg("Add Distorted\n");
+  YuiMsg("\t[%d,%d]\n", cmd->CMDXA, cmd->CMDYA);
+  YuiMsg("\t[%d,%d]\n", cmd->CMDXB, cmd->CMDYB);
+  YuiMsg("\t[%d,%d]\n", cmd->CMDXC, cmd->CMDYC);
+  YuiMsg("\t[%d,%d]\n", cmd->CMDXD, cmd->CMDYD);
+  YuiMsg("\n\n");
+  YuiMsg("=> %d (%d %d %d %d => %d %d) %f %f %f %f\n", cmd->nbStep, ADx, ADy, BCx, BCy, nbStepAD, nbStepBC, cmd->uAstepx, cmd->uAstepy, cmd->uBstepx, cmd->uBstepy);
+  YuiMsg("==============\n");
 #endif
   vdp1_add(cmd,0);
 }

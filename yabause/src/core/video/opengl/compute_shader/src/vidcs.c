@@ -165,34 +165,30 @@ YglCSFinsihDraw
 void addCSCommands(vdp1cmd_struct* cmd, int type)
 {
   //Test game: Sega rally : The aileron at the start
-  int Ax = (cmd->CMDXD - cmd->CMDXA);
-  int Ay = (cmd->CMDYD - cmd->CMDYA);
-  int Bx = (cmd->CMDXC - cmd->CMDXB);
-  int By = (cmd->CMDYC - cmd->CMDYB);
-  int nbStep = 0;
-  unsigned int lA;
-  unsigned int lB;
+  int ADx = (cmd->CMDXD - cmd->CMDXA);
+  int ADy = (cmd->CMDYD - cmd->CMDYA);
+  int BCx = (cmd->CMDXC - cmd->CMDXB);
+  int BCy = (cmd->CMDYC - cmd->CMDYB);
 
-  lA = ceil(sqrt(Ax*Ax+Ay*Ay));
-  lB = ceil(sqrt(Bx*Bx+By*By));
+  int nbStepAD = MAX(abs(ADx), abs(ADy));
+  int nbStepBC = MAX(abs(BCx), abs(BCy));
 
-  cmd->uAstepx = 0.0;
-  cmd->uAstepy = 0.0;
-  cmd->uBstepx = 0.0;
-  cmd->uBstepy = 0.0;
-  cmd->nbStep = 1;
+  int nbStep = MAX(nbStepAD, nbStepBC);
+
   cmd->type = type;
 
-  nbStep = lA;
-  if (lB >= lA)
-    nbStep = lB;
-
-  if(nbStep != 0) {
-    cmd->nbStep = nbStep + 1;
-    cmd->uAstepx = (float)Ax/(float)nbStep;
-    cmd->uAstepy = (float)Ay/(float)nbStep;
-    cmd->uBstepx = (float)Bx/(float)nbStep;
-    cmd->uBstepy = (float)By/(float)nbStep;
+  cmd->nbStep = nbStep;
+  if(cmd->nbStep  != 0) {
+    // Ici faut voir encore les Ax doivent faire un de plus.
+    cmd->uAstepx = (float)ADx/(float)nbStep;
+    cmd->uAstepy = (float)ADy/(float)nbStep;
+    cmd->uBstepx = (float)BCx/(float)nbStep;
+    cmd->uBstepy = (float)BCy/(float)nbStep;
+  } else {
+    cmd->uAstepx = 0.0;
+    cmd->uAstepy = 0.0;
+    cmd->uBstepx = 0.0;
+    cmd->uBstepy = 0.0;
   }
 #ifdef DEBUG_VDP1_CMD
   printf("%d %f [%d %d][%d %d][%d %d][%d %d]\n", cmd->nbStep, (float)cmd->h / (float)cmd->nbStep,

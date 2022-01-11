@@ -247,9 +247,9 @@ SHADER_VERSION_COMPUTE
 "  if ( c1 <= 0.0 )\n"
 "    return vec3(P0,0.0);\n"
 "  float c2 = dot(v,v);\n"
-"  float b = clamp(c1 / c2, 0.0, 1.0);\n"
+"  float b = (c1+0.5) / (c2+1);\n"
 "  vec2 Pb = P0 + b * v;\n"
-"  return vec3(Pb,b + upscale/c2);\n"
+"  return vec3(Pb,b);\n"
 "}\n"
 
 "vec3 aliasedPoint( vec2 P,  vec2 P0, vec2 P1 )\n"
@@ -290,13 +290,15 @@ SHADER_VERSION_COMPUTE
 "  uint ret = 0u;\n"
 "  vec2 A = V0;\n"
 "  vec2 B = V1;\n"
-"  for (uint i=0; i<step; i++) {\n"
+"  for (uint i=0; i<=step; i++) {\n"
 //A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec3 d = antiAliasedPoint(P, A, B);\n" //Get the projection of the point P to the line segment
-"    if (distance(d.xy, P) <= (length(upscale)/2.0)) {\n" //Test the distance between the projection on line and the center of the pixel
+"    vec2 Ar = vec2(round(A.x), round(A.y));\n"
+"    vec2 Br = vec2(round(B.x), round(B.y));\n"
+"    vec3 d = antiAliasedPoint(P, Ar, Br);\n" //Get the projection of the point P to the line segment
+"    if (((abs(P.x-d.x) <= 0.5) && (abs(P.y-d.y) <= 0.5))&&((d.z>=0.0) && (d.z<=1.0))) {\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux = d.z;\n" //u is the relative distance from first point to projected position
-"      float uy = (float(2*i) + 1.0)/float(2*step);\n" //v is the ratio between the current line and the total number of lines
+"      float uy = (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"

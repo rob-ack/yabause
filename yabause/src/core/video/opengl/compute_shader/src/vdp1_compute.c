@@ -516,10 +516,12 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  maxy = (maxy > Dy)?maxy:Dy;
 
 	//Add a bounding box
-	  cmd->B[0] = minx*tex_ratiow;
-	  cmd->B[1] = (maxx)*tex_ratiow;
-	  cmd->B[2] = miny*tex_ratioh;
-	  cmd->B[3] = (maxy)*tex_ratioh;
+	  cmd->B[0] = minx;
+	  cmd->B[1] = (maxx);
+	  cmd->B[2] = miny;
+	  cmd->B[3] = (maxy);
+
+		YuiMsg("Bounding %d %d %d %d\n", minx, maxx, miny, maxy);
 
 		progMask |= 1 << (cmd->CMDPMOD & 0x7u);
 		if ((cmd->CMDPMOD & 0x8000u) == 0x8000u) progMask |= 0x100;

@@ -232,14 +232,14 @@ void VIDCSVdp1NormalSpriteDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* b
 
 int getBestMode(vdp1cmd_struct* cmd) {
   int ret = DISTORTED;
-  if (
-    ((cmd->CMDXA - cmd->CMDXD) == 0) &&
-    ((cmd->CMDYA - cmd->CMDYB) == 0) &&
-    ((cmd->CMDXB - cmd->CMDXC) == 0) &&
-    ((cmd->CMDYC - cmd->CMDYD) == 0)
-  ) {
-    ret = QUAD;
-  }
+  // if (
+  //   ((cmd->CMDXA - cmd->CMDXD) == 0) &&
+  //   ((cmd->CMDYA - cmd->CMDYB) == 0) &&
+  //   ((cmd->CMDXB - cmd->CMDXC) == 0) &&
+  //   ((cmd->CMDYC - cmd->CMDYD) == 0)
+  // ) {
+  //   ret = QUAD;
+  // }
   return ret;
 }
 

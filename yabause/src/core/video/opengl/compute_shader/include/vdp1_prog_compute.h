@@ -244,8 +244,8 @@ SHADER_VERSION_COMPUTE
 "  vec2 v = P1 - P0;\n"
 "  vec2 w = P - P0;\n"
 "  float c1 = dot(w,v);\n"
-"  if ( c1 <= 0.0 )\n"
-"    return vec3(P0,0.0);\n"
+"  if ( c1 < 0.0 )\n"
+"    return vec3(P0,-1.0);\n"
 "  float c2 = dot(v,v);\n"
 "  float b = (c1+0.5) / (c2+1);\n"
 "  vec2 Pb = P0 + b * v;\n"
@@ -293,10 +293,9 @@ SHADER_VERSION_COMPUTE
 "  for (uint i=0; i<=step; i++) {\n"
 //A pixel shall be considered as part of an anti-aliased line if the distance of the pixel center to the line is shorter than (sqrt(0.5), which is the diagonal of the pixel
 //This represent the behavior of antialiasing as displayed in vdp1 spec.
-"    vec2 Ar = vec2(round(A.x), round(A.y));\n"
-"    vec2 Br = vec2(round(B.x), round(B.y));\n"
-"    vec3 d = antiAliasedPoint(P, Ar, Br);\n" //Get the projection of the point P to the line segment
-"    if (((abs(P.x-d.x) <= 0.5) && (abs(P.y-d.y) <= 0.5))&&((d.z>=0.0) && (d.z<=1.0))) {\n" //Test the distance between the projection on line and the center of the pixel
+"    vec3 d = antiAliasedPoint(P, A, B);\n" //Get the projection of the point P to the line segment
+// "    if (((abs(P.x-d.x) <= 0.5*upscale.x) && (abs(P.y-d.y) <= 0.5*upscale.y))&&((d.z>0.0) && (d.z<1.0))) {\n" //Test the distance between the projection on line and the center of the pixel
+"    if((distance(d.xy, P) <= (length(upscale)/2.0)) && (d.z>=0.0) && (d.z<=1.0) ){\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux = d.z;\n" //u is the relative distance from first point to projected position
 "      float uy = (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
 "      uv = vec2(ux,uy);\n"
@@ -333,7 +332,7 @@ SHADER_VERSION_COMPUTE
 "  vec2 Quad[4];\n"
 "  if (cmd[idx].type >= "Stringify(SYSTEM_CLIPPING)") return 6u;\n"
 "//Bounding box test\n"
-"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2]))) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])))) return 0u;\n"
+"  if (any(lessThan(Pin, ivec2(cmd[idx].B[0],cmd[idx].B[2])*upscale)) || any(greaterThan(Pin, ivec2(cmd[idx].B[1],cmd[idx].B[3])*upscale + upscale - vec2(1.0)))) return 0u;\n"
 "  Quad[0] = vec2(cmd[idx].CMDXA,cmd[idx].CMDYA)*upscale;\n"
 "  Quad[1] = vec2(cmd[idx].CMDXB,cmd[idx].CMDYB)*upscale;\n"
 "  Quad[2] = vec2(cmd[idx].CMDXC,cmd[idx].CMDYC)*upscale;\n"

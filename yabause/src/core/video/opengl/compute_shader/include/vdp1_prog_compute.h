@@ -247,7 +247,7 @@ SHADER_VERSION_COMPUTE
 "  if ( c1 < 0.0 )\n"
 "    return vec3(P0,-1.0);\n"
 "  float c2 = dot(v,v);\n"
-"  float b = (c1+0.5*upscale.x) / (c2+upscale.x);\n"
+"  float b = (c1+0.5) / (c2+1);\n"
 "  vec2 Pb = P0 + b * v;\n"
 "  return vec3(Pb,b);\n"
 "}\n"
@@ -286,7 +286,7 @@ SHADER_VERSION_COMPUTE
 "  return 0u;\n"
 "}\n"
 
-"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
+"uint isOnAQuadLine( vec2 P, vec2 V0, vec2 V1, vec2 V2, vec2 V3, vec2 sA, vec2 sB, uint step, out vec2 uv){\n"
 "  uint ret = 0u;\n"
 "  vec2 A = V0;\n"
 "  vec2 B = V1;\n"
@@ -296,7 +296,9 @@ SHADER_VERSION_COMPUTE
 "    vec3 d = antiAliasedPoint(P+vec2(0.5), A+upscale/2.0, B+upscale/2.0);\n" //Get the projection of the point P to the line segment
 "    if((distance(d.xy, P+vec2(0.5)) <= (length(upscale)/(2.0))) && (d.z>=0.0) && (d.z<=1.0) ){\n" //Test the distance between the projection on line and the center of the pixel
 "      float ux = d.z;\n" //u is the relative distance from first point to projected position
-"      float uy = (float(i)+0.5)/float(step+1);\n" //v is the ratio between the current line and the total number of lines
+"      vec2 PTop = V0 + ux*(V1 - V0);\n"
+"      vec2 PDown = V3 + ux*(V2 - V3);\n"
+"      float uy = length(P - PTop)/(length(PDown - PTop) + length(upscale));\n" //uy is the ratio between P postion and the length of the line at this ux postion.
 "      uv = vec2(ux,uy);\n"
 "      return 1u;\n"
 "    }\n"
@@ -338,7 +340,7 @@ SHADER_VERSION_COMPUTE
 "  Quad[3] = vec2(cmd[idx].CMDXD,cmd[idx].CMDYD)*upscale;\n"
 
 "  if ((cmd[idx].type == "Stringify(DISTORTED)") || (cmd[idx].type == "Stringify(POLYGON)")) {\n"
-"    return isOnAQuadLine(Pin, Quad[0], Quad[1], vec2(cmd[idx].uAstepx, cmd[idx].uAstepy)*upscale, vec2(cmd[idx].uBstepx, cmd[idx].uBstepy)*upscale, uint(float(cmd[idx].nbStep)), uv);\n"
+"    return isOnAQuadLine(Pin, Quad[0], Quad[1], Quad[2], Quad[3], vec2(cmd[idx].uAstepx, cmd[idx].uAstepy)*upscale, vec2(cmd[idx].uBstepx, cmd[idx].uBstepy)*upscale, uint(float(cmd[idx].nbStep)), uv);\n"
 "  } else {\n"
 "    if ((cmd[idx].type == "Stringify(QUAD)")  || (cmd[idx].type == "Stringify(QUAD_POLY)")) {\n"
 "     return isOnAQuad(Pin, Quad[0], Quad[2], uv);\n"

@@ -170,8 +170,8 @@ void addCSCommands(vdp1cmd_struct* cmd, int type)
   int BCx = (cmd->CMDXC - cmd->CMDXB);
   int BCy = (cmd->CMDYC - cmd->CMDYB);
 
-  int nbStepAD = MAX(abs(ADx), abs(ADy));
-  int nbStepBC = MAX(abs(BCx), abs(BCy));
+  int nbStepAD = sqrt(ADx*ADx + ADy*ADy);
+  int nbStepBC = sqrt(BCx*BCx + BCy*BCy);
 
   int nbStep = MAX(nbStepAD, nbStepBC);
 

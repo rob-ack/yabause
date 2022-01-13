@@ -521,7 +521,7 @@ int vdp1_add(vdp1cmd_struct* cmd, int clipcmd) {
 	  cmd->B[2] = miny;
 	  cmd->B[3] = (maxy);
 
-		YuiMsg("Bounding %d %d %d %d\n", minx, maxx, miny, maxy);
+		// YuiMsg("Bounding %d %d %d %d\n", minx, maxx, miny, maxy);
 
 		progMask |= 1 << (cmd->CMDPMOD & 0x7u);
 		if ((cmd->CMDPMOD & 0x8000u) == 0x8000u) progMask |= 0x100;

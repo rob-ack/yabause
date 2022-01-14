@@ -309,7 +309,7 @@ SHADER_VERSION_COMPUTE
 "}\n"
 
 "uint isOnAQuad(vec2 P, vec2 V0, vec2 V1, out vec2 uv) {\n"
-"  if (any(lessThan(P, V0)) || any(greaterThanEqual(P, V1))) return 0u;\n"
+"  if (any(lessThan(P, min(V0,V1))) || any(greaterThanEqual(P, max(V0,V1)))) return 0u;\n"
 " uv = (P + vec2(0.5) - V0)/(V1 - V0);\n"
 " return 1u;\n"
 // "  //B--------C\n"

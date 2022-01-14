@@ -340,8 +340,8 @@ void VIDCSVdp1LineDraw(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs, u8* back_fram
 
 void VIDCSVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  if (  (cmd->CMDXC+1 > regs->systemclipX2)
-    && (cmd->CMDYC+1 > regs->systemclipY2)
+  if (  (cmd->CMDXC > regs->systemclipX2)
+    && (cmd->CMDYC > regs->systemclipY2)
   ) {
     regs->localX = 0;
     regs->localY = 0;
@@ -359,7 +359,7 @@ void VIDCSVdp1UserClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 
 void VIDCSVdp1SystemClipping(vdp1cmd_struct *cmd, u8 * ram, Vdp1 * regs)
 {
-  if (((cmd->CMDXC+1) == regs->systemclipX2) && (regs->systemclipY2 == (cmd->CMDYC+1))) return;
+  if (((cmd->CMDXC) == regs->systemclipX2) && (regs->systemclipY2 == (cmd->CMDYC))) return;
   cmd->type = SYSTEM_CLIPPING;
   vdp1_add(cmd,1);
   regs->systemclipX2 = cmd->CMDXC;

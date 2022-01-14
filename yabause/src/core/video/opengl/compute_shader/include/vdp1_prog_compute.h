@@ -244,8 +244,6 @@ SHADER_VERSION_COMPUTE
 "  vec2 v = P1 - P0;\n"
 "  vec2 w = P - P0;\n"
 "  float c1 = dot(w,v);\n"
-"  if ( c1 < 0.0 )\n"
-"    return vec3(P0,-1.0);\n"
 "  float c2 = dot(v,v);\n"
 "  float b = (c1+0.5) / (c2+1);\n"
 "  vec2 Pb = P0 + b * v;\n"

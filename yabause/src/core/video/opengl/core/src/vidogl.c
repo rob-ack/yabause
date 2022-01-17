@@ -1684,6 +1684,8 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     int sh, sv;
     u32 baseaddr;
     vdp2Lineinfo * line;
+    info->draw_line = i;
+    info->alpha = info->alpha_per_line[info->draw_line];
     baseaddr = (u32)info->charaddr;
     line = &(info->lineinfo[i*info->lineinc]);
 

@@ -1601,6 +1601,13 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   }
 }
 
+static u32 getAlpha(vdp2draw_struct *info, int id) {
+  int idx = info->draw_line + id;
+  if (idx < 0) idx = 0;
+  if ((idx>>vdp2_interlace) > yabsys.VBlankLineCount) idx = yabsys.VBlankLineCount<<vdp2_interlace;
+  return info->alpha_per_line[idx>>vdp2_interlace];
+}
+
 static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *texture, Vdp2 *varVdp2Regs)
 {
   int i, j;
@@ -1611,13 +1618,13 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
 //     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
 //     return;
 //   }
+YuiMsg("%d %d %x\n", info->colornumber, info->draw_line, info->alpha_per_line[(info->draw_line)>>vdp2_interlace]);
   switch (info->colornumber)
   {
   case 0: // 4 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      if ((info->draw_line + i) < 0) info->alpha = 0;
-      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
+      info->alpha = getAlpha(info, i);
       for (j = 0; j < info->cellw; j += 4)
       {
         Vdp2GetPixel4bpp(info, info->charaddr, texture, varVdp2Regs);
@@ -1629,8 +1636,7 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 1: // 8 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      if ((info->draw_line + i) < 0) info->alpha = 0;
-      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
+      info->alpha = getAlpha(info, i);
       for (j = 0; j < info->cellw; j += 2)
       {
         Vdp2GetPixel8bpp(info, info->charaddr, texture, varVdp2Regs);
@@ -1642,8 +1648,7 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 2: // 16 BPP(palette)
     for (i = 0; i < info->cellh; i++)
     {
-      if ((info->draw_line + i) < 0) info->alpha = 0;
-      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
+      info->alpha = getAlpha(info, i);
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr, varVdp2Regs);
@@ -1655,8 +1660,7 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 3: // 16 BPP(RGB)
     for (i = 0; i < info->cellh; i++)
     {
-      if ((info->draw_line + i) < 0) info->alpha = 0;
-      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
+      info->alpha = getAlpha(info, i);
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1668,8 +1672,7 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 4: // 32 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      if ((info->draw_line + i) < 0) info->alpha = 0;
-      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
+      info->alpha = getAlpha(info, i);
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr, varVdp2Regs);

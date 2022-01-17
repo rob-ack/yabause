@@ -1514,7 +1514,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   case 0: // 4 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j += 4)
       {
         Vdp2GetPixel4bpp(info, info->charaddr, texture, varVdp2Regs);
@@ -1526,7 +1526,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   case 1: // 8 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j += 2)
       {
 
@@ -1539,7 +1539,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   case 2: // 16 BPP(palette)
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr, varVdp2Regs);
@@ -1556,7 +1556,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
     info->charaddr += (!vdp2_is_odd_frame)?0:2*info->cellw;
     for (i = 0; i < info->cellh/2; i+=2)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         color = Vdp2GetPixel16bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1573,7 +1573,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
     texture->textdata = start;
     for (i = 0; i < info->cellh/2; i+=2)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         color = Vdp2GetPixel16bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1589,7 +1589,7 @@ static void FASTCALL Vdp2DrawCellInterlace(vdp2draw_struct *info, YglTexture *te
   case 4: // 32 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1616,7 +1616,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 0: // 4 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      if ((info->draw_line + i) < 0) info->alpha = 0;
+      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j += 4)
       {
         Vdp2GetPixel4bpp(info, info->charaddr, texture, varVdp2Regs);
@@ -1628,7 +1629,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 1: // 8 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      if ((info->draw_line + i) < 0) info->alpha = 0;
+      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j += 2)
       {
         Vdp2GetPixel8bpp(info, info->charaddr, texture, varVdp2Regs);
@@ -1640,7 +1642,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 2: // 16 BPP(palette)
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      if ((info->draw_line + i) < 0) info->alpha = 0;
+      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bpp(info, info->charaddr, varVdp2Regs);
@@ -1652,7 +1655,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 3: // 16 BPP(RGB)
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      if ((info->draw_line + i) < 0) info->alpha = 0;
+      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel16bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1664,7 +1668,8 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
   case 4: // 32 BPP
     for (i = 0; i < info->cellh; i++)
     {
-      info->alpha = info->alpha_per_line[info->draw_line + i];
+      if ((info->draw_line + i) < 0) info->alpha = 0;
+      else info->alpha = info->alpha_per_line[(info->draw_line + i)>>vdp2_interlace];
       for (j = 0; j < info->cellw; j++)
       {
         *texture->textdata++ = Vdp2GetPixel32bppbmp(info, info->charaddr, varVdp2Regs);
@@ -1687,7 +1692,7 @@ static void FASTCALL Vdp2DrawBitmapLineScroll(vdp2draw_struct *info, YglTexture 
     u32 baseaddr;
     vdp2Lineinfo * line;
     info->draw_line = i;
-    info->alpha = info->alpha_per_line[info->draw_line];
+    info->alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
     baseaddr = (u32)info->charaddr;
     line = &(info->lineinfo[i*info->lineinc]);
 
@@ -1824,7 +1829,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
         else {
           int cc = 1;
           u8 dot = Vdp2RamReadByte(NULL, Vdp2Ram, addr);
-          u32 alpha = info->alpha_per_line[info->draw_line];
+          u32 alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
           if (!(h & 0x01)) dot = dot >> 4;
           if (!(dot & 0xF) && info->transparencyenable) *texture->textdata++ = 0x00000000;
           else {
@@ -1851,7 +1856,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
       for (j = 0; j < _Ygl->rwidth; j++)
       {
         int h = ((j*inch) >> 8);
-        u32 alpha = info->alpha_per_line[info->draw_line];
+        u32 alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
         u8 dot = Vdp2RamReadByte(NULL, Vdp2Ram, baseaddr + h);
         if (!dot && info->transparencyenable) {
           *texture->textdata++ = 0; continue;
@@ -1907,7 +1912,7 @@ static void FASTCALL Vdp2DrawBitmapCoordinateInc(vdp2draw_struct *info, YglTextu
 
 static void Vdp2DrawPatternPos(vdp2draw_struct *info, YglTexture *texture, int x, int y, int cx, int cy, int lines, Vdp2 *varVdp2Regs)
 {
-  u64 cacheaddr = ((u32)(info->alpha_per_line[y] >> 3) << 27) |
+  u64 cacheaddr = ((u32)(info->alpha_per_line[y>>vdp2_interlace] >> 3) << 27) |
     (info->paladdr << 20) | info->charaddr | info->transparencyenable |
     ((info->patternpixelwh >> 4) << 1) | (((u64)(info->coloroffset >> 8) & 0x07) << 32) | (((u64)(info->idScreen) & 0x07) << 39);
   int priority = info->priority;
@@ -2217,7 +2222,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   u32 dot;
   u32 cramindex;
   info->draw_line = y;
-  u32 alpha = info->alpha_per_line[info->draw_line];
+  u32 alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
   u8 lowdot = 0x00;
   u32 priority = 0;
   switch (info->colornumber)
@@ -2947,9 +2952,9 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   for (k = vstart; k < vstart+vres; k++)
   {
-    info->alpha_per_line[k] = (~Vdp2Lines[k].CCRR & 0x1F) << 3;
+    info->alpha_per_line[k>>vdp2_interlace] = (~Vdp2Lines[k>>vdp2_interlace].CCRR & 0x1F) << 3;
     info->draw_line = k;
-    info->alpha = info->alpha_per_line[info->draw_line];
+    info->alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
     if (rgb_type == 0) {
       rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * k) - rbg->paraA.Px) +
         rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +

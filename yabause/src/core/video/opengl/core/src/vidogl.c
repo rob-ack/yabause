@@ -2221,8 +2221,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
 {
   u32 dot;
   u32 cramindex;
-  info->draw_line = y;
-  u32 alpha = info->alpha_per_line[y>>vdp2_interlace];
+  u32 alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
   u8 lowdot = 0x00;
   u32 priority = 0;
   switch (info->colornumber)
@@ -2459,6 +2458,7 @@ static void Vdp2DrawMapPerLine(vdp2draw_struct *info, YglTexture *texture, Vdp2 
         prepagex = pagex;
         prepagey = pagey;
       }
+      info->draw_line = v>>scaleh;
       info->priority = getPriority(info->idScreen, &Vdp2Lines[v>>scaleh]); //MapPerLine is called only for NBG0 and NBG1
       int priority = info->priority;
       if (info->specialprimode == 1) {
@@ -2947,11 +2947,12 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   }
 
   colpoint = YglGetLineColorOffsetPointer(info->idScreen - RBG0, vstart, vres);
-  alpha = ((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
   addr = (varVdp2Regs->LCTA.all & 0x7FFFF)<<1;
   u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   for (k = vstart; k < vstart+vres; k++)
   {
+    alpha = rbg->info.alpha_per_line[k] | NONE;
+    info->draw_line = k;
     if (rgb_type == 0) {
       rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * k) - rbg->paraA.Px) +
         rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +

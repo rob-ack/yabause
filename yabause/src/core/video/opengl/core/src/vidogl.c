@@ -275,6 +275,7 @@ void Vdp2DrawCell_in_async(void *p)
          task->texture->textdata -= (task->texture->w + 8) * 8 - 8;
          Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
          task->texture->textdata -= 8;
+         task->info->draw_line += 8;
          Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
          task->texture->textdata -= (task->texture->w + 8) * 8 - 8;
          Vdp2DrawCell_in_sync(task->info, task->texture, task->varVdp2Regs);
@@ -382,6 +383,7 @@ static void requestDrawCellQuad(vdp2draw_struct * info, YglTexture *texture, Vdp
    texture->textdata -= (texture->w + 8) * 8 - 8;
    Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);
    texture->textdata -= 8;
+   task->info->draw_line += 8;
    Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);
    texture->textdata -= (texture->w + 8) * 8 - 8;
    Vdp2DrawCell_in_sync(info, texture, varVdp2Regs);

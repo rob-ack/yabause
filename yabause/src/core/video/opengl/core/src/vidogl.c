@@ -2222,7 +2222,7 @@ static INLINE u32 Vdp2RotationFetchPixel(vdp2draw_struct *info, int x, int y, in
   u32 dot;
   u32 cramindex;
   info->draw_line = y;
-  u32 alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
+  u32 alpha = info->alpha_per_line[y>>vdp2_interlace];
   u8 lowdot = 0x00;
   u32 priority = 0;
   switch (info->colornumber)
@@ -2952,9 +2952,6 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
   u16 LineColorRamAdress = Vdp2RamReadWord(NULL, Vdp2Ram, addr);
   for (k = vstart; k < vstart+vres; k++)
   {
-    info->alpha_per_line[k>>vdp2_interlace] = (~Vdp2Lines[k>>vdp2_interlace].CCRR & 0x1F) << 3;
-    info->draw_line = k;
-    info->alpha = info->alpha_per_line[info->draw_line>>vdp2_interlace];
     if (rgb_type == 0) {
       rbg->paraA.Xsp = rbg->paraA.A * ((rbg->paraA.Xst + rbg->paraA.deltaXst * k) - rbg->paraA.Px) +
         rbg->paraA.B * ((rbg->paraA.Yst + rbg->paraA.deltaYst * k) - rbg->paraA.Py) +
@@ -2977,7 +2974,7 @@ static void Vdp2DrawRotation_in_sync(RBGDrawInfo * rbg, Vdp2 *varVdp2Regs) {
         rbg->paraB.F * (rbg->paraB.Zst - rbg->paraB.Pz);
 
       rbg->paraB.KtablV = rbg->paraB.deltaKAst * k;
-  }
+   }
     for (l = 0; l < hres; l++)
     {
       switch (varVdp2Regs->RPMD | rgb_type ) {
@@ -4720,6 +4717,7 @@ static void Vdp2DrawRBG1_part(RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     info->display[i] = info->enable;
     // Color calculation ratio
     rgb->alpha[i] = (~Vdp2Lines[i].CCRNA & 0x1F)<<3;
+    info->alpha_per_line[i] = rgb->alpha[i];
   }
 
     // Read in Parameter B
@@ -5809,6 +5807,7 @@ static void Vdp2DrawRBG0_part( RBGDrawInfo *rgb, Vdp2* varVdp2Regs)
     info->display[i] = info->enable;
     // Color calculation ratio
     rgb->alpha[i] = (~(Vdp2Lines[i].CCRR & 0x1F)) << 3;
+    info->alpha_per_line[i] = rgb->alpha[i];
   }
 
   info->priority = varVdp2Regs->PRIR & 0x7;

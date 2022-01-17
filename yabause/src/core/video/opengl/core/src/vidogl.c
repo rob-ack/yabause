@@ -1618,7 +1618,6 @@ static void FASTCALL Vdp2DrawCell_in_sync(vdp2draw_struct *info, YglTexture *tex
 //     Vdp2DrawCellInterlace(info, texture, varVdp2Regs);
 //     return;
 //   }
-YuiMsg("%d %d %x\n", info->colornumber, info->draw_line, info->alpha_per_line[(info->draw_line)>>vdp2_interlace]);
   switch (info->colornumber)
   {
   case 0: // 4 BPP

@@ -680,7 +680,6 @@ Vdp2 * Vdp2RestoreRegs(int line, Vdp2* lines) {
 //////////////////////////////////////////////////////////////////////////////
 void Vdp2VBlankOUT(void) {
   g_frame_count++;
-  yabsys.screenOn = (Vdp2Regs->TVMD & 0x8000)!=0;
   FRAMELOG("***** VOUT %d *****", g_frame_count);
   if (VIDCore != NULL && VIDCore->id != VIDCORE_SOFT) YglUpdateColorRam();
 
@@ -1294,6 +1293,7 @@ void FASTCALL Vdp2WriteWord(SH2_struct *context, u8* mem, u32 addr, u16 val) {
    {
       case 0x000:
          Vdp2Regs->TVMD = val;
+         yabsys.screenOn = (Vdp2Regs->TVMD & 0x8000)!=0;
          yabsys.VBlankLineCount = 225+(val & 0x30);
          if (yabsys.VBlankLineCount > 256) yabsys.VBlankLineCount = 256;
          return;

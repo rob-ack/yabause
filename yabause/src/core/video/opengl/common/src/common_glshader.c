@@ -43,7 +43,7 @@ static const GLchar Yglprg_vdp2_sprite_getCode_8_16[] =
 
 
 static const GLchar Yglprg_vdp2_sprite_type_0[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 0\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -66,7 +66,7 @@ static const GLchar Yglprg_vdp2_sprite_type_0[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_1[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 1\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -89,7 +89,7 @@ static const GLchar Yglprg_vdp2_sprite_type_1[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_2[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 2\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -119,7 +119,7 @@ static const GLchar Yglprg_vdp2_sprite_type_2[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_3[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 3\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -149,7 +149,7 @@ static const GLchar Yglprg_vdp2_sprite_type_3[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_4[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 4\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -179,7 +179,7 @@ static const GLchar Yglprg_vdp2_sprite_type_4[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_5[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 5\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -209,7 +209,7 @@ static const GLchar Yglprg_vdp2_sprite_type_5[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_6[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 6\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -239,7 +239,7 @@ static const GLchar Yglprg_vdp2_sprite_type_6[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_7[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 7\n"
 "  FBCol ret = zeroFBCol();\n"
 "  if (any(notEqual(col,vec2(0.0)))) ret.valid = 1;\n"
@@ -272,8 +272,9 @@ static const GLchar Yglprg_vdp2_sprite_type_7[] =
 //Kunoichi Torimonochou is clearing with VDP1 clear code 0x8000 with FB in 8bits mode, so palette Only
 // Then the color code has to be considered as transparent color
 static const GLchar Yglprg_vdp2_sprite_type_8[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 8\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -287,8 +288,9 @@ static const GLchar Yglprg_vdp2_sprite_type_8[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_9[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type 9\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -303,8 +305,9 @@ static const GLchar Yglprg_vdp2_sprite_type_9[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_A[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type A\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -318,8 +321,9 @@ static const GLchar Yglprg_vdp2_sprite_type_A[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_B[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type B\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -333,8 +337,9 @@ static const GLchar Yglprg_vdp2_sprite_type_B[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_C[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type C\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -348,8 +353,9 @@ static const GLchar Yglprg_vdp2_sprite_type_C[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_D[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type D\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -364,8 +370,9 @@ static const GLchar Yglprg_vdp2_sprite_type_D[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_E[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type E\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -379,8 +386,9 @@ static const GLchar Yglprg_vdp2_sprite_type_E[] =
 "}\n";
 
 static const GLchar Yglprg_vdp2_sprite_type_F[] =
-"FBCol getVDP1PixelCode(vec2 col) {\n"
+"FBCol getVDP1PixelCode(vec2 col, bool odd) {\n"
 "//Sprite type F\n"
+"  if (odd) col.x = col.y\n;"
 "  FBCol ret = zeroFBCol();\n"
 "  if (col.x != 0.0) ret.valid = 1;\n"
 "  else return ret;\n"
@@ -534,9 +542,9 @@ static const GLchar Yglprg_vdp2_common_draw[] =
 "  vec4 col = texelFetch(s_vdp1FrameBuffer, fbCoord, 0);\n"
 "  vec4 meshpix = texelFetch(s_vdp1Mesh, fbCoord, 0);\n"
 "  FBTest = col;\n"
-"  ret = getVDP1PixelCode(col.rg);\n"
+"  ret = getVDP1PixelCode(col.rg, ((fbCoord.x & 0x1) == 0x1));\n"
 //Support of extended mesh mode
-"  mesh = getVDP1PixelCode(meshpix.rg);\n"
+"  mesh = getVDP1PixelCode(meshpix.rg, ((fbCoord.x & 0x1) == 0x1));\n"
 "  if (meshpix.b != 0.0) { \n"
 "    vec4 meshcol=vec4(0.0,0.0,0.0,1.0);\n"
 "    int meshdepth = getVDP2Reg(mesh.prio+8, line);\n"

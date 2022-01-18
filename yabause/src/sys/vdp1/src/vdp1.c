@@ -1352,18 +1352,21 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
             yabsys.vdp1cycles += 16;
             usrClipCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
             Vdp1ReadCommand(usrClipCmd, regs->addr, ram);
+            oldCmd = *usrClipCmd;
             break;
          case 9: // system clipping coordinates
             checkClipCmd(NULL, &usrClipCmd, &localCoordCmd, ram, regs);
             yabsys.vdp1cycles += 16;
             sysClipCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
             Vdp1ReadCommand(sysClipCmd, regs->addr, ram);
+            oldCmd = *sysClipCmd;
             break;
          case 10: // local coordinate
             checkClipCmd(&sysClipCmd, &usrClipCmd, NULL, ram, regs);
             yabsys.vdp1cycles += 16;
             localCoordCmd = (vdp1cmd_struct *)malloc(sizeof(vdp1cmd_struct));
             Vdp1ReadCommand(localCoordCmd, regs->addr, ram);
+            oldCmd = *localCoordCmd;
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);

@@ -2633,7 +2633,7 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, int dela
         if (info->char_bank[charAddrBk] == 1) {
           int x = h - charx;
           int y = v - chary;
-          info->draw_line =  y + info->patternpixelwh;
+          info->draw_line =  y;
           if (delayed && (h == -info->patternpixelwh)) continue;
           Vdp2DrawPatternPos(info, texture, x+delayed*8, y, 0, 0, info->lineinc, varVdp2Regs);
         }

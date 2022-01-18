@@ -2625,11 +2625,8 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, int dela
       pagex = dot_on_pagex >> page_shift;
       //charx = dot_on_pagex - pagex*(512 / info->pagewh);
       charx = dot_on_pagex & page_mask;
-      if (pagex < 0) pagex = info->pagewh - 1 + pagex;
 
       info->PlaneAddr(info, info->mapwh * mapy + mapx, varVdp2Regs);
-      if (delayed) pagex = pagex - 1;
-      if (pagex < 0) continue;
       if (Vdp2PatternAddrPos(info, planex, pagex, planey, pagey, varVdp2Regs) != 0) {
         //Only draw if there is a valid character pattern VRAM access for the current layer
         int charAddrBk = (((info->charaddr >> 16)& 0xF) >> ((varVdp2Regs->VRSIZE >> 15)&0x1)) >> 1;
@@ -2637,7 +2634,8 @@ static void Vdp2DrawMapTest(vdp2draw_struct *info, YglTexture *texture, int dela
           int x = h - charx;
           int y = v - chary;
           info->draw_line =  y + info->patternpixelwh;
-          Vdp2DrawPatternPos(info, texture, x, y, 0, 0, info->lineinc, varVdp2Regs);
+          if (delayed && (h == -info->patternpixelwh)) continue;
+          Vdp2DrawPatternPos(info, texture, x+delayed*8, y, 0, 0, info->lineinc, varVdp2Regs);
         }
       }
     }

@@ -2370,7 +2370,7 @@ DEBUGWIP("Init\n");
        uniform.endLine = rbg->info.endLine;
        uniform.specialprimode = rbg->info.specialprimode;
        uniform.specialfunction = rbg->info.specialfunction;
-			 uniform.alpha_lncl = (((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE)/255.0f;
+			 uniform.alpha_lncl = ((~(varVdp2Regs->CCRLB & 0x1F) << 3) | NONE)/255.0f;
 			 uniform.lncl_table_addr = Vdp2RamReadWord(NULL, Vdp2Ram, (varVdp2Regs->LCTA.all & 0x7FFFF)<<1);
 			 uniform.cram_mode = Vdp2Internal.ColorMode;
 

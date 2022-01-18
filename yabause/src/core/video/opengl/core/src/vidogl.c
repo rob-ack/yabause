@@ -4561,7 +4561,7 @@ static void Vdp2DrawLineColorScreen(Vdp2 *varVdp2Regs)
     inc = 0x00; // single color
   }
 
-  u8 alpha = ((varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
+  u8 alpha = ((~varVdp2Regs->CCRLB & 0x1F) << 3) | NONE;
 
   addr = (varVdp2Regs->LCTA.all & 0x7FFFF)<<1;
   for (i = 0; i < line_cnt; i++) {

@@ -6,6 +6,26 @@ include (CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 
+option(KRONOS_LINUX_USE_PERFETTO "Trace execution with perfetto" ON)
+if (KRONOS_LINUX_USE_PERFETTO)
+find_package(Git QUIET)
+if(GIT_FOUND)
+# Import Perfetto
+    message(STATUS "Import perfetto v22.1")
+    execute_process(COMMAND ${GIT_EXECUTABLE} clone https://android.googlesource.com/platform/external/perfetto -b v22.1
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+										OUTPUT_QUIET
+										ERROR_QUIET
+                    RESULT_VARIABLE GIT_SUBMOD_RESULT)
+    if(NOT GIT_SUBMOD_RESULT EQUAL "0")
+        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+    endif()
+endif()
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/perfetto/sdk/perfetto.cc")
+    message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+endif()
+endif (KRONOS_LINUX_USE_PERFETTO)
+
 include_directories(sys/bios/include)
 include_directories(sys/vdp1/include)
 include_directories(sys/vdp2/include)

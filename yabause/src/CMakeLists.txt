@@ -26,6 +26,12 @@ message(STATUS "Perfetto v22.1 already imported")
 endif()
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/perfetto/sdk/perfetto.cc")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
+else()
+	find_package(Threads)
+	# Define a static library for Perfetto.
+	include_directories(perfetto/sdk)
+	add_library( perfetto STATIC perfetto/sdk/perfetto.cc)
+	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} perfetto)
 endif()
 endif(GIT_FOUND)
 endif (KRONOS_LINUX_USE_PERFETTO)
@@ -70,6 +76,7 @@ option(YAB_FORCE_GLES31 "force to use OpenGLES 3.1" OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
 set(kronos_HEADERS
+	${kronos_HEADERS}
 	sys/bios/include/bios.h
 	sys/vdp1/include/vdp1.h
 	sys/vdp2/include/vdp2.h
@@ -125,6 +132,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer")
 endif (CMAKE_COMPILER_IS_GNUCC)
 
 set(kronos_SOURCES
+	${kronos_SOURCES}
   utils/src/cheat.c
   utils/src/db.c
 	utils/src/gameinfo.c

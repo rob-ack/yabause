@@ -1,3 +1,0 @@
-[submodule ".yabause/src/perfetto"]
-	path = ./yabause/src/perfetto
-	url = https://android.googlesource.com/platform/external/perfetto.git

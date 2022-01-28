@@ -28,6 +28,7 @@
 #include "debug.h"
 #include "error.h"
 #include "vdp1_compute.h"
+#include "perfetto_trace.h"
 
 #define YGLDEBUG
 
@@ -100,6 +101,7 @@ void YglCSFinsihDraw(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 void YglCSRenderVDP1(void) {
+  TRACE_RENDER("YglCSRenderVDP1");
   FRAMELOG("YglCSRenderVDP1: drawframe =%d %d\n", _Ygl->drawframe, yabsys.LineCount);
   vdp1_compute();
 }
@@ -160,6 +162,7 @@ void finishCSRender() {
 }
 
 void YglCSRender(Vdp2 *varVdp2Regs) {
+   TRACE_RENDER("YglCSRender");
 
    GLuint cprg=0;
    GLuint srcTexture;

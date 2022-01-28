@@ -91,16 +91,9 @@
     #include "gdb/stub.h"
 #endif
 
-#include <inttypes.h>
 #include "perfetto_trace.h"
 
 #ifdef _USE_PERFETTO_TRACE_
-
-PERFETTO_DEFINE_CATEGORIES(
-    perfetto::Category("rendering")
-        .SetDescription("Events from the graphics subsystem"),
-    perfetto::Category("emulator")
-        .SetDescription("Events for the saturn emulation"));
 
 #include <fstream>
 PERFETTO_TRACK_EVENT_STATIC_STORAGE();
@@ -391,7 +384,7 @@ int YabauseInit(yabauseinit_struct *init)
   InitializePerfetto();
   myTracingSession = StartTracing();
 
-TRACE_EMULATOR("YabauseInit")
+TRACE_EMULATOR("YabauseInit");
 
 #endif
    // Need to set this first, so init routines see it
@@ -723,7 +716,7 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
-  TRACE_EMULATOR("YabauseExec")
+  TRACE_EMULATOR("YabauseExec");
 #if 0
 	//automatically advance lag frames, this should be optional later
 	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){
@@ -846,7 +839,7 @@ int YabauseEmulate(void) {
 //   SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
 
-   TRACE_EMULATOR("YabauseEmulate")
+   TRACE_EMULATOR("YabauseEmulate");
 
    while (!oneframeexec)
    {

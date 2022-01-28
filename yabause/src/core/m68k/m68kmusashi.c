@@ -58,11 +58,11 @@ static void M68KMusashiSync(void) {
 }
 
 static u32 M68KMusashiGetDReg(u32 num) {
-   return m68k_get_reg(NULL, M68K_REG_D0 + num);
+   return m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + num));
 }
 
 static u32 M68KMusashiGetAReg(u32 num) {
-   return m68k_get_reg(NULL, M68K_REG_A0 + num);
+   return m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_A0 + num));
 }
 
 static u32 M68KMusashiGetPC(void) {
@@ -82,11 +82,11 @@ static u32 M68KMusashiGetMSP(void) {
 }
 
 static void M68KMusashiSetDReg(u32 num, u32 val) {
-   m68k_set_reg(M68K_REG_D0 + num, val);
+   m68k_set_reg((m68k_register_t)(M68K_REG_D0 + num), val);
 }
 
 static void M68KMusashiSetAReg(u32 num, u32 val) {
-   m68k_set_reg(M68K_REG_A0 + num, val);
+   m68k_set_reg((m68k_register_t)(M68K_REG_A0 + num), val);
 }
 
 static void M68KMusashiSetPC(u32 val) {
@@ -182,11 +182,11 @@ void m68k_save_context(void ** stream){
 	m68k_substate.halted  = (CPU_STOPPED & STOP_LEVEL_HALT) != 0;
 
 	for (i = 0; i<8; i++) {
-		regd[i]=m68k_get_reg(NULL, M68K_REG_D0 + i);
+		regd[i]=m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + i));
 	}
 	MemStateWrite((void *)&regd, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		rega[i]=m68k_get_reg(NULL, M68K_REG_A0 + i);
+		rega[i]=m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_A0 + i));
 	}
 	MemStateWrite((void *)&rega, sizeof(uint32), 8, stream );
 
@@ -274,12 +274,12 @@ void m68k_load_context(const void * stream){
 
 	MemStateRead((void *)&regd, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		m68k_set_reg(M68K_REG_D0 + i, regd[i]);
+		m68k_set_reg((m68k_register_t)(M68K_REG_D0 + i), regd[i]);
 	}
 
 	MemStateRead((void *)&rega, sizeof(uint32), 8, stream );
 	for (i = 0; i<8; i++) {
-		m68k_set_reg(M68K_REG_A0 + i, rega[i]);
+		m68k_set_reg((m68k_register_t)(M68K_REG_A0 + i), rega[i]);
 	}
 
 	MemStateRead((void *)&val, sizeof(uint32), 1, stream );

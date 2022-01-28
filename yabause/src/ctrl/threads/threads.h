@@ -86,7 +86,7 @@ enum {
 // YabThreadStart:  Start a new thread for the given function.  Only one
 // thread will be started for each thread ID (YAB_THREAD_*).  Returns 0 on
 // success, -1 on error.
-int YabThreadStart(unsigned int id, void (*func)(void *), void *arg);
+int YabThreadStart(unsigned int id, void* (*func)(void *), void *arg);
 
 // YabThreadWait:  Wait for the given ID's thread to terminate.  Returns
 // immediately if no thread has been started on the given ID.

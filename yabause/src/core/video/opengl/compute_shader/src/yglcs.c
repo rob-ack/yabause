@@ -121,12 +121,14 @@ extern int WinS_mode[enBGMAX+1];
 static void YglSetVDP1FB(int i){
   if (_Ygl->vdp1IsNotEmpty != 0) {
     _Ygl->vdp1On[i] = 1;
-    vdp1_set_directFB(i);
+    // Arevoir ca risque de ne pas fonctionner
+    vdp1_set_directFB();
     _Ygl->vdp1IsNotEmpty = 0;
   }
 }
 
 static void YglUpdateVDP1FB(void) {
+  //Le directFB utilise drawframe
   YglSetVDP1FB(_Ygl->readframe);
 }
 
@@ -136,6 +138,25 @@ static int warning = 0;
 GLuint GetCSVDP1fb(int id) {
   if (id == 0) return get_vdp1_tex(_Ygl->readframe);
   else return get_vdp1_mesh(_Ygl->readframe);
+}
+
+void finishCSRender() {
+  for (int i=0; i<SPRITE; i++)
+    YglReset(_Ygl->vdp2levels[i]);
+  glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
+  glUseProgram(0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
+  glDisableVertexAttribArray(0);
+  glDisableVertexAttribArray(1);
+  glDisableVertexAttribArray(2);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_SCISSOR_TEST);
+  glDisable(GL_STENCIL_TEST);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  OSDDisplayMessages(NULL,0,0);
+
+  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
 }
 
 void YglCSRender(Vdp2 *varVdp2Regs) {
@@ -244,8 +265,10 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    //glClearBufferfv(GL_COLOR, 0, colopaque);
    //glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-   if (yabsys.screenOn == 0) goto render_finish;
-   if (YglTM_vdp2 == NULL) goto render_finish;
+   if ((yabsys.screenOn == 0) || (YglTM_vdp2 == NULL)) {
+     finishCSRender();
+     return;
+   }
    glBindTexture(GL_TEXTURE_2D, YglTM_vdp2->textureID);
    glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
@@ -387,24 +410,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
    YglBlitFramebuffer(srcTexture, _Ygl->width, _Ygl->height, w, h);
 #endif
 
-render_finish:
-
-  for (int i=0; i<SPRITE; i++)
-    YglReset(_Ygl->vdp2levels[i]);
-  glViewport(_Ygl->originx, _Ygl->originy, GlWidth, GlHeight);
-  glUseProgram(0);
-  glBindBuffer(GL_ARRAY_BUFFER, 0);
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-  glDisableVertexAttribArray(0);
-  glDisableVertexAttribArray(1);
-  glDisableVertexAttribArray(2);
-  glDisable(GL_DEPTH_TEST);
-  glDisable(GL_SCISSOR_TEST);
-  glDisable(GL_STENCIL_TEST);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  OSDDisplayMessages(NULL,0,0);
-
-  _Ygl->sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE,0);
+  finishCSRender();
   return;
 }
 

@@ -2541,11 +2541,11 @@ u32 FASTCALL ScuReadLong(SH2_struct *sh, u8* mem, u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 struct intCtrl {
-  int vector;
-  int mask;
-  int status;
-  int level;
-  int clear;
+  unsigned int vector;
+  unsigned int mask;
+  unsigned int status;
+  unsigned int level;
+  unsigned int clear;
 };
 
 enum {

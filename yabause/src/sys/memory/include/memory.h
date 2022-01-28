@@ -435,7 +435,7 @@ extern "C" {
 
   int LoadBios(const char *filename);
   int LoadBackupRam(const char *filename);
-  void FormatBackupRam(void *mem, u32 size);
+  void FormatBackupRam(u8 *mem, u32 size);
 
   int YabSaveState(const char *filename);
   int YabLoadState(const char *filename);

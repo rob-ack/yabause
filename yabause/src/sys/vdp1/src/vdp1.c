@@ -35,6 +35,7 @@
 #include "threads.h"
 #include "sh2core.h"
 #include "ygl.h"
+#include "yui.h"
 
 
 // #define DEBUG_CMD_LIST

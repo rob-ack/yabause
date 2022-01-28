@@ -183,7 +183,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   if (status == GL_FALSE) {
     GLint length;
     glGetShaderiv(result, GL_INFO_LOG_LENGTH, &length);
-    GLchar *info = malloc(sizeof(GLchar) *length);
+    GLchar *info = (GLchar*)malloc(sizeof(GLchar) *length);
     glGetShaderInfoLog(result, length, NULL, info);
     YuiMsg("[COMPILE] %s\n", info);
     free(info);
@@ -197,7 +197,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
   if (status == GL_FALSE) {
     GLint length;
     glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
-    GLchar *info = malloc(sizeof(GLchar) *length);
+    GLchar *info = (GLchar*)malloc(sizeof(GLchar) *length);
     glGetProgramInfoLog(program, length, NULL, info);
     YuiMsg("[LINK] %s\n", info);
     free(info);
@@ -403,7 +403,7 @@ void vdp1GenerateBuffer_sync(vdp1cmd_struct* cmd, int id) {
 	  }
 }
 #ifdef VDP1RAM_CS_ASYNC
-void vdp1GenerateBuffer_async_0(void *p){
+void* vdp1GenerateBuffer_async_0(void *p){
 	while(vdp1_generate_run != 0){
 		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[0]);
 		if (cmd != NULL){
@@ -411,8 +411,9 @@ void vdp1GenerateBuffer_async_0(void *p){
 			free(cmd);
 		}
 	}
+	return NULL;
 }
-void vdp1GenerateBuffer_async_1(void *p){
+void* vdp1GenerateBuffer_async_1(void *p){
 	while(vdp1_generate_run != 0){
 		vdp1cmd_struct* cmd = (vdp1cmd_struct*)YabWaitEventQueue(cmdq[1]);
 		if (cmd != NULL){
@@ -420,10 +421,11 @@ void vdp1GenerateBuffer_async_1(void *p){
 			free(cmd);
 		}
 	}
+	return NULL;
 }
 
 void vdp1GenerateBuffer(vdp1cmd_struct* cmd){
-	vdp1cmd_struct* cmdToSent = malloc(sizeof(vdp1cmd_struct));
+	vdp1cmd_struct* cmdToSent = (vdp1cmd_struct*)malloc(sizeof(vdp1cmd_struct));
 	memcpy(cmdToSent, cmd, sizeof(vdp1cmd_struct));
 	YabAddEventQueue(cmdq[_Ygl->drawframe], cmdToSent);
 }

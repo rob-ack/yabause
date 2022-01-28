@@ -5383,7 +5383,7 @@ void ScspExec(){
 
 u64 newCycles = 0;
 
-void ScspAsynMainCpu( void * p ){
+void* ScspAsynMainCpu( void * p ){
 
 
 #if defined(ARCH_IS_LINUX)
@@ -5448,6 +5448,7 @@ void ScspAsynMainCpu( void * p ){
     #endif
   }
   YabThreadWake(YAB_THREAD_SCSP);
+  return NULL;
 }
 
 void ScspAsynMainRT( void * p ){

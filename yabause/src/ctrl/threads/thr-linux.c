@@ -367,7 +367,6 @@ void YabThreadFreeCond( YabCond *mtx ) {
     }
 }
 
-#define _GNU_SOURCE
 #include <sched.h>
 
 #if !(defined ARCH_IS_LINUX) || (defined ANDROID)

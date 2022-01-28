@@ -21,7 +21,7 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/perfetto/sdk/perfetto.cc")
 										ERROR_QUIET
                     RESULT_VARIABLE GIT_SUBMOD_RESULT)
     if(NOT GIT_SUBMOD_RESULT EQUAL "0")
-        message(FATAL_ERROR "git submodule update --init --recursive failed with ${GIT_SUBMOD_RESULT}, please checkout submodules")
+        message(FATAL_ERROR "git clone https://android.googlesource.com/platform/external/perfetto -b v22.1 failed with ${GIT_SUBMOD_RESULT}")
     endif()
 else ()
 message(STATUS "Perfetto v22.1 already imported")

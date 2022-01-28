@@ -11,7 +11,9 @@ if (KRONOS_LINUX_USE_PERFETTO)
 find_package(Git QUIET)
 if(GIT_FOUND)
 if(NOT EXISTS "${PROJECT_SOURCE_DIR}/perfetto/sdk/perfetto.cc")
-# Import Perfetto
+#once runned, a trace is generated kronos.pftrace
+#load the trace on ui.perfetto.dev
+
     message(STATUS "Import perfetto v22.1")
     execute_process(COMMAND ${GIT_EXECUTABLE} clone https://android.googlesource.com/platform/external/perfetto -b v22.1
                     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -31,7 +33,7 @@ else()
 	# Define a static library for Perfetto.
 	include_directories(perfetto/sdk)
 	add_library( perfetto STATIC perfetto/sdk/perfetto.cc)
-	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} perfetto)
+	set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} perfetto ${CMAKE_THREAD_LIBS_INIT})
 	add_definitions(-D_USE_PERFETTO_TRACE_)
 endif()
 endif(GIT_FOUND)

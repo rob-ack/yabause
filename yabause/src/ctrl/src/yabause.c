@@ -92,9 +92,11 @@
 #endif
 
 #include <inttypes.h>
+#include "perfetto_trace.h"
 
 #ifdef _USE_PERFETTO_TRACE_
-#include "perfetto_trace.h"
+#include <fstream>
+PERFETTO_TRACK_EVENT_STATIC_STORAGE();
 #endif
 
 #define DECILINE_STEP (20.0)
@@ -331,8 +333,60 @@ int YabauseSh2Init(yabauseinit_struct *init)
 
 static u64 fpsticks = 0;
 
+#ifdef _USE_PERFETTO_TRACE_
+
+std::unique_ptr<perfetto::TracingSession> myTracingSession;
+
+void InitializePerfetto() {
+  perfetto::TracingInitArgs args;
+  args.backends = perfetto::kInProcessBackend;
+
+  perfetto::Tracing::Initialize(args);
+  perfetto::TrackEvent::Register();
+}
+
+std::unique_ptr<perfetto::TracingSession> StartTracing() {
+  perfetto::TraceConfig cfg;
+  cfg.add_buffers()->set_size_kb(1024);
+  auto* ds_cfg = cfg.add_data_sources()->mutable_config();
+  ds_cfg->set_name("track_event");
+
+  auto tracing_session = perfetto::Tracing::NewTrace();
+  tracing_session->Setup(cfg);
+  tracing_session->StartBlocking();
+  return tracing_session;
+}
+
+void StopTracing(std::unique_ptr<perfetto::TracingSession> tracing_session) {
+  perfetto::TrackEvent::Flush();
+
+  // Stop tracing and read the trace data.
+  tracing_session->StopBlocking();
+  std::vector<char> trace_data(tracing_session->ReadTraceBlocking());
+
+  // Write the result into a file.
+  // Note: To save memory with longer traces, you can tell Perfetto to write
+  // directly into a file by passing a file descriptor into Setup() above.
+  std::ofstream output;
+  output.open("kronos.pftrace", std::ios::out | std::ios::binary);
+  output.write(&trace_data[0], std::streamsize(trace_data.size()));
+  output.close();
+  PERFETTO_LOG(
+      "Trace written in kronos.pftrace file. To read this trace in "
+      "text form, run `./tools/traceconv text kronos.pftrace`");
+}
+#endif
+
 int YabauseInit(yabauseinit_struct *init)
 {
+
+#ifdef _USE_PERFETTO_TRACE_
+  InitializePerfetto();
+  myTracingSession = StartTracing();
+
+TRACE_EMULATOR("YabauseInit")
+
+#endif
    // Need to set this first, so init routines see it
    yabsys.UseThreads = init->usethreads;
    yabsys.NumThreads = init->numthreads;
@@ -603,6 +657,10 @@ void YabauseDeInit(void) {
    PerDeInit();
    VideoDeInit();
    CheatDeInit();
+
+#ifdef _USE_PERFETTO_TRACE_
+   StopTracing(std::move(myTracingSession));
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -658,6 +716,7 @@ void YabauseResetButton(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 int YabauseExec(void) {
+  TRACE_EMULATOR("YabauseExec")
 #if 0
 	//automatically advance lag frames, this should be optional later
 	if (FrameAdvanceVariable > 0 && LagFrameFlag == 1){
@@ -779,6 +838,9 @@ int YabauseEmulate(void) {
 //   SH2OnFrame(MSH2);
 //   SH2OnFrame(SSH2);
    u64 cpu_emutime = 0;
+
+   TRACE_EMULATOR("YabauseEmulate")
+
    while (!oneframeexec)
    {
       PROFILE_START("Total Emulation");

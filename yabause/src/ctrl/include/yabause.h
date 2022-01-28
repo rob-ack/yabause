@@ -23,7 +23,6 @@
 #define YABAUSE_H
 
 #include "core.h"
-#include "perfetto_trace.h"
 
 #ifdef __cplusplus
 extern "C" {

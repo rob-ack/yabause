@@ -207,7 +207,7 @@ static GLuint createProgram(int count, const GLchar** prg_strs) {
 }
 
 
-static int regenerateMeshTex(int w, int h) {
+static void regenerateMeshTex(int w, int h) {
 	if (mesh_tex[0] != 0) {
 		glDeleteTextures(2,&mesh_tex[0]);
 	}

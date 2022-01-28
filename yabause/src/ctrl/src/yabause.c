@@ -92,7 +92,6 @@
 #endif
 
 #include <inttypes.h>
-#include "perfetto_trace.h"
 
 #ifdef _USE_PERFETTO_TRACE_
 #include <fstream>

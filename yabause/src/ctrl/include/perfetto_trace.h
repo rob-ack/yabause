@@ -1,6 +1,7 @@
 #ifndef __PERFETTO_TRACE_INCLUDE__
 #define __PERFETTO_TRACE_INCLUDE__
 
+#ifdef _USE_PERFETTO_TRACE_
 #include <perfetto.h>
 
 PERFETTO_DEFINE_CATEGORIES(
@@ -10,7 +11,6 @@ PERFETTO_DEFINE_CATEGORIES(
         .SetDescription("Events for the saturn emulation"));
 
 
-#ifdef _USE_PERFETTO_TRACE_
 #define TRACE_RENDER( A )  TRACE_EVENT("rendering", A);
 #define TRACE_RENDER_SUB_BEGIN( A ) TRACE_EVENT_BEGIN("rendering", A);
 #define TRACE_RENDER_SUB_END( A ) TRACE_EVENT_END("rendering", A);

@@ -1004,7 +1004,7 @@ static int useRotWin = 0;
 int WinS[enBGMAX+1];
 int WinS_mode[enBGMAX+1];
 
-int Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
+void Vdp2GenerateWindowInfo(Vdp2 *varVdp2Regs)
 {
   int HShift;
   int v = 0;

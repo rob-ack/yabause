@@ -91,6 +91,8 @@
     #include "gdb/stub.h"
 #endif
 
+#include <inttypes.h>
+
 #ifdef _USE_PERFETTO_TRACE_
 #include <fstream>
 PERFETTO_TRACK_EVENT_STATIC_STORAGE();

@@ -4,13 +4,6 @@
 #ifdef _USE_PERFETTO_TRACE_
 #include <perfetto.h>
 
-PERFETTO_DEFINE_CATEGORIES(
-    perfetto::Category("rendering")
-        .SetDescription("Events from the graphics subsystem"),
-    perfetto::Category("emulator")
-        .SetDescription("Events for the saturn emulation"));
-
-
 #define TRACE_RENDER( A )  TRACE_EVENT("rendering", A);
 #define TRACE_RENDER_SUB_BEGIN( A ) TRACE_EVENT_BEGIN("rendering", A);
 #define TRACE_RENDER_SUB_END( A ) TRACE_EVENT_END("rendering", A);

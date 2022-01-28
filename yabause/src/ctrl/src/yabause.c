@@ -95,6 +95,13 @@
 #include "perfetto_trace.h"
 
 #ifdef _USE_PERFETTO_TRACE_
+
+PERFETTO_DEFINE_CATEGORIES(
+    perfetto::Category("rendering")
+        .SetDescription("Events from the graphics subsystem"),
+    perfetto::Category("emulator")
+        .SetDescription("Events for the saturn emulation"));
+
 #include <fstream>
 PERFETTO_TRACK_EVENT_STATIC_STORAGE();
 #endif

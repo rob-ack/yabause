@@ -93,6 +93,10 @@
 
 #include <inttypes.h>
 
+#ifdef _USE_PERFETTO_TRACE_
+#include "perfetto_trace.h"
+#endif
+
 #define DECILINE_STEP (20.0)
 
 //#define DEBUG_ACCURACY

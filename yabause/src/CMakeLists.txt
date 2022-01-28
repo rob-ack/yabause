@@ -792,7 +792,7 @@ endif()
 add_dependencies(kronos m68kmake)
 
 if (KRONOS_LINUX_USE_PERFETTO)
-message(STATUS "Switch to g++"")
+message(STATUS "Switch to g++")
 file(GLOB_RECURSE CFILES ${kronos_SOURCES})
 SET_SOURCE_FILES_PROPERTIES(${CFILES} PROPERTIES LANGUAGE CXX )
 endif (KRONOS_LINUX_USE_PERFETTO)

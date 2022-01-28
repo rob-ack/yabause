@@ -2,6 +2,7 @@
 #define __PERFETTO_TRACE_INCLUDE__
 
 #ifdef _USE_PERFETTO_TRACE_
+#include <inttypes.h>
 #include <perfetto.h>
 
 PERFETTO_DEFINE_CATEGORIES(

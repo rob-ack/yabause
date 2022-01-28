@@ -59,13 +59,19 @@ int YabThreadStart(unsigned int id, void* (*func)(void *), void *arg)
 {
    // Set up a dummy signal handler for SIGUSR1 so we can return from pause()
    // in YabThreadSleep()
-   static const struct sigaction sa = {dummy_sighandler, NULL, 0, 0, NULL};
+   struct sigaction sa;
+   sa.sa_handler = dummy_sighandler;
+   sigemptyset (&sa.sa_mask);
+   sa.sa_flags = 0;
    if (sigaction(SIGUSR1, &sa, NULL) != 0)
    {
       perror("sigaction(SIGUSR1)");
       return -1;
    }
-   static const struct sigaction sb = {thread_exit_handler, NULL, 0, 0, NULL};
+   struct sigaction sb;
+   sb.sa_handler = thread_exit_handler;
+   sigemptyset (&sb.sa_mask);
+   sb.sa_flags = 0;
    if (sigaction(SIGUSR2, &sb, NULL) != 0)
    {
       perror("sigaction(SIGUSR2)");

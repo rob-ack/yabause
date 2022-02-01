@@ -65,6 +65,8 @@ static void Vdp1NoDraw(void);
 static int Vdp1Draw(void);
 static void FASTCALL Vdp1ReadCommand(vdp1cmd_struct *cmd, u32 addr, u8* ram);
 
+extern void addVdp1Framecount ();
+
 #define DEBUG_BAD_COORD //YuiMsg
 
 #define  CONVERTCMD(A) {\
@@ -2419,6 +2421,7 @@ static void startField(void) {
   // Frame Change
   if (Vdp1External.swap_frame_buffer == 1)
   {
+    addVdp1Framecount();
     FRAMELOG("Swap Line %d\n", yabsys.LineCount);
     lastHash = -1;
     if ((Vdp1External.manualerase == 1) || (Vdp1External.onecyclemode == 1))

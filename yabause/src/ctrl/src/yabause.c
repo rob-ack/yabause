@@ -765,7 +765,9 @@ u32 YabauseGetCpuTime(){
 
 //////////////////////////////////////////////////////////////////////////////
 static int fpsframecount = 0;
+static int vdp1fpsframecount = 0;
 static int fps = 0;
+static int vdp1fps = 0;
 static void FPSDisplay(void)
 {
   fpsframecount++;
@@ -774,14 +776,22 @@ static void FPSDisplay(void)
   {
     u64 delta = now - (fpsticks + yabsys.tickfreq);
     fps = fpsframecount;
+    vdp1fps = vdp1fpsframecount;
     fpsframecount = 0;
+    vdp1fpsframecount = 0;
     fpsticks = YabauseGetTicks() - delta;
   }
   if (isAutoFrameSkip() == 0) {
-    OSDPushMessage(OSDMSG_FPS, 1, "%02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+    OSDPushMessage(OSDMSG_FPS, 1, "VDP2 %02d/%02d FPS", fps, yabsys.IsPal ? 50 : 60);
+    OSDPushMessage(OSDMSG_VDP1_FPS, 1, "VDP1 %02d FPS", vdp1fps);
   } else {
-    OSDPushMessage(OSDMSG_FPS, 1, "%02d FPS", fps);
+    OSDPushMessage(OSDMSG_FPS, 1, "VDP2 %02d FPS", fps);
+    OSDPushMessage(OSDMSG_VDP1_FPS, 1, "VDP1 %02d FPS", vdp1fps);
   }
+}
+
+void addVdp1Framecount (){
+  vdp1fpsframecount++;
 }
 
 void dropFrameDisplay() {

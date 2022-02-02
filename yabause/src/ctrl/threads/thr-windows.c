@@ -30,7 +30,7 @@
 struct thd_s {
    int running;
    HANDLE thd;
-   void (*func)(void *);
+   void* (*func)(void *);
    void *arg;
    CRITICAL_SECTION mutex;
    HANDLE cond;

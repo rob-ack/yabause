@@ -755,6 +755,8 @@ u32 YabauseGetCpuTime(){
 
 // cyclesinc
 
+#define HBLANK_IN_STEP ((DECILINE_STEP * 8)/10)
+
 //////////////////////////////////////////////////////////////////////////////
 static int fpsframecount = 0;
 static int vdp1fpsframecount = 0;
@@ -868,7 +870,7 @@ int YabauseEmulate(void) {
 #endif
 
          yabsys.DecilineCount++;
-         if(yabsys.DecilineCount == DECILINE_STEP-1)
+         if(yabsys.DecilineCount == HBLANK_IN_STEP)
          {
             // HBlankIN
             PROFILE_START("hblankin");

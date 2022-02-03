@@ -869,15 +869,15 @@ int YabauseEmulate(void) {
 		 cpu_emutime += (YabauseGetTicks() - current_cpu_clock) * 1000000 / yabsys.tickfreq;
 #endif
 
-         yabsys.DecilineCount++;
-         if(yabsys.DecilineCount == HBLANK_IN_STEP)
-         {
-            // HBlankIN
-            PROFILE_START("hblankin");
-            Vdp1HBlankIN();
-            Vdp2HBlankIN();
-            PROFILE_STOP("hblankin");
-         }
+     yabsys.DecilineCount++;
+     if(yabsys.DecilineCount == HBLANK_IN_STEP)
+     {
+        // HBlankIN
+        PROFILE_START("hblankin");
+        Vdp1HBlankIN();
+        Vdp2HBlankIN();
+        PROFILE_STOP("hblankin");
+     }
 
       if (yabsys.DecilineCount == DECILINE_STEP)
       {
@@ -915,6 +915,7 @@ int YabauseEmulate(void) {
             PROFILE_STOP("VDP1/VDP2");
          }
       }
+
       PROFILE_START("SCU");
       ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
       PROFILE_STOP("SCU");
@@ -929,7 +930,7 @@ int YabauseEmulate(void) {
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
 
       saved_m68k_cycles  += m68k_cycles_per_deciline;
-      ScspAddCycles(m68k_cycles_per_deciline);
+      // ScspAddCycles(m68k_cycles_per_deciline);
       PROFILE_STOP("Total Emulation");
    }
 

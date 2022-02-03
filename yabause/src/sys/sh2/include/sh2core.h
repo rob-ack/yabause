@@ -369,14 +369,6 @@ typedef struct SH2_struct_s
    u32 cycleLost;
    int cdiff;
    int trace;
-#ifdef xSH2_ASYNC
-   int cycles_request;
-   int thread_running;
-   YabEventQueue *start;
-   YabEventQueue *end;
-   sem_t lock;
-   int thread_id;
-#endif
     u32 frtcycles;
     u32 wdtcycles;
 

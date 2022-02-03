@@ -201,11 +201,6 @@ include(${CMAKE_SOURCE_DIR}/l10n/CMakeLists.txt)
 
 #-------------------------------------------------------
 
-option(YAB_WANT_SH2_ASYNC "Execute slave SH2 emulation in a thread" OFF)
-if (YAB_WANT_SH2_ASYNC)
-  add_definitions(-DxSH2_ASYNC=1)
-endif()
-
 option(YAB_WANT_DYNAREC_KRONOS "Enable Sh2 dynarec by Kronos" ON)
 if (YAB_WANT_DYNAREC_KRONOS)
 	add_definitions(-DDYNAREC_KRONOS=1)

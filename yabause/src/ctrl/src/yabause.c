@@ -887,7 +887,7 @@ void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
     YabSemPost(g_cpu_ready);
     YabThreadWake(YAB_THREAD_SCSP);
-    YabSemWait(g_scsp_ready);
+    // YabSemWait(g_scsp_ready);
     saved_m68k_cycles = 0;
   //LOG("[SH2] START SCSP");
 }

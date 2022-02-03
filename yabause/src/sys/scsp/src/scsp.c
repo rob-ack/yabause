@@ -5062,7 +5062,7 @@ ScspDeInit (void)
   thread_running = false;
   YabThreadCondSignal(g_scsp_set_cyc_cond);
   YabSemPost(g_cpu_ready);
-  YabSemPost(g_scsp_ready);
+  // YabSemPost(g_scsp_ready);
   YabThreadWake(YAB_THREAD_SCSP);
   YabThreadWait(YAB_THREAD_SCSP);
 
@@ -5391,7 +5391,7 @@ void* ScspAsynMainCpu( void * p ){
         ScspInternalVars->scsptiming2 = 0;
         ScspInternalVars->scsptiming1 = scsplines;
         ScspExecAsync();
-        YabSemPost(g_scsp_ready);
+        // YabSemPost(g_scsp_ready);
         YabThreadYield();
         YabThreadSleep();
         YabSemWait(g_cpu_ready);
@@ -5401,7 +5401,7 @@ void* ScspAsynMainCpu( void * p ){
     }
     while (scsp_mute_flags && thread_running) {
       YabThreadUSleep((1000000 / fps));
-      YabSemPost(g_scsp_ready);
+      // YabSemPost(g_scsp_ready);
       YabSemWait(g_cpu_ready);
     }
   }

@@ -54,9 +54,6 @@ static s32 FASTCALL M68KMusashiExec(s32 cycle) {
    return m68k_execute(cycle);
 }
 
-static void M68KMusashiSync(void) {
-}
-
 static u32 M68KMusashiGetDReg(u32 num) {
    return m68k_get_reg(NULL, (m68k_register_t)(M68K_REG_D0 + num));
 }
@@ -348,7 +345,6 @@ M68K_struct M68KMusashi = {
    M68KMusashiDeInit,
    M68KMusashiReset,
    M68KMusashiExec,
-   M68KMusashiSync,
    M68KMusashiGetDReg,
    M68KMusashiGetAReg,
    M68KMusashiGetPC,

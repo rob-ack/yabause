@@ -894,17 +894,13 @@ int YabauseEmulate(void) {
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)
          {
-#if defined(ASYNC_SCSP)
             ScspAddCycles((u64)(44100 * 256 / frames)<< SCSP_FRACTIONAL_BITS);
-#endif
             PROFILE_START("vblankin");
             // VBlankIN
             SmpcINTBACKEnd();
             Vdp1VBlankIN();
             Vdp2VBlankIN();
-#if defined(ASYNC_SCSP)
             SyncCPUtoSCSP();
-#endif
             PROFILE_STOP("vblankin");
             CheatDoPatches(MSH2);
          }
@@ -922,9 +918,6 @@ int YabauseEmulate(void) {
       PROFILE_START("SCU");
       ScuExec((yabsys.DecilineStop>>YABSYS_TIMING_BITS) / 2);
       PROFILE_STOP("SCU");
-      PROFILE_START("68K");
-      M68KSync();  // Wait for the previous iteration to finish
-      PROFILE_STOP("68K");
 
       yabsys.UsecFrac += usecinc;
       PROFILE_START("SMPC");
@@ -935,26 +928,10 @@ int YabauseEmulate(void) {
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
 
-#if !defined(ASYNC_SCSP)
-      u32 m68k_integer_part = 0, scsp_integer_part = 0;
-      saved_m68k_cycles += m68k_cycles_per_deciline;
-      m68k_integer_part = saved_m68k_cycles >> SCSP_FRACTIONAL_BITS;
-      M68KExec(m68k_integer_part);
-      saved_m68k_cycles -= m68k_integer_part << SCSP_FRACTIONAL_BITS;
-
-      saved_scsp_cycles += scsp_cycles_per_deciline;
-      scsp_integer_part = saved_scsp_cycles >> SCSP_FRACTIONAL_BITS;
-      new_scsp_exec(scsp_integer_part);
-      saved_scsp_cycles -= scsp_integer_part << SCSP_FRACTIONAL_BITS;
-#else
-      {
-        saved_m68k_cycles  += m68k_cycles_per_deciline;
-        ScspAddCycles(m68k_cycles_per_deciline);
-#endif
-      }
+      saved_m68k_cycles  += m68k_cycles_per_deciline;
+      ScspAddCycles(m68k_cycles_per_deciline);
       PROFILE_STOP("Total Emulation");
    }
-   M68KSync();
 
    syncVideoMode();
    FPSDisplay();

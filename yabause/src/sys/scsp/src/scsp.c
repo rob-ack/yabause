@@ -392,6 +392,7 @@ static YabSem *m68counterCond;
 
 void scsp_main_interrupt (u32 id);
 void scsp_sound_interrupt (u32 id);
+void* ScspAsynMainCpu( void * p );
 
 void fill_plfo_tables()
 {
@@ -4655,12 +4656,14 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
     scsp_tl_table[i] = scsp_round(pow(10, ((double)i * -0.3762) / 20) * 1024.0);
 
   scsp_reset();
-  thread_running = false;
   g_scsp_ready = YabThreadCreateSem(0);
   g_cpu_ready = YabThreadCreateSem(0);
   g_scsp_set_cyc_mtx = YabThreadCreateMutex();
   g_scsp_set_cond_mtx = YabThreadCreateMutex();
   g_scsp_set_cyc_cond  = YabThreadCreateCond();
+
+  thread_running = true;
+  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5245,15 +5248,6 @@ M68KExecBP (s32 cycles)
 //////////////////////////////////////////////////////////////////////////////
 
 void
-M68KStep (void)
-{
-  M68K->Exec(1);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-void
 ScspConvert32uto16s (s32 *srcL, s32 *srcR, s16 *dst, u32 len)
 {
   u32 i;
@@ -5492,13 +5486,6 @@ void ScspAsynMainRT( void * p ){
     }
   }
   YabThreadWake(YAB_THREAD_SCSP);
-}
-
-void ScspExec(){
-	if (!thread_running){
-	  thread_running = true;
-	  YabThreadStart(YAB_THREAD_SCSP, ScspAsynMainCpu, NULL);
-	}
 }
 
 void ScspAddCycles(u64 cycles)

@@ -887,9 +887,6 @@ int YabauseEmulate(void) {
          Vdp1HBlankOUT();
         // SyncScsp();
          PROFILE_STOP("hblankout");
-         PROFILE_START("SCSP");
-         ScspExec();
-         PROFILE_STOP("SCSP");
          yabsys.DecilineCount = 0;
          yabsys.LineCount++;
          if (yabsys.LineCount == yabsys.VBlankLineCount)

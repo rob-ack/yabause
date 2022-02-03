@@ -99,7 +99,6 @@ void M68KStop(void);
 void ScspReset(void);
 int ScspChangeVideoFormat(int type);
 void ScspAddCycles(u64 cycles);
-void ScspExec(void);
 void ScspConvert32uto16s(s32 *srcL, s32 *srcR, s16 *dst, u32 len);
 void ScspReceiveCDDA(const u8 *sector);
 int SoundSaveState(void ** stream);
@@ -136,7 +135,6 @@ void scsp_update_timer(u32 len);
 
 u32 FASTCALL c68k_word_read(const u32 adr);
 
-void M68KStep(void);
 void M68KWriteNotify(u32 address, u32 size);
 void M68KGetRegisters(m68kregs_struct *regs);
 void M68KSetRegisters(m68kregs_struct *regs);

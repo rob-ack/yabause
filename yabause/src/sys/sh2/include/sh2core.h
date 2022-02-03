@@ -347,7 +347,6 @@ typedef struct SH2_struct_s
    u8 isslave;
    u8 isSleeping;
    u16 instruction;
-   u16 isInIt;
    int depth;
 
 #ifdef DMPHISTORY

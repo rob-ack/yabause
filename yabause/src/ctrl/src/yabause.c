@@ -99,8 +99,6 @@
 PERFETTO_TRACK_EVENT_STATIC_STORAGE();
 #endif
 
-#define DECILINE_STEP (20.0)
-
 //#define DEBUG_ACCURACY
 
 #define THREAD_LOG //printf
@@ -181,12 +179,22 @@ void YabauseChangeTiming(int freqtype) {
    const double freq_mult = (freqtype == CLKTYPE_26MHZ) ? 15.0/16.0 : 1.0;
    const double freq_shifted = (freq_base * freq_mult) * (1 << YABSYS_TIMING_BITS);
    const double usec_shifted = 1.0e6 * (1 << YABSYS_TIMING_BITS);
-   const double deciline_time = yabsys.IsPal ? 1.0 /  50        / 313 / DECILINE_STEP
-                                             : 1.0 / (60/1.001) / 263 / DECILINE_STEP;
+   const double line_time = yabsys.IsPal ? 1.0 /  50        / 313
+                                         : 1.0 / (60/1.001) / 263;
+   const double line_clk_cnt = line_time * (freq_base * freq_mult);
+   const double deciline_time = line_time / DECILINE_STEP;
 
    yabsys.DecilineCount = 0;
    yabsys.LineCount = 0;
    yabsys.CurSH2FreqType = freqtype;
+
+   for (int i = 0; i < DECILINE_STEP; i++) {
+     yabsys.LineCycle[i] = (u32) (line_clk_cnt * (float)i/(float)(DECILINE_STEP - 1));
+   }
+   for (int i = DECILINE_STEP-1; i>0; i--) {
+     yabsys.LineCycle[i] -= yabsys.LineCycle[i-1];
+   }
+
    yabsys.DecilineStop = (u32) (freq_shifted * deciline_time + 0.5);
    MSH2->cycleFrac = 0;
    SSH2->cycleFrac = 0;
@@ -200,23 +208,7 @@ extern YabSem * g_scsp_ready;
 extern YabSem * g_cpu_ready;
 
 static void sh2ExecuteSync( SH2_struct* sh, int req ) {
-    if (req != 0) {
-//printf("%s Request %d cycles\n", (sh == MSH2)?"MSH2":"SSH2", sh->cycles_request);
-         u32 sh2cycles;
-         sh->cycleFrac = req+sh->cycleLost;
-         sh->cycleLost = sh->cycleFrac - ((sh->cycleFrac >> YABSYS_TIMING_BITS)<<YABSYS_TIMING_BITS);
-         if ((sh->cycleFrac + (sh->cdiff * (1<<YABSYS_TIMING_BITS))) < 0) {
-           req = 0;
-	   sh->cycles += sh->cycleFrac>>YABSYS_TIMING_BITS;
-         } else {
-           req = ((sh->cycleFrac + (sh->cdiff* (1<<YABSYS_TIMING_BITS))) / (1 << (YABSYS_TIMING_BITS + 1))) * 2;
-         }
-           int i;
-	   int sh2start = sh->cycles;
-           SH2Exec(sh, req);
-	   sh->cdiff = req - (sh->cycles-sh2start);
-         req = 0;
-    }
+     SH2Exec(sh, req);
 }
 
 #ifdef xSH2_ASYNC
@@ -865,9 +857,9 @@ int YabauseEmulate(void) {
          YabAddEventQueue(MSH2->start, NULL);
        }
 #else
-       sh2ExecuteSync(MSH2, yabsys.DecilineStop);
+       sh2ExecuteSync(MSH2, yabsys.LineCycle[yabsys.DecilineCount]);
        if (yabsys.IsSSH2Running) {
-         sh2ExecuteSync(SSH2, yabsys.DecilineStop);
+         sh2ExecuteSync(SSH2, yabsys.LineCycle[yabsys.DecilineCount]);
        }
 #endif
 

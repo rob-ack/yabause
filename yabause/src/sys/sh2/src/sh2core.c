@@ -222,7 +222,6 @@ void FASTCALL SH2TestExec(SH2_struct *context, u32 cycles)
 
 void FASTCALL SH2Exec(SH2_struct *context, u32 cycles)
 {
-   u32 startCycle = context->cycles;
    SH2Core->Exec(context, cycles);
    FRTExec(context);
    WDTExec(context);

@@ -268,7 +268,7 @@ void YglCSRender(Vdp2 *varVdp2Regs) {
 
    //glClearBufferfv(GL_COLOR, 0, colopaque);
    //glClearBufferfi(GL_DEPTH_STENCIL, 0, 0, 0);
-   if ((yabsys.screenOn == 0) || (YglTM_vdp2 == NULL)) {
+   if (((varVdp2Regs->TVMD & 0x8000)==0) || (YglTM_vdp2 == NULL)) {
      finishCSRender();
      return;
    }

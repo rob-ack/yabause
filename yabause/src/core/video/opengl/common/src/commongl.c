@@ -3183,8 +3183,7 @@ void YglRender(Vdp2 *varVdp2Regs) {
    glGetIntegerv( GL_VIEWPORT, _Ygl->m_viewport );
    glScissor(0, 0, _Ygl->width, _Ygl->height);
    glEnable(GL_SCISSOR_TEST);
-
-   if ((YglTM_vdp2 == NULL)||(yabsys.screenOn == 0)) {
+   if ((YglTM_vdp2 == NULL)||((varVdp2Regs->TVMD & 0x8000)==0)) {
      glClearBufferfv(GL_COLOR, 0, col);
      finishRender();
      return;

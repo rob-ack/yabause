@@ -1464,7 +1464,7 @@ void Vdp2DebugStatsGeneral(char *outstring, int *isenabled)
 
    AddString(outstring, "RAMCTL 0x%x\r\n", Vdp2Regs->RAMCTL);
 
-   if (yabsys.screenOn != 0)
+   if ((Vdp2Regs->TVMD & 0x8000)!=0)
    {
       // TVMD stuff
       AddString(outstring, "Border Color Mode = %s\r\n", Vdp2Regs->TVMD & 0x100 ? "Back screen" : "Black");

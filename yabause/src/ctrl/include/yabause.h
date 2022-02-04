@@ -139,7 +139,6 @@ typedef struct
    int wireframe_mode;
    int stvInputType;
    int vdp1cycles;
-   u8 screenOn;
    u32 LineCycle[DECILINE_STEP];
 } yabsys_struct;
 

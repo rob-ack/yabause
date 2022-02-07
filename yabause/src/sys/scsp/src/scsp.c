@@ -5355,10 +5355,10 @@ void* ScspAsynMainCpu( void * p ){
   int frame = 0;
   u64 cycleRequest = 0;
   u64 m68k_inc = 0; //how much remaining samples should be played
-  int framecnt = (44100 * samplecnt) / fps; // 11289600/60
 
   while (thread_running)
   {
+    int framecnt = (44100 * samplecnt) / fps; // 11289600/60
     while (g_scsp_lock)
     {
 	    YabThreadUSleep(1000);

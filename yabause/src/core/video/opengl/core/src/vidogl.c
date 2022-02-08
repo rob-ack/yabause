@@ -5404,7 +5404,8 @@ static void Vdp2DrawNBG1(Vdp2* varVdp2Regs)
   info.linecheck_mask = 0x02;
 
   if ((varVdp2Regs->ZMXN1.all & 0x7FF00) == 0)
-    info.coordincx = 1.0f;
+    //invalid zoom value
+    return;
   else
     info.coordincx = (float)65536 / (varVdp2Regs->ZMXN1.all & 0x7FF00);
 

@@ -921,6 +921,18 @@
     <string>Alt+0</string>
    </property>
   </action>
+  <action name="aViewDebugMemoryEditor">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>Memory &amp;Editor</string>
+   </property>
+  </action>
   <action name="aToolsCheatSearch">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">

@@ -85,6 +85,9 @@ set(kronos_HEADERS
 	sys/vdp2/include/vdp2.h
   sys/vdp2/include/vdp2debug.h
 	sys/sh2/include/sh2core.h
+  sys/sh2/include/sh2iasm.h
+  sys/sh2/include/sh2d.h
+  sys/sh2/include/sh-opc.h
 	sys/scu/include/scu.h
 	sys/scsp/include/scsp.h
 	sys/scsp/include/scspdsp.h
@@ -149,6 +152,8 @@ set(kronos_SOURCES
 	sys/vdp1/src/vdp1.c
 	sys/vdp2/src/vdp2.c
 	sys/sh2/src/sh2core.c
+  sys/sh2/src/sh2iasm.c
+  sys/sh2/src/sh2d.c
 	sys/scu/src/scu.c
 	sys/scsp/src/scsp.c
 	sys/scsp/src/scspdsp.c

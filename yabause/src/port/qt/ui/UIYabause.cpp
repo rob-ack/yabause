@@ -25,6 +25,7 @@
 #include "UIBackupRam.h"
 #include "UICheats.h"
 #include "UICheatSearch.h"
+#include "UIDebugSH2.h"
 #include "UIDebugVDP1.h"
 #include "UIDebugVDP2.h"
 #include "UIMemoryEditor.h"
@@ -868,6 +869,34 @@ void UIYabause::on_aViewLayerRBG1_triggered()
 void UIYabause::on_aViewFullscreen_triggered( bool b )
 {
 	fullscreenRequested( b );
+}
+
+void UIYabause::breakpointHandlerMSH2(bool displayMessage)
+{
+	YabauseLocker locker( mYabauseThread );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2(UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::breakpointHandlerSSH2(bool displayMessage)
+{
+	YabauseLocker locker( mYabauseThread );
+	if (displayMessage)
+		CommonDialogs::information( QtYabause::translate( "Breakpoint Reached" ) );
+	UIDebugSH2(UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugMSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( UIDebugCPU::PROC_MSH2, mYabauseThread, this ).exec();
+}
+
+void UIYabause::on_aViewDebugSSH2_triggered()
+{
+	YabauseLocker locker( mYabauseThread );
+	UIDebugSH2( UIDebugCPU::PROC_SSH2, mYabauseThread, this ).exec();
 }
 
 void UIYabause::on_aViewDebugVDP1_triggered()

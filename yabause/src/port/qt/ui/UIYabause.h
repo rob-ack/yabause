@@ -113,6 +113,8 @@ public slots:
 	void cursorRestore();
 	void toggleEmulateMouse( bool enable );
 
+	void breakpointHandlerMSH2(bool displayMessage);
+	void breakpointHandlerSSH2(bool displayMessage);
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
@@ -152,6 +154,8 @@ protected slots:
 	void on_aViewLayerRBG1_triggered();
 	void on_aViewFullscreen_triggered( bool b );
 	// debug menu
+	void on_aViewDebugMSH2_triggered();
+	void on_aViewDebugSSH2_triggered();
 	void on_aViewDebugVDP1_triggered();
 	void on_aViewDebugVDP2_triggered();
 	// help menu

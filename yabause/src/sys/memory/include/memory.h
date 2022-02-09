@@ -380,14 +380,6 @@ extern "C" {
   extern u8 *BupRam;
   extern u8 BupRamWritten;
 
-  typedef void (FASTCALL *writebytefunc)(SH2_struct *context, u8*, u32, u8);
-  typedef void (FASTCALL *writewordfunc)(SH2_struct *context, u8*, u32, u16);
-  typedef void (FASTCALL *writelongfunc)(SH2_struct *context, u8*, u32, u32);
-
-  typedef u8(FASTCALL *readbytefunc)(SH2_struct *context, u8*, u32);
-  typedef u16(FASTCALL *readwordfunc)(SH2_struct *context, u8*, u32);
-  typedef u32(FASTCALL *readlongfunc)(SH2_struct *context, u8*, u32);
-
   extern writebytefunc WriteByteList[0x1000];
   extern writewordfunc WriteWordList[0x1000];
   extern writelongfunc WriteLongList[0x1000];

@@ -216,6 +216,8 @@
     <property name="title">
      <string>&amp;Debug</string>
     </property>
+    <addaction name="aViewDebugMSH2"/>
+    <addaction name="aViewDebugSSH2"/>
     <addaction name="aViewDebugVDP1"/>
     <addaction name="aViewDebugVDP2"/>
    </widget>
@@ -453,6 +455,27 @@
    </property>
    <property name="shortcut">
     <string>Alt+Return</string>
+   </property>
+  </action>
+  <action name="aViewDebugMSH2">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Master SH2</string>
+   </property>
+  </action>
+  <action name="aViewDebugSSH2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/debug_cpu.png</normaloff>:/actions/icons/actions/debug_cpu.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Slave SH2</string>
    </property>
   </action>
   <action name="aViewDebugVDP1">

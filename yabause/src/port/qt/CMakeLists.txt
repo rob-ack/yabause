@@ -80,6 +80,7 @@ set( kronos_qt_FORMS
     ui/UIDoubleMissionStickSetting.ui
 	ui/UIGunSetting.ui
 	ui/UIMouseSetting.ui
+    ui/UIDebugCPU.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -116,6 +117,8 @@ set( kronos_qt_MOC_HEADERS
 	ui/UIGunSetting.h
 	ui/UIMouseSetting.h
 	ui/UIShortcutManager.h
+   ui/UIDebugCPU.h
+    ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
     ui/UIDebugVDP2.h
     ui/UIDebugVDP2Viewer.h
@@ -155,6 +158,8 @@ set( kronos_qt_SOURCES
 	ui/UIGunSetting.cpp
 	ui/UIMouseSetting.cpp
 	ui/UIShortcutManager.cpp
+    ui/UIDebugCPU.cpp
+    ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
     ui/UIDebugVDP2.cpp
     ui/UIDebugVDP2Viewer.cpp

@@ -1233,13 +1233,6 @@ void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
     sysClipCmd = NULL;
     localCoordCmd = NULL;
     nbCmdToProcess = 0;
-  } else {
-    //Check if previous call where looping. In that case, directly abort
-    if (CmdListInLoop == 1) {
-      //Check if VDP1Ram has been modified so that the loop condition is not valid anymore
-      if (T1ReadWord(ram, regs->addr + 2) * 8 != regs->addr) CmdListInLoop = 0;
-      else return;
-    }
   }
   CmdListLimit = 0;
 

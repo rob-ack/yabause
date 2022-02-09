@@ -61,6 +61,7 @@ extern "C"
 	#include "memory.h"
 	#include "bios.h"
 
+	#include "m68kd.h"
 	#include "vdp2debug.h"
 
 	#include "PerQt.h"

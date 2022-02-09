@@ -32,6 +32,9 @@ public:
    {
       PROC_MSH2,
       PROC_SSH2,
+      PROC_M68K,
+      PROC_SCSPDSP,
+      PROC_SCUDSP,
    };
 
    UIDebugCPU( PROCTYPE proc, YabauseThread *mYabauseThread, QWidget* parent = 0 );

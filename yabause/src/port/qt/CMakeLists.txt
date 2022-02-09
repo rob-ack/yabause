@@ -12,8 +12,8 @@ if(YAB_USE_QT5)
     SET(CMAKE_PREFIX_PATH /opt/Qt/5.11.1/gcc_64)
   endif()
   find_package(Qt5 COMPONENTS Widgets QUIET)
-  find_package(Qt5 COMPONENTS Multimedia QUIET)
-  find_package(Qt5 COMPONENTS OpenGL QUIET)
+  find_package(Qt5 COMPONENTS Multimedia REQUIRED QUIET)
+  find_package(Qt5 COMPONENTS OpenGL REQUIRED QUIET)
   if (WIN32)
     find_package(Qt5Core)
   endif()
@@ -81,6 +81,8 @@ set( kronos_qt_FORMS
 	ui/UIGunSetting.ui
 	ui/UIMouseSetting.ui
     ui/UIDebugCPU.ui
+    ui/UIDebugSCSP.ui
+    ui/UIDebugSCSPDSP.ui
     ui/UIDebugVDP1.ui
     ui/UIDebugVDP2.ui
     ui/UIDebugVDP2Viewer.ui
@@ -117,7 +119,12 @@ set( kronos_qt_MOC_HEADERS
 	ui/UIGunSetting.h
 	ui/UIMouseSetting.h
 	ui/UIShortcutManager.h
-   ui/UIDebugCPU.h
+    ui/UIDebugCPU.h
+    ui/UIDebugM68K.h
+    ui/UIDebugSCSP.h
+    ui/UIDebugSCSPChan.h
+    ui/UIDebugSCSPDSP.h
+    ui/UIDebugSCUDSP.h
     ui/UIDebugSH2.h
     ui/UIDebugVDP1.h
     ui/UIDebugVDP2.h
@@ -159,6 +166,11 @@ set( kronos_qt_SOURCES
 	ui/UIMouseSetting.cpp
 	ui/UIShortcutManager.cpp
     ui/UIDebugCPU.cpp
+    ui/UIDebugM68K.cpp
+    ui/UIDebugSCSP.cpp
+    ui/UIDebugSCSPChan.cpp
+    ui/UIDebugSCSPDSP.cpp
+    ui/UIDebugSCUDSP.cpp
     ui/UIDebugSH2.cpp
     ui/UIDebugVDP1.cpp
     ui/UIDebugVDP2.cpp

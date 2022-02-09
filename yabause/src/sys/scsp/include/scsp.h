@@ -154,6 +154,8 @@ void new_scsp_exec(s32 cycles);
 
 void SyncScsp();
 
+void M68KStep(void);
+
 extern void ScspLockThread();
 extern void ScspUnLockThread();
 

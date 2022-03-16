@@ -214,10 +214,10 @@ void UIYabause::leaveEvent( QEvent* e )
 	if (emulateMouse && mouseCaptured)
 	{
 		// lock cursor to center
-		int midX = geometry().x()+(width()/2); // widget global x
-		int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+		int midX = (centralWidget()->size().width()/2); // widget global x
+		int midY = centralWidget()->size().height()/2; // widget global y
 
-		QPoint newPos(midX, midY);
+		QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
 		this->cursor().setPos(newPos);
 	}
 }
@@ -253,19 +253,19 @@ void UIYabause::cursorRestore()
 
 void UIYabause::mouseMoveEvent( QMouseEvent* e )
 {
-	int midX = geometry().x()+(width()/2); // widget global x
-	int midY = geometry().y()+menubar->height()+toolBar->height()+(height()/2); // widget global y
+	int midX = (centralWidget()->size().width()/2); // widget global x
+	int midY = centralWidget()->size().height()/2; // widget global y
 
-	int x = (e->x()-(width()/2))*mouseXRatio;
-	int y = ((menubar->height()+toolBar->height()+(height()/2))-e->y())*mouseYRatio;
-	int minAdj = mouseSensitivity/100;
+	int x = (e->x()-midX);
+	int y = (midY-e->y());
 
-	// If minimum movement is less than x, wait until next pass to apply
-	if (abs(x) < minAdj) x = 0;
-	if (abs(y) < minAdj) y = 0;
+	if (mouseCaptured) {
+		//use mouseSensitivity and scale ratio
+		x /= mouseXRatio * mouseSensitivity/100.0;
+		y /= mouseYRatio * mouseSensitivity/100.0;
 
-	if (mouseCaptured)
 		PerAxisMove((1 << 30), x, y);
+	}
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 
@@ -274,7 +274,7 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 		if (emulateMouse && mouseCaptured)
 		{
 			// lock cursor to center
-			QPoint newPos(midX, midY);
+			QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
 			this->cursor().setPos(newPos);
 			this->setCursor(Qt::BlankCursor);
 			return;
@@ -286,6 +286,8 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 	{
 		if (emulateMouse && mouseCaptured)
 		{
+			QPoint newPos(geometry().x() + centralWidget()->geometry().x() + midX, geometry().y() + centralWidget()->geometry().y() + midY);
+			this->cursor().setPos(newPos);
 			this->setCursor(Qt::BlankCursor);
 			return;
 		}
@@ -374,9 +376,6 @@ void UIYabause::sizeRequested( const QSize& s )
 		width=s.width();
 		height=s.height();
 	}
-
-	mouseXRatio = 320.0 / (float)width * 2.0 * (float)mouseSensitivity / 100.0;
-	mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
 
 	// Compensate for menubar and toolbar
 	VolatileSettings* vs = QtYabause::volatileSettings();

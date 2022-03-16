@@ -116,6 +116,7 @@ void OSDPushMessageDirect(char * msg) {
 int VIDOGLInit(void);
 void VIDOGLDeInit(void);
 void VIDOGLResize(int, int, unsigned int, unsigned int, int);
+void VIDOGLGetScale(float *, float *);
 int VIDOGLIsFullscreen(void);
 int VIDOGLVdp1Reset(void);
 void VIDOGLVdp1Draw();
@@ -152,6 +153,7 @@ VIDCORE_OGL,
 VIDOGLInit,
 VIDOGLDeInit,
 VIDOGLResize,
+VIDOGLGetScale,
 VIDOGLIsFullscreen,
 VIDOGLVdp1Reset,
 VIDOGLVdp1Draw,
@@ -3379,6 +3381,49 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
 
 }
 
+void VIDOGLGetScale(float *xRatio, float *yRatio) {
+  double w = 0;
+  double h = 0;
+  double dar = (double)GlWidth/(double)GlHeight;
+  double par = 4.0/3.0;
+
+  int Intw = (int)(floor((float)GlWidth/(float)_Ygl->width));
+  int Inth = (int)(floor((float)GlHeight/(float)_Ygl->height));
+  int Int  = 1;
+  int modeScreen = _Ygl->stretch;
+  #ifndef __LIBRETRO__
+  if (yabsys.isRotated) par = 1.0/par;
+  #endif
+  if (Intw == 0) {
+    modeScreen = 0;
+    Intw = 1;
+  }
+  if (Inth == 0) {
+    modeScreen = 0;
+    Inth = 1;
+  }
+  Int = (Inth<Intw)?Inth:Intw;
+
+  switch(modeScreen) {
+    case 0:
+      w = (dar>par)?(double)GlHeight*par:GlWidth;
+      h = (dar>par)?(double)GlHeight:(double)GlWidth/par;
+      break;
+    case 1:
+      w = GlWidth;
+      h = GlHeight;
+      break;
+    case 2:
+      w = Int * _Ygl->width;
+      h = Int * _Ygl->height;
+      break;
+    default:
+       break;
+   }
+
+  *xRatio = w / _Ygl->rwidth;
+  *yRatio = h / _Ygl->rheight;
+}
 //////////////////////////////////////////////////////////////////////////////
 
 int VIDOGLIsFullscreen(void) {

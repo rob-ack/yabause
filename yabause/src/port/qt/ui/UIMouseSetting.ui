@@ -66,10 +66,10 @@
   <widget class="QToolButton" name="tbB">
    <property name="geometry">
     <rect>
-     <x>80</x>
+     <x>30</x>
      <y>70</y>
      <width>54</width>
-     <height>31</height>
+     <height>58</height>
     </rect>
    </property>
    <property name="focusPolicy">
@@ -94,10 +94,10 @@
   <widget class="QToolButton" name="tbA">
    <property name="geometry">
     <rect>
-     <x>30</x>
+     <x>80</x>
      <y>70</y>
      <width>54</width>
-     <height>58</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="focusPolicy">

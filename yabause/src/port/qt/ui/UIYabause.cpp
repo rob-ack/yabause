@@ -261,8 +261,10 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 
 	if (mouseCaptured) {
 		//use mouseSensitivity and scale ratio
-		x /= mouseXRatio * mouseSensitivity/100.0;
-		y /= mouseYRatio * mouseSensitivity/100.0;
+		x *= (float)mouseSensitivity/100.0;
+		y *= (float)mouseSensitivity/100.0;
+		x /= mouseXRatio;
+		y /= mouseYRatio;
 
 		PerAxisMove((1 << 30), x, y);
 	}

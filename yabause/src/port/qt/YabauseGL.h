@@ -35,12 +35,13 @@ class YabauseGL : public QWidget
 #endif
 {
 	Q_OBJECT
-	
+
 public:
 	YabauseGL( );
-	
+
 	void updateView( const QSize& size = QSize() );
 	void swapBuffers();
+	void getScale(float *xRatio, float *yRatio);
 #ifndef HAVE_LIBGL
         QImage grabFrameBuffer();
 	virtual void paintEvent( QPaintEvent * event );

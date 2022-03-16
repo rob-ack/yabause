@@ -71,6 +71,15 @@ void YabauseGL::swapBuffers()
 void YabauseGL::resizeGL( int w, int h )
 { updateView( QSize( w, h ) ); }
 
+void YabauseGL::getScale(float *xRatio, float* yRatio) {
+  if ( VIDCore ) {
+    VIDCore->getScale(xRatio, yRatio);
+  } else {
+    *xRatio = 1.0;
+    *yRatio = 1.0;
+  }
+}
+
 void YabauseGL::updateView( const QSize& s )
 {
 	const QSize size = s.isValid() ? s : this->size();

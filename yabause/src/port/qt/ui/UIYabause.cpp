@@ -228,6 +228,7 @@ void UIYabause::mousePressEvent( QMouseEvent* e )
 	{
 		this->setCursor(Qt::BlankCursor);
 		mouseCaptured = true;
+		mYabauseGL->getScale(&mouseXRatio, &mouseYRatio);
 	}
 	else
 		PerKeyDown( (1 << 31) | e->button() );

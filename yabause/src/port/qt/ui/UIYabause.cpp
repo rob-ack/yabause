@@ -304,10 +304,6 @@ void UIYabause::mouseMoveEvent( QMouseEvent* e )
 
 void UIYabause::resizeEvent( QResizeEvent* event )
 {
-
-    //	if (event->oldSize().width() != event->size().width())
-    //fixAspectRatio(event->size().width(), event->size().height());
-
 	QMainWindow::resizeEvent( event );
 }
 
@@ -390,33 +386,6 @@ void UIYabause::sizeRequested( const QSize& s )
 		height += toolBar->height();
 
 	resize( width, height );
-}
-
-void UIYabause::fixAspectRatio( int width , int height )
-{
-	int aspectRatio = QtYabause::volatileSettings()->value( "Video/AspectRatio").toInt();
-
-      if (this->isFullScreen()) {
-        mYabauseGL->resize(width, height);
-      }
-      else{
-        int heightOffset = toolBar->height()+menubar->height();
-        switch(aspectRatio) {
-          case 0:
-            height = 3 * ((float) width / 4);
-            adjustHeight(height );
-            setFixedHeight(height);
-            break;
-          case 2:
-            height = 9 * ((float) width / 16);
-            adjustHeight(height );
-            setFixedHeight(height);
-            break;
-          default:
-            break;
-        }
-        mouseYRatio = 240.0 / (float)height * 2.0 * (float)mouseSensitivity / 100.0;
-      }
 }
 
 void UIYabause::toggleFullscreen( int width, int height, bool f, int videoFormat )

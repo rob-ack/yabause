@@ -121,7 +121,6 @@ public slots:
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
 	void sizeRequested( const QSize& size );
-	void fixAspectRatio( int width, int height  );
 	void toggleFullscreen( int width, int height, bool f, int videoFormat );
 	void fullscreenRequested( bool fullscreen );
 	void refreshStatesActions();

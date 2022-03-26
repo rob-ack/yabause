@@ -67,14 +67,28 @@ set(yabause_ra_SOURCES
     Preference.cpp
     ../about.h
     ../about.c
+    imgui/imconfig.h
+    imgui/imgui.cpp
+    imgui/imgui.h
+    imgui/imgui_draw.cpp
+    imgui/imgui_internal.h
+    imgui/imgui_tables.cpp
+    imgui/imgui_widgets.cpp
+    imgui/imstb_rectpack.h
+    imgui/imstb_textedit.h
+    imgui/imstb_truetype.h
+    imgui/backends/imgui_impl_opengl3.cpp
+    imgui/backends/imgui_impl_opengl3.h
+    imgui/backends/imgui_impl_sdl.cpp
+    imgui/backends/imgui_impl_sdl.h    
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
-include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" )
+include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "imgui" "imgui/backends/" )
 add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui stdc++fs  ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
-target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
-add_dependencies(yabause-retro-arena Json png zlib libchd )
+target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} dl)
+add_dependencies(yabause-retro-arena Json png zlib libchdr )
 yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 

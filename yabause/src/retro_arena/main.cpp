@@ -42,6 +42,12 @@ namespace fs = std::filesystem;
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL2/SDL_opengles2.h>
 
+#define IMGUI_IMPL_OPENGL_ES3
+#include "imgui.h"
+#include "imgui_impl_sdl.h"
+#include "imgui_impl_opengl3.h"
+
+pthread_mutex_t imgui_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 extern "C" {
 #include "../config.h"
@@ -180,8 +186,77 @@ void YuiErrorMsg(const char *string)
   LOG("%s",string);
 }
 
+
+
+int imgui_init = 0;
+
 void YuiSwapBuffers(void)
 {
+
+
+pthread_mutex_lock(&imgui_mutex);
+if( imgui_init == 0 ){
+  imgui_init++;
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO(); (void)io;  
+
+  // setup Dear ImGui style
+  ImGui::StyleColorsDark();
+
+  // setup platform/renderer bindings
+  ImGui_ImplSDL2_InitForOpenGL(wnd, glc);
+  ImGui_ImplOpenGL3_Init("#version 300 es");
+  ImVec4 background = ImVec4(35/255.0f, 35/255.0f, 35/255.0f, 1.00f);
+
+}
+
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplSDL2_NewFrame(wnd);
+  ImGui::NewFrame();
+
+        {
+            static int counter = 0;
+            // get the window size as a base for calculating widgets geometry
+            int sdl_width = 0, sdl_height = 0, controls_width = 0;
+            SDL_GetWindowSize(wnd, &sdl_width, &sdl_height);
+            controls_width = sdl_width;
+            // make controls widget width to be 1/3 of the main window width
+            if ((controls_width /= 3) < 300) { controls_width = 300; }
+
+            // position the controls widget in the top-right corner with some margin
+            ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_Always);
+            // here we set the calculated width and also make the height to be
+            // be the height of the main window also with some margin
+            ImGui::SetNextWindowSize(
+                ImVec2(static_cast<float>(controls_width), static_cast<float>(sdl_height - 20)),
+                ImGuiCond_Always
+                );
+            // create a window and append into it
+            ImGui::Begin("Controls", NULL, ImGuiWindowFlags_NoResize);
+
+            ImGui::Dummy(ImVec2(0.0f, 1.0f));
+            ImGui::TextColored(ImVec4(1.0f, 0.0f, 1.0f, 1.0f), "Platform");
+            ImGui::Text("%s", SDL_GetPlatform());
+            ImGui::Text("CPU cores: %d", SDL_GetCPUCount());
+            ImGui::Text("RAM: %.2f GB", SDL_GetSystemRAM() / 1024.0f);
+
+            // buttons and most other widgets return true when clicked/edited/activated
+            if (ImGui::Button("Counter button"))
+            {
+               // std::cout << "counter button clicked\n";
+                counter++;
+            }
+            ImGui::SameLine();
+            ImGui::Text("counter = %d", counter);
+
+            ImGui::End();
+        }
+
+  ImGui::Render();
+  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());  
+  pthread_mutex_unlock(&imgui_mutex);
+
   SDL_GL_SwapWindow(wnd);
   SetOSDToggle(g_EnagleFPS);
 }
@@ -453,6 +528,13 @@ int main(int argc, char** argv)
     SDL_Event e;
     event_count = 0;
     while(SDL_PollEvent(&e)) {
+      
+      pthread_mutex_lock(&imgui_mutex);
+      if( imgui_init != 0) {
+        ImGui_ImplSDL2_ProcessEvent(&e);
+      }
+      pthread_mutex_unlock(&imgui_mutex);
+
       event_count++;
       if(e.type == SDL_QUIT){
         glClearColor(0.0,0.0,0.0,1.0);

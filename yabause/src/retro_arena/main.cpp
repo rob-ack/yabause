@@ -263,6 +263,10 @@ int yabauseinit()
   yinit.rbg_use_compute_shader = pre.getBool( "Use compute shader" , false);
 #endif
 
+  yinit.use_cpu_affinity = 1;
+
+  yinit.use_sh2_cache = 1;
+
   res = YabauseInit(&yinit);
   if( res == -1) {
     return -1;

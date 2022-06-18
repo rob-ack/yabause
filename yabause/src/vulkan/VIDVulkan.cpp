@@ -105,7 +105,7 @@ extern "C" {
   void VIDVulkanSetFilterMode(int type) { VIDVulkan::getInstance()->SetFilterMode(type); }
   void VIDVulkanSync() { VIDVulkan::getInstance()->Sync(); }
   void VIDVulkanVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val) { VIDVulkan::getInstance()->Vdp1WriteFrameBuffer(type, addr, val); }
-  void VIDVulkanVdp1EraseWrite(void) { VIDVulkan::getInstance()->Vdp1EraseWrite(); }
+  void VIDVulkanVdp1EraseWrite(int isDraw) { VIDVulkan::getInstance()->Vdp1EraseWrite(isDraw); }
   void VIDVulkanVdp1FrameChange(void) { VIDVulkan::getInstance()->Vdp1FrameChange(); }
   void VIDVulkanSetSettingValue(int type, int value) { VIDVulkan::getInstance()->SetSettingValue(type, value); }
   void VIDVulkanGetNativeResolution(int *width, int *height, int * interlace) { VIDVulkan::getInstance()->GetNativeResolution(width, height, interlace); }
@@ -1254,9 +1254,9 @@ void VIDVulkan::Vdp1WriteFrameBuffer(u32 type, u32 addr, u32 val)
   this->vdp1->writeFrameBuffer(type, addr, val);
 }
 
-void VIDVulkan::Vdp1EraseWrite(void)
+void VIDVulkan::Vdp1EraseWrite( int isDraw )
 {
-  vdp1->erase();
+  vdp1->erase(isDraw);
 }
 
 void VIDVulkan::Vdp1FrameChange(void)
@@ -3672,7 +3672,7 @@ void VIDVulkan::drawRotation(RBGDrawInfo * rbg, VdpPipeline ** pipleLine)
       Vdp2DrawRotationThread_running = 1;
       g_rotate_mtx = YabThreadCreateMutex();
       YabThreadLock(g_rotate_mtx);
-      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, Vdp2DrawRotationThread, NULL);
+      YabThreadStart(YAB_THREAD_VIDSOFT_LAYER_RBG0, "vdp rbg0", Vdp2DrawRotationThread, NULL);
     }
     Vdp2RgbTextureSync();
     YGL_THREAD_DEBUG("Vdp2DrawRotation in %d\n", curret_rbg->vdp2_sync_flg);

@@ -424,8 +424,12 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
       FRAMELOG("[VDP1] Write VBE=%d line = %d", (Vdp1Regs->TVMR >> 3) & 0x01, yabsys.LineCount);
     break;
     case 0x2:
-      FRAMELOG("[VDP1] Write FCM=%d FCT=%d line = %d", (val & 0x02) >> 1, (val & 0x01), yabsys.LineCount);
+      //FRAMELOG("[VDP1] Write FCM=%d FCT=%d line = %d", (val & 0x02) >> 1, (val & 0x01), yabsys.LineCount);
+
       Vdp1Regs->FBCR = val;
+      
+      FRAMELOG("[VDP1] Write FBCR %X line = %d @ %08X", Vdp1Regs->FBCR, yabsys.LineCount, CurrentSH2->regs.PC);
+
       if ((Vdp1Regs->FBCR & 3) == 3) {
         //FRAMELOG("[VDP1] FCBR swtich to manual change");
         Vdp1External.manualchange = 1;
@@ -460,13 +464,18 @@ extern "C" void FASTCALL Vdp1WriteWord(u32 addr, u16 val) {
 #else
     if (val == 1){
       FRAMELOG("VDP1: VDPEV_DIRECT_DRAW\n");
-        Vdp1Regs->EDSR >>= 1;
-        Vdp1Draw(); 
-        VIDCore->Vdp1DrawEnd();
-        yabsys.wait_line_count = yabsys.LineCount + 50;
-        yabsys.wait_line_count %= yabsys.MaxLineCount;
-        //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
-        FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
+
+      if (Vdp1External.manualerase == 0) {
+        VIDCore->Vdp1EraseWrite(1);
+      }
+       
+      Vdp1Regs->EDSR >>= 1;
+      Vdp1Draw(); 
+      VIDCore->Vdp1DrawEnd();
+      yabsys.wait_line_count = yabsys.LineCount + 50;
+      yabsys.wait_line_count %= yabsys.MaxLineCount;
+      //if (yabsys.wait_line_count == 2) { yabsys.wait_line_count = 3; } // it should not be the same line with render.
+      FRAMELOG("VDP1: end line is %d", yabsys.wait_line_count);
     }
 #endif
          break;
@@ -580,8 +589,8 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 	  if (regs->EDSR & 0x02){
 		  regs->LOPR = regs->addr >> 3;
 		  regs->COPR = regs->addr >> 3;
-      Vdp1External.status = VDP1_STATUS_IDLE;
-      VDP1LOG("VDP1: Force to quit internal command error %x\n", command);
+        Vdp1External.status = VDP1_STATUS_IDLE;
+        VDP1LOG("VDP1: Force to quit internal command error %x\n", command);
 		  return;
 	  }
 
@@ -632,12 +641,13 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       command_count++;
       if (command & 0x8000) {
         LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
+		  regs->LOPR = regs->addr >> 3;
+		  regs->COPR = regs->addr >> 3;
         Vdp1External.status = VDP1_STATUS_IDLE;
       }
    }
 
    if (Vdp1External.status == VDP1_STATUS_RUNNING) {
-     Vdp1External.status = VDP1_STATUS_IDLE;
      LOG("VDP1: Readched to max comand count = %d", command_count);
    }
 }
@@ -1671,6 +1681,7 @@ void VIDDummyGetGlSize(int *width, int *height);
 void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
 void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummSetFilterMode(int typei,int a ){};
+void VIDDummErase(int i) {};
 void VIDDummSync(){};
 void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
 void VIDDummyVdp2DispOff(void);
@@ -1698,7 +1709,7 @@ VideoInterface_struct VIDDummy = {
 	VIDDummyVdp1LocalCoordinate,
 	VIDDummVdp1ReadFrameBuffer,
 	VIDDummVdp1WriteFrameBuffer,
-  VIDDummSync,
+  VIDDummErase,
   VIDDummSync,
 	VIDDummyVdp2Reset,
 	VIDDummyVdp2DrawStart,

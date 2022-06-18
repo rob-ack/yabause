@@ -79,12 +79,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #if CACHE_ENABLE
 #else
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr){ return MappedMemoryReadByte(addr, NULL); }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr){ return MappedMemoryReadWord(addr, NULL); }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr){ return MappedMemoryReadLong(addr, NULL); }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val){ MappedMemoryWriteByte(addr,val, NULL);  }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val){ MappedMemoryWriteWord(addr, val, NULL); }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val){ MappedMemoryWriteLong(addr, val, NULL); }
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr, u32 * cycle){ return MappedMemoryReadByte(addr, NULL); }
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle){ return MappedMemoryReadWord(addr, NULL); }
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle){ return MappedMemoryReadLong(addr, NULL); }
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle){ MappedMemoryWriteByte(addr,val, NULL);  }
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle){ MappedMemoryWriteWord(addr, val, NULL); }
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val, u32 * cycle){ MappedMemoryWriteLong(addr, val, NULL); }
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -496,11 +496,19 @@ static u8 FASTCALL BupRamMemoryReadByte(u32 addr)
     return fgetc(pbackup);
   }
 #endif
-  if (yabsys.extend_backup) {
-    addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return 0;
-    }
+  if (yabsys.extend_backup ) {
+
+     if( yabsys.emulatebios == 1 ) {
+        addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }else{
+        addr = (addr&0x0000FFFF );
+        if (addr >= tweak_backup_file_size) {
+           return 0;
+        }
+     }
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -545,12 +553,18 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
     BupRamWritten = 1;  
   }
 #endif
-
-  if (yabsys.extend_backup) {
-    addr = (addr & 0x0FFFFFFF) - tweak_backup_file_addr;
-    if (addr >= tweak_backup_file_size) {
-      return;
-    }
+  if (yabsys.extend_backup ) {
+     if( yabsys.emulatebios == 1 ) {
+        addr = (addr&0x0FFFFFFF) - tweak_backup_file_addr;
+        if (addr >= tweak_backup_file_size) {
+           return;
+        }
+     }else{
+        addr = (addr&0x0000FFFF );
+        if (addr >= tweak_backup_file_size) {
+           return;
+        }
+     }
   }
   else {
     addr = addr & 0x0000FFFF;
@@ -734,7 +748,7 @@ void MappedMemoryInit()
 #else
 INLINE int getVramCycle(u32 addr) {
   if (yabsys.LineCount >= yabsys.VBlankLineCount) { 
-    return 2; 
+    return 16;
   }
   if ((addr & 0x000F0000) < 0x00040000) {
     return Vdp2External.cpu_cycle_a;
@@ -742,60 +756,51 @@ INLINE int getVramCycle(u32 addr) {
   else {
     return Vdp2External.cpu_cycle_b;
   }
-  return 2;
+  return 16;
 }
 
-// gcc 4.9 bug
-#define GET_MEM_CYCLE_W \
-  switch (addr & 0xDFF00000) { \
-  case 0x00200000: /* Low */ \
-    *cycle = 7; \
-    break; \
-  case 0x05A00000: /* SOUND */ \
-    *cycle = 7; \
-    break; \
-  case 0x05C00000: /* VDP1 */ \
-    *cycle = 2; \
-    break; \
-  case 0x05e00000: /* VDP2 */ \
-    *cycle = getVramCycle(addr);  \
-    break; \
-  case 0x06000000: /* High */ \
-    *cycle = 2; \
-    break; \
-  default: \
-    *cycle = 0; \
-    break; \
-  } \
+const int clock_shift = 1;
 
-#define GET_MEM_CYCLE_R \
-  switch (addr & 0xDFF00000) { \
-  case 0x00000000: /* ROM */ \
-  case 0x00100000: /* Backup */ \
-    *cycle = 16; \
-    break; \
-  case 0x00200000: /* Low */ \
-    *cycle = 12; \
-    break; \
-  case 0x02000000: /* CS0 */ \
-  case 0x05800000: /* CS2 */ \
-    *cycle = 24; \
-    break; \
-  case 0x05A00000: /* SOUND RAM */ \
-  case 0x05B00000: /* SOUND REG */ \
-  case 0x05C00000: /* VDP1 RAM */ \
-    *cycle = 50; \
-    break; \
-  case 0x05E00000: /* VDP2 RAM */ \
-    *cycle = getVramCycle(addr); \
-    break; \
-  case 0x06000000: /* High */ \
-    *cycle = 0; \
-    break; \
-  default: \
-    *cycle = 0; \
-    break; \
-  } \
+
+inline u32 getMemClock(u32 addr) {
+  
+  addr = addr & 0xDFFFFFFF;
+
+  // CPU bus 1
+  if (addr >= 0x06000000 && addr < 0x06100000) {
+    return (16 >> clock_shift);
+  }
+  else if (addr >= 0x000000 && addr < 0x00300000) {
+    return 22 >> clock_shift;
+  }
+
+  // A bus 
+  else if (addr >= 0x02000000 && addr < 0x05800000) {
+    return 80 >> clock_shift;
+  }
+
+  // B bus
+  else if (addr >= 0x05A00000 && addr < 0x05E00000) {
+    return 80 >> clock_shift;
+  }
+  else if (addr >= 0x05e00000 && addr < 0x05E80000) {
+    if (yabsys.LineCount >= yabsys.VBlankLineCount) {
+      return 80 >> clock_shift;
+    }
+    if ((addr & 0x000F0000) < 0x00040000) {
+      return Vdp2External.cpu_cycle_a >> clock_shift;
+    }
+    else {
+      return Vdp2External.cpu_cycle_b >> clock_shift;
+    }
+    return 80 >> clock_shift;
+  }
+  else if (addr >= 0x05f00000 && addr < 0x060000000) {
+    return 16 >> clock_shift;
+  }
+  return 0;
+}
+
 
 #endif
 
@@ -842,18 +847,18 @@ inline u32 getMemCycle(u32 addr) {
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u8 FASTCALL MappedMemoryReadByte(u32 addr){
-	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr);
+u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle){
+	return cache_memory_read_b(&CurrentSH2->onchip.cache, addr, cycle);
 }
-u8 FASTCALL MappedMemoryReadByteNocache(u32 addr)
+u8 FASTCALL MappedMemoryReadByteNocache(u32 addr, u32 * cycle)
 #else
 u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 #endif
 {
   if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
-    GET_MEM_CYCLE_R
+    *cycle = getMemClock(addr);
   }
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -861,7 +866,12 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadByteList[(addr >> 16) & 0xFFF](addr);
+         u8 rtn = ReadByteList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         // LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 1, addr, rtn);
+         //}
+         return rtn;
+
       }
 
       case 0x2:
@@ -906,18 +916,24 @@ u8 FASTCALL MappedMemoryReadByte(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u16 FASTCALL MappedMemoryReadWord(u32 addr){
-	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr);
+u16 MappedMemoryReadInst(u32 addr, u32 * cycle) {
+  return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle, 1);
 }
-u16 FASTCALL MappedMemoryReadWordNocache(u32 addr)
+u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle){
+	return cache_memory_read_w(&CurrentSH2->onchip.cache, addr, cycle, 0);
+}
+u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle)
 #else
+u16 MappedMemoryReadInst(u32 addr, u32 * cycle) {
+  return MappedMemoryReadWord(addr,cycle);
+}
 u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 #endif
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
-    GET_MEM_CYCLE_R
+  if (cycle != NULL) {
+    *cycle = getMemClock(addr);
   }
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -925,14 +941,18 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadWordList[(addr >> 16) & 0xFFF](addr);
+         u16 rtn = ReadWordList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         //  LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 2, addr, rtn);
+         //}
+         return rtn;
       }
 
       case 0x2:
       case 0x5:
       {
         // Purge Area
-        return 0xFFFFFFFF;
+        return 0xFFFF;
       }
 
 
@@ -969,18 +989,19 @@ u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-u32 FASTCALL MappedMemoryReadLong(u32 addr){
-	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr);
+u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle){
+	return cache_memory_read_l(&CurrentSH2->onchip.cache, addr,cycle);
 }
-u32 FASTCALL MappedMemoryReadLongNocache(u32 addr)
+u32 FASTCALL MappedMemoryReadLongNocache(u32 addr, u32 * cycle)
 #else
 u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 #endif
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
-    GET_MEM_CYCLE_R
+
+  if (cycle != NULL) {
+    *cycle = getMemClock(addr);
   }
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -988,7 +1009,11 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
       case 0x4:
       {
          // Cache/Non-Cached
-         return ReadLongList[(addr >> 16) & 0xFFF](addr);
+         u32 rtn = ReadLongList[(addr >> 16) & 0xFFF](addr);
+         //if( (addr&0xF0000000) == 0x20000000 ){
+         //   LOG("[%s] %zu-byte read address=0x%08x value=0x%x\n", CurrentSH2->isslave ? "SH2-S" : "SH2-M", 4, addr, rtn);
+         //}
+         return rtn;
       }
 
       case 0x2:
@@ -1035,18 +1060,25 @@ u32 FASTCALL MappedMemoryReadLong(u32 addr, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val){
-	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val);
+void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle){
+	cache_memory_write_b(&CurrentSH2->onchip.cache,addr,val,cycle);
 }
-void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val)
+void FASTCALL MappedMemoryWriteByteNocache(u32 addr, u8 val, u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 #endif
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); ]
-    GET_MEM_CYCLE_W
+  //if ((addr & 0x0FFFFFFF) == 0x060f9600) {
+  //  LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 1, val, addr, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+    //if (slogp != NULL){
+    //   fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
+    //}
+  //}
+
+  if (cycle != NULL) {
+    *cycle = getMemClock(addr);
   }
+
   switch (addr >> 29)
    {
       case 0x0:
@@ -1099,18 +1131,18 @@ void FASTCALL MappedMemoryWriteByte(u32 addr, u8 val, u32 * cycle)
 
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val){
-	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val);
+void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle){
+	cache_memory_write_w(&CurrentSH2->onchip.cache, addr, val, cycle);
 }
-void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val)
+void FASTCALL MappedMemoryWriteWordNocache(u32 addr, u16 val, u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
 #endif
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
-    GET_MEM_CYCLE_W
+  if (cycle != NULL) {
+    *cycle = getMemClock(addr);
   }
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -1161,20 +1193,33 @@ void FASTCALL MappedMemoryWriteWord(u32 addr, u16 val, u32 * cycle )
    }
 }
 
+#if 0  
+extern FILE * slogp;
+#endif
+
 //////////////////////////////////////////////////////////////////////////////
 #if CACHE_ENABLE
-void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val){
-	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val);
+void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val , u32 * cycle ){
+	cache_memory_write_l(&CurrentSH2->onchip.cache, addr, val, cycle);
 }
-void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val)
+void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val , u32 * cycle)
 #else
 void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 #endif
 {
-  if (cycle != NULL) { 
-    //*cycle = getMemCycle(addr); 
-    GET_MEM_CYCLE_W
-  }
+#if 0   
+   if( (addr & 0x0FFFFFFF) == 0x060f9600){
+     LOG("[%s] %d Write %zu-byte write of 0x%08x to 0x%08x PC=%08X frame=%d:%d", CurrentSH2->isslave ? "SH2-S" : "SH2-M", CurrentSH2->cycles, 4, val, addr, CurrentSH2->regs.PC, yabsys.frame_count, yabsys.LineCount);
+      //if (slogp != NULL){
+      //   fprintf(slogp, "%08X: CPU write 0x%08X = %d(0x%08X)\n", CurrentSH2->regs.PC, addr, val,val );
+      //}
+   }
+#endif
+
+   if (cycle != NULL) {
+     *cycle = getMemClock(addr);
+   }
+
    switch (addr >> 29)
    {
       case 0x0:
@@ -1195,6 +1240,8 @@ void FASTCALL MappedMemoryWriteLong(u32 addr, u32 val, u32 * cycle )
 
       case 0x3:
       {
+         if (cycle != NULL) { *cycle = 2; }
+         
          // Address Array
          AddressArrayWriteLong(addr, val);
          return;

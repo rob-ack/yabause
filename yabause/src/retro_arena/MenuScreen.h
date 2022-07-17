@@ -18,17 +18,16 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
+#if defined(ARCH_IS_LINUX)
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL2/SDL_opengles2.h>
+#include <SDL_opengles2.h>
+#endif
 #undef Success 
 #include "nanogui/screen.h"
 #include "nanovg.h"
 #include <string.h>
 #include <stack>
-#include <vector>
-
-using std::shared_ptr;
 
 #if defined(_MSC_VER) 
 #undef snprintf

@@ -36,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <experimental/filesystem>
 #include <ctime>
 #include <iomanip>
-
+#include <dirent.h>
 #include <nanogui/imageview.h>
 
 namespace fs = std::experimental::filesystem ;
@@ -44,6 +44,7 @@ namespace fs = std::experimental::filesystem ;
 using namespace std;
 
 #include "InputManager.h"
+
 
 #include "about.h"
 
@@ -60,53 +61,7 @@ using namespace std;
 int MenuScreen::onShow(){
   //setupPlayerPsuhButton( 0, player1, "Player1 Input Settings", &p1cb );
   //setupPlayerPsuhButton( 1, player2, "Player2 Input Settings", &p2cb );
-}
-
-#include <thread>
-
-void MenuScreen::refreshGameListAsync(const vector<string> & base_path_array) {
-  bFileSearchCancled = false;
-
-  MessageDialog * dlg = new MessageDialog(this, MessageDialog::Type::Warning, "Searching games", "", "Cancel");
-  evm->setEvent("updateFile", [this, dlg](int code, void * data1, void * data2) {
-    if (!bFileSearchCancled) {
-      string msg((char*)data1);
-      Label * pl = dlg->messageLabel();
-      pl->setCaption(msg);
-      delete data1;
-    }
-  });
-
-
-  std::thread *t = new std::thread([this, base_path_array]() {
-    int indent = 0;
-    for (int i = 0; i < base_path_array.size(); i++) {
-      listdir(base_path_array[i], indent, games);
-    }
-    if (!bFileSearchCancled) {
-      evm->postEvent("showFileSelectDialog");
-    }
-  });
-
-  dlg->setCallback([this, t](int result) {
-    bFileSearchCancled = true;
-    t->join();
-    delete t;
-    games.clear();
-    MENU_LOG("Cancel\n");
-    //void * datax = malloc(256 * sizeof(char));
-    //strcpy((char*)datax, "");
-    //evm->postEvent("close tray", datax);
-  });
-
-  evm->setEvent("showFileSelectDialog", [this, dlg, t, base_path_array](int code, void * data1, void * data2) {
-    t->join();
-    delete t;
-    dlg->dispose();
-    showFileSelectDialog(tools, bCdTray, base_path_array);
-  });
-
-
+  return 0;
 }
 
 MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game )
@@ -212,7 +167,15 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
 
             size_t pos = current_game_path_.find_last_of("/");
             string base_path = current_game_path_.substr(0,pos);
-            showFileSelectDialog( tools, bCdTray, base_path);
+
+            Preference pref("");
+            vector<string> base_path_array = pref.getStringArray("game directories");
+
+            if (base_path_array.size() >= 0) {
+              base_path = base_path_array[0];
+            }
+
+            showFileSelectDialog( tools, bCdTray, base_path_array[0]);
 
             /*
             SDL_Event event = {};
@@ -331,8 +294,6 @@ void MenuScreen::showInputCheckDialog( const std::string & key ){
     current_key_ = key;
 }
 
-#include <dirent.h>
-
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
@@ -343,7 +304,7 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 void MenuScreen::showConfigDialog( PopupButton *parent ){
 
   // Todo setCurrentGamePath
-  std::shared_ptr<Preference> preference(new Preference( current_game_path_ ));
+  std::shared_ptr<Preference> preference(new Preference( current_game_path_));
 
   Popup *popup = parent->popup();    
   popup->setLayout(new GroupLayout(4,2,2,2)); 
@@ -364,11 +325,16 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   });
 
   cb->setSelectedIndex( preference->getInt("Resolution",0) );
-  cb->setCallbackSelect([this,preference]( int idx ) {
+
+  std::function<void(int32_t)> cbk = [this, preference](int32_t idx) {
     popActiveMenu();
-    preference->setInt("Resolution",idx);
+    preference->setInt("Resolution", idx);
     VideoSetSetting(VDP_SETTING_RESOLUTION_MODE, idx);
-  });
+    return;
+  };
+
+  cb->setCallbackSelect(cbk);
+
 
   new Label(popup, "Aspect rate");
   cb = new ComboBox(popup);  
@@ -383,8 +349,12 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
+  cb->setChangeCallback([](bool ok){});
+
+
   cb->setSelectedIndex( preference->getInt("Aspect rate",0) );
-  cb->setCallbackSelect([this,preference]( int idx ) {
+
+  cb->setCallbackSelect([this,preference]( int32_t idx ) {
     popActiveMenu();
     preference->setInt("Aspect rate",idx);
   });
@@ -404,7 +374,8 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   });
 
   cb->setSelectedIndex( preference->getInt("Rotate screen resolution",0) );
-  cb->setCallbackSelect([this,preference]( int idx ) {
+
+  cb->setCallbackSelect([this,preference]( int32_t idx ) {
     popActiveMenu();
     preference->setInt("Rotate screen resolution",idx);
     VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, idx);
@@ -746,16 +717,19 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
 
 
     Button *b0 = new Button(wrapper, "Cancel");
-    if (first_object) {
-      first_object = false;
-      pushActiveMenu(wrapper, toback);
-    }
-
-    b0->setCallback([this]() {
-      MENU_LOG("Cancel\n");
-      void * data1 = malloc(256 * sizeof(char));
-      strcpy((char*)data1, "");
-      evm->postEvent("close tray", data1);
+    if( first_object ){
+       first_object = false;
+       pushActiveMenu(wrapper,toback);
+    }    
+    b0->setCallback([this]() { 
+      MENU_LOG("Cancel\n"); 
+      SDL_Event event = {};
+      event.type = close_tray_;
+      event.user.code = 0;
+      event.user.data1 = malloc( 256* sizeof(char) );
+      strcpy( (char*)event.user.data1, "" );
+      event.user.data2 = 0;
+      SDL_PushEvent(&event);
       this->popActiveMenu();
       swindow->dispose();
       swindow = nullptr;
@@ -928,8 +902,9 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   cb->setCallback([this,cbpopup,cb]() {       
     pushActiveMenu(cbpopup, cb );
   });
-  
-  cb->setCallbackSelect([this, userid]( int idx ) {
+
+
+  cb->setCallbackSelect([this, userid](int32_t idx ) {
       popActiveMenu();
 
       SDL_JoystickID joyId = -1;
@@ -1007,9 +982,7 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
       event.user.data1 = 0;
       event.user.data2 = 0;
       SDL_PushEvent(&event);         
-
   });
-
 
   *cbo = cb;
 

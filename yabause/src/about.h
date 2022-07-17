@@ -3,6 +3,7 @@
 #pragma once
 #include <stdint.h>
 
-extern uint8_t about_png[];
-extern uint32_t about_png_size;
-
+extern "C" {
+  extern uint8_t about_png[];
+  extern uint32_t about_png_size;
+}

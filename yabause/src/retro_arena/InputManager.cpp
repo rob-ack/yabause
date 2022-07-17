@@ -24,15 +24,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 //#include "Window.h"
 //#include "Log.h"
 #include "pugixml/pugixml.hpp"
-#include <boost/filesystem.hpp>
+//#include <boost/filesystem.hpp>
 //#include "platform.h"
 #include <iostream>
 
 #include <stdio.h>
-#include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
+
+#if defined(ARCH_IS_LINUX)
+#include <execinfo.h>
 #include <unistd.h>
+#endif
 
 #include "MenuScreen.h"
 extern "C"{
@@ -47,6 +50,11 @@ using namespace::std;
 #include <sstream>
 #include <iomanip>
 
+#include "common.h"
+
+#if defined(_MSC_VER) && _MSC_VER < 1500 // VC++ 8.0 and below
+#define std::snprintf _snprintf
+#endif
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -78,7 +86,9 @@ static const unsigned int SDL_HAT_VALUES_NUM = sizeof(SDL_HAT_VALUES) / sizeof(S
 // 4. Joystick GUID - this is some squashed version of joystick vendor, version, and a bunch of other device-specific things.
 //    It should remain the same across runs of the program/system restarts/device reordering and is what I use to identify which joystick to load.
 
-namespace fs = boost::filesystem;
+//namespace fs = boost::filesystem;
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 InputManager* InputManager::mInstance = NULL;
 void genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid );
@@ -175,7 +185,9 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
       PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS3, padbits);  
       InputManager::getInstance()->_analogType[joyId] = 1; 
     }
+
     return 0;
+
 }
 
 void InputManager::genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid ){
@@ -304,6 +316,7 @@ int mapKeys( const json & configs ){
         size = backtrace(array, 10);
         backtrace_symbols_fd(array, size, STDERR_FILENO);
 */
+#if defined(ARCH_IS_LINUX)
         void *trace_elems[20];
         int trace_elem_count(backtrace(trace_elems, 20));
         char **stack_syms(backtrace_symbols(trace_elems, trace_elem_count));
@@ -312,7 +325,7 @@ int mapKeys( const json & configs ){
             cout << stack_syms[i] << "\n";
         }
         free(stack_syms);
-
+#endif
         return -1;
   }
 
@@ -496,16 +509,16 @@ int getPlayerJsonFromInputConfig( int joy, InputConfig * inputconfig, json & pla
   player[guid]["right"] = { { "type", input_types[result.type] },{ "id", result.id },{ "value", result.value } };
 
   //inputconfig->getInputByName("leftanalogup", &result);
-  player[guid]["analogx"] = { { "type", "axis" },{ "id", 0 },{ "value", 0 } };
+  player[guid]["analogx"] = { { "type", "axis" },{ "id", 0 },{ "value", 1 } };
 
   //inputconfig->getInputByName("leftanalogdown", &result);
-  player[guid]["analogy"] = { { "type", "axis" },{ "id", 1 },{ "value", 0 } };
+  player[guid]["analogy"] = { { "type", "axis" },{ "id", 1 },{ "value", 1 } };
 
   //inputconfig->getInputByName("leftanalogleft", &result);
-  player[guid]["analogleft"] = { { "type", "axis" },{ "id", 4 },{ "value", 0 } };
+  player[guid]["analogl"] = { { "type", "axis" },{ "id", 4 },{ "value", 0 } };
 
   //inputconfig->getInputByName("leftanalogright", &result);
-  player[guid]["analogright"] = { { "type", "axis" },{ "id", 5 },{ "value", 0 } };
+  player[guid]["analogr"] = { { "type", "axis" },{ "id", 5 },{ "value", 0 } };
 
   inputconfig->getInputByName("start", &result);
   player[guid]["start"] = { { "type", input_types[result.type] },{ "id", result.id },{ "value", result.value } };
@@ -1207,7 +1220,8 @@ void InputManager::writeDeviceConfig(InputConfig* config)
 
 std::string InputManager::getConfigPath()
 {
-  std::string path = getenv("HOME");
+  std::string path;
+  getHomeDir(path);
   path += "/.emulationstation/es_temporaryinput.cfg";
   return path;
 }

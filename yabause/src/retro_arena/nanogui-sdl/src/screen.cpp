@@ -20,7 +20,7 @@
 #include <map>
 
 
-#if 0
+#if defined(_WINDOWS)
 #ifndef GL_GLEXT_PROTOTYPES
 #ifdef WIN32
   PFNGLACTIVETEXTUREPROC glActiveTexture;
@@ -108,6 +108,9 @@
   PFNGLSTENCILOPSEPARATEPROC glStencilOpSeparate;
   PFNGLUNIFORM2FVPROC glUniform2fv;
   PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+
+  PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
+
 #endif
 #endif
 #include <SDL2/SDL.h>
@@ -123,7 +126,7 @@ static void __initGl()
    if( !__glInit )
    {
     __glInit = true;
-#if 0    
+#if defined(_WINDOWS)    
  #ifndef GL_GLEXT_PROTOTYPES
     #define ASSIGNGLFUNCTION(type,name) name = (type)SDL_GL_GetProcAddress( #name );
 #ifdef WIN32
@@ -185,6 +188,7 @@ static void __initGl()
     ASSIGNGLFUNCTION(PFNGLSTENCILOPSEPARATEPROC,glStencilOpSeparate)
     ASSIGNGLFUNCTION(PFNGLUNIFORM2FVPROC,glUniform2fv)
     ASSIGNGLFUNCTION(PFNGLBINDBUFFERBASEPROC,glBindBufferBase)
+    ASSIGNGLFUNCTION(PFNGLBLENDFUNCSEPARATEPROC,glBlendFuncSeparate)
  #endif
  #endif 
    }
@@ -543,7 +547,6 @@ bool Screen::scrollCallbackEvent(double x, double y)
                   << std::endl;
         abort();
     }
-
     return false;
 }
 
@@ -567,6 +570,7 @@ bool Screen::resizeCallbackEvent(int, int)
                   << std::endl;
         abort();
     }
+    return true;
 }
 
 void Screen::updateFocus(Widget *widget) {

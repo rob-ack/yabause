@@ -603,6 +603,8 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
       tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     }
     if (tm->texture_in[tm->current] == NULL) {
+      int error = glGetError();
+      YGLLOG("Fail to glMapBufferRange %X", error );
       abort();
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

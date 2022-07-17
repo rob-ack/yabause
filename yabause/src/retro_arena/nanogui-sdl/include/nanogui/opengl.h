@@ -22,10 +22,14 @@
 #endif
 */
 
+#if defined(ARCH_IS_LINUX)
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 //#include <EGL/egl.h>
 #include <GLES3/gl32.h>
+#else
+#include <SDL_opengl.h>
+#endif
 
 
 #include <nanogui/common.h>

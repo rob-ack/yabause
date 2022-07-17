@@ -1,9 +1,6 @@
 project(yabause-retro-arena)
 
-add_definitions( -D__RETORO_ARENA__ )
-
 yab_port_start()
-
 
 find_package(SDL2 COMPONENTS sdl)
 find_package(SDL2 REQUIRED)
@@ -12,9 +9,9 @@ find_package(PkgConfig REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system filesystem date_time locale)
 
-if (NOT OPENGLES2_FOUND)
-	return()
-endif (NOT OPENGLES2_FOUND)
+#if (NOT OPENGLES2_FOUND)
+#	return()
+#endif (NOT OPENGLES2_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -79,6 +76,7 @@ set(PORT_LIBRARIES ${SDL2_LIBRARY} ${OPENGLES2_LIBRARIES} ${png_STATIC_LIBRARIES
 message("Nlohmann/json dir =" ${EXTERNAL_JSON_INCLUDE_DIR})
 
 set(yabause_ra_SOURCES
+  common.h
 	main.cpp
 	InputManager.h
 	InputManager.cpp
@@ -88,53 +86,16 @@ set(yabause_ra_SOURCES
   MenuScreen.cpp
   Preference.h
   Preference.cpp
-  EventManager.h
-  EventManager.cpp
-  GameInfo.h
-  GameInfo.cpp
-  GameListPanel.h
-  GameListPanel.cpp
   ../about.h
   ../about.c
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
-include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${sqlite3_source_path} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
-set(APP_ICON_RESOURCE_WINDOWS application.rc)
-add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
-
-
-# OpenSSL for https
-if(WIN32) 
-
-include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
-
-# 64bit
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libssl.lib)
-	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libcrypto.lib)
-else()
-	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libssl-1_1.lib)
-	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libcrypto-1_1.lib)
-endif()
-
-else()
-	
-  find_package(OpenSSL REQUIRED) 
-	if( OpenSSL_FOUND )
-		include_directories(${OPENSSL_INCLUDE_DIRS})
-		link_directories(${OPENSSL_LIBRARIES})
-		message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
-		target_link_libraries(yabause-retro-arena ${OPENSSL_LIBRARIES})
-  endif()
-
-endif()
-
-
+include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
+add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
-target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_BINARY_DIR}/lib/sqlite3.lib )
-add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
+add_dependencies(yabause-retro-arena Json png zlib libchd nanogui )
 yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 

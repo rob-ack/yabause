@@ -17,16 +17,23 @@
 NAMESPACE_BEGIN(nanogui)
 
 ComboBox::ComboBox(Widget *parent) : PopupButton(parent), mSelectedIndex(0) {
+  mCallbackSelect = [](int32_t a){};
 }
 
 ComboBox::ComboBox(Widget *parent, const std::vector<std::string> &items)
     : PopupButton(parent), mSelectedIndex(0) {
     setItems(items);
+    mCallbackSelect = [](int32_t a) {};
 }
 
 ComboBox::ComboBox(Widget *parent, const std::vector<std::string> &items, const std::vector<std::string> &itemsShort)
     : PopupButton(parent), mSelectedIndex(0) {
     setItems(items, itemsShort);
+    mCallbackSelect = [](int32_t a) {};
+}
+
+void ComboBox::setCallbackSelect(const std::function<void(int32_t)> &callback) {
+  mCallbackSelect = callback;
 }
 
 void ComboBox::setSelectedIndex(int idx) {

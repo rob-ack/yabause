@@ -1,4 +1,4 @@
-﻿/*
+/*
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 
 This file is part of YabaSanshiro.
@@ -37,13 +37,8 @@ namespace fs = std::experimental::filesystem ;
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL2/SDL_opengles2.h>
 #elif defined(_WINDOWS)
-#include <windows.h>
-#include <commdlg.h>
-
 #include <direct.h>
 #include <SDL.h>
-#include <SDL_syswm.h>
-
 #endif
 
 #include "common.h"
@@ -196,22 +191,21 @@ extern "C" {
     SetOSDToggle(g_EnagleFPS);
   }
 
-  int YuiRevokeOGLOnThisThread() {
-#if defined(YAB_ASYNC_RENDERING)
-    LOG("revoke thread\n");
+int YuiRevokeOGLOnThisThread(){
+  LOG("revoke thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-    int rc = -1;
-    int retry = 0;
-    while (rc != 0) {
-      YabThreadUSleep(16666);
-      retry++;
-      rc = SDL_GL_MakeCurrent(subwnd, subglc);
-      if (rc != 0) { LOG("fail revoke thread\n"); }
-      if (retry > 100) {
-        LOG("out of retry cont\n");
-        abort();
-      }
+  int rc = -1;
+  int retry=0;
+  while( rc != 0 ){
+    YabThreadUSleep(16666);
+    retry++;
+    rc = SDL_GL_MakeCurrent(subwnd,subglc);
+    if( rc != 0 ){ LOG("fail revoke thread\n"); }
+    if( retry > 100){
+      LOG("out of retry cont\n");
+      abort();
     }
+  }
 #else
     SDL_GL_MakeCurrent(wnd, nullptr);
 #endif  
@@ -219,22 +213,21 @@ extern "C" {
     return 0;
   }
 
-  int YuiUseOGLOnThisThread() {
-#if defined(YAB_ASYNC_RENDERING)
-    LOG("use thread\n");
+int YuiUseOGLOnThisThread(){
+  LOG("use thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-    int rc = -1;
-    int retry = 0;
-    while (rc != 0) {
-      YabThreadUSleep(16666);
-      retry++;
-      rc = SDL_GL_MakeCurrent(wnd, glc);
-      if (rc != 0) { LOG("fail revoke thread\n"); }
-      if (retry > 100) {
-        LOG("out of retry cont\n");
-        abort();
-      }
+  int rc = -1;
+  int retry=0;
+  while( rc != 0 ){
+    YabThreadUSleep(16666);
+    retry++;
+    rc = SDL_GL_MakeCurrent(wnd,glc);
+    if( rc != 0 ){ LOG("fail revoke thread\n"); }
+    if( retry > 100){
+      LOG("out of retry cont\n");
+      abort();
     }
+  }
 #else
     SDL_GL_MakeCurrent(wnd, glc);
 #endif
@@ -253,7 +246,7 @@ int yabauseinit()
   int res;
   yabauseinit_struct yinit = {};
 
-  Preference pre("default");
+  Preference pre(cdpath);
 
   yinit.m68kcoretype = M68KCORE_MUSASHI;
   yinit.percoretype = PERCORE_DUMMY;
@@ -295,7 +288,7 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
 #if defined(__JETSON__) || defined(__SWITCH__) || defined(_WINDOWS)
-  yinit.scsp_main_mode = 1;
+  yinit.scsp_main_mode = 0;
 #else
   yinit.scsp_main_mode = 1;
 #endif
@@ -335,143 +328,44 @@ void narrow(const std::wstring &src, std::string &dest) {
 void getHomeDir( std::string & homedir ) {
 #if defined(ARCH_IS_LINUX)
   homedir = getenv("HOME");
-  homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
-  
-  WCHAR * path;
-  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {
+  WCHAR path[MAX_PATH];
+  if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
     std::wstring tmp;
     tmp = path;
     narrow(tmp, homedir);
-    homedir += "/YabaSanshiro/";
-    CoTaskMemFree(path);
   }
   else {
     exit(-1);
   }
-  
-  //homedir = "./";
 #endif
 }
 
-void ToggleFullscreen(SDL_Window* Window) {
-  const Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN;
-  g_full_screen = !g_full_screen;
-  SDL_SetWindowFullscreen(Window, g_full_screen ? 0 : FullscreenFlag);
-  SDL_ShowCursor(g_full_screen);
-}
-
-
-int __stdcall BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
-  TCHAR dir[MAX_PATH];
-  ITEMIDLIST *lpid;
-  HWND hEdit;
-
-  switch (uMsg) {
-  case BFFM_INITIALIZED:  //      ダイアログボックス初期化時
-    SendMessage(hWnd, BFFM_SETSELECTION, (WPARAM)TRUE, lpData);     //      コモンダイアログの初期ディレクトリ
-    break;
-  case BFFM_VALIDATEFAILED:       //      無効なフォルダー名が入力された
-    //MessageBox(hWnd, (TCHAR*)lParam, _TEXT("無効なフォルダー名が入力されました"), MB_OK);
-    //hEdit = FindWindowEx(hWnd, NULL, _TEXT("EDIT"), NULL);     //      エディットボックスのハンドルを取得する
-    //SetWindowText(hEdit, _TEXT(""));
-    return 1;       //      ダイアログボックスを閉じない
-    break;
-  case BFFM_IUNKNOWN:
-    break;
-  case BFFM_SELCHANGED:   //      選択フォルダーが変化した場合
-    //lpid = (ITEMIDLIST *)lParam;
-    //SHGetPathFromIDList(lpid, dir);
-    //hEdit = FindWindowEx(hWnd, NULL, _TEXT("EDIT"), NULL);     //      エディットボックスのハンドルを取得する
-    //SetWindowText(hEdit, dir);
-    break;
-  }
-  return 0;
-}
-
-bool selectDirectory(std::string & out) {
-
-  char path[_MAX_PATH];
-
-  BROWSEINFOA bInfo;
-  LPITEMIDLIST pIDList;
-
-  SDL_SysWMinfo wmInfo;
-  SDL_VERSION(&wmInfo.version);
-  SDL_GetWindowWMInfo(wnd, &wmInfo);
-  HWND hWnd = wmInfo.info.win.window;
-
-  memset(&bInfo, 0, sizeof(bInfo));
-  bInfo.hwndOwner = hWnd; // ダイアログの親ウインドウのハンドル 
-  bInfo.pidlRoot = NULL; // ルートフォルダをデスクトップフォルダとする 
-  bInfo.pszDisplayName = path; //フォルダ名を受け取るバッファへのポインタ 
-  bInfo.lpszTitle = "Choose game directory"; // ツリービューの上部に表示される文字列 
-  bInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_VALIDATE | BIF_NEWDIALOGSTYLE; // 表示されるフォルダの種類を示すフラグ 
-  bInfo.lpfn = BrowseCallbackProc; // BrowseCallbackProc関数のポインタ 
-  //bInfo.lParam = (LPARAM)def_dir;
-  pIDList = SHBrowseForFolderA(&bInfo);
-  if (pIDList == NULL) {
-    path[0] = '\0';
-    return false; //何も選択されなかった場合 
-  }
-
-   if (!SHGetPathFromIDListA(pIDList, path))
-      return false;//変換に失敗 
-
-   CoTaskMemFree(pIDList);// pIDListのメモリを開放 
-   out = path;
-   return true;
-}
-
-
-//#undef main
-//int main(int argc, char** argv)
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
+#undef main
+int main(int argc, char** argv)
 {
-
   inputmng = InputManager::getInstance();
-
-  char** argv = __argv;
-  int argc = __argc;
-
+  
   //printf("\033[2J");
 
   // Inisialize home directory
   std::string home_dir;
   getHomeDir(home_dir);
-  struct stat st = { 0 };
+  home_dir += "/.yabasanshiro/";
+  struct stat st = {0};
   if (stat(home_dir.c_str(), &st) == -1) {
 #if defined(_WINDOWS)
     mkdir(home_dir.c_str());
 #else
     mkdir(home_dir.c_str(), 0700);
 #endif
-  }
-
-#if 0
-  AllocConsole();
-  FILE * stdout_fp = freopen("CONOUT$", "wb", stdout);
-  FILE * stderr_fp = freopen("CONOUT$", "wb", stderr);
-#else
-  FILE * stdout_fp = freopen(string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
-  FILE * stderr_fp = freopen(string(home_dir + "/stderr.txt").c_str(), "wb", stderr);
-#endif
-
-  std::string games_dir = home_dir + "games";
-  if (stat(games_dir.c_str(), &st) == -1) {
-#if defined(_WINDOWS)
-    mkdir(games_dir.c_str());
-#else
-    mkdir(home_dir.c_str(), 0700);
-#endif
-  }
-
+  } 
   std::string bckup_dir = home_dir + "/backup.bin";
-  strcpy(buppath, bckup_dir.c_str());
-  strcpy(s_savepath, home_dir.c_str());
+  strcpy( buppath, bckup_dir.c_str() );
+  strcpy( s_savepath, home_dir.c_str() );
   g_keymap_filename = home_dir + "/keymapv2.json";
 
-  Preference * defpref = new Preference("default");
+  Preference defpref("");
 
   std::string current_exec_name = argv[0]; // Name of the current exec program
   std::vector<std::string> all_args;
@@ -490,29 +384,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     }
   }
 
-  auto biosFilename = defpref->getString("bios file", "");
+  auto biosFilename = defpref.getString("bios", "");
   if (biosFilename != "") {
     g_emulated_bios = 0;
     strncpy(biospath, biosFilename.c_str(), 256);
-    if (fs::exists(biosFilename.c_str()) == false) {
-      g_emulated_bios = 1;
-      biosFilename = "";
-    }
   }
-
-  auto lastFilePath = defpref->getString("last play game path", "");
+  
+  auto lastFilePath = defpref.getString("last play game path", "");
   if (lastFilePath != "") {
     strncpy(cdpath, lastFilePath.c_str(), 256);
   }
 
-  g_resolution_mode = defpref->getInt("Resolution", 0);
-  g_keep_aspect_rate = defpref->getInt("Aspect rate", 0);
-  g_scsp_sync = defpref->getInt("sound sync count per a frame", 32);
-  g_frame_skip = defpref->getBool("frame skip", false);
-  g_full_screen = defpref->getBool("Full screen", false);
-  g_EnagleFPS = defpref->getBool("Show Fps", false);
+  g_resolution_mode = defpref.getInt("Resolution", 0);
+  g_keep_aspect_rate = defpref.getInt("Aspect rate", 0);
+  g_scsp_sync = defpref.getInt("sound sync count per a frame", 4);
+  g_frame_skip = defpref.getBool("frame skip", false);
 
-  for (int i = 0; i < all_args.size(); i++) {
+  for( int i=0; i<all_args.size(); i++ ){
     string x = all_args[i];
     if ((x == "-b" || x == "--bios") && (i + 1 < all_args.size())) {
       g_emulated_bios = 0;
@@ -540,7 +428,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
       printf("YabaSanshiro version %s(%s)\n", YAB_VERSION, GIT_SHA1);
       return 0;
     }
-  }
+	}
+
+  defpref.setString("last play game path", cdpath);
 
   defpref->setString("last play game path", cdpath);
 
@@ -568,6 +458,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
+#if defined(__PC__) || defined(_WINDOWS)
   int width = 1280;
   int height = 720;
 
@@ -651,15 +542,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   printf("version string: \"%s\"\n", glGetString(GL_VERSION));
   printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
-/*
   if (strlen(cdpath) <= 0 ) {
     strcpy(cdpath, home_dir.c_str());
-    p = new Preference(cdpath);
   }
-  else {
-    p = new Preference("default");
-  }
-*/
 
   SDL_GL_MakeCurrent(wnd, glc);
 
@@ -744,105 +629,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
   std::string tmpfilename = home_dir + "tmp.png";
 
-  evm->setEvent("save state", [tmpfilename](int code, void * data1, void * data2) {
-    int ret;
-    time_t t = time(NULL);
-    YUI_LOG("MSG_SAVE_STATE");
-
-    snprintf(last_state_filename, 256, "%s/%s_%d.yss", s_savepath, cdip->itemnum, code);
-    ret = YabSaveState(last_state_filename);
-    if (ret == 0) {
-      char pngname[256];
-      snprintf(pngname, 256, "%s/%s_%d.png", s_savepath, cdip->itemnum, code);
-      fs::copy(tmpfilename, pngname, fs::copy_options::overwrite_existing);
-    }
-    hideMenuScreen();
-  });
-
-  evm->setEvent("load state", [tmpfilename](int code, void * data1, void * data2) {
-    int rtn;
-    YUI_LOG("MSG_LOAD_STATE");
-
-    // Find latest filename
-    sprintf(last_state_filename, "%s/%s_%d.yss", s_savepath, cdip->itemnum, code);
-    rtn = YabLoadState(last_state_filename);
-    switch (rtn) {
-    case 0:
-      YUI_LOG("Load State: OK");
-      break;
-    case -1:
-      YUI_LOG("Load State: File Not Found");
-      break;
-    case -2:
-      YUI_LOG("Load State: Bad format");
-      break;
-    case -3:
-      YUI_LOG("Load State: Bad format deep inside");
-      break;
-    default:
-      YUI_LOG("Load State: Fail unkown");
-      break;
-    }
-    hideMenuScreen();
-  });
-
-  evm->setEvent("update config", [](int code, void * data1, void * data2) {
-      inputmng->updateConfig();
-  });
-
-  evm->setEvent("select bios", [home_dir](int code, void * data1, void * data2) {
-
-    // use builtlin bios
-    if (code == 0) {
-      Preference * p = new Preference("default");
-      p->setString("bios file", "");
-      delete p;
-    }
-    else {
-
-      SDL_SysWMinfo wmInfo;
-      SDL_VERSION(&wmInfo.version);
-      SDL_GetWindowWMInfo(wnd, &wmInfo);
-      HWND hwnd = wmInfo.info.win.window;
-
-      char * fname = new char[256];
-      OPENFILENAMEA o;
-      fname[0] = '\0';
-      ZeroMemory(&o, sizeof(o));
-      o.lStructSize = sizeof(o);              //      構造体サイズ
-      o.hwndOwner = hwnd;                             //      親ウィンドウのハンドル
-      o.lpstrInitialDir = home_dir.c_str();    //      初期フォルダー
-      o.lpstrFile = fname;                    //      取得したファイル名を保存するバッファ
-      o.nMaxFile = 256;                                //      取得したファイル名を保存するバッファサイズ
-      //o.lpstrFilter = _TEXT("TXTファイル(*.TXT)\0*.TXT\0") _TEXT("全てのファイル(*.*)\0*.*\0");
-      //o.lpstrDefExt = _TEXT("TXT");
-      o.lpstrTitle = "Select a BIOS file";
-      o.nFilterIndex = 1;
-      if (GetOpenFileNameA(&o)) {
-        Preference * p = new Preference("default");
-        p->setString("bios file", fname);
-        delete p;
-      }
-      delete fname;
-    }
-    menu->popActiveMenu();
-    hideMenuScreen();
-  });
-
-  
-  // 初期設定がされていない場合はメニューを表示する
-  // BIOSなしの状態でゲームが選択されていない場合も
-  if (defpref->getBool("is first time",true) || (g_emulated_bios == 1 && strlen(cdpath) == 0 ) ) {
-    defpref->setBool("is first time", false);
-    SDL_Event event = {};
-    event.type = evToggleMenu;
-    event.user.code = 0;
-    event.user.data1 = 0;
-    event.user.data2 = 0;
-    SDL_PushEvent(&event);
-  }
-  delete defpref;
-
 #if defined(ARCH_IS_LINUX)
   struct sched_param thread_param;
   thread_param.sched_priority = 15; //sched_get_priority_max(SCHED_FIFO);
@@ -893,7 +679,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
           menu_show = true;
           SDL_ShowCursor(SDL_TRUE);
           ScspMuteAudio(1);
-#if defined(YAB_ASYNC_RENDERING)  
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
           SDL_GL_MakeCurrent(subwnd,nullptr);
           VdpRevoke();
@@ -926,13 +711,97 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
         }
       }
 
-      else if (e.type == evRepeat) {
-       string keycode((char*)e.user.data1);
-        menu->keyboardEvent(keycode,0,e.user.code,0);
-        delete[] e.user.data1;
+      else if(e.type == evResetMenu){
+        YabauseReset();
+        hideMenuScreen(); 
       }
-      else {
-        evm->procEvent(e.type, e.user.code, e.user.data1);
+
+      else if(e.type == evPadMenu ){
+        if( padmode == 0 ){
+          padmode = 1;
+        }else{
+          padmode = 0;
+        }
+        hideMenuScreen();         
+      }
+
+      else if(e.type == evToggleFps ){
+        if( g_EnagleFPS == 0 ){
+          g_EnagleFPS = 1;
+        }else{
+          g_EnagleFPS = 0;
+        }
+        hideMenuScreen();         
+      }
+
+      else if(e.type == evToggleFrameSkip ){
+        if( g_frame_skip == 0 ){
+          g_frame_skip = 1;
+          EnableAutoFrameSkip();
+        }else{
+          g_frame_skip = 0;
+          DisableAutoFrameSkip();
+        }
+        hideMenuScreen();         
+      }
+      else if(e.type == evOpenTray ){
+        menu->setCurrentGamePath(cdpath);
+        Cs2ForceOpenTray();
+        if( !g_emulated_bios ) {
+          hideMenuScreen();            
+        }
+      }
+      else if(e.type == evCloseTray ){
+        if( e.user.data1 != nullptr ){
+          strcpy( cdpath, (const char*)e.user.data1 );
+          free(e.user.data1);
+        }
+        defpref.setString("last play game path", cdpath);
+        Cs2ForceCloseTray(CDCORE_ISO, cdpath );
+        hideMenuScreen();     
+      }
+
+      else if(e.type == evSaveState ){
+
+        int ret;
+        time_t t = time(NULL);
+        YUI_LOG("MSG_SAVE_STATE");
+
+        snprintf(last_state_filename, 256, "%s/%s_%d.yss", s_savepath, cdip->itemnum, e.user.code);
+        ret = YabSaveState(last_state_filename);
+        if( ret == 0 ){
+          char pngname[256];
+          snprintf(pngname,256,"%s/%s_%d.png", s_savepath, cdip->itemnum, e.user.code);
+          fs::copy(tmpfilename, pngname, fs::copy_options::overwrite_existing );
+        }
+        hideMenuScreen();
+      }
+
+      else if(e.type == evLoadState ){
+        int rtn;
+        YUI_LOG("MSG_LOAD_STATE");
+
+        // Find latest filename
+        sprintf(last_state_filename, "%s/%s_%d.yss", s_savepath, cdip->itemnum, e.user.code);
+        rtn = YabLoadState(last_state_filename);
+        switch(rtn){
+          case 0:
+          YUI_LOG("Load State: OK");
+          break;
+        case -1:
+          YUI_LOG("Load State: File Not Found");
+          break;
+        case -2:
+          YUI_LOG("Load State: Bad format");
+           break;
+        case -3:
+          YUI_LOG("Load State: Bad format deep inside");
+          break;                    
+        default:
+          YUI_LOG("Load State: Fail unkown");
+          break;                    
+        }
+        hideMenuScreen();
       }
 
       inputmng->parseEvent(e);
@@ -974,8 +843,7 @@ void hideMenuScreen(){
   inputmng->setMenuLayer(nullptr);
   glClearColor(0.0f, 0.0f, 0.0f, 1);
   glClear(GL_COLOR_BUFFER_BIT);
-  SDL_GL_SwapWindow(wnd);       
-#if defined(YAB_ASYNC_RENDERING)
+  SDL_GL_SwapWindow(wnd);          
 #if defined(_JETSON_)  || defined(PC) || defined(_WINDOWS)
   SDL_GL_MakeCurrent(wnd,nullptr);
   VdpResume();

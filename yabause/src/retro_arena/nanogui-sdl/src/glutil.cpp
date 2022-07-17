@@ -17,9 +17,18 @@
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 //#include <EGL/egl.h>
+
+
+//void GLAPIENTRY glActiveTexture(GLenum texture) {
+//
+//}
+
+#if !defined(_WINDOWS)
+
 #include <GLES3/gl32.h>
 
-#if 0
+#else
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 extern PFNGLCREATESHADERPROC glCreateShader;
 extern PFNGLSHADERSOURCEPROC glShaderSource;
 extern PFNGLCOMPILESHADERPROC glCompileShader;

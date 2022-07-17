@@ -27,7 +27,8 @@ option(NANOGUISDL_BUILD_SHARED  "Build NanoGUI as a shared library?" OFF)
 #    message(FATAL_ERROR "Unknown GL implementaion. Use one of gl2, gl3, gles2, gles3.")
 #endif()
 
-add_definitions(-DNANOVG_GLES3_IMPLEMENTATION)
+add_definitions(-DNANOVG_GL2_IMPLEMENTATION)
+#add_definitions(-DNANOVG_GLES3_IMPLEMENTATION)
 
 # Required libraries for linking against nanogui (all targets)
 set(NANOGUISDL_EXTRA_LIBS "")
@@ -127,7 +128,7 @@ endforeach()
 # Run bin2c on resource files
 add_custom_command(
   OUTPUT nanogui_resources.cpp nanogui_resources.h
-  COMMAND ./bin2c ARGS ${bin2c_cmdline}
+  COMMAND ./Debug/bin2c.exe ARGS ${bin2c_cmdline}
   DEPENDS bin2c ${resources}
   COMMENT "Running bin2c"
   PRE_BUILD VERBATIM)

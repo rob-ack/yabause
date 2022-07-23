@@ -31,6 +31,8 @@ class YWindow;
 
 class MenuScreen;
 
+class Timer;
+
 using std::string;
 
 struct MenuInput {
@@ -46,6 +48,8 @@ class InputManager
 {
 private:
 	InputManager();
+
+  Timer * currentTimer = nullptr;
 
 	static InputManager* mInstance;
 

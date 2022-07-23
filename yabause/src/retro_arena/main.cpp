@@ -384,7 +384,7 @@ int main(int argc, char** argv)
     }
   }
 
-  auto biosFilename = defpref.getString("bios", "");
+  auto biosFilename = defpref.getString("bios file", "");
   if (biosFilename != "") {
     g_emulated_bios = 0;
     strncpy(biospath, biosFilename.c_str(), 256);
@@ -458,7 +458,7 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
-#if defined(__PC__) || defined(_WINDOWS)
+#if defined(__PC__) //|| defined(_WINDOWS)
   int width = 1280;
   int height = 720;
 
@@ -505,7 +505,7 @@ int main(int argc, char** argv)
     }
     SDL_ShowCursor(SDL_FALSE);
   }
-  
+  SDL_ShowCursor(SDL_FALSE);
 #if defined(_JETSON_)  
   subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
       width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN );
@@ -574,58 +574,35 @@ int main(int argc, char** argv)
   Uint32 evToggleMenu = SDL_RegisterEvents(1);
   inputmng->setToggleMenuEventCode(evToggleMenu);
 
+  Uint32  evResetMenu = SDL_RegisterEvents(1);
+  menu->setResetMenuEventCode(evResetMenu);
+
+  Uint32  evPadMenu = SDL_RegisterEvents(1);
+  menu->setTogglePadModeMenuEventCode(evPadMenu);
+
+  Uint32  evToggleFps = SDL_RegisterEvents(1);
+  menu->setToggleFpsCode(evToggleFps);
+
+  Uint32  evToggleFrameSkip = SDL_RegisterEvents(1);
+  menu->setToggleFrameSkip(evToggleFrameSkip);
+
+  Uint32  evUpdateConfig = SDL_RegisterEvents(1);
+  menu->setUpdateConfig(evUpdateConfig);
+
+  Uint32  evOpenTray = SDL_RegisterEvents(1);
+  menu->setOpenTrayMenuEventCode(evOpenTray);
+
+  Uint32  evCloseTray = SDL_RegisterEvents(1);
+  menu->setCloseTrayMenuEventCode(evCloseTray);
+
+  Uint32  evSaveState = SDL_RegisterEvents(1);
+  menu->setSaveStateEventCode(evSaveState);
+
+  Uint32  evLoadState = SDL_RegisterEvents(1);
+  menu->setLoadStateEventCode(evLoadState);
+
   Uint32  evRepeat = SDL_RegisterEvents(1);
   menu->setRepeatEventCode(evRepeat);
-
-  EventManager * evm = EventManager::getInstance();
-
-
-  evm->setEvent("reset", [](int code, void * data1, void * data2) {
-     printf("hello");
-     YabauseReset();
-     hideMenuScreen(); 
-  });
-
-  evm->setEvent("toggle fps", [](int code, void * data1, void * data2) {
-    if (g_EnagleFPS == 0) {
-      g_EnagleFPS = 1;
-    }
-    else {
-      g_EnagleFPS = 0;
-    }
-    hideMenuScreen();
-  });
-
-  evm->setEvent("toggle frame skip", [](int code, void * data1, void * data2) {
-    if (g_frame_skip == 0) {
-      g_frame_skip = 1;
-      EnableAutoFrameSkip();
-    }
-    else {
-      g_frame_skip = 0;
-      DisableAutoFrameSkip();
-    }
-    hideMenuScreen();
-  });
-
-  evm->setEvent("open tray", [](int code, void * data1, void * data2) {
-    menu->setCurrentGamePath(cdpath);
-    Cs2ForceOpenTray();
-    if (!g_emulated_bios) {
-      hideMenuScreen();
-    }
-  });
-
-  evm->setEvent("close tray", [](int code, void * data1, void * data2) {
-    if (data1 != nullptr) {
-      strcpy(cdpath, (const char*)data1);
-      free(data1);
-    }
-    Preference defpref("default");
-    defpref.setString("last play game path", cdpath);
-    Cs2ForceCloseTray(CDCORE_ISO, cdpath);
-    hideMenuScreen();
-  });
 
   std::string tmpfilename = home_dir + "tmp.png";
 
@@ -802,6 +779,11 @@ int main(int argc, char** argv)
           break;                    
         }
         hideMenuScreen();
+      }
+      else if (e.type == evRepeat) {
+       string keycode((char*)e.user.data1);
+        menu->keyboardEvent(keycode,0,e.user.code,0);
+        delete[] e.user.data1;
       }
 
       inputmng->parseEvent(e);

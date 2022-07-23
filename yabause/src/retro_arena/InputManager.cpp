@@ -58,6 +58,66 @@ using namespace::std;
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+
+#include <thread>
+#include <chrono>
+#include <functional>
+#include <cstdio>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
+class Timer {
+public:
+  ~Timer() {
+    if (mRunning) {
+      stop();
+    }
+  }
+  typedef std::chrono::milliseconds Interval;
+  typedef std::chrono::milliseconds Repeat;
+  typedef std::function<void(void)> Timeout;
+
+  void start(const Interval &interval, const Interval &repeat, const Timeout &timeout) {
+    mRunning = true;
+    count = 0;
+
+    mThread = std::thread([=]() {
+
+      std::unique_lock<std::mutex> lk(mtx_);
+
+      while (mRunning) {
+
+        if (count == 0) {
+          cond_.wait_for(lk, interval);
+        }
+        else {
+          cond_.wait_for(lk, repeat);
+        }
+
+        if (mRunning) {
+          timeout();
+        }
+        count++;
+      }
+    });
+  }
+  void stop() {
+    mRunning = false;
+    cond_.notify_all();
+    mThread.join();
+  }
+
+private:
+  int count = 0;
+  std::thread mThread;
+  std::mutex mtx_;
+  std::condition_variable cond_;
+  std::atomic_bool mRunning{};
+};
+
+//std::thread Timer::mThread = {};
+
 #define PADLOG 
 //#define PADLOG printf
 
@@ -95,6 +155,7 @@ void genJoyString( string & out, SDL_JoystickID id, const string & name, const s
 
 InputManager::InputManager() : mKeyboardInputConfig(NULL)
 {
+  currentTimer = nullptr;
 }
 
 InputManager::~InputManager()
@@ -1027,14 +1088,39 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
       InputConfig* cfg = getInputConfigByDevice(ev.jhat.which);
       evstr = cfg->getMappedTo( Input(ev.jhat.which, TYPE_HAT, ev.jhat.hat, ev.jhat.value, false));
       if( evstr.size() != 0 ){
+
+        {
+          if (currentTimer != nullptr) {
+            delete currentTimer;
+            currentTimer = nullptr;
+          }
+
+          if (ev.jhat.value != 0) {
+            currentTimer = new Timer();
+            string evvv = evstr[0];
+            currentTimer->start(std::chrono::milliseconds(500), std::chrono::milliseconds(80), [this, ev, evvv] {
+              std::puts("Hello!");
+              menu_layer_->sendRepeatEvent( (const string)evvv, 0, (ev.jhat.value != 0), 0);
+            });
+          }
+
+        }
+
         menu_layer_->keyboardEvent(evstr[0],0, (ev.jhat.value != 0) ,0);
+      }
+      else {
+        if (currentTimer != nullptr) {
+          delete currentTimer;
+          currentTimer = nullptr;
+        }
       }
       return true;
   }
   break;
   case SDL_KEYDOWN:
-    if(ev.key.repeat)
-      return false;  
+    if (ev.key.repeat) {
+      return false;
+    }
     
     if(ev.key.keysym.sym == SDLK_ESCAPE){
       //if( menu_layer_->onBackButtonPressed() == 0 ){

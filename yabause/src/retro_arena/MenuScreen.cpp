@@ -1182,7 +1182,20 @@ int MenuScreen::onRawInputEvent( InputManager & imp, const std::string & deviceg
   return 0;
 }
 
-bool MenuScreen::keyboardEvent( std::string & keycode , int scancode, int action, int modifiers){
+bool MenuScreen::sendRepeatEvent( const std::string & keycode, int scancode, int action, int modifiers) {
+  char * str = new char[keycode.length() + 1];
+  strncpy(str, keycode.c_str(), keycode.length()+1);
+  SDL_Event event = {};
+  event.type = this->repeat_;
+  event.user.code = action;
+  event.user.data1 = str;
+  event.user.data2 = 0;
+  SDL_PushEvent(&event);
+  return true;
+}
+
+
+bool MenuScreen::keyboardEvent( const std::string & keycode , int scancode, int action, int modifiers){
 
   if( swindow != nullptr && swindow->title() != "Select Game"){ return false; }
 

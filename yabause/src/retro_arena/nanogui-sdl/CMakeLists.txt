@@ -128,7 +128,7 @@ endforeach()
 # Run bin2c on resource files
 add_custom_command(
   OUTPUT nanogui_resources.cpp nanogui_resources.h
-  COMMAND ./Debug/bin2c.exe ARGS ${bin2c_cmdline}
+  COMMAND $<TARGET_FILE:bin2c> ARGS ${bin2c_cmdline}
   DEPENDS bin2c ${resources}
   COMMENT "Running bin2c"
   PRE_BUILD VERBATIM)

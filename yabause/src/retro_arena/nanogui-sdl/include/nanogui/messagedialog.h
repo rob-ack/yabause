@@ -36,9 +36,15 @@ public:
 
     MessageDialog& withCallback(const std::function<void(int)> &callback)
     { setCallback( callback ); return *this; }
+
+    Button * getOkBottn() {
+      return okButton; 
+    }
+    
 protected:
     std::function<void(int)> mCallback;
     Label *mMessageLabel;
+    Button * okButton;
 };
 
 NAMESPACE_END(nanogui)

@@ -21,14 +21,13 @@ Preference::Preference( const std::string & filename){
 
   std::string home_dir;
   getHomeDir(home_dir);
-  home_dir += "/.yabasanshiro/";
 
   this->filename = home_dir + input_trace_filename + ".config";
 
   LOG("Preference: opening %s\n", this->filename.c_str() );
 
   if (!fs::exists(this->filename)) {
-    if (filename == "") {
+    if (filename == "default") {
       json defaults;
       defaults["frame skip"] = false;
       defaults["Aspect rate"] = 0;
@@ -40,10 +39,12 @@ Preference::Preference( const std::string & filename){
       defaults["speed"] = 0;
       defaults["sound sync mode"] = "cpu";
       defaults["sound sync count per a frame"] = 4;
-      defaults["bios file"] = "";
+      defaults["bios file"] = "bios.bin";
       defaults["last play game path"] = "";
+      defaults["Full screen"] = true;
+      defaults["Show Fps"] = false;
       std::vector<string> gamedirs;
-      gamedirs.push_back(home_dir);
+      gamedirs.push_back(home_dir + "/games");
       json j_array(gamedirs);
       defaults["game directories"] = j_array;
       std::ofstream out(this->filename);
@@ -51,7 +52,7 @@ Preference::Preference( const std::string & filename){
       out.close();
     }
     else {
-      Preference default("");
+      Preference default("default");
       std::ofstream out(this->filename);
       out << default.j.dump(2);
       out.close();

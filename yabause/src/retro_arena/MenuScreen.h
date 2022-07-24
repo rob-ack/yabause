@@ -208,6 +208,7 @@ public:
     }
     void getSelectedGUID( int user_index, std::string & selguid );
 
+    void checkGameFiles(Widget * parent, const std::string & base_path);
 
     //void showSaveStateDialog( Widget * parent, Widget * toback );
     void setCurrentGameId( const std::string & id ){ cuurent_game_id_ = id; }

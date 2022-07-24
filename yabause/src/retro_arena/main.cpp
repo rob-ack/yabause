@@ -152,19 +152,19 @@ extern "C" {
 #endif
 
 
-  static SDL_Window* wnd;
-  static SDL_Window* subwnd;
-  static SDL_GLContext glc;
-  static SDL_GLContext subglc;
-  int g_EnagleFPS = 0;
-  int g_resolution_mode = 0;
-  int g_keep_aspect_rate = 0;
-  int g_scsp_sync = 32;
-  int g_frame_skip = 1;
-  int g_emulated_bios = 1;
-  bool g_full_screen = false;
-  InputManager* inputmng;
-  MenuScreen * menu;
+static SDL_Window* wnd;
+static SDL_Window* subwnd;
+static SDL_GLContext glc;
+static SDL_GLContext subglc;
+int g_EnagleFPS = 0;
+int g_resolution_mode = 0;
+int g_keep_aspect_rate = 0;
+int g_scsp_sync = 1;
+int g_frame_skip = 1;
+int g_emulated_bios = 1;
+bool g_full_screen = false;
+InputManager* inputmng;
+MenuScreen * menu;
 
   using std::string;
   string g_keymap_filename;
@@ -246,7 +246,7 @@ int yabauseinit()
   int res;
   yabauseinit_struct yinit = {};
 
-  Preference pre(cdpath);
+  Preference pre("default");
 
   yinit.m68kcoretype = M68KCORE_MUSASHI;
   yinit.percoretype = PERCORE_DUMMY;
@@ -328,7 +328,9 @@ void narrow(const std::wstring &src, std::string &dest) {
 void getHomeDir( std::string & homedir ) {
 #if defined(ARCH_IS_LINUX)
   homedir = getenv("HOME");
+  homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
+  /*
   WCHAR path[MAX_PATH];
   if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
     std::wstring tmp;
@@ -338,6 +340,8 @@ void getHomeDir( std::string & homedir ) {
   else {
     exit(-1);
   }
+  */
+  homedir = "./";
 #endif
 }
 
@@ -345,27 +349,26 @@ void getHomeDir( std::string & homedir ) {
 int main(int argc, char** argv)
 {
   inputmng = InputManager::getInstance();
-  
+
   //printf("\033[2J");
 
   // Inisialize home directory
   std::string home_dir;
   getHomeDir(home_dir);
-  home_dir += "/.yabasanshiro/";
-  struct stat st = {0};
+  struct stat st = { 0 };
   if (stat(home_dir.c_str(), &st) == -1) {
 #if defined(_WINDOWS)
     mkdir(home_dir.c_str());
 #else
     mkdir(home_dir.c_str(), 0700);
 #endif
-  } 
+  }
   std::string bckup_dir = home_dir + "/backup.bin";
-  strcpy( buppath, bckup_dir.c_str() );
-  strcpy( s_savepath, home_dir.c_str() );
+  strcpy(buppath, bckup_dir.c_str());
+  strcpy(s_savepath, home_dir.c_str());
   g_keymap_filename = home_dir + "/keymapv2.json";
 
-  Preference defpref("");
+  Preference defpref("default");
 
   std::string current_exec_name = argv[0]; // Name of the current exec program
   std::vector<std::string> all_args;
@@ -388,8 +391,12 @@ int main(int argc, char** argv)
   if (biosFilename != "") {
     g_emulated_bios = 0;
     strncpy(biospath, biosFilename.c_str(), 256);
+    if (fs::exists(biosFilename.c_str()) == false) {
+      g_emulated_bios = 1;
+      biosFilename = "";
+    }
   }
-  
+
   auto lastFilePath = defpref.getString("last play game path", "");
   if (lastFilePath != "") {
     strncpy(cdpath, lastFilePath.c_str(), 256);
@@ -399,8 +406,10 @@ int main(int argc, char** argv)
   g_keep_aspect_rate = defpref.getInt("Aspect rate", 0);
   g_scsp_sync = defpref.getInt("sound sync count per a frame", 4);
   g_frame_skip = defpref.getBool("frame skip", false);
+  g_full_screen = defpref.getBool("Full screen", false);
+  g_EnagleFPS = defpref.getBool("Show Fps", false);
 
-  for( int i=0; i<all_args.size(); i++ ){
+  for (int i = 0; i < all_args.size(); i++) {
     string x = all_args[i];
     if ((x == "-b" || x == "--bios") && (i + 1 < all_args.size())) {
       g_emulated_bios = 0;
@@ -421,18 +430,13 @@ int main(int argc, char** argv)
     else if ((x == "-nf" || x == "--no_frame_skip")) {
       g_frame_skip = 0;
     }
-    else if ((x == "-w" || x == "--window")) {
-      g_full_screen = false;
-    }
     else if ((x == "-v" || x == "--version")) {
       printf("YabaSanshiro version %s(%s)\n", YAB_VERSION, GIT_SHA1);
       return 0;
     }
-	}
+  }
 
   defpref.setString("last play game path", cdpath);
-
-  defpref->setString("last play game path", cdpath);
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
     printf("Fail to init SDL Bye! (%s)", SDL_GetError());
@@ -458,7 +462,6 @@ int main(int argc, char** argv)
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
-#if defined(__PC__) //|| defined(_WINDOWS)
   int width = 1280;
   int height = 720;
 
@@ -471,41 +474,17 @@ int main(int argc, char** argv)
 
   }
   else {
-
-    int targetDisplay = 0; // defpref->getInt("target display", 0);
-
-    // enumerate displays
-    int displays = SDL_GetNumVideoDisplays();
-    assert(displays > 1);  // assume we have secondary monitor
-
-    if (targetDisplay > displays || targetDisplay < 0 ) {
-      LOG("Display number is ecxeeded. force to use 0");
-      targetDisplay = 0;
-    }
-
-    // get display bounds for all displays
-    vector< SDL_Rect > displayBounds;
-    for (int i = 0; i < displays; i++) {
-      displayBounds.push_back(SDL_Rect());
-      SDL_GetDisplayBounds(i, &displayBounds.back());
-    }
-
-    int x = displayBounds[targetDisplay].x;
-    int y = displayBounds[targetDisplay].y;
-    int w = displayBounds[targetDisplay].w;
-    int h = displayBounds[targetDisplay].h;
-
     width = dsp.w;
     height = dsp.h;
-    wnd = SDL_CreateWindow("Yaba Snashiro", x, y,
-      w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+    wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP);
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;
     }
     SDL_ShowCursor(SDL_FALSE);
   }
-  SDL_ShowCursor(SDL_FALSE);
+  
 #if defined(_JETSON_)  
   subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
       width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN );
@@ -542,9 +521,18 @@ int main(int argc, char** argv)
   printf("version string: \"%s\"\n", glGetString(GL_VERSION));
   printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
+  Preference * p = nullptr;
+  p = new Preference("default");
+
+/*
   if (strlen(cdpath) <= 0 ) {
     strcpy(cdpath, home_dir.c_str());
+    p = new Preference(cdpath);
   }
+  else {
+    p = new Preference("default");
+  }
+*/
 
   SDL_GL_MakeCurrent(wnd, glc);
 
@@ -559,6 +547,8 @@ int main(int argc, char** argv)
       return -1;
   }
 
+  
+  VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
   
   VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
@@ -605,6 +595,18 @@ int main(int argc, char** argv)
   menu->setRepeatEventCode(evRepeat);
 
   std::string tmpfilename = home_dir + "tmp.png";
+
+  // 初期設定がされていない場合はメニューを表示する
+  if ( p->getBool("is first time",true) ) {
+    p->setBool("is first time", false);
+    SDL_Event event = {};
+    event.type = evToggleMenu;
+    event.user.code = 0;
+    event.user.data1 = 0;
+    event.user.data2 = 0;
+    SDL_PushEvent(&event);
+  }
+  delete p;
 
 #if defined(ARCH_IS_LINUX)
   struct sched_param thread_param;

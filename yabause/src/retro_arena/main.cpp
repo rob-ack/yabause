@@ -368,7 +368,7 @@ int main(int argc, char** argv)
   strcpy(s_savepath, home_dir.c_str());
   g_keymap_filename = home_dir + "/keymapv2.json";
 
-  Preference defpref("default");
+  Preference * defpref = new Preference("default");
 
   std::string current_exec_name = argv[0]; // Name of the current exec program
   std::vector<std::string> all_args;
@@ -387,7 +387,7 @@ int main(int argc, char** argv)
     }
   }
 
-  auto biosFilename = defpref.getString("bios file", "");
+  auto biosFilename = defpref->getString("bios file", "");
   if (biosFilename != "") {
     g_emulated_bios = 0;
     strncpy(biospath, biosFilename.c_str(), 256);
@@ -397,17 +397,17 @@ int main(int argc, char** argv)
     }
   }
 
-  auto lastFilePath = defpref.getString("last play game path", "");
+  auto lastFilePath = defpref->getString("last play game path", "");
   if (lastFilePath != "") {
     strncpy(cdpath, lastFilePath.c_str(), 256);
   }
 
-  g_resolution_mode = defpref.getInt("Resolution", 0);
-  g_keep_aspect_rate = defpref.getInt("Aspect rate", 0);
-  g_scsp_sync = defpref.getInt("sound sync count per a frame", 4);
-  g_frame_skip = defpref.getBool("frame skip", false);
-  g_full_screen = defpref.getBool("Full screen", false);
-  g_EnagleFPS = defpref.getBool("Show Fps", false);
+  g_resolution_mode = defpref->getInt("Resolution", 0);
+  g_keep_aspect_rate = defpref->getInt("Aspect rate", 0);
+  g_scsp_sync = defpref->getInt("sound sync count per a frame", 4);
+  g_frame_skip = defpref->getBool("frame skip", false);
+  g_full_screen = defpref->getBool("Full screen", false);
+  g_EnagleFPS = defpref->getBool("Show Fps", false);
 
   for (int i = 0; i < all_args.size(); i++) {
     string x = all_args[i];
@@ -436,7 +436,7 @@ int main(int argc, char** argv)
     }
   }
 
-  defpref.setString("last play game path", cdpath);
+  defpref->setString("last play game path", cdpath);
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
     printf("Fail to init SDL Bye! (%s)", SDL_GetError());
@@ -521,9 +521,6 @@ int main(int argc, char** argv)
   printf("version string: \"%s\"\n", glGetString(GL_VERSION));
   printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
 
-  Preference * p = nullptr;
-  p = new Preference("default");
-
 /*
   if (strlen(cdpath) <= 0 ) {
     strcpy(cdpath, home_dir.c_str());
@@ -548,7 +545,7 @@ int main(int argc, char** argv)
   }
 
   
-  VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
+  VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
   VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
@@ -597,8 +594,8 @@ int main(int argc, char** argv)
   std::string tmpfilename = home_dir + "tmp.png";
 
   // 初期設定がされていない場合はメニューを表示する
-  if ( p->getBool("is first time",true) ) {
-    p->setBool("is first time", false);
+  if (defpref->getBool("is first time",true) ) {
+    defpref->setBool("is first time", false);
     SDL_Event event = {};
     event.type = evToggleMenu;
     event.user.code = 0;
@@ -606,7 +603,7 @@ int main(int argc, char** argv)
     event.user.data2 = 0;
     SDL_PushEvent(&event);
   }
-  delete p;
+  delete defpref;
 
 #if defined(ARCH_IS_LINUX)
   struct sched_param thread_param;
@@ -735,6 +732,7 @@ int main(int argc, char** argv)
           strcpy( cdpath, (const char*)e.user.data1 );
           free(e.user.data1);
         }
+        Preference defpref("default");
         defpref.setString("last play game path", cdpath);
         Cs2ForceCloseTray(CDCORE_ISO, cdpath );
         hideMenuScreen();     

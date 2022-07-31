@@ -28,6 +28,8 @@
 #include <AL/alc.h>
 #endif
 
+#include "core.h"
+
 #include "threads.h"
 #include <stdlib.h>
 #include <string.h>

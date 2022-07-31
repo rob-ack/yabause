@@ -184,6 +184,9 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.resolution_mode = GetResolutionType();
     yinit.rotate_screen = GetIsRotateScreen();
     yinit.extend_backup = 1;
+    yinit.scsp_main_mode = 1;
+    yinit.use_cpu_affinity = 0;
+    yinit.use_sh2_cache = 1;
 
     res = YabauseInit(&yinit);
     if (res != 0) {

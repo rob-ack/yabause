@@ -1534,7 +1534,7 @@ opdesc LDC_SR_INC,	(12*4),0xff,0,0xff,0xff,0xff
 opfunc LDC_SR_INC
 mov     w1, #0  // m
 ldr     w5, [x19, x1] // w5 = R[m] 
-mov     w4, w1
+mov     w22, w1
 mov     w0, w5
 CALL_GETMEM_LONG
 bic     w0, w0, #12
@@ -1542,7 +1542,7 @@ lsl     w0, w0, #22
 lsr     w0, w0, #22  // SR = w0 & 0w000003f3;
 STR_SR  w0
 add     w5, w5, #4
-str     w5, [x19, x4]
+str     w5, [x19, x22]
 
 
 opdesc LDCGBR,	12,0xff,0,0xff,0xff,0xff
@@ -1657,25 +1657,25 @@ str     w2, [x19]
 
 opdesc MOVWI,	40,0xff,0,0xff,4,0xff
 opfunc MOVWI
-mov w4, #0 // n
+mov w22, #0 // n
 mov w2, #0 // disp
 mov w1, w20 // GET PC
 add w1, w1, w2, lsl #1 // PC += (disp << 1)
 add w0, w1, #4  // PC += 4
 CALL_GETMEM_WORD
 sxth w0,w0
-str w0, [x19, x4] // R[n] = readval
+str w0, [x19, x22] // R[n] = readval
 
 opdesc MOVLI,  36,0xff,0,0xff,4,0xff
 opfunc MOVLI
-mov w4, #0 // n
+mov w22, #0 // n
 mov w2, #0 // disp
 mov w1, w20 // GET PC
 add w1, w1, #4
 bic w1, w1, #3
 add w0, w1, w2, lsl #2 // read addr
 CALL_GETMEM_LONG
-str w0, [x19, x4] // R[n] = readval
+str w0, [x19, x22] // R[n] = readval
 
 
 opdesc MOVBL4, (8*4),0,0xff,4,0xff,0xff
@@ -2125,11 +2125,11 @@ mov w0, #0
 mov w1, #0
 mov w6, w0 
 ldr w0, [x19, x1]
-mov w4, w1
+mov w22, w1
 CALL_GETMEM_LONG
-ldr w3, [x19, x4]
+ldr w3, [x19, x22]
 add w3, w3, #4
-str w3, [x19, x4]
+str w3, [x19, x22]
 mov w4, #0
 mov w5, w0 
 ldr w0, [x19, x6]

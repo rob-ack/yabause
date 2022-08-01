@@ -54,6 +54,15 @@ using namespace std;
 #define MENU_LOG printf
 
 
+extern int g_EnagleFPS;
+extern int g_resolution_mode;
+extern int g_keep_aspect_rate;
+extern int g_rotate_resolution_mode;
+extern int g_scsp_sync;
+extern int g_frame_skip;
+extern int g_emulated_bios;
+
+
 int MenuScreen::onShow(){
   //setupPlayerPsuhButton( 0, player1, "Player1 Input Settings", &p1cb );
   //setupPlayerPsuhButton( 1, player2, "Player2 Input Settings", &p2cb );
@@ -296,7 +305,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Resolution",0) );
+  cb->setSelectedIndex( preference->getInt("Resolution",g_resolution_mode) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Resolution",idx);
@@ -316,7 +325,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Aspect rate",0) );
+  cb->setSelectedIndex( preference->getInt("Aspect rate",g_keep_aspect_rate) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Aspect rate",idx);
@@ -336,7 +345,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     pushActiveMenu(cbpopup, cb );
   });
 
-  cb->setSelectedIndex( preference->getInt("Rotate screen resolution",0) );
+  cb->setSelectedIndex( preference->getInt("Rotate screen resolution",g_rotate_resolution_mode) );
   cb->setCallbackSelect([this,preference]( int idx ) {
     popActiveMenu();
     preference->setInt("Rotate screen resolution",idx);
@@ -660,9 +669,9 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
       int itenindex = 0;
       std::string device_name = "Keyboard";
       string guid_only = "-1";
-      cuurent_deviceguid_ = "Keyboard_-1";
+      cuurent_deviceguid_ = "-1_Keyboard_-1";
       if( idx >= joysticks_.size() ){
-        cuurent_deviceguid_ = "Keyboard_-1"; // keyboard may be
+        cuurent_deviceguid_ = "-1_Keyboard_-1"; // keyboard may be
       }else{
         for( auto it = joysticks_.begin(); it != joysticks_.end() ; ++it ) {
           if( itenindex == idx ){
@@ -860,28 +869,28 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   b = new Button(popup, "Analog X");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "Keyboard_-1" ){
+    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1" ){
       showInputCheckDialog("analogx");
     }
   });   
   b = new Button(popup, "Analog Y");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "Keyboard_-1" ){
+    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1" ){
       showInputCheckDialog("analogy");
     }
   });   
   b = new Button(popup, "Analog L");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "Keyboard_-1"){
+    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1"){
       showInputCheckDialog("analogl");
     }
   });   
   b = new Button(popup, "Analog R");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "Keyboard_-1"){
+    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1"){
       showInputCheckDialog("analogr");
     }
   });   
@@ -1077,7 +1086,7 @@ void MenuScreen::setCurrentInputDevices( std::map<SDL_JoystickID, SDL_Joystick*>
       itemsShort.push_back(SDL_JoystickName(joy));
   }  
   itemsShort.push_back("KeyBoard");
-  items.push_back("Keyboard_-1");
+  items.push_back("-1_Keyboard_-1");
   itemsShort.push_back("Disable");
   items.push_back("Disable_-2");
 

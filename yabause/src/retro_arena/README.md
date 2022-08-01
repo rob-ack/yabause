@@ -4,7 +4,11 @@
 
 ### Get Source Code
 
+
+
 ```
+$ apt update 
+$ apt install -y git python-pip cmake build-essential protobuf-compiler libprotobuf-dev libsecret-1-dev libssl-dev libsdl2-dev libboost-all-dev 
 $ git clone https://github.com/devmiyax/yabause.git
 $ cd yabause
 $ git submodule update --init --recursive
@@ -118,3 +122,45 @@ Sample file format
 | start                 | start |
 
 'select' is force to mapped as 'Show/Hide Menu' button
+
+
+## Retropie on Raspberry PI 4
+
+### Build and Install
+
+```
+$ cmake ../yabause -DGIT_EXECUTABLE=/usr/bin/git -DYAB_PORTS=retro_arena -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_ARM7=ON -DCMAKE_TOOLCHAIN_FILE=../yabause/src/retro_arena/pi4.cmake -DCMAKE_INSTALL_PREFIX=/opt/retropie/emulators/yabause/
+$ make 
+$ sudo make install
+```
+
+### Setup 
+
+* Copy cue or chd format files to /home/pi/RetroPie/roms/saturn/
+
+* Add these lines to /etc/emulationstation/es_systems.cfg and reboot
+
+```xml
+  <system>
+    <name>saturn</name>
+    <fullname>Sega Saturn</fullname>
+    <path>/home/pi/RetroPie/roms/saturn</path>
+    <extension>.cue .CUE .chd .CHD </extension>
+    <command>/opt/retropie/emulators/yabause/yabasanshiro -i "%ROM_RAW%"</command>
+    <platform>saturn</platform>
+    <theme>saturn</theme>
+  </system> 
+```
+
+### RetroPie Setup 
+
+You can also use RetroPie setup command.
+
+```markdown
+cd ~/RetroPie-Setup/scriptmodules/
+wget https://raw.githubusercontent.com/devmiyax/yabause/b96dbd2393a3f9482d37344fd5d1c60fa68cac35/yabause/src/retro_arena/yabasanshiro.sh
+chmod 755 yabasanshiro.sh
+cd ~/RetroPie-Setup/
+sudo ./retropie_setup.sh
+```
+

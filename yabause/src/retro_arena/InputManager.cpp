@@ -113,11 +113,11 @@ uint32_t genid( int user, int joyId, const Input & result ){
 
 uint32_t genidjson( int user, int joyId, const json & result ){
 
-  PADLOG("Keymap: user %d, joyid %d, type %s, id %d, val %d\n", 0, joyId, 
-  result["type"].get<string>().c_str(), 
-  result["id"].get<int>(),
-  result["value"].get<int>()
-  );
+ // PADLOG("Keymap: user %d, joyid %d, type %s, id %d, val %d\n", 0, joyId, 
+ // result["type"].get<string>().c_str(), 
+ // result["id"].get<int>(),
+ // result["value"].get<int>()
+ // );
 
   if( result["type"] == "axis" ){
     if( result["value"].get<int>() < 0 ){
@@ -130,6 +130,7 @@ uint32_t genidjson( int user, int joyId, const json & result ){
   }else if( result["type"] == "key" ){
     return result["id"].get<int>() | KEYBOARD_MASK ;
   }
+  
   return MAKE_PAD(0,((joyId << 18)|result["id"].get<int>()));
 }
 
@@ -164,8 +165,8 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
       InputManager::getInstance()->_analogType[joyId] = 0;
     }
     if( player.find("analogy") != player.end()) {
-        PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
-        InputManager::getInstance()->_analogType[joyId] = 0; 
+      PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
+      InputManager::getInstance()->_analogType[joyId] = 0; 
     }
     if( player.find("analogleft") != player.end()) {
       PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS4, padbits);
@@ -1034,7 +1035,7 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
       //}
     }
 
-    menu_layer_->onRawInputEvent(*this,"Keyboard_-1", "key",ev.key.keysym.sym,1);
+    menu_layer_->onRawInputEvent(*this,"-1_Keyboard_-1", "key",ev.key.keysym.sym,1);
 
     if( mKeyboardInputConfig )  {
       evstr = mKeyboardInputConfig->getMappedTo(Input(DEVICE_KEYBOARD, TYPE_KEY, ev.key.keysym.sym, 1, false));

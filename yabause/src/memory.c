@@ -65,6 +65,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "yabause.h"
 #include "yui.h"
 #include "movie.h"
+#include "bios.h"
 
 //#ifdef HAVE_LIBGL
 //#define USE_OPENGL
@@ -97,13 +98,17 @@ readbytefunc ReadByteList[0x1000];
 readwordfunc ReadWordList[0x1000];
 readlongfunc ReadLongList[0x1000];
 
+#define EXTENDED_BACKUP_SIZE 0x00800000
+#define EXTENDED_BACKUP_ADDR 0x08000000
+
+u32 tweak_backup_file_addr = EXTENDED_BACKUP_ADDR;
+u32 tweak_backup_file_size = EXTENDED_BACKUP_SIZE;
+static const char* bupfilename = NULL;
+
 u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
-
-extern int tweak_backup_file_size;
-extern u32 tweak_backup_file_addr;
 
 /* This flag is set to 1 on every write to backup RAM.  Ports can freely
  * check or clear this flag to determine when backup RAM has been written,
@@ -734,7 +739,7 @@ void MappedMemoryInit()
                                 &HighWramMemoryWriteByte,
                                 &HighWramMemoryWriteWord,
                                 &HighWramMemoryWriteLong);
-   FillMemoryArea( ((tweak_backup_file_addr >> 16) & 0xFFF) , 0x7ff, &BupRamMemoryReadByte,
+   FillMemoryArea(((tweak_backup_file_addr >> 16) & 0xFFF), (((tweak_backup_file_addr + (tweak_backup_file_size << 1)) >> 16) & 0xFFF) + 1, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
@@ -1394,6 +1399,82 @@ int MappedMemoryLoadExec(const char *filename, u32 pc)
 
    return 0;
 }
+
+//////////////////////////////////////////////////////////////////////////////
+
+int BackupHandled(SH2_struct* sh, u32 addr) {
+    if ((addr & 0xFFFFF) == 0x7d600) {
+        if (sh == NULL) return 1;
+        BiosBUPInit(sh);
+        return 1;
+    }
+    if (((addr & 0xFFFFF) >= 0x0384 && (addr & 0xFFFFF) <= 0x03A8) || ((addr & 0xFFFFF) == 0x358)) {
+        if (sh == NULL) return 1;
+        return BiosHandleFunc(sh); //replace by NOP
+    }
+    return 0;
+}
+
+int isBackupHandled(u32 addr) {
+    return(((addr & 0xFFFFF) == 0x7d600) || (((addr & 0xFFFFF) >= 0x0384 && (addr & 0xFFFFF) <= 0x03A8) || ((addr & 0xFFFFF) == 0x358)));
+}
+
+int BackupInit(const char* path, int extended) {
+    int currentSaveSize = TSize(path);
+    int forceFormat = 0;
+    if (currentSaveSize != -1) {
+        int isNormalSize = (currentSaveSize == 0x8000);
+        int isExtendedSize = (currentSaveSize == EXTENDED_BACKUP_SIZE);
+        if (extended && isNormalSize) {
+            extended = 0; //Force to use small save format
+//            YuiMsg("Internal backup file format is detected as standard save format - Force to use standard save format\n");
+        }
+        if (!extended && isExtendedSize) {
+            extended = 1; //Force to use large save format
+//            YuiMsg("Internal backup file format is detected as extended save format - Force to use extended save format\n");
+        }
+        if (!((!extended && isNormalSize) || (extended && isExtendedSize))) {
+//            YuiMsg("Internal backup file format is bad - Force format to %s save format\n", (extended ? "extended" : "standard"));
+            forceFormat = 1; //Size is not the good one - Format
+        }
+    }
+    if (!extended) {
+        tweak_backup_file_addr = 0x00180000;
+        tweak_backup_file_size = 0x8000;
+    }
+    else {
+        tweak_backup_file_addr = EXTENDED_BACKUP_ADDR;
+        tweak_backup_file_size = EXTENDED_BACKUP_SIZE;
+    }
+
+    if ((BupRam = T1MemoryInit(tweak_backup_file_size)) == NULL)
+        return -1;
+
+    if ((LoadBackupRam(path) != 0) || (forceFormat))
+        FormatBackupRam(BupRam, tweak_backup_file_size);
+    BupRamWritten = 0;
+    bupfilename = path;
+    return 0;
+}
+
+void BackupFlush() {
+    if (BupRam)
+    {
+        if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
+            YabSetError(YAB_ERR_FILEWRITE, (void*)bupfilename);
+    }
+}
+
+void BackupDeinit() {
+    if (BupRam)
+    {
+        if (T123Save(BupRam, tweak_backup_file_size, 1, bupfilename) != 0)
+            YabSetError(YAB_ERR_FILEWRITE, (void*)bupfilename);
+        T1MemoryDeInit(BupRam);
+    }
+    BupRam = NULL;
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 

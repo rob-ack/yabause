@@ -216,6 +216,26 @@ extern "C" {
 #endif
   }
 
+  static INLINE int TSize(const char* filename) {
+      FILE* fp;
+      u32 filesize;
+
+      if (!filename)
+          return -1;
+
+      if ((fp = fopen(filename, "rb")) == NULL) {
+          return -1;
+      }
+
+      // Calculate file size
+      fseek(fp, 0, SEEK_END);
+      filesize = ftell(fp);
+      fseek(fp, 0, SEEK_SET);
+
+      fclose(fp);
+      return filesize;
+  }
+
   static INLINE int T123Load(void * mem, u32 size, int type, const char *filename)
   {
     FILE *fp;
@@ -449,6 +469,10 @@ int ExtendBackupFile(FILE *fp, u32 size );
 void FormatBackupRamFile(FILE *fp, u32 size);
 void FormatBackupRam(void *mem, u32 size);
 int CheckBackupFile(FILE *fp);
+
+int BackupInit(const char* path, int extended);
+void BackupFlush();
+void BackupDeinit();
 
 #ifdef __cplusplus
 }

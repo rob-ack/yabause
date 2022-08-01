@@ -49,8 +49,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "yabause.h"
 #include "error.h"
 
-const u32 tweak_backup_file_addr = 0x06300000;
-const int tweak_backup_file_size = 1024 * 1024 * 8;
+extern u32 tweak_backup_file_addr;
+extern u32 tweak_backup_file_size;
 
 static u8 sh2masklist[0x20] = {
 0xF0, 0xE0, 0xD0, 0xC0, 0xB0, 0xA0, 0x90, 0x80,
@@ -483,16 +483,9 @@ static u32 GetDeviceStats(u32 device, u32 *size, u32 *addr, u32 *blocksize)
    switch(device)
    {
       case 0:
-        if (yabsys.extend_backup) {
-          *addr = tweak_backup_file_addr | 0x20000000;
+          *addr = tweak_backup_file_addr;
           *size = tweak_backup_file_size;
           *blocksize = 0x40;
-        }
-        else {
-          *addr      = 0x20180000;
-          *size      = 0x800;
-          *blocksize = 0x40;
-        }
         return 0;
       case 1:
          if ((CartridgeArea->cartid & 0xF0) == 0x20)

@@ -415,7 +415,7 @@ extern "C"
   u32 memGetLongNoCache(u32);
 }
 
-#ifdef _WINDOWS
+#if defined _WINDOWS && defined MSVC && defined _M_X86
 
 #define dynaLock() __asm {                         \
     __asm push edx /*__asm push ebx*/ \

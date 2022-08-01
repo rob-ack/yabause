@@ -10,6 +10,8 @@ cmake_minimum_required(VERSION 2.8)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
 
 set(yabause_HEADERS
 	bios.h
@@ -37,8 +39,10 @@ option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fomit-frame-pointer -DJSONCPP_NO_LOCALE_SUPPORT")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer -DJSONCPP_NO_LOCALE_SUPPORT")
 		
+string(COMPARE EQUAL ${YAB_PORTS} "libretro" IS_LIBRETRO_PORT)
+
 set(yabause_SOURCES
 	bios.c
 	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
@@ -61,9 +65,20 @@ set(yabause_SOURCES
 	BackupManager.cpp
 	jsoncpp.cpp
 	cd-web.cpp
-	PlayRecorder.cpp
-	sh2cache.c )
-	add_definitions(-DIMPROVED_SAVESTATES)
+	sh2cache.c 
+)
+	
+if(IS_LIBRETRO_PORT)
+	add_definitions(
+		-D__LIBRETRO__
+	)
+else()
+	set(yabause_SOURCES ${yabause_SOURCES} 
+		PlayRecorder.cpp
+	)
+endif()
+
+add_definitions(-DIMPROVED_SAVESTATES)
 
 if (ANDROID)
 	add_definitions(-D__ANDROID__)
@@ -71,7 +86,6 @@ if (ANDROID)
 	add_definitions(-DYAB_PORT_OSD)
 	add_definitions(-D_OGLES3_)
 	add_definitions(-DYAB_ASYNC_RENDERING)
-	add_definitions(-DYAB_PORT_OSD)
 	include_directories( ./ ./nanovg )	
 	include_directories( ./vulkan/include )
 	#include_directories( ${ANDROID_NDK}/sources/third_party/vulkan/src/include)
@@ -91,7 +105,6 @@ if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")
 add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
 #add_definitions(-DYAB_ASYNC_RENDERING)
-add_definitions(-DYAB_PORT_OSD)
 include_directories(./ ./nanovg)		
 set(yabause_SOURCES
 	${yabause_SOURCES}
@@ -171,7 +184,7 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 		if (MSVC) # NASM
 	  	set(YABAUSE_LIBRARIES 
 			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib )
+			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib.obj )
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
@@ -343,13 +356,19 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			add_definitions(-D_OGL3_)
 			set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
 		endif()
-		include_directories(./ ./nanovg)
-		set(yabause_SOURCES ${yabause_SOURCES} 
-			nanovg/nanovg.c 
-			nanovg/nanovg_osdcore.h 
-			nanovg/nanovg_osdcore.c
-		)
-		add_definitions(-DYAB_PORT_OSD)
+		
+		include_directories(./)
+		
+		if(IS_LIBRETRO_PORT)
+		else()
+			include_directories(./nanovg)
+			set(yabause_SOURCES ${yabause_SOURCES} 
+				nanovg/nanovg.c 
+				nanovg/nanovg_osdcore.h 
+				nanovg/nanovg_osdcore.c
+			)
+			add_definitions(-DYAB_PORT_OSD)
+		endif()
 		
 		include(FindGLUT)
 		if (GLUT_FOUND)

@@ -124,10 +124,10 @@ extern PFNGLPATCHPARAMETERIPROC glPatchParameteri;
   #if defined(_USEGLEW_)
     #include <GL/glew.h>
     #include <GL/gl.h>
-    #include "glext.h"
+    #include <GL/glext.h>
 #else
     #include <GL/gl.h>
-    #include "glext.h"
+    #include <GL/glext.h>
     extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 #endif
 

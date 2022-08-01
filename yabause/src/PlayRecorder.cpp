@@ -95,7 +95,7 @@ PlayRecorder * PlayRecorder::instance = NULL;
 
 #ifdef _WINDOWS
 #include <filesystem>
-namespace fs = experimental::filesystem;
+namespace fs = std::filesystem;
 extern "C" int YabMakeCleanDir(const char * dirname) {
   fs::remove_all(dirname);
   if (fs::create_directories(dirname) == false) {

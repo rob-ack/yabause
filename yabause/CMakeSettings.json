@@ -1,0 +1,220 @@
+﻿{
+  "configurations": [
+    {
+      "name": "x64-Debug-qt",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "variables": [
+        {
+          "name": "YAB_WANT_DYNAREC_DEVMIYAX",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "SH2_TRACE",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SDL",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
+    },
+    {
+      "name": "x64-Debug-libretro",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        {
+          "name": "YAB_WANT_DYNAREC_DEVMIYAX",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "SH2_TRACE",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_PORTS",
+          "value": "libretro",
+          "type": "STRING"
+        }
+      ]
+    },
+    {
+      "name": "x86-Debug-libretro",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x86_x64" ],
+      "variables": [
+        {
+          "name": "YAB_WANT_DYNAREC_DEVMIYAX",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "SH2_TRACE",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_PORTS",
+          "value": "libretro",
+          "type": "STRING"
+        },
+        {
+          "name": "YAB_WANT_SDL",
+          "value": "False",
+          "type": "BOOL"
+        }
+      ]
+    },
+    {
+      "name": "x86-Debug-qt",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x86" ],
+      "variables": [
+        {
+          "name": "YAB_WANT_DYNAREC_DEVMIYAX",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "SH2_TRACE",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SDL",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "Qt5_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Core_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Core",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Gui_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Gui",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Multimedia_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Multimedia",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Network_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Network",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5OpenGL_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5OpenGL",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Positioning_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Positioning",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5PrintSupport_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5PrintSupport",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Qml_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Qml",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Quick_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Quick",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5WebChannel_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5WebChannel",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5WebEngineCore_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5WebEngineCore",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5WebEngineWidgets_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5WebEngineWidgets",
+          "type": "PATH"
+        },
+        {
+          "name": "Qt5Widgets_DIR",
+          "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Widgets",
+          "type": "PATH"
+        }
+      ]
+    },
+    {
+      "name": "x86-Clang-Debug-qt",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "clang_cl_x86" ]
+    }
+  ]
+}

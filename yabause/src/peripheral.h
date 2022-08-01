@@ -311,10 +311,14 @@ void PerGunMove(PerGun_struct * gun, s32 dispx, s32 dispy);
 //#include <sys/stat.h>
 //#include <unistd.h>
 
+#if !defined __LIBRETRO__
+
 void PlayRecorder_proc( u32 framecount );
 int PlayRecorder_getStatus();
 //int PlayRecorder_getVirtualTime(time_t * t );
 void PlayRecorder_setPlayMode( const char * dir, yabauseinit_struct *init  );
+
+#endif
 
 #if defined (__cplusplus)
 }

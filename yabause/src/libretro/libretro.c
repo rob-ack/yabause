@@ -32,6 +32,10 @@
 #include "vidsoft.h"
 #include "ygl.h"
 
+#if defined WIN32
+#include "compat/msvc.h"
+#endif
+
 yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
@@ -564,7 +568,7 @@ void retro_set_resolution()
    }
    current_width = game_width * resolution_mode;
    current_height = game_height * resolution_mode;
-   VIDCore->Resize(0, 0, current_width, current_height, 0);
+   VIDCore->Resize(0, 0, current_width, current_height, 0, true);
    retro_reinit_av_info();
    VIDCore->SetSettingValue(VDP_SETTING_RESOLUTION_MODE, g_resolution_mode);
 }

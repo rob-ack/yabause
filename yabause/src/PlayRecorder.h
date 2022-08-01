@@ -1,3 +1,5 @@
+#pragma once
+
 /*
         Copyright 2019 devMiyax(smiyaxdev@gmail.com)
 

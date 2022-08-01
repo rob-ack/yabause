@@ -42,6 +42,9 @@ set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer -DJSONCPP_NO_LOCALE_SUPPORT")
 		
 string(COMPARE EQUAL ${YAB_PORTS} "libretro" IS_LIBRETRO_PORT)
+if(NOT DEFINED IS_LIBRETRO_PORT)
+	set(IS_LIBRETRO_PORT FALSE)
+endif()
 
 set(yabause_SOURCES
 	bios.c
@@ -359,8 +362,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		
 		include_directories(./)
 		
-		if(IS_LIBRETRO_PORT)
-		else()
+		if(NOT IS_LIBRETRO_PORT)
 			include_directories(./nanovg)
 			set(yabause_SOURCES ${yabause_SOURCES} 
 				nanovg/nanovg.c 

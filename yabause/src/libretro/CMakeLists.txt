@@ -67,6 +67,7 @@ if(HAVE_CDROM)
 		${LIBRETRO_COMM_DIR}/lists/dir_list.c 
 		${LIBRETRO_COMM_DIR}/string/stdstring.c
 		${LIBRETRO_COMM_DIR}/file/retro_dirent.c
+		${SOURCE_DIR}/cd-libretro.c
 	)
 endif()
 

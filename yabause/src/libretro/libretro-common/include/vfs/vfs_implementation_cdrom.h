@@ -1,7 +1,7 @@
-/* Copyright  (C) 2010-2018 The RetroArch team
+/* Copyright  (C) 2010-2019 The RetroArch team
  *
  * ---------------------------------------------------------------------------------------
- * The following license statement only applies to this file (fopen_utf8.c).
+ * The following license statement only applies to this file (vfs_implementation_cdrom.h).
  * ---------------------------------------------------------------------------------------
  *
  * Permission is hereby granted, free of charge,
@@ -20,39 +20,33 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <compat/fopen_utf8.h>
-#include <encodings/utf.h>
-#include <stdio.h>
-#include <stdlib.h>
+#ifndef __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
+#define __LIBRETRO_SDK_VFS_IMPLEMENTATION_CDROM_H
 
-#if defined(_WIN32_WINNT) && _WIN32_WINNT < 0x0500 || defined(_XBOX)
-#ifndef LEGACY_WIN32
-#define LEGACY_WIN32
-#endif
-#endif
+#include <vfs/vfs.h>
+#include <cdrom/cdrom.h>
 
-#ifdef _WIN32
-#undef fopen
+RETRO_BEGIN_DECLS
 
-void *fopen_utf8(const char * filename, const char * mode)
-{
-#if defined(LEGACY_WIN32)
-   FILE             *ret = NULL;
-   char * filename_local = utf8_to_local_string_alloc(filename);
+int64_t retro_vfs_file_seek_cdrom(libretro_vfs_implementation_file *stream, int64_t offset, int whence);
 
-   if (!filename_local)
-      return NULL;
-   ret = fopen(filename_local, mode);
-   if (filename_local)
-      free(filename_local);
-   return ret;
-#else
-   wchar_t * filename_w = utf8_to_utf16_string_alloc(filename);
-   wchar_t * mode_w = utf8_to_utf16_string_alloc(mode);
-   FILE* ret = _wfopen(filename_w, mode_w);
-   free(filename_w);
-   free(mode_w);
-   return ret;
-#endif
-}
+void retro_vfs_file_open_cdrom(
+      libretro_vfs_implementation_file *stream,
+      const char *path, unsigned mode, unsigned hints);
+
+int retro_vfs_file_close_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_tell_cdrom(libretro_vfs_implementation_file *stream);
+
+int64_t retro_vfs_file_read_cdrom(libretro_vfs_implementation_file *stream,
+      void *s, uint64_t len);
+
+int retro_vfs_file_error_cdrom(libretro_vfs_implementation_file *stream);
+
+const cdrom_toc_t* retro_vfs_file_get_cdrom_toc(void);
+
+const vfs_cdrom_t* retro_vfs_file_get_cdrom_position(const libretro_vfs_implementation_file *stream);
+
+RETRO_END_DECLS
+
 #endif

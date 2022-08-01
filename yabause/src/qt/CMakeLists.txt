@@ -337,14 +337,16 @@ endif()
 
 yab_port_success(yabause-qt)
 
-# copy need files for running
+# copy need files for running. 
+# BEWARE. if the wrong files are copied, the port will not run and probably also not giving you an indication that the dlls are not matching (most likely error 0xc000007b).
+# this can happen if windeployqt just passes dlls it finds on its own instead of passing the correct ones used during the build (i.e. this can happen when you use x86 vs but have a QTDIR env var which point to x64 dlls).
 if(WIN32)
-
 
 add_custom_command(
 	TARGET yabause-qt
 	POST_BUILD
-	COMMAND ${QT_BINARY_DIR}/windeployqt.exe ${CMAKE_CURRENT_BINARY_DIR}/$<CONFIGURATION>/${YAB_PORT_NAME}.exe
+	env QTDIR=${QT_BINARY_DIR} #this is to prevent the above described problem
+	COMMAND ${QT_BINARY_DIR}/windeployqt.exe --no-translations ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.exe
 )
 
 endif()

@@ -20,8 +20,8 @@ rp_module_section="exp"
 rp_module_flags="!all rpi4 !videocore"
 
 function depends_yabasanshiro() {
-#    local depends=(cmake pkg-config python-pip protobuf-compiler libprotobuf-dev libsecret-1-dev libssl-dev libsdl2-dev libboost-all-dev)
-#    getDepends "${depends[@]}"
+    local depends=(cmake pkg-config libsecret-1-dev libssl-dev libsdl2-dev libboost-all-dev)
+    getDepends "${depends[@]}"
 }
 
 function sources_lr-yabasanshiro() {
@@ -44,7 +44,7 @@ function build_lr-yabasanshiro() {
 #    make clean
 #    make "${params[@]}"
 #    md_ret_require="$md_build/yabause/src/libretro/yabasanshiro_libretro.so"
-    cd yabause/
+    cd yabause
     rm -f ./out/CMakeCache.txt
     cmake -DYAB_PORTS:STRING="libretro" -DYAB_USE_QT5:BOOL=False -DSH2_DYNAREC:BOOL=False -DSH2_TRACE:BOOL=False -S . -B ./out
     cmake --build ./out --config Release -- -j4

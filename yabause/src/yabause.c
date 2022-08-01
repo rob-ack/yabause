@@ -438,17 +438,7 @@ int YabauseInit(yabauseinit_struct *init)
 
 void YabFlushBackups(void)
 {
-  if (BupRam)
-  {
-    if (yabsys.extend_backup) {
-    //  YabFreeMap(BupRam);
-    }
-    else {
-      if (T123Save(BupRam, 0x10000, 1, bupfilename) != 0)
-        YabSetError(YAB_ERR_FILEWRITE, (void *)bupfilename);
-      T1MemoryDeInit(BupRam);
-    }
-  }
+  BackupFlush();
   CartFlush();
 }
 

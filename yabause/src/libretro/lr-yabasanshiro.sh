@@ -8,6 +8,7 @@
 # See the LICENSE.md file at the top-level directory of this distribution and
 # at https://raw.githubusercontent.com/RetroPie/RetroPie-Setup/master/LICENSE.md
 #
+# this file is supposed to reside in /home/pi/RetroPie-Setup/scriptmodules/libretrocores
 
 rp_module_id="lr-yabasanshiro"
 rp_module_desc="SEGA Saturn emulator Yaba Sanshiro 2"

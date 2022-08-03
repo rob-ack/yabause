@@ -605,8 +605,24 @@ void SyncCPUtoSCSP();
 u64 getM68KCounter();
 u64 g_m68K_dec_cycle = 0;
 
+#if defined CV_SUPPORT
+#include "cvmarkers.h"
+PCV_MARKERSERIES series;
+PCV_PROVIDER provider;
+#endif
 
 int YabauseEmulate(void) {
+#if defined CV_SUPPORT
+    static once = false;
+    if (!once)
+    {
+        CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series);
+        once = true;
+}
+    PCV_SPAN spanFrame;
+    CvEnterSpan(series, &spanFrame, L"Frame");
+#endif
+
    int oneframeexec = 0;
    yabsys.frame_count++;
 
@@ -872,6 +888,10 @@ int YabauseEmulate(void) {
    SSH2->onchip.cache.read_hit_count = 0;
    SSH2->onchip.cache.read_miss_count = 0;
    SSH2->onchip.cache.write_count = 0;
+#endif
+
+#if defined CV_SUPPORT
+   CvLeaveSpan(spanFrame);
 #endif
 
    return 0;

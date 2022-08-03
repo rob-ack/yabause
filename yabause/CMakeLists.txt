@@ -67,6 +67,7 @@ function(assign_source_group)
     endforeach()
 endfunction(assign_source_group)
 
+include(CMake/Options/CMakeLists.txt)
 add_subdirectory(doc)
 add_subdirectory(l10n)
 add_subdirectory(src)

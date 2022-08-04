@@ -130,7 +130,7 @@
         },
         {
           "name": "YAB_WANT_SDL",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {

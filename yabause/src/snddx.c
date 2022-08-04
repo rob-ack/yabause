@@ -78,7 +78,7 @@ static u32 soundbufsize;
 static LONG soundvolume;
 static int issoundmuted;
 
-HWND DXGetWindow ();
+extern HWND DXGetWindow(void);
 
 HMIDIIN indevice=NULL;
 HMIDIOUT outdevice=NULL;

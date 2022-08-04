@@ -37,10 +37,10 @@
 #include "debug.h"
 #include "persdljoy.h"
 
-#define SDL_MAX_AXIS_VALUE 0x110000
-#define SDL_MIN_AXIS_VALUE 0x100000
 #define SDL_HAT_VALUE 0x200000
-#define SDL_MEDIUM_AXIS_VALUE (int)(32768 / 2)
+#define SDL_PERSF_AXIS_VALUE 0x4000
+#define SDL_PERSF_HAT_MAX_VALUE 0x110000
+#define SDL_PERSF_HAT_MIN_VALUE 0x100000
 #define SDL_BUTTON_PRESSED 1
 #define SDL_BUTTON_RELEASED 0
 
@@ -91,6 +91,7 @@ int PERSDLJoyInit(void) {
    SDL_SetMainReady();
 #endif
 
+//YuiMsg("µSDL joy init\n");
 	// init joysticks
 	if ( SDL_InitSubSystem( SDL_INIT_JOYSTICK ) == -1 )
 	{
@@ -102,7 +103,7 @@ int PERSDLJoyInit(void) {
 	
 	// open joysticks
 	SDL_PERCORE_JOYSTICKS_INITIALIZED = SDL_NumJoysticks();
-	SDL_PERCORE_JOYSTICKS = malloc(sizeof(PERSDLJoystick) * SDL_PERCORE_JOYSTICKS_INITIALIZED);
+	SDL_PERCORE_JOYSTICKS = (PERSDLJoystick*)malloc(sizeof(PERSDLJoystick) * SDL_PERCORE_JOYSTICKS_INITIALIZED);
 	for ( i = 0; i < SDL_PERCORE_JOYSTICKS_INITIALIZED; i++ )
 	{
 		SDL_Joystick* joy = SDL_JoystickOpen( i );
@@ -110,8 +111,8 @@ int PERSDLJoyInit(void) {
 		SDL_JoystickUpdate();
 		
 		SDL_PERCORE_JOYSTICKS[ i ].mJoystick = joy;
-		SDL_PERCORE_JOYSTICKS[ i ].mScanStatus = joy ? malloc(sizeof(s16) * SDL_JoystickNumAxes( joy )) : 0;
-		SDL_PERCORE_JOYSTICKS[ i ].mHatStatus = joy ? malloc(sizeof(Uint8) * SDL_JoystickNumHats( joy )) : 0;
+		SDL_PERCORE_JOYSTICKS[ i ].mScanStatus = joy ? (s16*)malloc(sizeof(s16) * SDL_JoystickNumAxes( joy )) : 0;
+		SDL_PERCORE_JOYSTICKS[ i ].mHatStatus = joy ? (Uint8*)malloc(sizeof(Uint8) * SDL_JoystickNumHats( joy )) : 0;
 		
 		if ( joy )
 		{
@@ -174,11 +175,6 @@ int PERSDLJoyHandleEvents(void) {
 	Uint8 newHatState;
 	Uint8 oldHatState;
 	int hatValue;
-
-  if (PlayRecorder_getStatus() == 1) {
-    YabauseExec();
-    return 0;
-  }
 	
 	// update joysticks states
 	SDL_JoystickUpdate();
@@ -198,22 +194,21 @@ int PERSDLJoyHandleEvents(void) {
 		{
 			cur = SDL_JoystickGetAxis( joy, i );
 
-			PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
+			PerAxisValue((joyId << 18) | SDL_PERSF_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
 			
-			if ( cur < -SDL_MEDIUM_AXIS_VALUE )
-			{
-				PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
-				PerKeyDown( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
+			if ( cur < 8196 ) {
+				PerKeyUp( (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i );
 			}
-			else if ( cur > SDL_MEDIUM_AXIS_VALUE )
-			{
-				PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
-				PerKeyDown( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
+			if ( cur > -8196 ) {
+				PerKeyUp( (joyId << 18) | SDL_PERSF_HAT_MIN_VALUE | i );
 			}
-			else
+			if ( cur < -16384 )
 			{
-				PerKeyUp( (joyId << 18) | SDL_MIN_AXIS_VALUE | i );
-				PerKeyUp( (joyId << 18) | SDL_MAX_AXIS_VALUE | i );
+				PerKeyDown( (joyId << 18) | SDL_PERSF_HAT_MIN_VALUE | i );
+			}
+			if ( cur > 16384 )
+			{
+				PerKeyDown( (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i );
 			}
 		}
 		
@@ -224,6 +219,7 @@ int PERSDLJoyHandleEvents(void) {
 			
 			if ( buttonState == SDL_BUTTON_PRESSED )
 			{
+//				YuiMsg("Btn press\n");
 				PerKeyDown( (joyId << 18) | (i +1) );
 			}
 			else if ( buttonState == SDL_BUTTON_RELEASED )
@@ -243,6 +239,7 @@ int PERSDLJoyHandleEvents(void) {
 				hatValue = SDL_HAT_VALUES[ j ];
 				if ( oldHatState & hatValue && ~newHatState & hatValue )
 				{
+//					YuiMsg("Hat up\n");
 					PerKeyUp( (joyId << 18) | SDL_HAT_VALUE | (hatValue << 4) | i );
 				}
 			}
@@ -251,18 +248,13 @@ int PERSDLJoyHandleEvents(void) {
 				hatValue = SDL_HAT_VALUES[ j ];
 				if ( ~oldHatState & hatValue && newHatState & hatValue )
 				{
+//					YuiMsg("Hat down\n");
 					PerKeyDown( (joyId << 18) | SDL_HAT_VALUE | (hatValue << 4) | i);
 				}
 			}
 
 			SDL_PERCORE_JOYSTICKS[ joyId ].mHatStatus[ i ] = newHatState;
 		}
-	}
-	
-	// execute yabause
-	if ( YabauseExec() != 0 )
-	{
-		return -1;
 	}
 	
 	// return success
@@ -296,22 +288,21 @@ u32 PERSDLJoyScan( u32 flags ) {
 		for ( i = 0; i < SDL_JoystickNumAxes( joy ); i++ )
 		{
 			cur = SDL_JoystickGetAxis( joy, i );
-
+			
 			if ( cur != SDL_PERCORE_JOYSTICKS[ joyId ].mScanStatus[ i ] )
 			{
-				if ( cur < -SDL_MEDIUM_AXIS_VALUE )
-				{
-					if (flags & PERSF_AXIS)
-						return (joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i;
-					if (flags & PERSF_HAT)
-						return (joyId << 18) | SDL_MIN_AXIS_VALUE | i;
+				if (flags & PERSF_AXIS) {
+					if (( cur > 16384 ) || (cur < -16384)) {
+						return (joyId << 18) | SDL_PERSF_AXIS_VALUE | i;
+					}
 				}
-				else if ( cur > SDL_MEDIUM_AXIS_VALUE )
-				{
-					if (flags & PERSF_AXIS)
-						return (joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i;
-					if (flags & PERSF_HAT)
-						return (joyId << 18) | SDL_MAX_AXIS_VALUE | i;
+				if (flags & PERSF_HAT) {
+					if ( cur > 16384 ) {
+						return (joyId << 18) | SDL_PERSF_HAT_MAX_VALUE | i;
+					}
+					if ( cur < -16384 ) {
+						return (joyId << 18) | SDL_PERSF_HAT_MIN_VALUE | i;
+					}
 				}
 			}
 		}

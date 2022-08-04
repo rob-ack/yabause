@@ -329,8 +329,6 @@ static int PERLIBRETROHandleEvents(void)
          }
    }
 
-   if ( YabauseExec() != 0 )
-      return -1;
    return 0;
 }
 
@@ -1348,9 +1346,11 @@ void retro_run(void)
          DisableAutoFrameSkip();
    }
 
-   //YabauseExec(); runs from handle events
    if(PERCore)
       PERCore->HandleEvents();
+
+   if (renderer_running)
+       YabauseExec();
 
    // If no frame rendered, dupe
    if(!one_frame_rendered)

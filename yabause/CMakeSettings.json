@@ -202,6 +202,16 @@
           "name": "Qt5Widgets_DIR",
           "value": "C:/Qt/5.12.11/msvc2017/lib/cmake/Qt5Widgets",
           "type": "PATH"
+        },
+        {
+          "name": "YAB_WANT_DIRECTINPUT",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DIRECTSOUND",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },

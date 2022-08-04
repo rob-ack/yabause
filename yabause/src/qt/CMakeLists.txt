@@ -343,10 +343,12 @@ yab_port_success(yabause-qt)
 if(WIN32)
 
 add_custom_command(
-	TARGET yabause-qt
+	TARGET yabause-qt 
 	POST_BUILD
-	env QTDIR=${QT_BINARY_DIR} #this is to prevent the above described problem
-	COMMAND ${QT_BINARY_DIR}/windeployqt.exe --no-translations ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.exe
+	COMMAND ${CMAKE_COMMAND} -E env "QTDIR=${QT_BINARY_DIR}" #this is to prevent the above described problem
+	${CMAKE_COMMAND} -E environment 
+#	&&
+#	${QT_BINARY_DIR}/windeployqt.exe --no-translations ${CMAKE_CURRENT_BINARY_DIR}/${YAB_PORT_NAME}.exe
 )
 
 endif()

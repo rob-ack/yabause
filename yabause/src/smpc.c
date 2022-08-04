@@ -347,7 +347,8 @@ static void SmpcINTBACKStatus(void) {
 static void SmpcINTBACKPeripheral(void) {
   int oregoffset;
   PortData_struct *port1, *port2;
-
+  if (PERCore)
+      PERCore->HandleEvents();
   if (SmpcInternalVars->firstPeri)
     SmpcRegs->SR = 0xC0 | (SmpcRegs->IREG[1] >> 4);
   else

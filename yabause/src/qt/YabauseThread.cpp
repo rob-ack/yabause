@@ -668,7 +668,9 @@ void YabauseThread::timerEvent( QTimerEvent* )
 	//while ( mRunning )
 	{
 		if ( !mPause )
-			PERCore->HandleEvents();
+		{
+			YabauseExec();
+		}
 		//else
 			//msleep( 25 );
 		//sleep( 0 );

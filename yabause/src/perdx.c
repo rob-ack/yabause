@@ -21,16 +21,15 @@
     \brief Direct X peripheral interface.
 */
 
-#include <windows.h>
 #ifdef __MINGW32__
 #undef HAVE_XINPUT
 #endif
 #define COBJMACROS
 #ifdef HAVE_XINPUT
-#include <wbemidl.h>
-#include <wbemcli.h>
+#include <Wbemidl.h>
+#include <Wbemcli.h>
 #include <oleauto.h>
-#include <xinput.h>
+#include <Xinput.h>
 #endif
 #include "debug.h"
 #include "peripheral.h"
@@ -40,6 +39,9 @@
 #include "yui.h"
 #include "movie.h"
 #include "error.h"
+#include <stdbool.h>
+#include <Windows.h>
+#include "Dbt.h"
 
 enum {
    EMUTYPE_NONE=0,
@@ -50,6 +52,29 @@ enum {
    EMUTYPE_KEYBOARD
 };
 
+typedef struct
+{
+	LPDIRECTINPUTDEVICE8 lpDIDevice;
+	int type;
+	int emulatetype;
+#ifdef HAVE_XINPUT
+	int is_xinput_device;
+	int xinput_num;
+#endif
+} padconf_struct;
+
+enum XIAXIS
+{
+	XI_THUMBL = 1,
+	XI_THUMBLX = 1,
+	XI_THUMBLY = 5,
+	XI_THUMBR = 9,
+	XI_THUMBRX = 9,
+	XI_THUMBRY = 13,
+	XI_TRIGGERL = 17,
+	XI_TRIGGERR = 19
+};
+
 #define DX_PADOFFSET 24
 #define DX_STICKOFFSET 8
 #define DX_MAKEKEY(p, s, a) ( ((p) << DX_PADOFFSET) | ((s) << DX_STICKOFFSET) | (a) )
@@ -58,6 +83,11 @@ enum {
 #define DX_PerKeyDown(p, s, a) PerKeyDown(DX_MAKEKEY(p, s, a) )
 
 int Check_Skip_Key();
+int PERDXInit(void);
+void PERDXDeInit(void);
+int PERDXHandleEvents(void);
+u32 PERDXScan(u32 flags);
+void PERDXFlush(void);
 
 PerInterface_struct PERDIRECTX = {
 PERCORE_DIRECTX,
@@ -99,7 +129,7 @@ NULL
 #define PAD_DIR_POVDOWN         2
 #define PAD_DIR_POVLEFT         3
 
-HWND DXGetWindow ();
+extern HWND DXGetWindow(void);
 
 #ifdef HAVE_XINPUT
 #define SAFE_RELEASE(p)      { if(p) { (p)->lpVtbl->Release((p)); (p)=NULL; } }
@@ -148,8 +178,7 @@ HRESULT SetupForIsXInputDevice()
 	bstrDeviceID  = SysAllocString( L"DeviceID" );          if( bstrDeviceID == NULL )  goto bail;
 
 	// Connect to WMI 	
-	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, NULL, 
-		0L, NULL, NULL, &pIWbemServices );
+	hr = IWbemLocator_ConnectServer(pIWbemLocator, bstrNamespace, NULL, NULL, NULL, 0L, NULL, NULL, &pIWbemServices );
 
 	if( FAILED(hr) || pIWbemServices == NULL )
 		goto bail;
@@ -290,14 +319,43 @@ BOOL CALLBACK EnumPeripheralsCallback (LPCDIDEVICEINSTANCE lpddi, LPVOID pvRef)
 	return DIENUM_CONTINUE;
 }
 
+int SetupDevices();
+
+LRESULT CALLBACK SubWndProc(int code, WPARAM wParam, LPARAM lParam)
+{
+	// invalid code skip
+	if (code < 0) return CallNextHookEx(NULL, code, wParam, lParam);
+
+	// check if device was added/removed
+	PCWPSTRUCT pMsg = (PCWPSTRUCT)(lParam);
+	if (pMsg->message == WM_DEVICECHANGE)
+	{
+		switch (pMsg->wParam)
+		{
+			case DBT_DEVNODES_CHANGED:
+				SetupDevices();
+				break;
+
+			case DBT_DEVICEARRIVAL:
+				SetupDevices();
+				break;
+
+			case DBT_DEVICEREMOVECOMPLETE:
+				SetupDevices();
+				break;
+		}
+	}
+
+	// continue as normal
+	return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
 int PERDXInit(void)
 {
 	char tempstr[512];
 	HRESULT ret;
-	int user_index=0;
-	u32 i;
 
 	if (PERCORE_INITIALIZED)
 		return 0;
@@ -305,41 +363,56 @@ int PERDXInit(void)
 	if (FAILED((ret = DirectInput8Create(GetModuleHandle(NULL), DIRECTINPUT_VERSION,
 		&IID_IDirectInput8, (LPVOID *)&lpDI8, NULL)) ))
 	{
-		sprintf(tempstr, "Input. DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
-		YabSetError(YAB_ERR_CANNOTINIT, tempstr);
+//		sprintf(tempstr, "Input. DirectInput8Create error: %s - %s", DXGetErrorString8(ret), DXGetErrorDescription8(ret));
+//		YabSetError(YAB_ERR_CANNOTINIT, tempstr);
 		return -1;
 	}
+
+	int const err = SetupDevices();
+	if(err != 0)
+	{
+		return err;
+	}
+
+	SetWindowsHookExW(WH_CALLWNDPROC, &SubWndProc, GetModuleHandleW(NULL), GetCurrentThreadId());
+
+	//LoadDefaultPort1A();
+	PERCORE_INITIALIZED = 1;
+	return 0;
+}
+
+int SetupDevices()
+{
+	int user_index = 0;
 
 #ifdef HAVE_XINPUT
 	SetupForIsXInputDevice();
 #endif
 	num_devices = 0;
-	IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback,
-							&user_index, DIEDFL_ATTACHEDONLY);
+	IDirectInput8_EnumDevices(lpDI8, DI8DEVCLASS_ALL, EnumPeripheralsCallback, &user_index, DIEDFL_ATTACHEDONLY);
 
 #ifdef HAVE_XINPUT
 	CleanupForIsXInputDevice();
 #endif
 
-	for (i = 0; i < num_devices; i++)
+	for (int i = 0; i < num_devices; i++)
 	{
 		if (!dev_list[i].is_xinput_device)
 		{
-			if( FAILED( ret = IDirectInputDevice8_SetDataFormat(dev_list[i].lpDIDevice, &c_dfDIJoystick2 ) ) )
+			HRESULT ret;
+
+			if (FAILED(ret = IDirectInputDevice8_SetDataFormat(dev_list[i].lpDIDevice, &c_dfDIJoystick2)))
 				return -1;
 
 			// Set the cooperative level to let DInput know how this device should
 			// interact with the system and with other DInput applications.
-			if( FAILED( ret = IDirectInputDevice8_SetCooperativeLevel( dev_list[i].lpDIDevice, DXGetWindow(), 
+			if (FAILED(ret = IDirectInputDevice8_SetCooperativeLevel(dev_list[i].lpDIDevice, DXGetWindow(),
 				DISCL_NONEXCLUSIVE | DISCL_BACKGROUND
 				/* DISCL_EXCLUSIVE |
-				DISCL_FOREGROUND */ ) ) )
+				DISCL_FOREGROUND */)))
 				return -1;
 		}
 	}
-	PerPortReset();
-	//LoadDefaultPort1A();
-	PERCORE_INITIALIZED = 1;
 	return 0;
 }
 
@@ -449,6 +522,13 @@ void PollKeys(void)
 			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
 								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
 
+
+                // Right Stick
+          			PollAxisAsButton(i, XI_TRIGGERR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
+          								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRX);
+          			PollAxisAsButton(i, XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN,
+          								XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE, state.Gamepad.sThumbRY);
+
 			PollXInputButtons(i, &state);
 			continue;
 		}
@@ -482,6 +562,10 @@ void PollKeys(void)
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBLY, (u8)((js.lY) >> 8));
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBRX, (u8)((js.lRx) >> 8));
 		DX_PerAxisValue(i, 0x3FFF, XI_THUMBRY, (u8)((js.lRy) >> 8));
+    LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+    DX_PerAxisValue(i, 0x3FFF, XI_TRIGGERR, (u8)(RVal >> 8));
+    LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+    DX_PerAxisValue(i, 0x3FFF, XI_TRIGGERL, (u8)(LVal >> 8));
 
 		// Left Stick
 		PollAxisAsButton(i, XI_THUMBL+PAD_DIR_AXISLEFT, XI_THUMBL+PAD_DIR_AXISRIGHT,
@@ -574,9 +658,6 @@ int PERDXHandleEvents(void)
 {
 	PollKeys();
 
-	if (YabauseExec() != 0)
-		return -1;
-
    return 0;
 }
 
@@ -594,7 +675,7 @@ u32 ScanXInputAxis(int pad, LONG axis, LONG deadzone, SHORT stick, int min_id, i
 
 //////////////////////////////////////////////////////////////////////////////
 
-u32 ScanXInputTrigger(int pad, BYTE value, BYTE deadzone, SHORT stick, int id)
+u32 ScanXInputTrigger(int pad, LONG value, LONG deadzone, SHORT stick, int id)
 {
 	if (value > deadzone)
 		return DX_MAKEKEY(pad, stick, id);
@@ -738,10 +819,36 @@ u32 PERDXScan(u32 flags)
 				return scan;
 
 			// Right Stick
-			if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
-				return scan;
-			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
-				return scan;
+      if ((js.lRx != 0) && (js.lRy != 0)) {
+        if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
+        return scan;
+
+  			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
+  				return scan;
+      } else {
+        if ((js.lZ != 0) && (js.lRz != 0)) {
+          if ((scan = ScanXInputAxis(i, js.lZ-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRX, XI_THUMBRX)) != 0)
+          return scan;
+
+    			if ((scan = ScanXInputAxis(i, js.lRz-0x7FFF, 0x3FFF, 0x3FFF, XI_THUMBRY, XI_THUMBRY)) != 0)
+    				return scan;
+        }
+      }
+
+      if (js.lZ != 0) {
+        LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+          // Right detected
+          return scan;
+        }
+
+        LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+          // Right detected
+          return scan;
+        }
+      }
+
 		}
 
 		if (flags & PERSF_HAT)
@@ -754,13 +861,41 @@ u32 PERDXScan(u32 flags)
 											XI_THUMBL+PAD_DIR_AXISUP, XI_THUMBL+PAD_DIR_AXISDOWN)) != 0)
 				return scan;
 
-			// R Thumb
-			if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0,
-											XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
-				return scan;
-			if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0,
-											XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
-				return scan;
+      if ((js.lRx != 0) && (js.lRy != 0))  {
+        // R Thumb
+        if ((scan = ScanXInputAxis(i, js.lRx-0x7FFF, 0x3FFF, 0,
+          XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
+          return scan;
+
+        if ((scan = ScanXInputAxis(i, js.lRy-0x7FFF, 0x3FFF, 0,
+          XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
+          return scan;
+      } else {
+        if ((js.lZ != 0) && (js.lRz != 0))  {
+          // R Thumb
+          if ((scan = ScanXInputAxis(i, js.lZ-0x7FFF, 0x3FFF, 0,
+            XI_THUMBR+PAD_DIR_AXISLEFT, XI_THUMBR+PAD_DIR_AXISRIGHT)) != 0)
+            return scan;
+
+          if ((scan = ScanXInputAxis(i, js.lRz-0x7FFF, 0x3FFF, 0,
+            XI_THUMBR+PAD_DIR_AXISUP, XI_THUMBR+PAD_DIR_AXISDOWN)) != 0)
+            return scan;
+        }
+      }
+
+      if (js.lZ != 0) {
+        LONG RVal = MAX(MIN( 0x7FFF - js.lZ,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, RVal, 0x3FFF, 0, XI_TRIGGERR)) != 0) {
+          // Right detected
+          return scan;
+        }
+
+        LONG LVal = MAX(MIN(js.lZ- 0x7FFF,0x7FFF),0);
+        if ((scan = ScanXInputTrigger(i, LVal, 0x3FFF, 0, XI_TRIGGERL)) != 0) {
+          // Right detected
+          return scan;
+        }
+      }
 
 			for (j = 0; j < 4; j++)
 			{

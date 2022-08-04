@@ -371,7 +371,8 @@ if (WIN32)
 	endif ()
 	if (SDL2_FOUND)
 		if (NOT MSYS2_BUILD)
-			get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
+			list(GET ${SDL2_LIBRARY} 0 __SDL2_LIBRARY_FIRST_ENTRY__)
+			get_filename_component(SDL2_BINARY_DIR ${__SDL2_LIBRARY_FIRST_ENTRY__} DIRECTORY)
 			install(DIRECTORY ${SDL2_BINARY_DIR}/
 				DESTINATION "."
 				FILES_MATCHING PATTERN "SDL2.dll")

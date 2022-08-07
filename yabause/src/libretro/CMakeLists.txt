@@ -6,14 +6,6 @@ cmake_policy(VERSION 3.12)
 #this is because multiple ports are atm not buildable in parallel
 set(YAB_PORTS "" CACHE STRING "List of ports to build" FORCE)
 
-if(WIN32 OR LINUX)
-	set(HAVE_CDROM OFF CACHE BOOL "Have CD-ROM support" FORCE)
-endif()
-
-if(HAVE_CDROM)
-	add_definitions(-DHAVE_CDROM -DHAVE_FSEEKO)
-endif()
-
 set(LIBRETRO_COMM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libretro-common)
 set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 
@@ -130,7 +122,9 @@ endif()
 if(UNIX)
 #	target_compile_options(mini18n-static PUBLIC -fPIC)
 #	target_compile_options(zlibstatic PUBLIC -fPIC)
+if(NOT YAB_WANT_DYNAREC_DEVMIYAX)
 	target_compile_options(yabause PUBLIC -fPIC)
+endif()
 	target_compile_options(yabause_libretro PUBLIC -fPIC)
 endif()
 

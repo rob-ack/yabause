@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <coretypes.h>
 #include <ctype.h>
 #include <wchar.h>
 #include "cdbase.h"

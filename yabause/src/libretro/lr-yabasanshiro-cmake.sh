@@ -10,7 +10,7 @@
 #
 # this file is supposed to reside in /home/pi/RetroPie-Setup/scriptmodules/libretrocores
 
-rp_module_id="lr-yabasanshiro"
+rp_module_id="lr-yabasanshiro-rob"
 rp_module_desc="SEGA Saturn emulator Yaba Sanshiro 2"
 rp_module_help="ROM Extensions: .iso .cue .zip .ccd .mds\n\nCopy your Sega Saturn & ST-V roms to $romdir/saturn\n\nCopy the required BIOS file saturn_bios.bin / stvbios.zip to $biosdir/yabasanshiro"
 rp_module_licence="GPL2 https://github.com/devmiyax/yabause/blob/master/LICENSE"
@@ -20,16 +20,16 @@ rp_module_repo="git https://github.com/rob-ack/yabause.git libretro-cmake-rpi4"
 rp_module_section="exp"
 rp_module_flags="!all rpi4 !videocore"
 
-function depends_yabasanshiro() {
+function depends_lr-yabasanshiro-rob() {
     local depends=(cmake pkg-config libsecret-1-dev libssl-dev libsdl2-dev libboost-all-dev)
     getDepends "${depends[@]}"
 }
 
-function sources_lr-yabasanshiro() {
+function sources_lr-yabasanshiro-rob() {
     gitPullOrClone
 }
 
-function build_lr-yabasanshiro() {
+function build_lr-yabasanshiro-rob() {
     local params=()
     cd yabause/
     rm -f ./out/CMakeCache.txt
@@ -38,7 +38,7 @@ function build_lr-yabasanshiro() {
     md_ret_require="$md_build/yabause/out/src/libretro/libyabause_libretro.so"
 }
 
-function install_lr-yabasanshiro() {
+function install_lr-yabasanshiro-rob() {
     md_ret_files=(
         'yabause/out/src/libretro/libyabause_libretro.so'
         'LICENSE'
@@ -46,7 +46,7 @@ function install_lr-yabasanshiro() {
     )
 }
 
-function configure_lr-yabasanshiro() {
+function configure_lr-yabasanshiro-rob() {
     mkRomDir "saturn"
     ensureSystemretroconfig "saturn"
 

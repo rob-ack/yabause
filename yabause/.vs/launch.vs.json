@@ -26,6 +26,31 @@
       },
       "projectTarget": "yabasanshiro.exe (src\\qt\\yabasanshiro.exe)",
       "name": "yabasanshiro.exe (src\\qt\\yabasanshiro.exe)"
+    },
+    {
+      "type": "dll",
+      "exe": "",
+      "project": "CMakeLists.txt",
+      "projectTarget": "yabause_libretro.dll (Install)",
+      "name": "yabause_libretro.dll (Install)"
+    },
+    {
+      "type": "cppgdb",
+      "name": "retroarch core",
+      "project": "CMakeLists.txt",
+      "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "debuggerConfiguration": "gdb",
+      "MIMode": "gdb",
+      "args": [
+        "-L /opt/retropie/libretrocores/lr-yabasanshiro-rob/libyabause_libretro.so --config /opt/retropie/configs/saturn/retroarch.cfg",
+        "/home/pi/RetroPie/roms/saturn/Mystaria - The Realms Of Lore/Mystaria.cue",
+        "--verbose",
+        "--appendconfig",
+        "/dev/shm/retroarch.cfg"
+      ],
+      "env": {},
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch"
     }
   ]
 }

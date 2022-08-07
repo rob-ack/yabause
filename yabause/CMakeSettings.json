@@ -305,12 +305,12 @@
       "variables": [
         {
           "name": "YAB_WANT_SDL",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
           "name": "YAB_WANT_DYNAREC_DEVMIYAX",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -326,6 +326,16 @@
         {
           "name": "SH2_TRACE",
           "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_SSF",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "HAVE_CDROM",
+          "value": "True",
           "type": "BOOL"
         }
       ]

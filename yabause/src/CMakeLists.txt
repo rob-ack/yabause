@@ -13,9 +13,25 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
+if(WIN32 OR LINUX)
+	set(HAVE_CDROM ON CACHE BOOL "Have CD-ROM support")
+endif()
+
+if(UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+	add_definitions(-DARCH_IS_LINUX=1)
+endif()
+
+if (MSVC)
+	add_compile_options(/MP)
+	add_link_options("$<$<CONFIG:Debug>:/INCREMENTAL>")
+	add_link_options("$<$<CONFIG:Debug>:/EDITANDCONTINUE>")
+	add_compile_options("$<$<CONFIG:Debug>:/ZI>")
+endif()
+
 set(yabause_HEADERS
 	bios.h
-	cdbase.h cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
+	cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
 	debug.h
 	error.h
 	gameinfo.h
@@ -48,11 +64,10 @@ endif()
 
 set(yabause_SOURCES
 	bios.c
-	cdbase.c cheat.c coffelf.c cs0.c cs1.c cs2.c
+	cheat.c coffelf.c cs0.c cs1.c cs2.c
 	debug.c
 	error.c
 	gameinfo.c
-	japmodem.c
 	m68kcore.c m68kd.c memory.c movie.c
 	state_save.cpp
 	netlink.c
@@ -64,10 +79,8 @@ set(yabause_SOURCES
 	vdp1.cpp vdp2.cpp vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
 	Counter.cpp
-	#ygl_texture.cpp
-	BackupManager.cpp
-	jsoncpp.cpp
-	cd-web.cpp
+	ygl_texture.cpp
+	japmodem.c
 	sh2cache.c 
 )
 	
@@ -78,6 +91,8 @@ if(IS_LIBRETRO_PORT)
 else()
 	set(yabause_SOURCES ${yabause_SOURCES} 
 		PlayRecorder.cpp
+		BackupManager.cpp
+		jsoncpp.cpp
 	)
 endif()
 
@@ -185,9 +200,11 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 	  sh2_dynarec_devmiyax/opcodes.h)
 
 		if (MSVC) # NASM
-	  	set(YABAUSE_LIBRARIES 
-			  ${YABAUSE_LIBRARIES} 
-			  ${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib.obj )
+			enable_language(ASM_MASM) #should actually be default
+	  		set(YABAUSE_LIBRARIES 
+				${YABAUSE_LIBRARIES} 
+				${CMAKE_CURRENT_SOURCE_DIR}/sh2_dynarec_devmiyax/dynalib.obj 
+			)
 		else() # UNIX(GAS)
 			if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "arm")
 				enable_language(ASM-ATT)
@@ -349,6 +366,37 @@ endif ()
 option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
 if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 	include(FindOpenGL)
+	include(FindOpenGLES)
+	include(FindEGL)
+
+	set(OPENGL_SUPPORTED "YES")
+
+	if (OPENGLES31_FOUND)
+		if (NOT EGL_FOUND)
+			message(ERROR "No EGL found")
+		endif()
+		add_definitions(-D_OGLES3_)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} EGL GLESv2)
+		add_definitions(-DYAB_ASYNC_RENDERING)
+		message(STATUS "OPENGL ES 3.1 supported")
+	elseif (OPENGLES3_FOUND)
+		if (NOT EGL_FOUND)
+			message(ERROR "No EGL found")
+		endif (NOT EGL_FOUND)
+		SET( NEED_GLEW "YES")
+		add_definitions(-D_OGLES3_)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} EGL GLESv2)
+		add_definitions(-DYAB_ASYNC_RENDERING)
+		message(STATUS "OPENGL ES 3.0 supported")	
+	elseif (OPENGL_FOUND)
+		SET( NEED_GLEW "YES")
+		add_definitions(-D_OGL3_)
+		set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${OPENGL_LIBRARIES})
+		message(STATUS "OPENGL Core supported")
+	else ()
+		SET( OPENGL_SUPPORTED "NO" )
+	endif ()
+
 	if (OPENGL_FOUND )
 		add_definitions(-DHAVE_LIBGL=1)
 		if( USE_EGL )
@@ -404,8 +452,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			)
 		#endif()
 
-		if( USE_EGL )
-		else()
+		if( NEED_GLEW )
 			include(FindGLEW)
 			add_definitions(-D_USEGLEW_)
 			if (GLEW_FOUND)
@@ -413,10 +460,10 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 					set(YABAUSE_LIBRARIES ${YABAUSE_LIBRARIES} ${GLEW_LIBRARIES})
 			else()
 				add_definitions(-DGLEW_STATIC)
-					include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
-				set(yabause_SOURCES
-					${yabause_SOURCES}
-					gllibs/glew/glew.c)
+				include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/gllibs/include/ )
+				set(yabause_SOURCES ${yabause_SOURCES}
+					gllibs/glew/glew.c
+				)
 			endif()
 		endif()
 
@@ -886,51 +933,65 @@ if (SH2_UBC)
 	add_definitions(-DSH2_UBC=1)
 endif()
 
-# Yabause Arch
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	add_definitions(-DARCH_IS_MACOSX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
-	add_definitions(-DARCH_IS_MACOSX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-	add_definitions(-DARCH_IS_FREEBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Switch")
-#	add_definitions(-DARCH_IS_FREEBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-nx.c )
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
-	add_definitions(-DARCH_IS_LINUX=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp cd-linux.c)
+if(HAVE_CDROM)
+	add_definitions(-DHAVE_CDROM -DHAVE_FSEEKO)
 
-        if (!ANDROID)
-          check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
-          if (LINUX_HAS_JOYSTICK)
-          	set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-          	set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
-          endif()
+	set(yabause_HEADERS ${yabause_HEADERS}
+		cdbase.h
+	)
 
-        check_c_source_compiles("
-				#include <linux/cdrom.h>
-				int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
-			" LINUX_CDROM_H_OK)
-		if (NOT LINUX_CDROM_H_OK)
-				add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
-		endif (NOT LINUX_CDROM_H_OK)
-	endif()
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
-	add_definitions(-DARCH_IS_NETBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
-	add_definitions(-DARCH_IS_NETBSD=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	add_definitions(-DARCH_IS_WINDOWS=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-windows.c thr-windows.c)
-else ()
-	add_definitions(-DUNKNOWN_ARCH=1)
-	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
-endif ()
+	set(yabause_SOURCES ${yabause_SOURCES}
+		cdbase.c 
+		cd-web.cpp
+	)
+	if(IS_LIBRETRO_PORT)
+	# Yabause Arch
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		add_definitions(-DARCH_IS_MACOSX=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+		add_definitions(-DARCH_IS_MACOSX=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+		add_definitions(-DARCH_IS_FREEBSD=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Switch")
+	#	add_definitions(-DARCH_IS_FREEBSD=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-nx.c )
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
+		add_definitions(-DARCH_IS_LINUX=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp cd-linux.c)
+
+			if (!ANDROID)
+			  check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
+			  if (LINUX_HAS_JOYSTICK)
+          		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+          		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+			  endif()
+
+			check_c_source_compiles("
+					#include <linux/cdrom.h>
+					int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
+				" LINUX_CDROM_H_OK)
+			if (NOT LINUX_CDROM_H_OK)
+					add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
+			endif (NOT LINUX_CDROM_H_OK)
+		endif()
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
+		add_definitions(-DARCH_IS_NETBSD=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+		add_definitions(-DARCH_IS_NETBSD=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
+	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+		add_definitions(-DARCH_IS_WINDOWS=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-windows.c thr-windows.c)
+	else ()
+		add_definitions(-DUNKNOWN_ARCH=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	endif ()
+endif()
+
 
 set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
 if(ENABLE_SANITIZER)
@@ -1091,6 +1152,13 @@ endif()
 
 #-------------------------- STATUS --------------------------------
 
+if(NOT DEFINED OPENGLES31_FOUND)
+	set(OPENGLES31_FOUND NO)
+endif()
+if(NOT DEFINED OPENGLES3_FOUND)
+	set(OPENGLES3_FOUND NO)
+endif()
+
 if(YAB_PORTS)
 	message(STATUS "------ PORTS ------")
 	message(STATUS "YAB_PORTS ${YAB_PORTS}")
@@ -1104,8 +1172,11 @@ if(YAB_RGB)
 	message(STATUS "YAB_RGB ${YAB_RGB}")
 endif()
 message(STATUS "------ STATUS -------")
+message(STATUS "HAVE_CDROM ${HAVE_CDROM}")
 message(STATUS "OPENGL_SUPPORTED ${OPENGL_SUPPORTED}")
 message(STATUS "HAVE_OPENSL ${HAVE_OPENSL}")
+message(STATUS "OPENGLES31_FOUND ${OPENGLES31_FOUND}")
+message(STATUS "OPENGLES3_FOUND ${OPENGLES3_FOUND}")
 message(STATUS "------ FLAGS  -------")
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")

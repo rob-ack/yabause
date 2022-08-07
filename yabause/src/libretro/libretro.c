@@ -474,8 +474,10 @@ PerInterface_struct *PERCoreList[] = {
 };
 
 CDInterface *CDCoreList[] = {
+#if defined HAVE_CDROM
     &DummyCD,
     &ISOCD,
+#endif
     NULL
 };
 

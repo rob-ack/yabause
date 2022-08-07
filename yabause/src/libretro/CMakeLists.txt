@@ -133,3 +133,5 @@ if(UNIX)
 	target_compile_options(yabause PUBLIC -fPIC)
 	target_compile_options(yabause_libretro PUBLIC -fPIC)
 endif()
+
+install(TARGETS yabause_libretro DESTINATION ".")

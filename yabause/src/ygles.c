@@ -549,7 +549,6 @@ YglTextureManager *YglTMInit(unsigned int w, unsigned int h)
 
 void YglTMDeInit(YglTextureManager *tm)
 {
-
   for (int i = 0; i < NUM_TEXTURE_BUFFER; i++)
   {
     glBindTexture(GL_TEXTURE_2D, tm->textureID_in[i]);

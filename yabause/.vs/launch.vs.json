@@ -1,0 +1,31 @@
+{
+  "version": "0.2.1",
+  "defaults": {},
+  "configurations": [
+    {
+      "type": "dll",
+      "project": "CMakeLists.txt",
+      "defaultWorkingDirectory": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32",
+      "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
+      "name": "Retroarch Core",
+      "exe": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/retroarch.exe",
+      "deployDirectory": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/cores"
+    },
+    {
+      "type": "dll",
+      "exe": "",
+      "project": "CMakeLists.txt",
+      "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
+      "name": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)"
+    },
+    {
+      "type": "default",
+      "project": "CMakeLists.txt",
+      "env": {
+        "QTDIR": "C:\\Qt\\5.12.11\\msvc2017\\bin"
+      },
+      "projectTarget": "yabasanshiro.exe (src\\qt\\yabasanshiro.exe)",
+      "name": "yabasanshiro.exe (src\\qt\\yabasanshiro.exe)"
+    }
+  ]
+}

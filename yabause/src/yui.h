@@ -41,10 +41,10 @@ void YuiErrorMsg(const char *string);
 void YuiSwapBuffers(void);
 
 /* need to call before glXXXXX call in a thread */
-int YuiUseOGLOnThisThread();
+int YuiUseOGLOnThisThread(void);
 
 /* Bfore rendering in a thread, it needs to revoke current rendering thread */
-int YuiRevokeOGLOnThisThread();
+int YuiRevokeOGLOnThisThread(void);
 
 
 //////////////////////////////////////////////////////////////////////////////

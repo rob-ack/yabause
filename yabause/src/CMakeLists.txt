@@ -945,6 +945,8 @@ if(HAVE_CDROM)
 		cd-web.cpp
 	)
 	if(IS_LIBRETRO_PORT)
+		add_definitions(-DARCH_IS_LINUX=1)
+		set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp)
 	# Yabause Arch
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 		add_definitions(-DARCH_IS_MACOSX=1)

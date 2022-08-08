@@ -12,6 +12,8 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${LIBRETRO_COMM_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+set(YAB_LIBRETRO_FORCE_GLES ON CACHE BOOL "FORCE GLES ON THIS PLATFORM")
+
 add_definitions(
 	-D__LIBRETRO__
 	-DVERSION=\"3.4.2\"
@@ -67,12 +69,26 @@ if(WIN32)
 	add_definitions(-D_WINDOWS)
 endif()
 
-if (YAB_FORCE_GLES31 OR OPENGLES31_FOUND OR OPENGLES3_FOUND)
+if (YAB_LIBRETRO_FORCE_GLES OR OPENGLES31_FOUND OR OPENGLES3_FOUND)
 	message(STATUS "OpenGL ES 3.1 found, using GLES 3.1")
 	set(LIBRETRO_SRCS ${LIBRETRO_SRCS} ${LIBRETRO_COMM_DIR}/glsym/glsym_es3.c)
+	target_compile_definitions(yabause PUBLIC 
+		-D_OGLES3_
+	)
 	add_definitions(
 		-D_OGLES3_
 	)
+	if(YAB_LIBRETRO_FORCE_GLES)
+		target_compile_definitions(yabause PUBLIC 
+			-DHAVE_OPENGLES
+			-DHAVE_OPENGLES3
+		)
+		add_definitions(
+			-DHAVE_OPENGLES
+			-DHAVE_OPENGLES3
+		)
+	endif()
+
 	if (NOT OPENGLES31_FOUND)
 		if(WIN32)
 			message(WARNING "Failed to find OpenGLES. Targeting OpenGLES on Windows is not nessesarly usefull since most Windows systems wont support OpenGLES and rather support OpenGL. But try to workaround that anyways.")
@@ -111,8 +127,12 @@ add_dependencies(yabause_libretro libchdr)
 #the order is important for now which is just about the order of linking. some of the components still need to be exchanged when building a libretrocore
 target_link_libraries(yabause_libretro yabause ${zlib_STATIC_LIBRARIES} ${LIBCHDR_LIBRARIES} ${YABAUSE_LIBRARIES})
 
-if(YAB_FORCE_GLES31 OR OPENGLES31_FOUND OR OPENGLES3_FOUND)
+if(YAB_LIBRETRO_FORCE_GLES OR OPENGLES31_FOUND OR OPENGLES3_FOUND)
 	target_link_libraries(yabause_libretro GLESv2)
+endif()
+
+if(UNIX)
+	target_link_libraries(yabause_libretro atomic)
 endif()
 
 if(WIN32)

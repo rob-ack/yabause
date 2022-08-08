@@ -7,11 +7,14 @@ extern "C" {
 #if defined(_OGLES3_)
 typedef double GLclampd;
 typedef double GLdouble;
+
+#if defined HAVE_OPENGLES
 typedef void (GL_APIENTRYP RGLSYMGLMEMORYBARRIERPROC) (GLbitfield barriers);
 typedef void (GL_APIENTRYP RGLSYMGLBINDFRAGDATALOCATIONPROC) (GLuint program, GLuint color, const GLchar *name);
 typedef void (GL_APIENTRYP RGLSYMGLPATCHPARAMETERIPROC) (GLenum pname, GLint value);
 typedef void (GL_APIENTRYP RGLSYMGLDISPATCHCOMPUTEPROC) (GLuint num_groups_x, GLuint num_groups_y, GLuint num_groups_z);
 typedef void (GL_APIENTRYP RGLSYMGLBINDIMAGETEXTUREPROC) (GLuint unit, GLuint texture, GLint level, GLboolean layered, GLint layer, GLenum access, GLenum format);
+#endif
 
 #define glMemoryBarrier __rglgen_glMemoryBarrier
 #define glBindFragDataLocation __rglgen_glBindFragDataLocation

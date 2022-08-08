@@ -1,14 +1,7 @@
-#ifndef _MSC_VER
-#include <stdbool.h>
-#endif
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-
-#ifdef _MSC_VER
-#define snprintf _snprintf
-#endif
 
 #include <sys/stat.h>
 
@@ -32,7 +25,9 @@
 #include "vidsoft.h"
 #include "ygl.h"
 
-#if defined WIN32
+#ifdef _MSC_VER
+#include <stdbool.h>
+#define snprintf _snprintf
 #include "compat/msvc.h"
 #endif
 

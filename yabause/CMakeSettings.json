@@ -286,7 +286,7 @@
     {
       "name": "linux_arm-Remote-Release-libretro",
       "generator": "Ninja",
-      "configurationType": "RelWithDebInfo",
+      "configurationType": "MinSizeRel",
       "cmakeExecutable": "/usr/bin/cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", ".github", "win_template", "yabauseut", "out", "qt", "firebase_cpp_sdk" ],
       "cmakeCommandArgs": "",

@@ -119,6 +119,11 @@
           "name": "YAB_LIBRETRO_FORCE_GLES",
           "value": "False",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },

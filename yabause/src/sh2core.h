@@ -612,6 +612,7 @@ typedef struct
    u8 isIdle;
    u8 isSleeping;
    u16 instruction;
+   u16 isInIt;
    int depth;
    u8 breakpointEnabled;
    breakpoint_struct bp;
@@ -687,7 +688,7 @@ typedef struct
    void (*SetInterrupts)(SH2_struct *context, int num_interrupts,
                          const interrupt_struct interrupts[MAX_INTERRUPTS]);
 
-   void (*WriteNotify)(u32 start, u32 length);
+   void (*WriteNotify)(SH2_struct* context, u32 start, u32 length);
    void(*AddCycle)(SH2_struct *context, u32 value);
 } SH2Interface_struct;
 
@@ -715,7 +716,7 @@ void SH2TrackInfLoopClear(SH2_struct *context);
 
 void SH2GetRegisters(SH2_struct *context, sh2regs_struct * r);
 void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r);
-void SH2WriteNotify(u32 start, u32 length);
+void SH2WriteNotify(SH2_struct* context, u32 start, u32 length);
 
 void SH2SetBreakpointCallBack(SH2_struct *context, void (*func)(void *, u32, void *), void *userdata);
 int SH2AddCodeBreakpoint(SH2_struct *context, u32 addr);

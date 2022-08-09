@@ -1403,12 +1403,13 @@ int MappedMemoryLoadExec(const char *filename, u32 pc)
 //////////////////////////////////////////////////////////////////////////////
 
 int BackupHandled(SH2_struct* sh, u32 addr) {
-    if ((addr & 0xFFFFF) == 0x7d600) {
+    addr = (addr & 0xFFFFF);
+    if (addr == 0x7d600) {
         if (sh == NULL) return 1;
         BiosBUPInit(sh);
         return 1;
     }
-    if (((addr & 0xFFFFF) >= 0x0384 && (addr & 0xFFFFF) <= 0x03A8) || ((addr & 0xFFFFF) == 0x358)) {
+    if ((addr >= 0x0384 && addr <= 0x03A8) || (addr == 0x358)) {
         if (sh == NULL) return 1;
         return BiosHandleFunc(sh); //replace by NOP
     }

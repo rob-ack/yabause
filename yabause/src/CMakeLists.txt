@@ -219,7 +219,24 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 					sh2_dynarec_devmiyax/dynalib_arm64.s)
 			endif ()
 		endif ()
+endif()
 
+#----------------------------------------------------------------------
+option(YAB_WANT_DYNAREC_KRONOS "Enable Sh2 dynarec by Kronos" OFF)
+if (YAB_WANT_DYNAREC_KRONOS)
+	add_definitions(-DDYNAREC_KRONOS=1)
+	include_directories(sh2_kronos/include)
+	set(yabause_SOURCES ${yabause_SOURCES}
+		sh2_kronos/include/memory_sh2.h
+		sh2_kronos/src/memory_sh2.cpp
+		sh2_kronos/src/sh2int_kronos.c
+		sh2_kronos/src/sh2_opcodes_kronos.c
+	)
+	if(MSVC)
+		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
+#		set(CMAKE_CPP_FLAGS "${CMAKE_CPP_FLAGS} /bigobj")
+#		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
+	endif()
 endif()
 
 option(YAB_USE_SSF "Include SSF player." ON)
@@ -944,7 +961,7 @@ if(HAVE_CDROM)
 		cdbase.c 
 		cd-web.cpp
 	)
-	if(IS_LIBRETRO_PORT)
+	if(IS_LIBRETRO_PORT AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android")
 		add_definitions(-DARCH_IS_LINUX=1)
 		set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp)
 	# Yabause Arch
@@ -993,7 +1010,6 @@ if(HAVE_CDROM)
 		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
 	endif ()
 endif()
-
 
 set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
 if(ENABLE_SANITIZER)

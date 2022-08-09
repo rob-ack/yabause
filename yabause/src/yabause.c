@@ -1239,7 +1239,7 @@ int YabauseQuickLoadGame(void)
          lgpartition->numblocks = 0;
       }
 
-      SH2WriteNotify(0x6002000, blocks<<11);
+      SH2WriteNotify(CurrentSH2, 0x6002000, blocks<<11);
 
       // Ok, now that we've loaded the ip, now it's time to load the
       // First Program
@@ -1311,7 +1311,7 @@ int YabauseQuickLoadGame(void)
          lgpartition->numblocks = 0;
       }
 
-      SH2WriteNotify(addr, blocks<<11);
+      SH2WriteNotify(CurrentSH2, addr, blocks<<11);
 
       // Now setup SH2 registers to start executing at ip code
       SH2GetRegisters(MSH2, &MSH2->regs);

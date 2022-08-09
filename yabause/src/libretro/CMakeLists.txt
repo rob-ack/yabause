@@ -12,7 +12,11 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${LIBRETRO_COMM_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-set(YAB_LIBRETRO_FORCE_GLES ON CACHE BOOL "FORCE GLES ON THIS PLATFORM")
+if(UNIX)
+	set(YAB_LIBRETRO_FORCE_GLES ON CACHE BOOL "FORCE GLES ON THIS PLATFORM")
+else()
+	set(YAB_LIBRETRO_FORCE_GLES OFF CACHE BOOL "FORCE GLES ON THIS PLATFORM")
+endif()
 
 add_definitions(
 	-D__LIBRETRO__
@@ -62,6 +66,7 @@ if(HAVE_CDROM)
 		${LIBRETRO_COMM_DIR}/string/stdstring.c
 		${LIBRETRO_COMM_DIR}/file/retro_dirent.c
 		${SOURCE_DIR}/cd-libretro.c
+		${SOURCE_DIR}/junzip.c
 	)
 endif()
 
@@ -100,12 +105,13 @@ else()
 	set(LIBRETRO_SRCS ${LIBRETRO_SRCS} ${LIBRETRO_COMM_DIR}/glsym/glsym_gl.c)
 endif()
 
-set(LIBRETRO_PUBLIC_HDRS
-#	libretro_core_options.h
-)
+if(MSVC)
+	set(LIBRETRO_PRIVATE_HDRS
+		${LIBRETRO_COMM_DIR}/include/compat/msvc.h
+	)
+endif()
 
 set(LIBRETRO_PRIVATE_HDRS
-	${LIBRETRO_COMM_DIR}/include/compat/msvc.h
 	glsym_private.h
 )
 

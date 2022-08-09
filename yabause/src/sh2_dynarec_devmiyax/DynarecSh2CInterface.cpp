@@ -61,7 +61,7 @@ void SH2DynSendInterrupt(SH2_struct *context, u8 level, u8 vector);
 void SH2DynRemoveInterrupt(SH2_struct *context, u8 level, u8 vector);
 int SH2DynGetInterrupts(SH2_struct *context, interrupt_struct interrupts[MAX_INTERRUPTS]);
 void SH2DynSetInterrupts(SH2_struct *context, int num_interrupts, const interrupt_struct interrupts[MAX_INTERRUPTS]);
-void SH2DynWriteNotify(u32 start, u32 length);
+void SH2DynWriteNotify(SH2_struct* context, u32 start, u32 length);
 void SH2DynAddCycle(SH2_struct *context, u32 value);
 
 SH2Interface_struct SH2Dyn = {
@@ -340,7 +340,7 @@ void SH2DynAddCycle(SH2_struct *context, u32 value) {
 }
 
 
-void SH2DynWriteNotify(u32 start, u32 length){
+void SH2DynWriteNotify(SH2_struct* context, u32 start, u32 length){
   CompileBlocks * block = CompileBlocks::getInstance();
   
   switch (start & 0x0FF00000){

@@ -35,6 +35,9 @@
 #include <QPointer>
 #include <QDir>
 
+#if defined DYNAREC_KRONOS
+#include "sh2int_kronos.h"
+#endif
 // cores
 
 #ifdef Q_OS_WIN
@@ -62,6 +65,9 @@ SH2Interface_struct *SH2CoreList[] = {
 #if DYNAREC_DEVMIYAX
 &SH2Dyn,
 &SH2DynDebug,
+#endif
+#if DYNAREC_KRONOS
+&SH2KronosInterpreter,
 #endif
 NULL
 };

@@ -403,9 +403,9 @@ void SH2SetRegisters(SH2_struct *context, sh2regs_struct * r)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void SH2WriteNotify(u32 start, u32 length) {
+void SH2WriteNotify(SH2_struct* context, u32 start, u32 length) {
    if (SH2Core->WriteNotify)
-      SH2Core->WriteNotify(start, length);
+      SH2Core->WriteNotify(context, start, length);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -2392,7 +2392,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  SH2WriteNotify(CurrentSH2, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   dmac->penerly = 0;
                   return;
                }
@@ -2420,7 +2420,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   // Set Transfer End bit
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  SH2WriteNotify(CurrentSH2, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   dmac->penerly = 0;
                   return;
                }
@@ -2448,7 +2448,7 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                   }
                   *dmac->CHCR |= 0x2;
                   *dmac->CHCRM |= 0x2;
-                  SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+                  SH2WriteNotify(CurrentSH2, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                   dmac->penerly = 0;
                   return;
                }
@@ -2476,14 +2476,14 @@ void DMATransferCycles(Dmac * dmac, int cycles ){
                }
                *dmac->CHCR |= 0x2;
                *dmac->CHCRM |= 0x2;
-               SH2WriteNotify(destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
+               SH2WriteNotify(CurrentSH2, destInc<0 ? *dmac->DAR : *dmac->DAR - i*destInc, i*abs(destInc));
                dmac->penerly = 0;
                return;
              }
            }
            break;
       }
-      SH2WriteNotify(destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
+      SH2WriteNotify(CurrentSH2, destInc<0?*dmac->DAR:*dmac->DAR-i*destInc,i*abs(destInc));
    }
 
 }
@@ -2576,7 +2576,7 @@ void DMATransfer(u32 *CHCR, u32 *SAR, u32 *DAR, u32 *TCR, u32 *VCRDMA)
          }
          break;
       }
-      SH2WriteNotify(destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
+      SH2WriteNotify(CurrentSH2, destInc<0?*DAR:*DAR-i*destInc,i*abs(destInc));
    }
 
    if (*CHCR & 0x4)

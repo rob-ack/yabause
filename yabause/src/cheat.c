@@ -270,21 +270,21 @@ void CheatDoPatches(void)
                continue;
             LOG("CheatDoPatches %08X", cheatlist[i].addr);
             MappedMemoryWriteByte(cheatlist[i].addr, (u8)cheatlist[i].val, NULL);
-            SH2WriteNotify(cheatlist[i].addr, 1);
+            SH2WriteNotify(CurrentSH2, cheatlist[i].addr, 1);
             break;
          case CHEATTYPE_WORDWRITE:
             if (cheatlist[i].enable == 0)
                continue;
             LOG("CheatDoPatches %08X", cheatlist[i].addr);
             MappedMemoryWriteWord(cheatlist[i].addr, (u16)cheatlist[i].val, NULL);
-            SH2WriteNotify(cheatlist[i].addr, 2);
+            SH2WriteNotify(CurrentSH2, cheatlist[i].addr, 2);
             break;
          case CHEATTYPE_LONGWRITE:
             if (cheatlist[i].enable == 0)
                continue;
             LOG("CheatDoPatches %08X", cheatlist[i].addr);
             MappedMemoryWriteLong(cheatlist[i].addr, cheatlist[i].val, NULL);
-            SH2WriteNotify(cheatlist[i].addr, 4);
+            SH2WriteNotify(CurrentSH2, cheatlist[i].addr, 4);
             break;            
       }
    }

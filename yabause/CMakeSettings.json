@@ -97,7 +97,7 @@
         },
         {
           "name": "YAB_WANT_SDL",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -107,6 +107,16 @@
         },
         {
           "name": "YAB_USE_SSF",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "HAVE_CDROM",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_LIBRETRO_FORCE_GLES",
           "value": "False",
           "type": "BOOL"
         }

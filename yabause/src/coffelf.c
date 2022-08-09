@@ -202,7 +202,7 @@ int MappedMemoryLoadCoff(const char *filename)
 
       for (j = 0; j < section_headers[i].sectionsize; j++)
          MappedMemoryWriteByte(section_headers[i].physaddr+j, buffer[j], NULL);
-      SH2WriteNotify(section_headers[i].physaddr,
+      SH2WriteNotify(CurrentSH2, section_headers[i].physaddr,
                      section_headers[i].sectionsize);
 
       free(buffer);

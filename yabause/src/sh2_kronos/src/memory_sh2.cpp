@@ -110,7 +110,7 @@ u8 FASTCALL SH2MappedMemoryReadByte(SH2_struct* context, u32 addr) {
     return 0;
 }
 
-u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* context, u32 addr)
+u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* const context, u32 addr)
 {
     int id = addr >> 29;
 //    if (context == NULL) id = 1;

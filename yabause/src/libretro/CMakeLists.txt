@@ -41,7 +41,7 @@ add_definitions(
 
 set(LIBRETRO_SRCS ${LIBRETRO_SRCS}
 	glsym_private.c
-	libretro.c
+	libretro.cpp
 	${LIBRETRO_COMM_DIR}/compat/compat_posix_string.c
 	${LIBRETRO_COMM_DIR}/compat/compat_strl.c
 	${LIBRETRO_COMM_DIR}/compat/fopen_utf8.c

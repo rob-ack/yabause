@@ -1,12 +1,4 @@
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-
 #include <sys/stat.h>
-
-#include <libretro.h>
-
 #include <file/file_path.h>
 
 #include "vdp1.h"
@@ -31,6 +23,12 @@
 #include "compat/msvc.h"
 #endif
 
+#include "libretro.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdarg.h>
+
 yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
@@ -54,11 +52,14 @@ static bool one_frame_rendered = false;
 
 static bool libretro_supports_bitmasks = false;
 static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
- 
+
+#if defined DYNAREC_KRONOS
+#include "sh2int_kronos.h"
+#endif
+
 #ifdef DYNAREC_DEVMIYAX
 static int g_sh2coretype = 3;
 #elif defined DYNAREC_KRONOS
-#include "sh2int_kronos.h"
 static int g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
 #else
 static int g_sh2coretype = SH2CORE_INTERPRETER;
@@ -94,7 +95,7 @@ static retro_audio_sample_batch_t audio_batch_cb;
 #if defined(_USEGLEW_)
 static struct retro_hw_render_callback hw_render;
 #else
-extern struct retro_hw_render_callback hw_render;
+extern "C" struct retro_hw_render_callback hw_render;
 #endif
 
 void retro_set_environment(retro_environment_t cb)
@@ -105,8 +106,12 @@ void retro_set_environment(retro_environment_t cb)
       { "yabasanshiro_addon_cart", "Addon Cartridge (restart); 4M_extended_ram|1M_extended_ram" },
       { "yabasanshiro_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
       { "yabasanshiro_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX && defined DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|interpreter|kronos" },
+#elif DYNAREC_DEVMIYAX
       { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|interpreter" },
+#elif DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
 #endif
 #ifdef ALLOW_POLYGON_MODE
       { "yabasanshiro_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
@@ -432,7 +437,7 @@ void SNDLIBRETROUnMuteAudio(void) {}
 
 void SNDLIBRETROSetVolume(int volume) {}
 
-SoundInterface_struct SNDLIBRETRO = {
+extern "C" SoundInterface_struct SNDLIBRETRO = {
     SNDCORE_LIBRETRO,
     "Libretro Sound Interface",
     SNDLIBRETROInit,
@@ -446,7 +451,7 @@ SoundInterface_struct SNDLIBRETRO = {
     SNDLIBRETROSetVolume
 };
 
-M68K_struct *M68KCoreList[] = {
+extern "C" M68K_struct *M68KCoreList[] = {
     &M68KDummy,
 #ifdef HAVE_MUSASHI
     &M68KMusashi,
@@ -456,7 +461,7 @@ M68K_struct *M68KCoreList[] = {
     NULL
 };
 
-SH2Interface_struct *SH2CoreList[] = {
+extern "C" SH2Interface_struct *SH2CoreList[] = {
     &SH2Interpreter,
     &SH2DebugInterpreter,
 #ifdef DYNAREC_DEVMIYAX
@@ -468,13 +473,13 @@ SH2Interface_struct *SH2CoreList[] = {
     NULL
 };
 
-PerInterface_struct *PERCoreList[] = {
+extern "C" PerInterface_struct *PERCoreList[] = {
     &PERDummy,
     &PERLIBRETROJoy,
     NULL
 };
 
-CDInterface *CDCoreList[] = {
+extern "C" CDInterface *CDCoreList[] = {
 #if defined HAVE_CDROM
     &DummyCD,
     &ISOCD,
@@ -482,13 +487,13 @@ CDInterface *CDCoreList[] = {
     NULL
 };
 
-SoundInterface_struct *SNDCoreList[] = {
+extern "C" SoundInterface_struct *SNDCoreList[] = {
     &SNDDummy,
     &SNDLIBRETRO,
     NULL
 };
 
-VideoInterface_struct *VIDCoreList[] = {
+extern "C" VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
     &VIDOGL,
     &VIDSoft,
@@ -497,7 +502,7 @@ VideoInterface_struct *VIDCoreList[] = {
 
 #pragma mark Yabause Callbacks
 
-void YuiMsg(const char *format, ...)
+extern "C" void YuiMsg(const char *format, ...)
 {
   char buf[512]; 
   va_list arglist;
@@ -520,6 +525,7 @@ int YuiUseOGLOnThisThread()
 #if !defined(_USEGLEW_)
   return glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
 #endif
+  return 0;
 }
 
 int YuiRevokeOGLOnThisThread()
@@ -527,9 +533,10 @@ int YuiRevokeOGLOnThisThread()
 #if !defined(_USEGLEW_)
   return glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
 #endif
+  return 0;
 }
 
-int YuiGetFB(void)
+extern "C" int YuiGetFB(void)
 {
   return hw_render.get_current_framebuffer();
 }
@@ -731,15 +738,21 @@ void check_variables(void)
          g_rbg_use_compute_shader = 0;
    }
 
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX || defined DYNAREC_KRONOS
    var.key = "yabasanshiro_sh2coretype";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "dynarec") == 0)
-         g_sh2coretype = 3;
-      else if (strcmp(var.value, "interpreter") == 0)
+      if (strcmp(var.value, "interpreter") == 0)
          g_sh2coretype = SH2CORE_INTERPRETER;
+#if defined DYNAREC_DEVMIYAX
+       else if (strcmp(var.value, "dynarec") == 0)
+         g_sh2coretype = 3;
+#endif
+#if defined DYNAREC_KRONOS
+       else if (strcmp(var.value, "kronos") == 0)
+          g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
+#endif
    }
 #endif
 
@@ -1357,7 +1370,7 @@ void retro_run(void)
 
    // If no frame rendered, dupe
    if(!one_frame_rendered)
-      video_cb(NULL, current_width, current_height, 0);
+      video_cb(nullptr, current_width, current_height, 0);
 
    reset_global_gl_state();
 }

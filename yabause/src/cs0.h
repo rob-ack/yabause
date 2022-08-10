@@ -42,6 +42,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "memory.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CART_NONE               0
 #define CART_PAR                1
 #define CART_BACKUPRAM4MBIT     2
@@ -95,5 +99,9 @@ void CartDeInit(void);
 
 int CartSaveState(FILE *fp);
 int CartLoadState(FILE *fp, int version, int size);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif

@@ -50,6 +50,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define INSTRUCTION_CD(x) (x & 0x00FF)
 #define INSTRUCTION_BCD(x) (x & 0x0FFF)
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 extern SH2Interface_struct SH2Interpreter;
 extern SH2Interface_struct SH2DebugInterpreter;
 
@@ -58,5 +62,9 @@ extern fetchfunc fetchlist[0x100];
 
 typedef void (FASTCALL *opcodefunc)(SH2_struct *);
 extern opcodefunc opcodes[0x10000];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

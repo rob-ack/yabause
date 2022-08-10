@@ -22,6 +22,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "m68kcore.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 extern M68K_struct M68KMusashi;
+
+#ifdef __cplusplus
+};
+#endif /* __cplusplus */
 
 #endif

@@ -82,6 +82,7 @@ set(yabause_SOURCES
 	ygl_texture.cpp
 	japmodem.c
 	sh2cache.c 
+	cd-dummy.c
 )
 	
 if(IS_LIBRETRO_PORT)
@@ -228,6 +229,8 @@ if (YAB_WANT_DYNAREC_KRONOS)
 	include_directories(sh2_kronos/include)
 	set(yabause_SOURCES ${yabause_SOURCES}
 		sh2_kronos/include/memory_sh2.h
+		sh2_kronos/include/sh2int_kronos.h
+		sh2_kronos/include/sh2_functions.inc
 		sh2_kronos/src/memory_sh2.cpp
 		sh2_kronos/src/sh2int_kronos.c
 		sh2_kronos/src/sh2_opcodes_kronos.c
@@ -594,9 +597,7 @@ if ( ANDROID_NDK_HOST_SYSTEM_NAME2 MATCHES  "windows" )
  add_definitions(-DC68K_NO_JUMP_TABLE)
 endif (  )
 
-#all this should move to targets like qt port or sdl port or a common file defining windows ports as target
 if (WIN32)
-
 	# Windows ddk
 	option(YAB_WANT_DDK "Use the real DDK instead of the built-in one")
 	if(YAB_WANT_DDK)
@@ -614,8 +615,6 @@ if (WIN32)
 			message(STATUS "Could not find ntddcdrm.h")
 		endif (ntddcdrm_INCLUDE_DIR)
 	endif(YAB_WANT_DDK)
-
-	set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
 
 	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
 	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
@@ -952,42 +951,43 @@ endif()
 
 if(HAVE_CDROM)
 	add_definitions(-DHAVE_CDROM -DHAVE_FSEEKO)
-
 	set(yabause_HEADERS ${yabause_HEADERS}
 		cdbase.h
 	)
-
 	set(yabause_SOURCES ${yabause_SOURCES}
 		cdbase.c 
 		cd-web.cpp
 	)
-	if(IS_LIBRETRO_PORT AND ${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android")
-		add_definitions(-DARCH_IS_LINUX=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp)
-	# Yabause Arch
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		add_definitions(-DARCH_IS_MACOSX=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
-		add_definitions(-DARCH_IS_MACOSX=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp /*thr-dummy.c*/ )
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-		add_definitions(-DARCH_IS_FREEBSD=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-freebsd.c)
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Switch")
-	#	add_definitions(-DARCH_IS_FREEBSD=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-nx.c )
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
-		add_definitions(-DARCH_IS_LINUX=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp cd-linux.c)
+endif()
 
-			if (!ANDROID)
-			  check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
-			  if (LINUX_HAS_JOYSTICK)
-          		set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
-          		set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
-			  endif()
+# Yabause Arch
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	add_definitions(-DARCH_IS_MACOSX=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
+	add_definitions(-DARCH_IS_MACOSX=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-linux.cpp)
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
+	add_definitions(-DARCH_IS_FREEBSD=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	if(HAVE_CDROM)
+		set(yabause_SOURCES ${yabause_SOURCES} cd-freebsd.c)
+	endif()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Switch")
+#	add_definitions(-DARCH_IS_FREEBSD=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-nx.c )
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Android" )
+	add_definitions(-DARCH_IS_LINUX=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-linux.c thr-linux.cpp)
 
+	if (!ANDROID)
+		check_include_file("linux/joystick.h" LINUX_HAS_JOYSTICK)
+		if (LINUX_HAS_JOYSTICK)
+			set(yabause_SOURCES ${yabause_SOURCES} perlinuxjoy.c)
+			set(yabause_HEADERS ${yabause_HEADERS} perlinuxjoy.h)
+		endif()
+		if(HAVE_CDROM)
+			set(yabause_SOURCES ${yabause_SOURCES} cd-linux.c)
 			check_c_source_compiles("
 					#include <linux/cdrom.h>
 					int main(int argc, char ** argv) { int i = CDSL_CURRENT; }
@@ -996,20 +996,29 @@ if(HAVE_CDROM)
 					add_definitions(-DLINUX_CDROM_H_IS_BROKEN)
 			endif (NOT LINUX_CDROM_H_OK)
 		endif()
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
-		add_definitions(-DARCH_IS_NETBSD=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
-		add_definitions(-DARCH_IS_NETBSD=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c cd-netbsd.c)
-	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		add_definitions(-DARCH_IS_WINDOWS=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-windows.c thr-windows.c)
-	else ()
-		add_definitions(-DUNKNOWN_ARCH=1)
-		set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
-	endif ()
-endif()
+	endif()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "NetBSD")
+	add_definitions(-DARCH_IS_NETBSD=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	if(HAVE_CDROM)
+		set(yabause_SOURCES ${yabause_SOURCES} cd-netbsd.c)
+	endif()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "OpenBSD")
+	add_definitions(-DARCH_IS_NETBSD=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+	if(HAVE_CDROM)
+		set(yabause_SOURCES ${yabause_SOURCES} cd-netbsd.c)
+	endif()
+elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+	add_definitions(-DARCH_IS_WINDOWS=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-windows.c thr-windows.c)
+	if(HAVE_CDROM)
+		set(yabause_SOURCES ${yabause_SOURCES} cd-windows.c)
+	endif()
+else ()
+	add_definitions(-DUNKNOWN_ARCH=1)
+	set(yabause_SOURCES ${yabause_SOURCES} sock-dummy.c thr-dummy.c)
+endif ()
 
 set(ENABLE_SANITIZER OFF CACHE STRING "Enable/Disable Sanitizer" )
 if(ENABLE_SANITIZER)

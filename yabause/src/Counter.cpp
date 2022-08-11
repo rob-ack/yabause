@@ -30,13 +30,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "sh2core.h"
 #include "debug.h"
 #include "yabause.h"
-
+#include <condition_variable>
+#include <mutex>
 #include <atomic>
 
 using std::atomic;
 
 atomic<u64> m68k_counter(0);
 atomic<u64> m68k_counter_done(0);
+
+std::mutex m68k_mtx_;
+std::condition_variable m68k_cond_;
 
 const u64 MAX_SCSP_COUNTER = (u64)(44100 * 256 / 60) << SCSP_FRACTIONAL_BITS;
 
@@ -45,7 +49,9 @@ extern "C" {
   extern u64 g_m68K_dec_cycle;
 
   void setM68kCounter(u64 counter) {
+    std::lock_guard<std::mutex> lk(m68k_mtx_);
     m68k_counter = counter;
+    m68k_cond_.notify_all();
   }
 
   void setM68kDoneCounter(u64 counter) {
@@ -53,7 +59,9 @@ extern "C" {
   }
 
   u64 getM68KCounter() {
-    return m68k_counter;
+     std::unique_lock<std::mutex> lk(m68k_mtx_);
+     m68k_cond_.wait(lk);
+     return m68k_counter;
   }
 
   void syncM68K() {

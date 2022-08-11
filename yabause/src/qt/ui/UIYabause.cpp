@@ -894,8 +894,8 @@ void UIYabause::on_aFileSettings_triggered()
 		if (newhash["Sound/SoundCore"] != hash["Sound/SoundCore"])
 			ScspChangeSoundCore(newhash["Sound/SoundCore"].toInt());
 
-      if (newhash["Sound/NewScsp"].toBool() != hash["Sound/NewScsp"])
-         scsp_set_use_new(newhash["Sound/NewScsp"].toInt());
+//      if (newhash["Sound/NewScsp"].toBool() != hash["Sound/NewScsp"])
+//         scsp_set_use_new(newhash["Sound/NewScsp"].toInt());
 
 		if (newhash["Video/WindowWidth"] != hash["Video/WindowWidth"] || newhash["Video/WindowHeight"] != hash["Video/WindowHeight"] ||
           newhash["View/Menubar"] != hash["View/Menubar"] || newhash["View/Toolbar"] != hash["View/Toolbar"] || 
@@ -1372,10 +1372,10 @@ void UIYabause::on_aViewDebugSCSP_triggered()
 
 void UIYabause::on_aViewDebugSCSPChan_triggered()
 {
-   if (use_new_scsp)
+//   if (use_new_scsp)
       UIDebugSCSPChan(this).exec();
-   else
-      CommonDialogs::information( QtYabause::translate( "Only available with new scsp code(USE_NEW_SCSP=1)" ) );
+//   else
+//      CommonDialogs::information( QtYabause::translate( "Only available with new scsp code(USE_NEW_SCSP=1)" ) );
 }
 
 void UIYabause::on_aViewDebugSCSPDSP_triggered()

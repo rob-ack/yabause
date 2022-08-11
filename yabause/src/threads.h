@@ -103,12 +103,22 @@ int YaGetQueueSize(YabEventQueue * queue_t);
 
 int YabClearEventQueue(YabEventQueue * queue_t);
 
+typedef void* YabSem;
+
+void YabSemPost(YabSem* mtx);
+void YabSemWait(YabSem* mtx);
+YabSem* YabThreadCreateSem(int val);
+void YabThreadFreeSem(YabSem* mtx);
+
 typedef void * YabMutex;
 
 void YabThreadLock( YabMutex * mtx );
 void YabThreadUnLock( YabMutex * mtx );
 YabMutex * YabThreadCreateMutex();
 void YabThreadFreeMutex( YabMutex * mtx );
+
+typedef void* YabCond;
+typedef void* YabBarrier;
 
 int YabThreadGetFastestCpuIndex();
 void YabThreadSetCurrentThreadAffinityMask(int mask);

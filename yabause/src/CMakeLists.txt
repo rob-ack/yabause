@@ -29,6 +29,8 @@ if (MSVC)
 	add_compile_options("$<$<CONFIG:Debug>:/ZI>")
 endif()
 
+include_directories(sys/scsp/include)
+
 set(yabause_HEADERS
 	bios.h
 	cheat.h coffelf.h core.h cs0.h cs1.h cs2.h
@@ -40,7 +42,7 @@ set(yabause_HEADERS
 	netlink.h
 	osdcore.h
 	peripheral.h profile.h
-	scsp.h scspdsp.h scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
+    scu.h sh2core.h sh2d.h sh2iasm.h sh2idle.h sh2int.h sh2trace.h smpc.h sock.h
 	threads.h titan/titan.h
 	vdp1.h vdp2.h vdp2debug.h vidogl.h vidshared.h vidsoft.h
 	yabause.h ygl.h yui.h
@@ -49,7 +51,8 @@ set(yabause_HEADERS
 	sh2cache.h
 	BackupManager.h
 	base64.h
-	json/json.h	)
+	json/json.h	
+)
 
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
@@ -74,15 +77,15 @@ set(yabause_SOURCES
 	osdcore.c
 	peripheral.c profile.c
 	frameprofile.cpp
-	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
+	scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
 	vdp1.cpp vdp2.cpp vdp2debug.c vidogl.c vidshared.c vidsoft.c
 	yabause.c
-	Counter.cpp
 	ygl_texture.cpp
 	japmodem.c
 	sh2cache.c 
 	cd-dummy.c
+	sys/core/core.mem.c
 )
 	
 if(IS_LIBRETRO_PORT)
@@ -267,10 +270,26 @@ endif()
 option(YAB_USE_SCSP2 "Use the new SCSP implementation.")
 if (YAB_USE_SCSP2)
 	add_definitions(-DUSE_SCSP2=1)
-	set(yabause_SOURCES ${yabause_SOURCES} scsp2.c)
-	set(yabause_HEADERS ${yabause_HEADERS} scsp2.h)
+	set(yabause_SOURCES ${yabause_SOURCES} 
+		scsp2.c
+		sys/scsp/src/scspdsp.c
+	)
+	set(yabause_HEADERS ${yabause_HEADERS} 
+		scsp2.h
+		sys/scsp/include/scspdsp.h
+	)
 else()
-	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
+	set(yabause_SOURCES ${yabause_SOURCES} 
+		sys/scsp/include/scsp.debug.h
+		sys/scsp/include/scsp.h
+		sys/scsp/include/scspdsp.disasm.h
+		sys/scsp/include/scspdsp.h
+		sys/scsp/src/scsp.debug.c
+		sys/scsp/src/scsp.c
+		sys/scsp/src/scspdsp.disasm.cpp
+		sys/scsp/src/scspdsp.c
+		sys/scsp/src/scsp.private.h
+	)
 endif()
 
 # Enable SCSP MIDI hooks in sound interface
@@ -1207,6 +1226,7 @@ message(STATUS "OPENGLES3_FOUND ${OPENGLES3_FOUND}")
 message(STATUS "------ FLAGS  -------")
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")
+message(STATUS "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} defined")
 if(MSVC)
 message(STATUS "CMAKE_SYSTEM_VERSION ${CMAKE_SYSTEM_VERSION}")
 	if(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)

@@ -16,30 +16,15 @@
     along with Yabause; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
-/*
-        Copyright 2019 devMiyax(smiyaxdev@gmail.com)
-
-This file is part of YabaSanshiro.
-
-        YabaSanshiro is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
-
-YabaSanshiro is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-along with YabaSanshiro; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
-*/
 
 #ifndef SCSPDSP_H
 #define SCSPDSP_H
 
 #include "core.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct
 {
@@ -79,7 +64,7 @@ typedef struct
    int last_step;
 
    s64 product;
-   u32 read_value;
+   s32 read_value;
    u32 write_value;
    int read_pending;
    int write_pending;
@@ -157,9 +142,6 @@ union ScspDspInstruction {
       u64 yrl : 1;
       u64 shift0 : 1;
       u64 shift1 : 1;
-#if 0
-      u64 shift : 2;
-#endif
       u64 frcl : 1;
       u64 adrl : 1;
       u64 ewa : 4;
@@ -182,9 +164,12 @@ union ScspDspInstruction {
 };
 #endif
 
-void ScspDspDisasm(u8 addr, char *outstring);
-void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
+void ScspDspExec(ScspDsp* const dsp, int const addr, u8 * const sound_ram);
 
 extern ScspDsp scsp_dsp;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

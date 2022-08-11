@@ -18,6 +18,8 @@
 */
 
 #include "UIDebugM68K.h"
+
+#include "scsp.debug.h"
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
 

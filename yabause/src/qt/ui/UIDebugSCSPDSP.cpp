@@ -19,6 +19,7 @@
 #include "UIDebugSCSPDSP.h"
 #include "../CommonDialogs.h"
 #include "UIYabause.h"
+#include "scspdsp.disasm.h"
 
 int SCSPDSPDis(u32 addr, char *string)
 {

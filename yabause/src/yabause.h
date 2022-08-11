@@ -42,6 +42,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #define YABAUSE_H
 
 #include "core.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -148,6 +149,7 @@ typedef struct
    int use_cpu_affinity;
    int use_sh2_cache;
    int Hcount;
+   u8 fps;
 } yabsys_struct;
 
 extern yabsys_struct yabsys;
@@ -156,7 +158,6 @@ int YabauseEmulate(void);
 
 extern u32 saved_scsp_cycles;
 extern volatile u64 saved_m68k_cycles;
-#define SCSP_FRACTIONAL_BITS 20
 u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
 

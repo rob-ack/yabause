@@ -13,13 +13,13 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
-if(WIN32 OR LINUX)
-	set(HAVE_CDROM ON CACHE BOOL "Have CD-ROM support")
-endif()
-
 if(UNIX AND NOT APPLE)
     set(LINUX TRUE)
 	add_definitions(-DARCH_IS_LINUX=1)
+endif()
+
+if(WIN32 OR LINUX)
+	set(HAVE_CDROM ON CACHE BOOL "Have CD-ROM support")
 endif()
 
 if (MSVC)

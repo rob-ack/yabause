@@ -55,6 +55,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <semaphore.h>
+
 #include <string>
 
 #if GCC_VERSION < 9

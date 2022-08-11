@@ -310,6 +310,11 @@
           "name": "CMAKE_INSTALL_PREFIX",
           "value": "/opt/retropie/libretrocores/lr-yabasanshiro-rob",
           "type": "PATH"
+        },
+        {
+          "name": "YAB_USE_SSF",
+          "value": "False",
+          "type": "BOOL"
         }
       ]
     },

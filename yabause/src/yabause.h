@@ -158,7 +158,6 @@ int YabauseEmulate(void);
 
 extern u32 saved_scsp_cycles;
 extern volatile u64 saved_m68k_cycles;
-u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line);
 u32 YabauseGetCpuTime();
 
 typedef enum {

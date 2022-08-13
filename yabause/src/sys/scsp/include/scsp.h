@@ -78,6 +78,9 @@ typedef struct
 extern const u16 scsp_frequency; 
 extern const u16 scsp_samplecnt; // 11289600/44100
 
+extern u32 saved_scsp_cycles;//fixed point
+extern volatile u64 saved_m68k_cycles;//fixed point
+
 extern SoundInterface_struct SNDDummy;
 extern SoundInterface_struct SNDWave;
 extern u8 *SoundRam;
@@ -140,9 +143,10 @@ void SyncScsp();
 extern void ScspLockThread();
 extern void ScspUnLockThread();
 
+void addM68kCounter(u64 counter);
 void setM68kCounter(u64 counter);
 
-INLINE u32 get_cycles_per_line_division(u32 clock, int frames, int lines, int divisions_per_line)
+INLINE u64 get_cycles_per_line_division(u32 clock, int frames, int lines, unsigned int divisions_per_line)
 {
     return ((u64)(clock / frames) << SCSP_FRACTIONAL_BITS) / (lines * divisions_per_line);
 }

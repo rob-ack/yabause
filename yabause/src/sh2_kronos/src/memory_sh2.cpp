@@ -1,5 +1,6 @@
 #include "memory_sh2.h"
 #include "memory.h"
+#include "sh2core.h"
 
 u8** MemoryBuffer[0x1000] = {};
 
@@ -110,7 +111,7 @@ u8 FASTCALL SH2MappedMemoryReadByte(SH2_struct* context, u32 addr) {
     return 0;
 }
 
-u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* const context, u32 addr)
+u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* context, u32 addr)
 {
     int id = addr >> 29;
 //    if (context == NULL) id = 1;
@@ -129,7 +130,7 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* const context, u32 addr)
         //case 0x4:
     case 0x6:
         // Data Array
-        CACHE_LOG("DAta Word R %x\n", addr);
+        CACHE_LOG("Data Word R %x\n", addr);
         return DataArrayReadWord(addr);
     case 0x7:
     {

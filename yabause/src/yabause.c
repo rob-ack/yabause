@@ -125,8 +125,6 @@ u64 tickfreq;
 char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
-u32 saved_scsp_cycles = 0;//fixed point
-volatile u64 saved_m68k_cycles = 0;//fixed point
 static u32 g_scsp_main_mode = 1;
 unsigned const DECILINE_STEP = 10.0;
 
@@ -180,8 +178,6 @@ extern int tweak_backup_file_size;
 
 int YabauseInit(yabauseinit_struct *init)
 {
-    setM68kCounter(0);
-
   YabThreadInit();
 
   if( init->use_cpu_affinity ){
@@ -713,7 +709,8 @@ int YabauseEmulate(void) {
          if (yabsys.LineCount == yabsys.VBlankLineCount) {
             PROFILE_START("vblankin");
 
-            setM68kCounter((u64)(44100 * 256 / frames) << SCSP_FRACTIONAL_BITS);
+             //play only the following ammount of samples for this frame before sync. i bet its here to prevent frame drops until sync
+            setM68kCounter((u64)((scsp_frequency * scsp_samplecnt) / frames) << SCSP_FRACTIONAL_BITS);
             // VBlankIN
             SmpcINTBACKEnd();
             Vdp2VBlankIN();
@@ -749,8 +746,8 @@ int YabauseEmulate(void) {
       PROFILE_STOP("CDB");
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
 
-      saved_m68k_cycles += m68k_cycles_per_deciline;
-      setM68kCounter(saved_m68k_cycles);
+//      saved_m68k_cycles += m68k_cycles_per_deciline;
+      addM68kCounter(m68k_cycles_per_deciline);
       
       PROFILE_STOP("Total Emulation");
    }
@@ -812,7 +809,6 @@ int YabauseEmulate(void) {
    return 0;
 }
 
-extern YabMutex* g_scsp_mtx;
 void SyncCPUtoSCSP() {
 #if defined CV_SUPPORT
     PCV_SPAN spanFrame;

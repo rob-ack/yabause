@@ -96,7 +96,6 @@
 #include "memory.h"
 #include "m68kcore.h"
 #include "scu.h"
-#include "yabause.h"
 #include "scsp.h"
 
 #if CV_SUPPORT
@@ -107,6 +106,7 @@ PCV_PROVIDER provider;
 #include "scspdsp.h"
 #include "threads.h"
 #include "scsp.private.h"
+#include "yabause.h"
 
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -143,14 +143,21 @@ pthread_cond_t  sync_cnd = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t sync_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
-int new_scsp_outbuf_pos = 0;
+u32 new_scsp_outbuf_pos = 0;
 s32 new_scsp_outbuf_l[900] = { 0 };
 s32 new_scsp_outbuf_r[900] = { 0 };
 int new_scsp_cycles = 0;
 int g_scsp_lock = 0;
 YabMutex * g_scsp_mtx = NULL;
 YabMutex * g_scsp_set_cyc_mtx = NULL;
+
+YabEventQueue* q_scsp_frame_start;
+YabEventQueue* q_scsp_finish;
+
 Scsp new_scsp = { 0 };
+
+u32 saved_scsp_cycles = 0;//fixed point
+volatile u64 saved_m68k_cycles = 0;//fixed point
 
 #include "sh2core.h"
 
@@ -4289,8 +4296,6 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 
   scsp_reset();
   thread_running = false;
-  g_scsp_mtx = YabThreadCreateMutex();
-  g_scsp_set_cyc_mtx = YabThreadCreateMutex();
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -4565,9 +4570,13 @@ SoundRamWriteLong (u32 addr, u32 val)
 int
 ScspInit (int coreid)
 {
-//    q_scsp_frame_start = YabThreadCreateQueue(1);
-//    q_scsp_finish = YabThreadCreateQueue(1);
+    g_scsp_mtx = YabThreadCreateMutex();
+    g_scsp_set_cyc_mtx = YabThreadCreateMutex();
+        
+    q_scsp_frame_start = YabThreadCreateQueue(1);
+    q_scsp_finish = YabThreadCreateQueue(1);
 
+    setM68kCounter(0);
 
   if ((SoundRam = T2MemoryInit (0x80000)) == NULL)
     return -1;
@@ -4763,11 +4772,7 @@ ScspChangeVideoFormat (int type)
 __attribute__((noinline))
 #endif
 
-#if defined(ASYNC_SCSP)
 void MM68KExec(s32 cycles)
-#else
-void M68KExec(s32 cycles)
-#endif
 {
   s32 newcycles = savedcycles - cycles;
   if (LIKELY(IsM68KRunning))
@@ -4832,17 +4837,11 @@ void new_scsp_exec(s32 cycles)
 //----------------------------------------------------------------------------
 
 // Wait for background execution to finish (used on PSP)
-#if defined(ASYNC_SCSP)
 void M68KSync(void){}
 void MM68KSync (void)
-#else
-void M68KSync(void)
-#endif
 {
   M68K->Sync();
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -4913,10 +4912,9 @@ ScspReceiveCDDA (const u8 *sector)
 }
 
 
-void new_scsp_update_samples(s32 *bufL, s32 *bufR, int scspsoundlen)
+void new_scsp_update_samples(s32 *bufL, s32 *bufR, u32 scspsoundlen)
 {
-   int i;
-   for (i = 0; i < new_scsp_outbuf_pos; i++)
+   for (u32 i = 0; i < new_scsp_outbuf_pos; i++)
    {
       if (i >= scspsoundlen)
          break;
@@ -4937,86 +4935,65 @@ void ScspUnLockThread() {
   g_scsp_lock = 0;
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-#if !defined(ASYNC_SCSP)
-void ScspExec(){
-  u32 audiosize;
-
-  ScspInternalVars->scsptiming2 +=
-	  ((scspsoundlen << 16) + scsplines / 2) / scsplines;
-  ScspInternalVars->scsptiming2 &= 0xFFFF; // Keep fractional part
-  ScspInternalVars->scsptiming1++;
-#else
-
 const u16 scsp_frequency = 44100u;
 const u16 scsp_samplecnt = 256u; // 11289600/44100
 void ScspExecAsync();
 
-static u64 m68k_counter = 0;
-static u64 pre_m68k_cycle = 0;
+
+u64 m68k_counter = (0);
+u64 m68k_counter_done = (0);
 static bool nextFrameFlagSet = false;
 
+void addM68kCounter(u64 counter) {
+    //    YabThreadLock(g_scsp_mtx);
+    m68k_counter += counter;
+    //    YabThreadUnLock(g_scsp_mtx);
+}
+
 void setM68kCounter(u64 counter) {
+//    YabThreadLock(g_scsp_mtx);
     m68k_counter = counter;
-//    if(counter > 0)
-//        YabThreadWake(YAB_THREAD_SCSP);
+//    YabThreadUnLock(g_scsp_mtx);
 }
 
 void SignalScspSync()
 {
 //    if (g_scsp_main_mode == 0) {
-//        YabWaitEventQueue(q_scsp_finish);
-        saved_m68k_cycles = 0;
-        setM68kCounter(saved_m68k_cycles);
-//        YabAddEventQueue(q_scsp_frame_start, 0);
+//    nextFrameFlagSet = true;
+    YabWaitEventQueue(q_scsp_finish);
+//    YabThreadLock(g_scsp_mtx);
+    m68k_counter = 0;
+//    YabThreadUnLock(g_scsp_mtx);
+//    setM68kCounter(saved_m68k_cycles);
+    YabAddEventQueue(q_scsp_frame_start, 0);
 //    }
-        
-    nextFrameFlagSet = true;
-//    YabThreadWake(YAB_THREAD_SCSP);
+
 }
 
 u64 getM68KCounter() {
     return m68k_counter;
 }
 
-//YabEventQueue* q_scsp_frame_start;
-//YabEventQueue* q_scsp_finish;
-
 void setM68kDoneCounter(u64 u64)
 {
-    m68k_counter = u64;
+    m68k_counter_done = u64;
 };
 
 void ScspAsynMainCpu( void * p ){
-    u64 before;
-    u64 now;
-    u64 difftime;
-    const int samplecnt = 256; // 11289600/44100
-    const int step = 16;
-    int frame = 0;
-    int frame_count = 0;
-    int i;
-    int frame_div = 1; // g_scsp_sync_count_per_frame;
-    int hzcheck = 0;
+//    int const frame_div = 1; // g_scsp_sync_count_per_frame;
 
 #if defined(ARCH_IS_LINUX)
-    struct timespec tm;
     setpriority(PRIO_PROCESS, 0, -20);
 #endif
     YabThreadSetCurrentThreadAffinityMask(0x03);
-    before = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-    u32 wait_clock = 0;
-    u64 pre_m68k_cycle = 0;
+    
+//    u64 pre_m68k_cycle = 0;
     u64 m68k_inc = 0;
-
-
-    //YabWaitEventQueue(q_scsp_frame_start);
-    now = 0;
-    before = 0;
+    int frame = 0;
+//    u64 playedSamples = 0;
     while (thread_running) {
+        int const framecnt = ((scsp_frequency * scsp_samplecnt) / yabsys.fps); // 11289600/fps
         nextFrameFlagSet = false;
-        int framecnt = (11289600 / yabsys.fps) / frame_div; // 11289600/60
 #if CV_SUPPORT
         static bool once = false;
         if (!once)
@@ -5028,54 +5005,63 @@ void ScspAsynMainCpu( void * p ){
         CvEnterSpan(series, &spanFrame, L"SCSP Work");
 #endif
         while (g_scsp_lock) { YabThreadUSleep(1000); }
-        u64 m68k_done_counter = 0;
-        u64 m68k_integer_part = 0;
-        u64 m68k_cycle = 0;
+
+//        u64 m68k_integer_part;
+        u64 m68k_cycle;
         do {
-            m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
-            m68k_cycle = m68k_integer_part - pre_m68k_cycle;
-            if (thread_running == 0) break;
-        } while (m68k_cycle == 0);
+//            YabThreadUSleep(1000);
+//            m68k_integer_part = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
+            m68k_cycle = getM68KCounter() >> SCSP_FRACTIONAL_BITS;
+//            if(m68k_cycle == 0 && thread_running)
+//            {
+//                YabThreadUSleep(1000);
+//            }
+        } while (m68k_cycle == 0 && thread_running);
 
         m68k_inc += m68k_cycle;
-        pre_m68k_cycle = m68k_integer_part;
+//        YabThreadLock(g_scsp_mtx);
+//        m68k_counter -= m68k_cycle << SCSP_FRACTIONAL_BITS; //we added that concrete amount of cycles (fractional part will remain and will count for next calculations). this is basically how the system syncs
+//        YabThreadUnLock(g_scsp_mtx);
+
+//        pre_m68k_cycle = m68k_integer_part;
 
         // Sync 44100KHz
-        while (m68k_inc >= samplecnt && thread_running) {
-            m68k_inc = m68k_inc - samplecnt;
+        while (m68k_inc >= scsp_samplecnt && thread_running) {
+            m68k_inc = m68k_inc - scsp_samplecnt;
+//            playedSamples += scsp_samplecnt;
             //LOG("[SCSP] MM68KExec %d", samplecnt);
-            MM68KExec(samplecnt);
-            new_scsp_exec((samplecnt << 1));
-            hzcheck++;
-
-            frame += samplecnt;
+            MM68KExec(scsp_samplecnt);
+            new_scsp_exec(scsp_samplecnt * 2);
+            
+            frame += scsp_samplecnt;
             if (frame >= framecnt) {
                 frame = frame - framecnt;
                 ScspInternalVars->scsptiming2 = 0;
                 ScspInternalVars->scsptiming1 = scsplines;
                 ScspExecAsync();
 
+//                while(!nextFrameFlagSet && thread_running)
+//                {
+//                    YabThreadUSleep(10);
+//                }
+                YabAddEventQueue(q_scsp_finish, 0);
                 m68k_inc = 0;
-                pre_m68k_cycle = 0;
-                while(!nextFrameFlagSet && thread_running)
-                {
-                    YabThreadUSleep(1000);
-                }
-                //LOG("[SCSP] WAIT SH2");
-                now = YabauseGetTicks() * 1000000000 / yabsys.tickfreq;
-                //LOG(" SCSPTIME = %d/16666666 %d/735", (s32)(now - before), hzcheck);
-                hzcheck = 0;
-                before = now;
+//                m68k_counter = 0;
+//                pre_m68k_cycle = 0;
+                YabWaitEventQueue(q_scsp_frame_start);
+//                YabThreadLock(g_scsp_mtx);
+//                m68k_counter -= playedSamples;
+//                YabThreadUnLock(g_scsp_mtx);
+
                 break;
             }
         }
-        setM68kDoneCounter(pre_m68k_cycle);
+//        setM68kDoneCounter(pre_m68k_cycle);
 #if defined CV_SUPPORT
     CvLeaveSpan(spanFrame);
 #endif
     }
     YabThreadWake(YAB_THREAD_SCSP);
-  
 }
 
 void ScspRun(){
@@ -5087,9 +5073,6 @@ void ScspRun(){
 
 void ScspExecAsync() {
   u32 audiosize;
-
-#endif
-
 
   if (ScspInternalVars->scsptiming1 >= scsplines)
   {
@@ -5104,10 +5087,8 @@ void ScspExecAsync() {
 
      if (scspsoundoutleft + scspsoundlen > scspsoundbufsize)
      {
-        u32 overrun = (scspsoundoutleft + scspsoundlen) -
-           scspsoundbufsize;
-        SCSPLOG("WARNING: Sound buffer overrun, %lu samples\n",
-           (long)overrun);
+        u32 overrun = (scspsoundoutleft + scspsoundlen) - scspsoundbufsize;
+        SCSPLOG("WARNING: Sound buffer overrun, %lu samples\n",(long)overrun);
         scspsoundoutleft -= overrun;
      }
 

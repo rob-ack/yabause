@@ -321,7 +321,7 @@
     {
       "name": "linux_arm-Remote-Release-libretro",
       "generator": "Ninja",
-      "configurationType": "MinSizeRel",
+      "configurationType": "RelWithDebInfo",
       "cmakeExecutable": "/usr/bin/cmake",
       "remoteCopySourcesExclusionList": [ ".vs", ".git", ".github", "win_template", "yabauseut", "out", "qt", "firebase_cpp_sdk" ],
       "cmakeCommandArgs": "",
@@ -377,6 +377,11 @@
           "name": "HAVE_CDROM",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },
@@ -423,6 +428,11 @@
         {
           "name": "YAB_USE_SSF",
           "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "HAVE_CDROM",
+          "value": "True",
           "type": "BOOL"
         }
       ]

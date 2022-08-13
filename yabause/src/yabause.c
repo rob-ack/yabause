@@ -122,7 +122,6 @@ yabsys_struct yabsys;
 const char *bupfilename = NULL;
 u64 tickfreq;
 //todo this ought to be in scspdsp.c
-ScspDsp scsp_dsp = { 0 };
 char ssf_track_name[256] = { 0 };
 char ssf_artist[256] = { 0 };
 
@@ -755,7 +754,6 @@ int YabauseEmulate(void) {
       
       PROFILE_STOP("Total Emulation");
    }
-   SyncCPUtoSCSP();
    M68KSync();
 
 #ifdef YAB_WANT_SSF
@@ -820,9 +818,7 @@ void SyncCPUtoSCSP() {
     PCV_SPAN spanFrame;
     CvEnterSpan(series, &spanFrame, L"SCSP Sync");
 #endif
-    saved_m68k_cycles = 0;
-    setM68kCounter(0);
-    SignalScsp();
+    SignalScspSync();
 #if defined CV_SUPPORT
     CvLeaveSpan(spanFrame);
 #endif

@@ -43,12 +43,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "core.h"
 #include "threads.h"
 
-#include <errno.h>
+#include <cerrno>
 #include <pthread.h>
-#include <signal.h>
+#include <csignal>
 #include <unistd.h>
 //#include <malloc.h>
-#include <stdlib.h>
+#include <cstdlib>
+#include <thread>
 
 #include <unistd.h>
 #include <sys/syscall.h>
@@ -162,6 +163,7 @@ void YabThreadYield(void)
 
 void YabThreadSleep(void)
 {
+//    std::this_thread::sleep_for(std::chrono::seconds(5)); //it must be enough.
    pause();
 }
 
@@ -184,7 +186,7 @@ void YabThreadWake(unsigned int id)
    if (!thread_handle[id])
       return;  // Thread isn't running
 
-   pthread_kill(thread_handle[id], SIGUSR1);
+   pthread_kill(thread_handle[id], SIGUSR1); //wtf dont do this and crash the whole system
 }
 
 

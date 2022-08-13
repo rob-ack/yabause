@@ -64,7 +64,7 @@ namespace chrono = std::chrono;
 extern "C" {
 u8 * Vdp1Ram;
 u8 * Vdp1FrameBuffer[2];
-VideoInterface_struct *VIDCore = NULL;
+VideoInterface_struct *VIDCore = nullptr;
 extern VideoInterface_struct *VIDCoreList[];
 extern YabEventQueue * rcv_evqueue;
 Vdp1 * Vdp1Regs;
@@ -232,17 +232,17 @@ extern "C" void FASTCALL Vdp1FrameBufferWriteLong(u32 addr, u32 val) {
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" int Vdp1Init(void) {
-   if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == NULL)
+   if ((Vdp1Regs = (Vdp1 *) malloc(sizeof(Vdp1))) == nullptr)
       return -1;
 
-   if ((Vdp1Ram = T1MemoryInit(0x80000)) == NULL)
+   if ((Vdp1Ram = T1MemoryInit(0x80000)) == nullptr)
       return -1;
 
    // Allocate enough memory for two frames
-   if ((Vdp1FrameBuffer[0] = T1MemoryInit(0x40000)) == NULL)
+   if ((Vdp1FrameBuffer[0] = T1MemoryInit(0x40000)) == nullptr)
       return -1;
 
-   if ((Vdp1FrameBuffer[1] = T1MemoryInit(0x40000)) == NULL)
+   if ((Vdp1FrameBuffer[1] = T1MemoryInit(0x40000)) == nullptr)
      return -1;
 
    Vdp1External.status = VDP1_STATUS_IDLE;
@@ -260,19 +260,19 @@ extern "C" int Vdp1Init(void) {
 extern "C" void Vdp1DeInit(void) {
    if (Vdp1Regs)
       free(Vdp1Regs);
-   Vdp1Regs = NULL;
+   Vdp1Regs = nullptr;
 
    if (Vdp1Ram)
       T1MemoryDeInit(Vdp1Ram);
-   Vdp1Ram = NULL;
+   Vdp1Ram = nullptr;
 
    if (Vdp1FrameBuffer[0])
       T1MemoryDeInit(Vdp1FrameBuffer[0]);
    if (Vdp1FrameBuffer[1])
      T1MemoryDeInit(Vdp1FrameBuffer[1]);
 
-   Vdp1FrameBuffer[0] = NULL;
-   Vdp1FrameBuffer[1] = NULL;
+   Vdp1FrameBuffer[0] = nullptr;
+   Vdp1FrameBuffer[1] = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -295,7 +295,7 @@ extern "C" int VideoChangeCore(int coreid)
       coreid = 0; // Assume we want the first one
 
    // Go through core list and find the id
-   for (i = 0; VIDCoreList[i] != NULL; i++)
+   for (i = 0; VIDCoreList[i] != nullptr; i++)
    {
       if (VIDCoreList[i]->id == coreid)
       {
@@ -305,7 +305,7 @@ extern "C" int VideoChangeCore(int coreid)
       }
    }
 
-   if (VIDCore == NULL)
+   if (VIDCore == nullptr)
       return -1;
 
    if (VIDCore->Init() != 0)
@@ -325,13 +325,13 @@ extern "C" int VideoChangeCore(int coreid)
 extern "C" void VideoDeInit(void) {
    if (VIDCore)
       VIDCore->DeInit();
-   VIDCore = NULL;
+   VIDCore = nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" void Vdp1Reset(void) {
-  memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
+  memset(Vdp1Regs, 0, sizeof(Vdp1));
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
    Vdp1Regs->TVMR = 0;
@@ -862,8 +862,8 @@ extern "C" int Vdp1SaveState(FILE *fp)
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
 
-   VIDCore->Vdp1ReadFrameBuffer = NULL;
-   VIDCore->Vdp1WriteFrameBuffer = NULL;
+   VIDCore->Vdp1ReadFrameBuffer = nullptr;
+   VIDCore->Vdp1WriteFrameBuffer = nullptr;
 
    for (i = 0; i < 0x20000; i++)
       back_framebuffer[i] = Vdp1FrameBufferReadWord(i<<1);
@@ -897,8 +897,8 @@ extern "C" int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
 
-   VIDCore->Vdp1ReadFrameBuffer = NULL;
-   VIDCore->Vdp1WriteFrameBuffer = NULL;
+   VIDCore->Vdp1ReadFrameBuffer = nullptr;
+   VIDCore->Vdp1WriteFrameBuffer = nullptr;
 
    yread(&check, (void *)back_framebuffer, 0x40000, 1, fp);
 
@@ -1013,7 +1013,7 @@ char *Vdp1DebugGetCommandNumberName(u32 number)
       }
    }
    else
-      return NULL;
+      return nullptr;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -1376,17 +1376,17 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
    int ret;
 
    if ((addr = Vdp1DebugGetCommandNumberAddr(number)) == 0xFFFFFFFF)
-      return NULL;
+      return nullptr;
 
    command = T1ReadWord(Vdp1Ram, addr);
 
    if (command & 0x8000)
       // Draw End
-      return NULL;
+      return nullptr;
 
    if (command & 0x4000)
       // Command Skipped
-      return NULL;
+      return nullptr;
 
    Vdp1ReadCommand(&cmd, addr, Vdp1Ram);
 
@@ -1399,8 +1399,8 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
          w[0] = (cmd.CMDSIZE & 0x3F00) >> 5;
          h[0] = cmd.CMDSIZE & 0xFF;
 
-         if ((texture = (u32 *)malloc(sizeof(u32) * w[0] * h[0])) == NULL)
-            return NULL;
+         if ((texture = (u32 *)malloc(sizeof(u32) * w[0] * h[0])) == nullptr)
+            return nullptr;
 
          if (!(cmd.CMDPMOD & 0x80))
          {
@@ -1417,8 +1417,8 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
          // Do 1x1 pixel
          w[0] = 1;
          h[0] = 1;
-         if ((texture = (u32 *)malloc(sizeof(u32))) == NULL)
-            return NULL;
+         if ((texture = (u32 *)malloc(sizeof(u32))) == nullptr)
+            return nullptr;
 
          if (cmd.CMDCOLR & 0x8000)
             texture[0] = SAT2YAB1(0xFF, cmd.CMDCOLR);
@@ -1430,9 +1430,9 @@ u32 *Vdp1DebugTexture(u32 number, int *w, int *h)
       case 9: // System Clipping
       case 10: // Local Coordinates
       case 11: // User Clipping *
-         return NULL;
+         return nullptr;
       default: // Invalid command
-         return NULL;
+         return nullptr;
    }
 
    charAddr = cmd.CMDSRCA * 8;

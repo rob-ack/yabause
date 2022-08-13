@@ -28,6 +28,10 @@
 #define M68KCORE_Q68      2
 #define M68KCORE_MUSASHI  3
 
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
+
 typedef u32 FASTCALL M68K_READ(const u32 adr);
 typedef void FASTCALL M68K_WRITE(const u32 adr, u32 data);
 
@@ -77,5 +81,9 @@ extern M68K_struct M68KDummy;
 extern M68K_struct M68KC68K;
 extern M68K_struct M68KQ68;
 extern M68K_struct M68KMusashi;
+
+#ifdef __cplusplus
+};
+#endif /* __cplusplus */
 
 #endif

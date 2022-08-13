@@ -77,7 +77,7 @@
       "variables": [
         {
           "name": "YAB_WANT_DYNAREC_DEVMIYAX",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -245,6 +245,11 @@
         },
         {
           "name": "ENABLE_CONCURENCY_VISUALIZER_SUPPORT",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
           "value": "True",
           "type": "BOOL"
         }
@@ -422,7 +427,7 @@
         },
         {
           "name": "SH2_DYNAREC",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -432,6 +437,11 @@
         },
         {
           "name": "HAVE_CDROM",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
           "value": "True",
           "type": "BOOL"
         }

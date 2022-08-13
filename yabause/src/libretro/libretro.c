@@ -25,6 +25,10 @@
 #include "vidsoft.h"
 #include "ygl.h"
 
+#if defined DYNAREC_KRONOS
+#include "sh2int_kronos.h"
+#endif
+
 #ifdef _MSC_VER
 #include <stdbool.h>
 #define snprintf _snprintf
@@ -55,8 +59,10 @@ static bool one_frame_rendered = false;
 static bool libretro_supports_bitmasks = false;
 static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
  
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX
 static int g_sh2coretype = 3;
+#elif defined DYNAREC_KRONOS
+static int g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
 #else
 static int g_sh2coretype = SH2CORE_INTERPRETER;
 #endif
@@ -99,14 +105,15 @@ void retro_set_environment(retro_environment_t cb)
    static const struct retro_variable vars[] = {
       { "yabasanshiro_force_hle_bios", "Force HLE BIOS (restart, deprecated, debug only); disabled|enabled" },
       { "yabasanshiro_frameskip", "Auto-frameskip (prevent fast-forwarding); enabled|disabled" },
-      { "yabasanshiro_addon_cart", "Addon Cartridge (restart); 4M_extended_ram|1M_extended_ram" },
+      { "yabasanshiro_addon_cart", "Addon Cartridge (restart); none|4M_extended_ram|1M_extended_ram" },
       { "yabasanshiro_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
       { "yabasanshiro_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX && defined DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); interpreter|kronos|dynarec" },
+#elif DYNAREC_DEVMIYAX
       { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|interpreter" },
-#endif
-#ifdef ALLOW_POLYGON_MODE
-      { "yabasanshiro_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
+#elif DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
 #endif
 #ifndef LOW_END
       { "yabasanshiro_resolution_mode", "Resolution Mode; original|2x|4x" },
@@ -459,6 +466,9 @@ SH2Interface_struct *SH2CoreList[] = {
 #ifdef DYNAREC_DEVMIYAX
     &SH2Dyn,
 #endif
+#if defined DYNAREC_KRONOS
+    & SH2KronosInterpreter,
+#endif
     NULL
 };
 
@@ -725,15 +735,21 @@ void check_variables(void)
          g_rbg_use_compute_shader = 0;
    }
 
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX || defined DYNAREC_KRONOS
    var.key = "yabasanshiro_sh2coretype";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
-      if (strcmp(var.value, "dynarec") == 0)
-         g_sh2coretype = 3;
-      else if (strcmp(var.value, "interpreter") == 0)
+      if (strcmp(var.value, "interpreter") == 0)
          g_sh2coretype = SH2CORE_INTERPRETER;
+#if defined DYNAREC_DEVMIYAX
+      else if (strcmp(var.value, "dynarec") == 0)
+          g_sh2coretype = 3;
+#endif
+#if defined DYNAREC_KRONOS
+      else if (strcmp(var.value, "kronos") == 0)
+          g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
+#endif
    }
 #endif
 

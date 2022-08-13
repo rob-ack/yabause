@@ -50,41 +50,10 @@ extern void SH2undecoded(SH2_struct * sh);
 void SH2KronosIOnFrame(SH2_struct *context) {
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-/*void SH2HandleInterrupts(SH2_struct* context)
-{
-  if (context->isInIt != 0) return;
-//  LOCK(context);
-  if (context->NumberOfInterrupts != 0)
-  {
-    if (context->interrupts[context->NumberOfInterrupts - 1].level > context->regs.SR.part.I)
-    {
-      u32 oldpc = context->regs.PC;
-      u32 persr = context->regs.SR.part.I;
-      // if (context->interrupts[context->NumberOfInterrupts - 1].vector != 0xB) context->isInIt = context->regs.PC; //NMI has a special handling
-      context->regs.R[15] -= 4;
-      SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.SR.all);
-      context->regs.R[15] -= 4;
-      SH2MappedMemoryWriteLong(context, context->regs.R[15], context->regs.PC);
-      if (context->interrupts[context->NumberOfInterrupts - 1].level == 0x10) {
-        //NMI
-        context->regs.SR.part.I = 0xF;
-      }
-      else {
-        context->regs.SR.part.I = context->interrupts[context->NumberOfInterrupts - 1].level;
-      }
-      context->regs.PC = SH2MappedMemoryReadLong(context,context->regs.VBR + (context->interrupts[context->NumberOfInterrupts - 1].vector << 2));
-      context->NumberOfInterrupts--;
-//      context->isSleeping = 0;
-    }
-  }
-//  UNLOCK(context);
-}
-*/
 fetchfunc krfetchlist[0x1000];
 static u8 cacheId[0x1000];
-//static opcode_func kropcodes[0x10000];
+opcode_func cacheCodeMSH2[7][0x80000];
+opcode_func cacheCodeSSH2[7][0x80000];
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -117,8 +86,6 @@ static u16 FASTCALL FetchCs0(u32 addr)
     return SH2MappedMemoryReadWord(NULL, addr);
 }
 
-opcode_func cacheCodeMSH2[7][0x80000];
-opcode_func cacheCodeSSH2[7][0x80000];
 //////////////////////////////////////////////////////////////////////////////
 
 static u16 FASTCALL FetchInvalid(UNUSED u32 addr)
@@ -126,18 +93,18 @@ static u16 FASTCALL FetchInvalid(UNUSED u32 addr)
    return 0xFFFF;
 }
 //////////////////////////////////////////////////////////////////////////////
-void decode(SH2_struct *context) {
+void decode(SH2_struct *const context) {
   int id = (context->regs.PC >> 20) & 0xFFF;
-  u16 opcode = krfetchlist[id](context->regs.PC);
-
+  u16 const opcode = krfetchlist[id](context->regs.PC);
+  int const opCode = cacheId[id];
   if (context == MSH2)
-    cacheCodeMSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+    cacheCodeMSH2[opCode][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
   else
-    cacheCodeSSH2[cacheId[id]][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
+    cacheCodeSSH2[opCode][(context->regs.PC >> 1) & 0x7FFFF] = opcodeTable[opcode];
   opcodeTable[opcode](context);
 }
 
-void biosDecode(SH2_struct *context) {
+void biosDecode(SH2_struct *const context) {
   int isBUPHandled = BackupHandled(context, context->regs.PC);
   if (isBUPHandled == 0) {
     decode(context);
@@ -301,21 +268,21 @@ static void showCPUState(SH2_struct *context)
 }
 #endif
 
-u8 execInterrupt = 0;
 
 FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct * context, u32 cycles)
 {
-  u32 target_cycle = context->cycles + cycles;
- char res[512];
- int inIt;
-  execInterrupt = 0;
+  u32 const target_cycle = context->cycles + cycles;
+  u8 execInterrupt = 0;
    while (execInterrupt == 0)
    {
-     inIt = context->isInIt;
+     int const inIt = context->isInIt;
+     u32 const cahceId = (context->regs.PC >> 20) & 0xFFF;
+     u8 const cacheIndex = cacheId[cahceId];
+     u32 const opCode = (context->regs.PC >> 1) & 0x7FFFF;
      if (context == MSH2)
-       cacheCodeMSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+       cacheCodeMSH2[cacheIndex][opCode](context);
      else
-       cacheCodeSSH2[cacheId[(context->regs.PC >> 20) & 0xFFF]][(context->regs.PC >> 1) & 0x7FFFF](context);
+       cacheCodeSSH2[cacheIndex][opCode](context);
      execInterrupt |= (context->cycles >= target_cycle);
      execInterrupt |= (inIt != context->isInIt);
    }
@@ -323,7 +290,7 @@ FASTCALL void SH2KronosInterpreterExecLoop(SH2_struct * context, u32 cycles)
 
 FASTCALL void SH2KronosInterpreterExec(SH2_struct *context, u32 cycles)
 {
-  u32 target_cycle = context->cycles + cycles;
+  u32 const target_cycle = context->cycles + cycles;
   while (context->cycles < target_cycle){
     SH2HandleInterrupts(context);
     SH2KronosInterpreterExecLoop(context, target_cycle-context->cycles);
@@ -594,11 +561,10 @@ void SH2KronosInterpreterSetInterrupts(SH2_struct *context, int num_interrupts,
    context->NumberOfInterrupts = num_interrupts;
 }
 
-void SH2KronosWriteNotify(SH2_struct *context, u32 start, u32 length){
-  int i;
-  for (i=0; i<length; i+=2) {
-    int id = ((start + i) >> 20) & 0xFFF;
-    int addr = (start + i) >> 1;
+void SH2KronosWriteNotify(SH2_struct * const context, u32 const start, u32 const length){
+  for (int i = 0; i<length; i+=2) {
+    int const id = ((start + i) >> 20) & 0xFFF;
+    int const addr = (start + i) >> 1;
     if (cacheId[id] == 0) {  //Special BAckupHandled case
       if (context == MSH2)
         cacheCodeMSH2[cacheId[id]][addr & 0x7FFFF] = biosDecode;

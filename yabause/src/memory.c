@@ -90,6 +90,8 @@ void FASTCALL MappedMemoryWriteLongNocache(u32 addr, u32 val, u32 * cycle){ Mapp
 
 //////////////////////////////////////////////////////////////////////////////
 
+u8** MemoryBuffer[0x1000];
+
 writebytefunc WriteByteList[0x1000];
 writewordfunc WriteWordList[0x1000];
 writelongfunc WriteLongList[0x1000];
@@ -109,6 +111,8 @@ u8 *HighWram;
 u8 *LowWram;
 u8 *BiosRom;
 u8 *BupRam;
+
+u8* VoidMem = NULL;
 
 /* This flag is set to 1 on every write to backup RAM.  Ports can freely
  * check or clear this flag to determine when backup RAM has been written,
@@ -583,6 +587,7 @@ static void FASTCALL BupRamMemoryWriteByte(u32 addr, u8 val)
 static void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 val)
 {
    LOG("bup\t: BackupRam write word - %08X\n", addr);
+   BupRamMemoryWriteByte(addr | 0x1, (val >> 8) & 0xFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -590,6 +595,8 @@ static void FASTCALL BupRamMemoryWriteWord(USED_IF_DEBUG u32 addr, UNUSED u16 va
 static void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 val)
 {
    LOG("bup\t: BackupRam write long - %08X\n", addr);
+   BupRamMemoryWriteByte(addr | 0x1, (val >> 8) & 0xFF);
+   BupRamMemoryWriteByte(addr | 0x3, (val >> 24) & 0xFF);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -597,12 +604,13 @@ static void FASTCALL BupRamMemoryWriteLong(USED_IF_DEBUG u32 addr, UNUSED u32 va
 static void FillMemoryArea(unsigned short start, unsigned short end,
                            readbytefunc r8func, readwordfunc r16func,
                            readlongfunc r32func, writebytefunc w8func,
-                           writewordfunc w16func, writelongfunc w32func)
+                           writewordfunc w16func, writelongfunc w32func, u8** memory)
 {
    int i;
 
    for (i=start; i < (end+1); i++)
    {
+      MemoryBuffer[i] = memory;
       ReadByteList[i] = r8func;
       ReadWordList[i] = r16func;
       ReadLongList[i] = r32func;
@@ -622,7 +630,8 @@ void MappedMemoryInit()
                                 &UnhandledMemoryReadLong,
                                 &UnhandledMemoryWriteByte,
                                 &UnhandledMemoryWriteWord,
-                                &UnhandledMemoryWriteLong);
+                                &UnhandledMemoryWriteLong,
+                                &VoidMem);
 
    // Fill the rest
    FillMemoryArea(0x000, 0x00F, &BiosRomMemoryReadByte,
@@ -630,121 +639,128 @@ void MappedMemoryInit()
                                 &BiosRomMemoryReadLong,
                                 &BiosRomMemoryWriteByte,
                                 &BiosRomMemoryWriteWord,
-                                &BiosRomMemoryWriteLong);
+                                &BiosRomMemoryWriteLong, 
+                                &BiosRom);
    FillMemoryArea(0x010, 0x017, &SmpcReadByte,
                                 &SmpcReadWord,
                                 &SmpcReadLong,
                                 &SmpcWriteByte,
                                 &SmpcWriteWord,
-                                &SmpcWriteLong);
+                                &SmpcWriteLong, 
+                                &VoidMem);
    FillMemoryArea(0x018, 0x01F, &BupRamMemoryReadByte,
                                 &BupRamMemoryReadWord,
                                 &BupRamMemoryReadLong,
                                 &BupRamMemoryWriteByte,
                                 &BupRamMemoryWriteWord,
-                                &BupRamMemoryWriteLong);
+                                &BupRamMemoryWriteLong,
+                                &BupRam);
    FillMemoryArea(0x020, 0x02F, &LowWramMemoryReadByte,
                                 &LowWramMemoryReadWord,
                                 &LowWramMemoryReadLong,
                                 &LowWramMemoryWriteByte,
                                 &LowWramMemoryWriteWord,
-                                &LowWramMemoryWriteLong);
+                                &LowWramMemoryWriteLong, &LowWram);
    FillMemoryArea(0x100, 0x17F, &UnhandledMemoryReadByte,
                                 &UnhandledMemoryReadWord,
                                 &UnhandledMemoryReadLong,
                                 &UnhandledMemoryWriteByte,
                                 &SSH2InputCaptureWriteWord,
-                                &UnhandledMemoryWriteLong);
+                                &UnhandledMemoryWriteLong, &VoidMem);
    FillMemoryArea(0x180, 0x1FF, &UnhandledMemoryReadByte,
                                 &UnhandledMemoryReadWord,
                                 &UnhandledMemoryReadLong,
                                 &UnhandledMemoryWriteByte,
                                 &MSH2InputCaptureWriteWord,
-                                &UnhandledMemoryWriteLong);
+                                &UnhandledMemoryWriteLong, &VoidMem);
    FillMemoryArea(0x200, 0x3FF, CartridgeArea->Cs0ReadByte,
                                 CartridgeArea->Cs0ReadWord,
                                 CartridgeArea->Cs0ReadLong,
                                 CartridgeArea->Cs0WriteByte,
                                 CartridgeArea->Cs0WriteWord,
-                                CartridgeArea->Cs0WriteLong);
+                                CartridgeArea->Cs0WriteLong, &CartridgeArea->rom);
    FillMemoryArea(0x400, 0x4FF, &Cs1ReadByte,
                                 &Cs1ReadWord,
                                 &Cs1ReadLong,
                                 &Cs1WriteByte,
                                 &Cs1WriteWord,
-                                &Cs1WriteLong);
+                                &Cs1WriteLong,
+                                &VoidMem);
    FillMemoryArea(0x580, 0x58F, &Cs2ReadByte,
                                 &Cs2ReadWord,
                                 &Cs2ReadLong,
                                 &Cs2WriteByte,
                                 &Cs2WriteWord,
-                                &Cs2WriteLong);
+                                &Cs2WriteLong,
+       &VoidMem);
    FillMemoryArea(0x5A0, 0x5AF, &SoundRamReadByte,
                                 &SoundRamReadWord,
                                 &SoundRamReadLong,
                                 &SoundRamWriteByte,
                                 &SoundRamWriteWord,
-                                &SoundRamWriteLong);
+                                &SoundRamWriteLong, &SoundRam);
    FillMemoryArea(0x5B0, 0x5BF, &scsp_r_b,
                                 &scsp_r_w,
                                 &scsp_r_d,
                                 &scsp_w_b,
                                 &scsp_w_w,
-                                &scsp_w_d);
+                                &scsp_w_d,
+       &VoidMem);
    FillMemoryArea(0x5C0, 0x5C7, &Vdp1RamReadByte,
                                 &Vdp1RamReadWord,
                                 &Vdp1RamReadLong,
                                 &Vdp1RamWriteByte,
                                 &Vdp1RamWriteWord,
-                                &Vdp1RamWriteLong);
+                                &Vdp1RamWriteLong, &Vdp1Ram);
    FillMemoryArea(0x5C8, 0x5CF, &Vdp1FrameBufferReadByte,
                                 &Vdp1FrameBufferReadWord,
                                 &Vdp1FrameBufferReadLong,
                                 &Vdp1FrameBufferWriteByte,
                                 &Vdp1FrameBufferWriteWord,
-                                &Vdp1FrameBufferWriteLong);
+                                &Vdp1FrameBufferWriteLong, &VoidMem);
    FillMemoryArea(0x5D0, 0x5D7, &Vdp1ReadByte,
                                 &Vdp1ReadWord,
                                 &Vdp1ReadLong,
                                 &Vdp1WriteByte,
                                 &Vdp1WriteWord,
-                                &Vdp1WriteLong);
+                                &Vdp1WriteLong, &VoidMem);
    FillMemoryArea(0x5E0, 0x5EF, &Vdp2RamReadByte,
                                 &Vdp2RamReadWord,
                                 &Vdp2RamReadLong,
                                 &Vdp2RamWriteByte,
                                 &Vdp2RamWriteWord,
-                                &Vdp2RamWriteLong);
+                                &Vdp2RamWriteLong, &Vdp2Ram);
    FillMemoryArea(0x5F0, 0x5F7, &Vdp2ColorRamReadByte,
                                 &Vdp2ColorRamReadWord,
                                 &Vdp2ColorRamReadLong,
                                 &Vdp2ColorRamWriteByte,
                                 &Vdp2ColorRamWriteWord,
-                                &Vdp2ColorRamWriteLong);
+                                &Vdp2ColorRamWriteLong, &Vdp2ColorRam);
    FillMemoryArea(0x5F8, 0x5FB, &Vdp2ReadByte,
                                 &Vdp2ReadWord,
                                 &Vdp2ReadLong,
                                 &Vdp2WriteByte,
                                 &Vdp2WriteWord,
-                                &Vdp2WriteLong);
+                                &Vdp2WriteLong, &VoidMem);
    FillMemoryArea(0x5FE, 0x5FE, &ScuReadByte,
                                 &ScuReadWord,
                                 &ScuReadLong,
                                 &ScuWriteByte,
                                 &ScuWriteWord,
-                                &ScuWriteLong);
+                                &ScuWriteLong, &VoidMem);
    FillMemoryArea(0x600, 0x610, &HighWramMemoryReadByte,
                                 &HighWramMemoryReadWord,
                                 &HighWramMemoryReadLong,
                                 &HighWramMemoryWriteByte,
                                 &HighWramMemoryWriteWord,
-                                &HighWramMemoryWriteLong);
+                                &HighWramMemoryWriteLong, &HighWram);
    FillMemoryArea(((tweak_backup_file_addr >> 16) & 0xFFF), (((tweak_backup_file_addr + (tweak_backup_file_size << 1)) >> 16) & 0xFFF) + 1, &BupRamMemoryReadByte,
      &BupRamMemoryReadWord,
      &BupRamMemoryReadLong,
      &BupRamMemoryWriteByte,
      &BupRamMemoryWriteWord,
-     &BupRamMemoryWriteLong);
+     &BupRamMemoryWriteLong,
+       &BupRam);
 }
 
 #if 0
@@ -1403,13 +1419,12 @@ int MappedMemoryLoadExec(const char *filename, u32 pc)
 //////////////////////////////////////////////////////////////////////////////
 
 int BackupHandled(SH2_struct* sh, u32 addr) {
-    addr = (addr & 0xFFFFF);
-    if (addr == 0x7d600) {
+    if ((addr & 0xFFFFF) == 0x7d600) {
         if (sh == NULL) return 1;
         BiosBUPInit(sh);
         return 1;
     }
-    if ((addr >= 0x0384 && addr <= 0x03A8) || (addr == 0x358)) {
+    if (((addr & 0xFFFFF) >= 0x0384 && (addr & 0xFFFFF) <= 0x03A8) || ((addr & 0xFFFFF) == 0x358)) {
         if (sh == NULL) return 1;
         return BiosHandleFunc(sh); //replace by NOP
     }

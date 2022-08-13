@@ -1,8 +1,6 @@
 #include "memory_sh2.h"
 #include "memory.h"
 
-u8** MemoryBuffer[0x1000] = {};
-
 #define LOG(...)
 
 void CacheInvalidate(SH2_struct* context, u32 addr) {
@@ -110,10 +108,10 @@ u8 FASTCALL SH2MappedMemoryReadByte(SH2_struct* context, u32 addr) {
     return 0;
 }
 
-u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* context, u32 addr)
+u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* const context, u32 addr)
 {
     int id = addr >> 29;
-//    if (context == NULL) id = 1;
+    if (context == NULL) id = 1;
     switch (id)
     {
     case 0x0: //0x0 cache
@@ -162,7 +160,7 @@ u16 FASTCALL SH2MappedMemoryReadWord(SH2_struct* context, u32 addr)
 u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct* context, u32 addr)
 {
     int id = addr >> 29;
-//    if (context == NULL) id = 1;
+    if (context == NULL) id = 1;
     switch (id)
     {
     case 0x0:
@@ -217,8 +215,8 @@ u32 FASTCALL SH2MappedMemoryReadLong(SH2_struct* context, u32 addr)
 void FASTCALL SH2MappedMemoryWriteByte(SH2_struct* context, u32 addr, u8 val)
 {
     int id = addr >> 29;
-//    if (context == NULL) id = 1;
-    SH2WriteNotify(CurrentSH2, addr, 1);
+    if (context == NULL) id = 1;
+    SH2WriteNotify(context, addr, 1);
     switch (id)
     {
     case 0x0:
@@ -277,8 +275,8 @@ void FASTCALL SH2MappedMemoryWriteByte(SH2_struct* context, u32 addr, u8 val)
 void FASTCALL SH2MappedMemoryWriteWord(SH2_struct* context, u32 addr, u16 val)
 {
     int id = addr >> 29;
-//    if (context == NULL) id = 1;
-    SH2WriteNotify(CurrentSH2, addr, 2);
+    if (context == NULL) id = 1;
+    SH2WriteNotify(context, addr, 2);
     switch (id)
     {
     case 0x0:
@@ -339,8 +337,8 @@ void FASTCALL SH2MappedMemoryWriteWord(SH2_struct* context, u32 addr, u16 val)
 void FASTCALL SH2MappedMemoryWriteLong(SH2_struct* context, u32 addr, u32 val)
 {
     int id = addr >> 29;
-//    if (context == NULL) id = 1;
-    SH2WriteNotify(CurrentSH2, addr, 4);
+    if (context == NULL) id = 1;
+    SH2WriteNotify(context, addr, 4);
     switch (id)
     {
     case 0x0:

@@ -418,6 +418,8 @@ extern "C" {
   extern readwordfunc ReadWordList[0x1000];
   extern readlongfunc ReadLongList[0x1000];
 
+  extern u8** MemoryBuffer[0x1000];
+
   typedef struct {
     u32 addr;
     u32 val;

@@ -12,7 +12,7 @@ extern "C" {
 extern SH2Interface_struct SH2KronosInterpreter;
 
 extern fetchfunc krfetchlist[0x1000];
-typedef void (FASTCALL* opcode_func)(SH2_struct*);
+typedef void (FASTCALL* opcode_func)(SH2_struct*const);
 extern opcode_func opcodeTable[0x10000];
 
 #ifdef __cplusplus

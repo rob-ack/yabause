@@ -13,11 +13,11 @@ YabaSansiro for hand held devices is aimed to use YabaSansiro widthout mouse and
 
 ### Game files
 
-Place game files on "games" directory. Yabasanshiro supports "chd","cue", and "ccd" format. "chd" format is recomannded you can generate "chd" with the tool we provided. for more detail please refer [this page](https://www.uoyabause.org/static_pages/chd).
+Place game files on "%USER_DIR%/YabaSanshioro/games" folder ( %USER_DIR% is your home folder ). Yabasanshiro supports "chd","cue", and "ccd" format. "chd" format is recomannded you can generate "chd" with the tool we provided. for more detail please refer [this page](https://www.uoyabause.org/static_pages/chd).
 
 ### BIOS 
 
-The BIOS file is not recomended. but if you want to use it. rename "bios.bin" and plase it on the same directory of yabasanshiro.exe 
+The BIOS file is not recomended. but if you want to use it. rename "bios.bin" and plase it on the "%USER_DIR%/YabaSanshioro" folder.
 
 ### Game pad
 
@@ -25,7 +25,7 @@ Connect a gamepad before running yabasanshiro.exe. A X-box style gamepad is conf
 
 ## Execution
 
-1. Execute "yabasanshiro.exe"
+1. Execute "yabasanshiro"
 2. Push "view botton" on your game pad or "ESC" key on your keyboard. Then menu is shown up.
 
 3. You can controll menu item with these game pad buttons
@@ -37,11 +37,43 @@ Connect a gamepad before running yabasanshiro.exe. A X-box style gamepad is conf
 4. At the first time your game pad may not be configured. Select "Player1" and Select the game pad you are using and map buttons.
 
 5. Select "Open CD tray"
-6. Select "Close CD tray" then games list is shown up.
+6. Select "Close CD tray" then game list is shown up.
 7. Select the game you want to play.  
 
 ## Configuration
 
-* In game configuration ... In game you can change these setting dinamically by selecting a menu item
-* Configuration files ... Configuration data is saved in "default.config" you can change settings directly to edit this file.
+You can config your setting by selecting 
 
+### Resolution
+
+* Native ... Draws at the resolution of the device you are using.
+* 1080p
+* 720p
+* 4x
+* 2x
+* Original
+
+### Aspect Rate
+
+* Original ... Draws in the aspect ratio according to the internal settings of the Sega Saturn.
+* 4:3
+* 16:9
+* Full screen
+
+### Rotate Screen Resolution
+
+Increase the resolution of RBG(Rotate BackGround Screen)
+
+* Original
+* 2x
+* 720p
+* 1080p
+* Native
+
+### Use Compute Shader
+
+If it's checked, Compute Shader is used for generating hi-resolution RBG
+
+### Rotate Screen
+
+Rotate the screen 90 degrees for games such as Layers section

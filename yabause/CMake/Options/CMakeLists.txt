@@ -1,3 +1,8 @@
+option(KRONOS_ENABLE_LOGGING "Enable loggin output via corresponding log macros / options" off)
+if(KRONOS_ENABLE_LOGGING)
+	add_definitions(-DYAB_ENABLE_LOGGING)
+endif()
+
 option(KRONOS_GL_DEBUG "Debug output for GL" off)
 mark_as_advanced(KRONOS_GL_DEBUG)
 if(KRONOS_GL_DEBUG)

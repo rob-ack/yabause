@@ -211,19 +211,22 @@ Debug * MainLog;
 //////////////////////////////////////////////////////////////////////////////
 
 void LogStart(void) {
+#if defined YAB_ENABLE_LOGGING
 #if defined LOG_FILE_DEBUG
-	MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
+    MainLog = DebugInit("main", DEBUG_STREAM, "stdout.txt");
 #else
-        MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
+    MainLog = DebugInit("main", DEBUG_STDOUT, NULL);
 #endif
-
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
 void LogStop(void) {
-	DebugDeInit(MainLog);
+#if defined YAB_ENABLE_LOGGING
+    DebugDeInit(MainLog);
 	MainLog = NULL;
+#endif
 }
 
 //////////////////////////////////////////////////////////////////////////////

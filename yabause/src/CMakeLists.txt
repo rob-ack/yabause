@@ -185,6 +185,27 @@ add_subdirectory(tools/libchdr)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/src)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
 
+string(COMPARE EQUAL ${YAB_PORTS} "libretro" KRONOS_LIBRETRO_CORE)
+
+if(KRONOS_LIBRETRO_CORE)
+	set(LIBRETRO_COMM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/port/libretro/libretro-common)
+	include_directories(${LIBRETRO_COMM_DIR}/include)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR}/port/libretro)
+	include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
+	add_definitions(
+		-D__LIBRETRO__ 
+		-DHAVE_LROUND 
+		-D_7ZIP_ST 
+		-DFLAC__HAS_OGG=0 
+		-DFLAC__NO_DLL
+		-DNO_CLI 
+		-DIMPROVED_SAVESTATES 
+		-DHAVE_GLSYM_PRIVATE
+		-DHAVE_THREADS=1 
+	)
+endif()
+
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/deps/zlib-1.2.11)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} zlibstatic)
 
@@ -359,13 +380,11 @@ endif ()
 # OpenGL
 option(YAB_WANT_OPENGL "use OpenGL for video output (most ports require it)" ON)
 if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
-	if (NOT YAB_FORCE_GLES31)
 		include(FindOpenGL)
-	endif (NOT YAB_FORCE_GLES31)
   include(FindOpenGLES)
 	include(FindEGL)
 
-	if (OPENGL_FOUND)
+	if (OPENGL_FOUND AND NOT YAB_FORCE_GLES31)
 	  message(STATUS "OPENGL Core supported")
 		add_definitions(-D_OGL3_)
 		SET( NEED_GLEW "YES")
@@ -395,11 +414,19 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 		endif (OPENGLES31_FOUND)
 	endif (OPENGL_FOUND)
 
+	if(YAB_FORCE_GLES31)
+		add_definitions(-D_OGLES31_)
+	endif()
+
+	if(OPENGLES31_FOUND OR OPENGLES3_FOUND)
+		add_definitions(-D_OGLES3_ -DHAVE_OPENGLES -DHAVE_OPENGLES3)
+	endif()
 
 	if (OPENGL_SUPPORTED)
 		add_definitions(-DHAVE_LIBGL=1)
 		set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} ${OPENGL_CURRENT_LIBRARIES})
 
+		if(NOT KRONOS_LIBRETRO_CORE)
 		include_directories(./ ./tools/nanovg)
 		set(kronos_SOURCES ${kronos_SOURCES}
 			tools/nanovg/nanovg.c
@@ -407,6 +434,7 @@ if (YAB_WANT_OPENGL AND (YAB_RGB STREQUAL ""))
 			tools/nanovg/nanovg_osdcore.c
 		)
 		add_definitions(-DYAB_PORT_OSD)
+		endif()
 
 		# glXGetProcAddress
 		set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${OPENGL_CURRENT_LIBRARIES})

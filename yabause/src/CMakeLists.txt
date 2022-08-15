@@ -116,6 +116,7 @@ set(kronos_HEADERS
   ctrl/include/yui.h
 	ctrl/threads/threads.h
   utils/include/error.h
+	utils/include/debug.h
 	utils/include/cdbase.h
   utils/include/profile.h
   utils/include/netlink.h
@@ -176,6 +177,7 @@ set(kronos_SOURCES
   ctrl/src/stv.c
   ctrl/src/movie.c
 	utils/src/error.c
+	utils/src/debug.c
 	utils/src/cdbase.c
 	tools/junzip/junzip.c
 	)

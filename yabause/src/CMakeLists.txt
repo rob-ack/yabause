@@ -187,7 +187,9 @@ add_subdirectory(tools/libchdr)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tools/libchdr/src)
 set(KRONOS_LIBRARIES ${KRONOS_LIBRARIES} chdr-static)
 
-string(COMPARE EQUAL ${YAB_PORTS} "libretro" KRONOS_LIBRETRO_CORE)
+if(${YAB_PORTS})
+	string(COMPARE EQUAL ${YAB_PORTS} "libretro" KRONOS_LIBRETRO_CORE)
+endif()
 
 if(KRONOS_LIBRETRO_CORE)
 	set(LIBRETRO_COMM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/port/libretro/libretro-common)

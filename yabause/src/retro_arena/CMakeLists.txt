@@ -91,7 +91,9 @@ set(yabause_ra_SOURCES
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
 include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
-add_executable(yabause-retro-arena ${yabause_ra_SOURCES})
+set(APP_ICON_RESOURCE_WINDOWS application.rc)
+add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
@@ -103,9 +105,14 @@ set(YAB_TARGET "-HH"  CACHE STRING "package name" )
 
 if (WIN32)
 install(TARGETS yabause-retro-arena DESTINATION ".")
-install(FILES "default.config" DESTINATION "." )
+set_property(INSTALL $<TARGET_FILE_NAME:yabause-retro-arena>
+  PROPERTY CPACK_START_MENU_SHORTCUTS "Yaba Sanshiro"
+)
+#install(FILES "default.config" DESTINATION "." )
 install(FILES "howtouse.md" DESTINATION "." )
-install(FILES "place_games_here" DESTINATION "./games" )
+#install(FILES "place_games_here" DESTINATION "./games" )
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../COPYING.txt    DESTINATION "." RENAME COPYING.txt)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../EULA.txt    DESTINATION "." RENAME EULA.txt)
 get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
 install(DIRECTORY ${SDL2_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "SDL2.dll")
 else ()
@@ -113,5 +120,5 @@ install(TARGETS yabause-retro-arena DESTINATION ".")
 install(FILES "README.md" DESTINATION "." )
 endif ()
 
-#install(TARGETS yabause-retoro-arena DESTINATION "bin")
-#install(FILES "README.md" DESTINATION "." )
+
+

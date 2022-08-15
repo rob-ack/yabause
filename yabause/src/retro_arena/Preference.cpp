@@ -39,7 +39,7 @@ Preference::Preference( const std::string & filename){
       defaults["speed"] = 0;
       defaults["sound sync mode"] = "cpu";
       defaults["sound sync count per a frame"] = 4;
-      defaults["bios file"] = "bios.bin";
+      defaults["bios file"] = home_dir + "/bios.bin";
       defaults["last play game path"] = "";
       defaults["Full screen"] = true;
       defaults["Show Fps"] = false;

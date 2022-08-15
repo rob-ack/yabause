@@ -330,25 +330,30 @@ void getHomeDir( std::string & homedir ) {
   homedir = getenv("HOME");
   homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
-  /*
+  
   WCHAR path[MAX_PATH];
   if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
     std::wstring tmp;
     tmp = path;
     narrow(tmp, homedir);
+    homedir += "/YabaSanshiro/";
   }
   else {
     exit(-1);
   }
-  */
-  homedir = "./";
+  
+  //homedir = "./";
 #endif
 }
 
-#undef main
-int main(int argc, char** argv)
+//#undef main
+//int main(int argc, char** argv)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
 {
   inputmng = InputManager::getInstance();
+
+  char** argv = __argv;
+  int argc = __argc;
 
   //printf("\033[2J");
 
@@ -363,6 +368,19 @@ int main(int argc, char** argv)
     mkdir(home_dir.c_str(), 0700);
 #endif
   }
+
+  FILE * stdout_fp = freopen( string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
+  FILE * stderr_fp = freopen(string(home_dir + "/stderr.txt").c_str(), "wb", stderr);
+
+  std::string games_dir = home_dir + "/games";
+  if (stat(games_dir.c_str(), &st) == -1) {
+#if defined(_WINDOWS)
+    mkdir(games_dir.c_str());
+#else
+    mkdir(home_dir.c_str(), 0700);
+#endif
+  }
+
   std::string bckup_dir = home_dir + "/backup.bin";
   strcpy(buppath, bckup_dir.c_str());
   strcpy(s_savepath, home_dir.c_str());
@@ -662,7 +680,7 @@ int main(int argc, char** argv)
 #else
           VdpRevoke();
 #endif
-#endif
+
           fflush(stdout_fp);
           fflush(stderr_fp);
           

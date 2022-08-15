@@ -107,6 +107,7 @@ SOURCES_C := \
 	$(SOURCE_DIR)/sys/memory/src/memory.c \
 	$(SOURCE_DIR)/ctrl/src/movie.c \
 	$(SOURCE_DIR)/utils/src/netlink.c \
+	$(SOURCE_DIR)/utils/src/debug.c \
 	$(SOURCE_DIR)/core/peripheral/common/peripheral.c \
 	$(SOURCE_DIR)/sys/scsp/src/scspdsp.c \
 	$(SOURCE_DIR)/sys/scsp/src/scsp.c \

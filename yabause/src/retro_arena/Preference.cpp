@@ -39,12 +39,12 @@ Preference::Preference( const std::string & filename){
       defaults["speed"] = 0;
       defaults["sound sync mode"] = "cpu";
       defaults["sound sync count per a frame"] = 4;
-      defaults["bios file"] = home_dir + "/bios.bin";
+      defaults["bios file"] = home_dir + "bios.bin";
       defaults["last play game path"] = "";
       defaults["Full screen"] = true;
       defaults["Show Fps"] = false;
       std::vector<string> gamedirs;
-      gamedirs.push_back(home_dir + "/games");
+      gamedirs.push_back(home_dir + "games");
       json j_array(gamedirs);
       defaults["game directories"] = j_array;
       std::ofstream out(this->filename);

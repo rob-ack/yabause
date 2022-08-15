@@ -13,11 +13,11 @@ YabaSansiro for hand held devices is aimed to use YabaSansiro widthout mouse and
 
 ### Game files
 
-Place game files on "%USER_DIR%/YabaSanshioro/games" folder ( %USER_DIR% is your home folder ). Yabasanshiro supports "chd","cue", and "ccd" format. "chd" format is recomannded you can generate "chd" with the tool we provided. for more detail please refer [this page](https://www.uoyabause.org/static_pages/chd).
+Place game files on "Documents/YabaSanshiro/games" folder. Yabasanshiro supports "chd","cue", and "ccd" format. "chd" format is recomannded you can generate "chd" with the tool we provided. for more detail please refer [this page](https://www.uoyabause.org/static_pages/chd).
 
 ### BIOS 
 
-The BIOS file is not recomended. but if you want to use it. rename "bios.bin" and plase it on the "%USER_DIR%/YabaSanshioro" folder.
+The BIOS file is not recomended. but if you want to use it. rename "bios.bin" and plase it on the "Documents/YabaSanshiro" folder.
 
 ### Game pad
 

@@ -331,12 +331,13 @@ void getHomeDir( std::string & homedir ) {
   homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
   
-  WCHAR path[MAX_PATH];
-  if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
+  WCHAR * path;
+  if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {
     std::wstring tmp;
     tmp = path;
     narrow(tmp, homedir);
     homedir += "/YabaSanshiro/";
+    CoTaskMemFree(path);
   }
   else {
     exit(-1);
@@ -372,7 +373,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   FILE * stdout_fp = freopen( string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
   FILE * stderr_fp = freopen(string(home_dir + "/stderr.txt").c_str(), "wb", stderr);
 
-  std::string games_dir = home_dir + "/games";
+  std::string games_dir = home_dir + "games";
   if (stat(games_dir.c_str(), &st) == -1) {
 #if defined(_WINDOWS)
     mkdir(games_dir.c_str());

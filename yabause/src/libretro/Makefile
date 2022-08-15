@@ -46,7 +46,7 @@ else ifneq (,$(findstring armv,$(platform)))
 	override platform += unix
 endif
 
-CORE_DIR := .
+CORE_DIR := ./../port/libretro
 
 TARGET_NAME = kronos
 CC_AS ?= $(CC)

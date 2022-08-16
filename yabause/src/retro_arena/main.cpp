@@ -288,7 +288,7 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
 #if defined(__JETSON__) || defined(__SWITCH__) || defined(_WINDOWS)
-  yinit.scsp_main_mode = 0;
+  yinit.scsp_main_mode = 1;
 #else
   yinit.scsp_main_mode = 1;
 #endif
@@ -613,7 +613,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   std::string tmpfilename = home_dir + "tmp.png";
 
   // 初期設定がされていない場合はメニューを表示する
-  if (defpref->getBool("is first time",true) ) {
+  // BIOSなしの状態でゲームが選択されていない場合も
+  if (defpref->getBool("is first time",true) || (g_emulated_bios == 1 && strlen(cdpath) == 0 ) ) {
     defpref->setBool("is first time", false);
     SDL_Event event = {};
     event.type = evToggleMenu;
@@ -663,6 +664,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
           break;
         }
         break;
+      }
+      else if( e.type == evUpdateConfig ){
+          inputmng->updateConfig();
       }
       else if(e.type == evToggleMenu){
         if( menu_show ){

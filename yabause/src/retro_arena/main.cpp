@@ -347,6 +347,13 @@ void getHomeDir( std::string & homedir ) {
 #endif
 }
 
+void ToggleFullscreen(SDL_Window* Window) {
+  const Uint32 FullscreenFlag = SDL_WINDOW_FULLSCREEN;
+  g_full_screen = !g_full_screen;
+  SDL_SetWindowFullscreen(Window, g_full_screen ? 0 : FullscreenFlag);
+  SDL_ShowCursor(g_full_screen);
+}
+
 //#undef main
 //int main(int argc, char** argv)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
@@ -496,7 +503,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     width = dsp.w;
     height = dsp.h;
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN_DESKTOP);
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;
@@ -741,6 +748,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
           g_frame_skip = 0;
           DisableAutoFrameSkip();
         }
+
+        //ToggleFullscreen(wnd);
+
         hideMenuScreen();         
       }
       else if(e.type == evOpenTray ){

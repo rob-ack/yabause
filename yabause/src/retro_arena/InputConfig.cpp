@@ -84,10 +84,11 @@ InputConfig::InputConfig(int deviceId, const std::string& deviceName, const std:
   mapInput("y", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_Y, 1, true));
   mapInput("leftshoulder", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_BACK, 1, true));
 
-  mapInput("l", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERLEFT, 1, true));
+  // XBox controller returns 2 but SDL_CONTROLLER_AXIS_TRIGGERLEFT(4)
+  mapInput("l", Input(deviceId, TYPE_AXIS, 2 /*SDL_CONTROLLER_AXIS_TRIGGERLEFT*/, 1, true));
   mapInput("r", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, 1, true));
 
-  mapInput("lefttrigger", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERLEFT, 1, true));
+  mapInput("lefttrigger", Input(deviceId, TYPE_AXIS, 2 /*SDL_CONTROLLER_AXIS_TRIGGERLEFT*/ , 1, true));
   mapInput("righttrigger", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, 1, true));
 
   mapInput("start", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_LEFTSTICK, 1, true));

@@ -264,7 +264,7 @@ int setDefalutSettings( void * padbits ){
     PerSetKey(SDLK_UP,PERPAD_UP, padbits);
     PerSetKey(SDLK_DOWN,PERPAD_DOWN, padbits);
     PerSetKey(SDLK_LEFT,PERPAD_LEFT, padbits);
-    PerSetKey(SDLK_RIGHT,PERPAD_RIGHT, padbits);
+    PerSetKey(SDLK_LEFT,PERPAD_RIGHT, padbits);
     PerSetKey(SDLK_RETURN, PERPAD_START, padbits);
     PerSetKey(SDLK_z,PERPAD_A, padbits);
     PerSetKey(SDLK_x,PERPAD_B, padbits);
@@ -293,6 +293,7 @@ int mapKeys( const json & configs ){
     json p = configs["player1"];
     if( p["DeviceID"].get<int>() == -1 ){
       std::string guid = p["deviceGUID"];
+      InputManager::genJoyString(guid, p["DeviceID"], p["deviceName"], p["deviceGUID"]);
       if( configs.find(guid) != configs.end() ){
         json dev = configs[ guid ];
         setPlayerKeys( padbits, 0, -1, dev );
@@ -622,20 +623,20 @@ int InputManager::convertFromEmustationFile( const std::string & fname ){
       joystics["player1"]["padmode"] = 0;
       joystics["player1"]["deviceGUID"] = "-1";
       joystics["player1"]["deviceName"] = "Keyboard";
-      joystics["-1"]["a"] ={ { "type", "key" },{ "id", 122 },{ "value", 0 } };
-      joystics["-1"]["b"] ={ { "type", "key" },{ "id", 120 },{ "value", 0 } };
-      joystics["-1"]["c"] ={ { "type", "key" },{ "id", 199 },{ "value", 0 } };
-      joystics["-1"]["x"] ={ { "type", "key" },{ "id", 97 },{ "value", 0 } };
-      joystics["-1"]["y"] ={ { "type", "key" },{ "id", 115 },{ "value", 0 } };
-      joystics["-1"]["z"] ={ { "type", "key" },{ "id", 133 },{ "value", 0 } };
-      joystics["-1"]["l"] ={ { "type", "key" },{ "id", 101 },{ "value", 0 } };
-      joystics["-1"]["r"] ={ { "type", "key" },{ "id", 114 },{ "value", 0 } };
-      joystics["-1"]["start"] ={ { "type", "key" },{ "id", 13 },{ "value", 0 } };
-      joystics["-1"]["select"] ={ { "type", "key" },{ "id", 93 },{ "value", 0 } };
-      joystics["-1"]["up"] ={ { "type", "key" },{ "id", 1073741906 },{ "value", 0 } };
-      joystics["-1"]["down"] ={ { "type", "key" },{ "id", 1073741905 },{ "value", 0 } };
-      joystics["-1"]["left"] ={ { "type", "key" },{ "id", 1073741904 },{ "value", 0 } };
-      joystics["-1"]["right"] ={ { "type", "key" },{ "id", 1073741903 },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["a"] ={ { "type", "key" },{ "id", SDLK_z },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["b"] ={ { "type", "key" },{ "id", SDLK_x },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["c"] ={ { "type", "key" },{ "id", SDLK_c },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["x"] ={ { "type", "key" },{ "id", SDLK_a },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["y"] ={ { "type", "key" },{ "id", SDLK_s },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["z"] ={ { "type", "key" },{ "id", SDLK_d },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["l"] ={ { "type", "key" },{ "id", SDLK_q },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["r"] ={ { "type", "key" },{ "id", SDLK_e },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["start"] ={ { "type", "key" },{ "id", SDLK_RETURN },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["select"] ={ { "type", "key" },{ "id", SDLK_ESCAPE },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["up"] ={ { "type", "key" },{ "id", SDLK_UP },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["down"] ={ { "type", "key" },{ "id", SDLK_DOWN },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["left"] ={ { "type", "key" },{ "id", SDLK_LEFT },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["right"] ={ { "type", "key" },{ "id", SDLK_RIGHT },{ "value", 0 } };
     }
 
   }else{
@@ -1133,7 +1134,7 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
       //}
     }
 
-    menu_layer_->onRawInputEvent(*this,"Keyboard_-1", "key",ev.key.keysym.sym,1);
+    menu_layer_->onRawInputEvent(*this,"-1_Keyboard_-1", "key",ev.key.keysym.sym,1);
 
     if( mKeyboardInputConfig )  {
       evstr = mKeyboardInputConfig->getMappedTo(Input(DEVICE_KEYBOARD, TYPE_KEY, ev.key.keysym.sym, 1, false));

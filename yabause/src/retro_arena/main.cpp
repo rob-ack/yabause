@@ -503,7 +503,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     width = dsp.w;
     height = dsp.h;
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
+      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;

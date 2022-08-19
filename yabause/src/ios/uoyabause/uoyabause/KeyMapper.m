@@ -31,15 +31,15 @@
 }
 
 -(NSMutableDictionary*) defaultMapping {
-    return [@{ [NSNumber numberWithInteger:MFI_BUTTON_X] : [NSNumber numberWithInteger:SaturnKeyA],
-               [NSNumber numberWithInteger:MFI_BUTTON_A] : [NSNumber numberWithInteger:SaturnKeyB],
-               [NSNumber numberWithInteger:MFI_BUTTON_B] : [NSNumber numberWithInteger:SaturnKeyC],
-               [NSNumber numberWithInteger:MFI_BUTTON_Y] : [NSNumber numberWithInteger:SaturnKeyX],
-               [NSNumber numberWithInteger:MFI_BUTTON_LT] : [NSNumber numberWithInteger:SaturnKeyY],
-               [NSNumber numberWithInteger:MFI_BUTTON_RT] : [NSNumber numberWithInteger:SaturnKeyZ],
-               [NSNumber numberWithInteger:MFI_BUTTON_LS] : [NSNumber numberWithInteger:SaturnKeyLeftTrigger],
-               [NSNumber numberWithInteger:MFI_BUTTON_RS] : [NSNumber numberWithInteger:SaturnKeyRightTrigger],
-               [NSNumber numberWithInteger:MFI_BUTTON_HOME] : [NSNumber numberWithInteger:SaturnKeyStart],
+    return [@{ [NSNumber numberWithInteger:MFI_BUTTON_A] : [NSNumber numberWithInteger:SaturnKeyA],
+               [NSNumber numberWithInteger:MFI_BUTTON_B] : [NSNumber numberWithInteger:SaturnKeyB],
+               [NSNumber numberWithInteger:MFI_BUTTON_RS] : [NSNumber numberWithInteger:SaturnKeyC],
+               [NSNumber numberWithInteger:MFI_BUTTON_X] : [NSNumber numberWithInteger:SaturnKeyX],
+               [NSNumber numberWithInteger:MFI_BUTTON_Y] : [NSNumber numberWithInteger:SaturnKeyY],
+               [NSNumber numberWithInteger:MFI_BUTTON_LS] : [NSNumber numberWithInteger:SaturnKeyZ],
+               [NSNumber numberWithInteger:MFI_BUTTON_LT] : [NSNumber numberWithInteger:SaturnKeyLeftTrigger],
+               [NSNumber numberWithInteger:MFI_BUTTON_RT] : [NSNumber numberWithInteger:SaturnKeyRightTrigger],
+               [NSNumber numberWithInteger:MFI_BUTTON_OPTION] : [NSNumber numberWithInteger:SaturnKeyStart],
                
                } mutableCopy];
 }

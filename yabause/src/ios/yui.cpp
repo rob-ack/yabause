@@ -17,6 +17,8 @@ extern "C"{
 #include "sndCoreAudio.h"
 }
 
+#include <stdarg.h>
+
 #include <OpenGLES/ES3/gl.h>
 #include <OpenGLES/ES3/glext.h>
 
@@ -33,10 +35,10 @@ extern "C" {
 int yprintf( const char * fmt, ... )
 {
     int result = 0;
-  // va_list ap;
-   //va_start(ap, fmt);
-   //result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
-   //va_end(ap);
+   va_list ap;
+   va_start(ap, fmt);
+   result = vprintf(fmt, ap);
+   va_end(ap);
    return result;
 }
 }
@@ -82,6 +84,9 @@ SH2Interface_struct *SH2CoreList[] = {
     &SH2DebugInterpreter,
 #ifdef SH2_DYNAREC
     &SH2Dynarec,
+#endif
+#ifdef DYNAREC_DEVMIYAX
+    &SH2Dyn,
 #endif
     NULL
 };
@@ -184,7 +189,8 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.resolution_mode = GetResolutionType();
     yinit.rotate_screen = GetIsRotateScreen();
     yinit.extend_backup = 1;
-    yinit.scsp_main_mode = 1;
+    yinit.scsp_sync_count_per_frame = 4;
+    yinit.scsp_main_mode = 0;
     yinit.use_cpu_affinity = 0;
     yinit.use_sh2_cache = 1;
 

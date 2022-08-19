@@ -845,11 +845,11 @@ int YabauseEmulate(void) {
 
          PROFILE_START("68K");
          cycles = m68kcycles;
-         saved_centicycles += m68kcenticycles;
-         if (saved_centicycles >= 100) {
-            cycles++;
-            saved_centicycles -= 100;
-         }
+         //yabsys.saved_centicycles += m68kcenticycles;
+         //if (yabsys.saved_centicycles >= 100) {
+         //   cycles++;
+         //   yabsys.saved_centicycles -= 100;
+         //}
          M68KExec(cycles);
          PROFILE_STOP("68K");
       }
@@ -910,7 +910,7 @@ int YabauseEmulate(void) {
 #endif
 #endif
 #if DYNAREC_DEVMIYAX
-   if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
+   //if (SH2Core->id == 3) SH2DynShowSttaics(MSH2, SSH2);
 #endif
 
 #ifdef CACHE_STATICS
@@ -931,7 +931,8 @@ int YabauseEmulate(void) {
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
-  if (g_scsp_main_mode == 0) {
+  if (yabsys.scsp_main_mode == 0) {
+    setM68kCounter(1);
     YabWaitEventQueue(q_scsp_finish);
     saved_m68k_cycles = 0;
     setM68kCounter(saved_m68k_cycles);

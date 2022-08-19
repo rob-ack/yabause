@@ -971,6 +971,7 @@ int GetPlayer2Device(){
     [self left_trigger ].hidden = hidden;
     [self right_trigger ].hidden = hidden;
     [self start_button ].hidden = hidden;
+    [self start_view].hidden = hidden;
     
     [self.remapLabelViews enumerateObjectsUsingBlock:^(UILabel *  _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         obj.hidden = [self hasControllerConnected] && hidden == NO ? NO : hidden;
@@ -990,14 +991,26 @@ int GetPlayer2Device(){
     }
 }
 
+/*
+-(BOOL) shouldAutorotate{
+    return NO;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    return UIInterfaceOrientationMaskLandscapeLeft;
+}
+*/
+
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     [self loadSettings];
     
     if( _landscape == YES ){
-        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeRight) forKey:@"orientation"];
-        [UINavigationController attemptRotationToDeviceOrientation];
+        [[UIDevice currentDevice] setValue:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight] forKey:@"orientation"];
+//        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeRight) forKey:@"orientation"];
+//        [UINavigationController attemptRotationToDeviceOrientation];
     }
     
     sharedData_ = self;
@@ -1023,9 +1036,9 @@ int GetPlayer2Device(){
     self.view.multipleTouchEnabled = YES;
     self.command = 0;
     
-     [self right_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
+    [self right_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
     [self left_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
-
+    [self start_view].backgroundColor = [UIColor colorWithRed:0.0f green:0.0f blue:0.0f alpha:0.0f];
     [self left_button ].alpha = 0.0f;
     [self right_button ].alpha = 0.0f;
     [self up_button ].alpha = 0.0f;
@@ -1184,6 +1197,13 @@ int GetPlayer2Device(){
     tf = CGAffineTransformScale(tf, scale, scale);
     tf = CGAffineTransformTranslate(tf, -(258.0/2.0), -(340.0/2.0));
     rfv.transform = tf;
+    
+    UIView * sfv = self.start_view;
+    tf = CGAffineTransformMakeScale(1.0,1.0);
+    //tf = CGAffineTransformTranslate(tf, (258.0/2.0), (340.0/2.0));
+    tf = CGAffineTransformScale(tf, scale, scale);
+    //tf = CGAffineTransformTranslate(tf, -(258.0/2.0), -(340.0/2.0));
+    sfv.transform = tf;
     
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
     [ud setFloat:scale forKey:@"controller scale"];

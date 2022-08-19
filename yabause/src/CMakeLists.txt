@@ -115,7 +115,7 @@ add_definitions(-DHAVE_LIBGL)
 add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
 add_definitions(-DYAB_ASYNC_RENDERING)
-
+include_directories( ./ )	
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
@@ -190,9 +190,11 @@ if (YAB_WANT_DYNAREC_DEVMIYAX)
 			elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES  "aarch64")
 				enable_language(ASM-ATT)
                                 add_definitions(-DAARCH64) 
-				set(yabause_SOURCES 
-				  ${yabause_SOURCES}
-					sh2_dynarec_devmiyax/dynalib_arm64.s)
+				if (IOS) 
+					set(yabause_SOURCES  ${yabause_SOURCES} sh2_dynarec_devmiyax/dynalib_arm64_mach.s)
+				else ()
+					set(yabause_SOURCES  ${yabause_SOURCES} sh2_dynarec_devmiyax/dynalib_arm64.s)
+				endif ()
 			endif ()
 		endif ()
 

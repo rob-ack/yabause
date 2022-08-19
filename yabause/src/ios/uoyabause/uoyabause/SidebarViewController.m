@@ -103,7 +103,7 @@
  
                 
             
-            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"uoYabause" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
+            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
             
                 // addActionした順に左から右にボタンが配置されます
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {

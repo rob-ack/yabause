@@ -23,6 +23,7 @@
 @property (weak, nonatomic) IBOutlet UIImageView *left_panel;
 @property (weak, nonatomic) IBOutlet UIImageView *right_panel;
 
+@property (weak, nonatomic) IBOutlet UIView *start_view;
 @property (weak, nonatomic) IBOutlet UIView *right_view;
 @property (weak, nonatomic) IBOutlet UIView *left_view;
 @property (weak, nonatomic) IBOutlet UISlider *scale_slider;

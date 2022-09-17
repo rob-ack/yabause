@@ -168,7 +168,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
             if (base_path_array.size() >= 0) {
               base_path = base_path_array[0];
             }
-            showFileSelectDialog( tools, bCdTray, base_path_array[0]);
+            showFileSelectDialog( tools, bCdTray, base_path_array);
           }else{
             MENU_LOG("Open CD Tray\n"); 
             bCdTray->setCaption("Close CD Tray");
@@ -237,7 +237,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         vector<string> base_path_array = pref.getStringArray("game directories");
         if (base_path_array.size() >= 0) {
           base_path = base_path_array[0];
-          checkGameFiles(this, base_path);
+          checkGameFiles(this, base_path_array);
         }
 
         performLayout();
@@ -519,11 +519,51 @@ void MenuScreen::showLoadStateDialog( Popup *popup ){
 
 }
 
+void MenuScreen::listdir(const string & dirname, int indent, vector<string> & files )
+{
+  DIR *dir;
+  struct dirent *entry;
 
-void MenuScreen::checkGameFiles(Widget * parent, const std::string & base_path) {
+  if (!(dir = opendir(dirname.c_str())))
+    return;
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_DIR) {
+      char path[1024];
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      snprintf(path, sizeof(path), "%s/%s", dirname.c_str(), entry->d_name);
+      printf("%*s[%s]\n", indent, "", entry->d_name);
+      listdir(string(path), indent + 2, files);
+    }
+    else {
+      printf("%*s- %s\n", indent, "", entry->d_name);
+      string dname = dirname + "/" + entry->d_name;
+      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+        files.push_back(dname);
+      }
+    }
+  }
+  closedir(dir);
+}
+
+void MenuScreen::checkGameFiles(Widget * parent, const vector<std::string> & base_paths) {
   DIR *dir;
   struct dirent *ent;
   int filecount = 0;
+
+  vector<string> files;
+  int indent;
+  for (int i = 0; i < base_paths.size(); i++) {
+    listdir(base_paths[i], indent, files);
+    filecount = files.size();
+    if (filecount != 0) {
+      break;
+    }
+  }
+
+#if 0
   if ((dir = opendir(base_path.c_str())) != NULL) {
     /* print all the files and directories within directory */
     while ((ent = readdir(dir)) != NULL) {
@@ -535,11 +575,12 @@ void MenuScreen::checkGameFiles(Widget * parent, const std::string & base_path) 
       }
     }
   }
+#endif
 
   if (filecount == 0) {
     string message;
     message = "No games are found in \"";
-    message += base_path + "\" folder. ";
+    message += base_paths[0] + "\" folder. ";
     message += "Place cue or ccd or chd files there.";
     auto dlg = new MessageDialog(this, MessageDialog::Type::Warning, "Game not found", message.c_str() );
     nanogui::Button* btn = (nanogui::Button*)mFocus;
@@ -558,7 +599,7 @@ void MenuScreen::checkGameFiles(Widget * parent, const std::string & base_path) 
   }
 }
 
-void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const std::string & base_path ){
+void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const vector<std::string> & base_paths ){
   const int dialog_width = 512;
   const int dialog_height = this->size()[1] - 20 ;
     swindow = new Window(this, "Select Game");
@@ -577,6 +618,34 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
 
     bool first_object = true;
     int file_count = 0;
+
+    vector<string> files;
+    int indent = 0;
+
+    for (int i = 0; i < base_paths.size(); i++) {
+      listdir(base_paths[i], indent, files);
+    }
+
+    for (int i = 0; i < files.size(); i++) {
+      Button *tmp = new Button(wrapper, files[i]);
+      string path = files[i];
+      tmp->setCallback([this, path]() {
+        MENU_LOG("CD Close: %s\n", path.c_str());
+        void * data1 = malloc((path.size() + 1) * sizeof(char));
+        strcpy((char*)data1, path.c_str());
+        evm->postEvent("close tray", data1);
+
+        this->popActiveMenu();
+        this->swindow->dispose();
+        this->swindow = nullptr;
+      });
+      if (first_object) {
+        first_object = false;
+        pushActiveMenu(wrapper, toback);
+      }
+    }
+
+#if 0
     if ((dir = opendir (base_path.c_str())) != NULL) {
       /* print all the files and directories within directory */
       while ((ent = readdir (dir)) != NULL) {
@@ -605,7 +674,9 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
       closedir (dir);
     } else {
     }
-    
+#endif
+
+
     Button *b0 = new Button(wrapper, "Cancel");
     if( first_object ){
        first_object = false;
@@ -627,7 +698,7 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
 
     if (file_count == 0) {
       swindow->setModal(true);
-      checkGameFiles(this, base_path);
+      checkGameFiles(this, base_paths);
     }
     else {
       swindow->setModal(true);

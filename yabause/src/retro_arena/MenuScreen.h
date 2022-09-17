@@ -28,12 +28,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "nanovg.h"
 #include <string.h>
 #include <stack>
+#include <vector>
 
 #if defined(_MSC_VER) 
 #undef snprintf
 #endif
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+using std::vector;
 
 #include "EventManager.h"
 
@@ -164,7 +166,7 @@ public:
 
     void showInputCheckDialog( const std::string & key );
 
-    void showFileSelectDialog( Widget * parent, Widget * toback, const std::string & base_path );
+    void showFileSelectDialog( Widget * parent, Widget * toback, const vector<std::string> & base_paths );
 
     void setupPlayerPsuhButton( int user_index, PopupButton *player, const std::string & label, ComboBox **cb );
 
@@ -182,7 +184,7 @@ public:
     }
     void getSelectedGUID( int user_index, std::string & selguid );
 
-    void checkGameFiles(Widget * parent, const std::string & base_path);
+    void checkGameFiles(Widget * parent, const vector<std::string> & base_paths);
 
     //void showSaveStateDialog( Widget * parent, Widget * toback );
     void setCurrentGameId( const std::string & id ){ cuurent_game_id_ = id; }
@@ -191,6 +193,7 @@ public:
     void showConfigDialog( PopupButton *popup );
 
     void setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
+    void listdir(const string & dirname, int indent, vector<string> & files);
 
 public:  // events
     int onBackButtonPressed();    

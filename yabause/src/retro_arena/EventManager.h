@@ -53,7 +53,7 @@ public:
 
     void procEvent(uint32_t ev, int code = 0, void * data = nullptr ) {
       if (etos.find(ev) != etos.end()) {
-        m[etos[ev]].func(0, data, nullptr);
+        m[etos[ev]].func(code, data, nullptr);
       }
     }
 

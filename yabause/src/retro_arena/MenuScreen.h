@@ -44,8 +44,6 @@ using namespace nanogui;
 
 class InputManager;
 class Preference;
-class GameInfo;
-class GameInfoManager;
 
 struct PreMenuInfo {
     Widget* window = nullptr;
@@ -192,12 +190,7 @@ public:
     void showLoadStateDialog( Popup *popup );
     void showConfigDialog( PopupButton *popup );
 
-    void setupBiosMenu(PopupButton *parent, shared_ptr<Preference> preference);
-    void listdir(const string & dirname, int indent, vector<shared_ptr<GameInfo>> & files);
-    void checkdir(const string & dirname, int indent, vector<string> & files);
-
-    void setupGameDirsMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
-
+    void setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
 
 public:  // events
     int onBackButtonPressed();    

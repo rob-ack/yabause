@@ -37,8 +37,13 @@ namespace fs = std::experimental::filesystem ;
 #define GL_GLEXT_PROTOTYPES 1
 #include <SDL2/SDL_opengles2.h>
 #elif defined(_WINDOWS)
+#include <windows.h>
+#include <commdlg.h>
+
 #include <direct.h>
 #include <SDL.h>
+#include <SDL_syswm.h>
+
 #endif
 
 #include "common.h"
@@ -686,6 +691,45 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
   evm->setEvent("update config", [](int code, void * data1, void * data2) {
       inputmng->updateConfig();
+  });
+
+  evm->setEvent("select bios", [home_dir](int code, void * data1, void * data2) {
+
+    // use builtlin bios
+    if (code == 0) {
+      Preference * p = new Preference("default");
+      p->setString("bios file", "");
+      delete p;
+    }
+    else {
+
+      SDL_SysWMinfo wmInfo;
+      SDL_VERSION(&wmInfo.version);
+      SDL_GetWindowWMInfo(wnd, &wmInfo);
+      HWND hwnd = wmInfo.info.win.window;
+
+      char * fname = new char[256];
+      OPENFILENAMEA o;
+      fname[0] = '\0';
+      ZeroMemory(&o, sizeof(o));
+      o.lStructSize = sizeof(o);              //      構造体サイズ
+      o.hwndOwner = hwnd;                             //      親ウィンドウのハンドル
+      o.lpstrInitialDir = home_dir.c_str();    //      初期フォルダー
+      o.lpstrFile = fname;                    //      取得したファイル名を保存するバッファ
+      o.nMaxFile = 256;                                //      取得したファイル名を保存するバッファサイズ
+      //o.lpstrFilter = _TEXT("TXTファイル(*.TXT)\0*.TXT\0") _TEXT("全てのファイル(*.*)\0*.*\0");
+      //o.lpstrDefExt = _TEXT("TXT");
+      o.lpstrTitle = "Select a BIOS file";
+      o.nFilterIndex = 1;
+      if (GetOpenFileNameA(&o)) {
+        Preference * p = new Preference("default");
+        p->setString("bios file", fname);
+        delete p;
+      }
+      delete fname;
+    }
+    menu->popActiveMenu();
+    hideMenuScreen();
   });
 
   

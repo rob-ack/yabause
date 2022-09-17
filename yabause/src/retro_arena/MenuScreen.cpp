@@ -262,11 +262,53 @@ inline bool ends_with(std::string const & value, std::string const & ending)
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
+void MenuScreen::setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference) {
+  string f = preference->getString("bios file", "");
+
+  Popup *bpopup = parent->popup();
+  bpopup->setLayout(new GroupLayout(4, 2, 2, 2));
+  new Label(bpopup, "BIOS");
+  ComboBox * bcb = new ComboBox(bpopup);
+  vector<string> bitems;
+  bitems.push_back("Use built-in BIOS");
+
+  if (f != "") {
+    bitems.push_back(f);
+  }
+  else {
+    bitems.push_back("Select BIOS file");
+  }
+  bcb->setItems(bitems);
+  Popup *cbpopup = bcb->popup();
+  bcb->setCallback([this, cbpopup, bcb]() {
+    pushActiveMenu(cbpopup, bcb);
+  });
+
+  
+  if ( f == "") {
+    bcb->setSelectedIndex(0);
+  }
+  else {
+    bcb->setSelectedIndex(1);
+  }
+ 
+
+  std::function<void(int32_t)> cbk = [this, preference](int32_t idx) {
+    popActiveMenu();
+    evm->postEvent("select bios", idx);
+    return;
+  };
+
+  bcb->setCallbackSelect(cbk);
+
+}
 
 void MenuScreen::showConfigDialog( PopupButton *parent ){
 
   // Todo setCurrentGamePath
   std::shared_ptr<Preference> preference(new Preference("default"));
+
+  setupBiosMenu(parent, preference);
 
   Popup *popup = parent->popup();    
   popup->setLayout(new GroupLayout(4,2,2,2)); 

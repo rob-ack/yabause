@@ -86,6 +86,8 @@ set(yabause_ra_SOURCES
   MenuScreen.cpp
   Preference.h
   Preference.cpp
+  EventManager.h
+  EventManager.cpp
   ../about.h
   ../about.c
 ) 

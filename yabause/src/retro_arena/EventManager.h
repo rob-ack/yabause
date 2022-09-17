@@ -47,13 +47,13 @@ public:
       Event event;
       event.type = SDL_RegisterEvents(1);
       event.func = callback;
-      m.insert_or_assign( ev, event);
-      etos.insert_or_assign( event.type, ev);
+      m.insert(std::make_pair( ev, event));
+      etos.insert(std::make_pair(event.type, ev));
     }
 
     void procEvent(uint32_t ev, int code = 0, void * data = nullptr ) {
       if (etos.find(ev) != etos.end()) {
-        m[etos[ev]].func(code, data, nullptr);
+        m[etos[ev]].func(0, data, nullptr);
       }
     }
 

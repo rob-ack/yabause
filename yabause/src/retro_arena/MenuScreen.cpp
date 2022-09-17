@@ -132,13 +132,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         Button *b1 = new Button(tools, "Reset");
         b1->setFixedWidth(248);
         b1->setCallback([this]() { 
-          MENU_LOG("Reset\n");  
-          SDL_Event event = {};
-          event.type = reset_;
-          event.user.code = 0;
-          event.user.data1 = 0;
-          event.user.data2 = 0;
-          SDL_PushEvent(&event);          
+          evm->postEvent("reset");
         });        
 
         PopupButton * ps = new PopupButton(tools, "Save State");
@@ -174,42 +168,12 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
             if (base_path_array.size() >= 0) {
               base_path = base_path_array[0];
             }
-
             showFileSelectDialog( tools, bCdTray, base_path_array[0]);
-
-            /*
-            SDL_Event event = {};
-            event.type = close_tray_;
-            event.user.code = 0;
-            //event.user.data1 = malloc( 256* sizeof(char) );
-            //strcpy( (char*)event.user.data1, "filename" );
-            event.user.data2 = 0;
-            SDL_PushEvent(&event);               
-            */
-
-            Preference pref("default");
-            vector<string> base_path_array = pref.getStringArray("game directories");
-            if (base_path_array.size() >= 0) {
-              base_path = base_path_array[0];
-            }
-
-            if (games.size() == 0) {
-              refreshGameListAsync(base_path_array);
-            }
-            else {
-              showFileSelectDialog(tools, bCdTray, base_path_array);
-            }
-           
           }else{
             MENU_LOG("Open CD Tray\n"); 
             bCdTray->setCaption("Close CD Tray");
             this->is_cdtray_open_ = true;
-            SDL_Event event = {};
-            event.type = open_tray_;
-            event.user.code = 0;
-            event.user.data1 = 0;
-            event.user.data2 = 0;
-            SDL_PushEvent(&event);
+            evm->postEvent("open tray");
           }
         });
 
@@ -218,24 +182,14 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         b2->setFixedWidth(248);
         b2->setCallback([this]() { 
           MENU_LOG("Show/Hide FPS\n");  
-          SDL_Event event = {};
-          event.type = toggile_fps_;
-          event.user.code = 0;
-          event.user.data1 = 0;
-          event.user.data2 = 0;
-          SDL_PushEvent(&event);          
+          evm->postEvent("toggle fps");
         });
 
         Button *b3 = new Button(tools, "Enable/Disable Frame Skip");
         b3->setFixedWidth(248);
         b3->setCallback([this]() { 
-          MENU_LOG("Reset\n");  
-          SDL_Event event = {};
-          event.type = toggile_frame_skip_;
-          event.user.code = 0;
-          event.user.data1 = 0;
-          event.user.data2 = 0;
-          SDL_PushEvent(&event);          
+          MENU_LOG("toggle frame skip\n");  
+          evm->postEvent("toggle frame skip");
         });        
 #if 0
         Button *b4 = new Button(tools, "About");
@@ -445,12 +399,7 @@ void MenuScreen::showSaveStateDialog( Popup *popup ){
 
     Button *tmp = new Button(popup, stream.str() );
     tmp->setCallback([this,i,popup]() { 
-      SDL_Event event = {};
-      event.type = save_state_;
-      event.user.code = i;
-      event.user.data1 = 0;
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);
+      evm->postEvent("save state", i);
       popActiveMenu();
     });  
 
@@ -506,12 +455,7 @@ void MenuScreen::showLoadStateDialog( Popup *popup ){
 
       Button *tmp = new Button(popup, stream.str() );
       tmp->setCallback([this,i,popup]() { 
-        SDL_Event event = {};
-        event.type = load_state_;
-        event.user.code = i;
-        event.user.data1 = 0;
-        event.user.data2 = 0;
-        SDL_PushEvent(&event);
+        evm->postEvent("load state", i);
         popActiveMenu();
       });  
 
@@ -602,13 +546,10 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
             string path = base_path + "/" + string(ent->d_name);
             tmp->setCallback([this,path]() { 
               MENU_LOG("CD Close: %s\n", path.c_str() ); 
-              SDL_Event event = {};
-              event.type = close_tray_;
-              event.user.code = 0;
-              event.user.data1 = malloc( (path.size()+1) * sizeof(char) );
-              strcpy( (char*)event.user.data1, path.c_str() );
-              event.user.data2 = 0;
-              SDL_PushEvent(&event);
+              void * data1 = malloc((path.size() + 1) * sizeof(char));
+              strcpy((char*)data1, path.c_str());
+              evm->postEvent("close tray", data1);
+
               this->popActiveMenu();
               this->swindow->dispose();
               this->swindow = nullptr;
@@ -630,13 +571,9 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const s
     }    
     b0->setCallback([this]() { 
       MENU_LOG("Cancel\n"); 
-      SDL_Event event = {};
-      event.type = close_tray_;
-      event.user.code = 0;
-      event.user.data1 = malloc( 256* sizeof(char) );
-      strcpy( (char*)event.user.data1, "" );
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);
+      void * data1 = malloc(256 * sizeof(char));
+      strcpy((char*)data1, "");
+      evm->postEvent("close tray", data1);
       this->popActiveMenu();
       swindow->dispose();
       swindow = nullptr;
@@ -818,12 +755,8 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
       out << j.dump(2);
       out.close();        
 
-      SDL_Event event = {};
-      event.type = this->update_config_;
-      event.user.code = 0;
-      event.user.data1 = 0;
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);         
+      evm->postEvent("update config");
+
   });
 
   *cbo = cb;
@@ -856,12 +789,8 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
       out << j.dump(2);
       out.close();
 
-      SDL_Event event = {};
-      event.type = this->update_config_;
-      event.user.code = 0;
-      event.user.data1 = 0;
-      event.user.data2 = 0;
-      SDL_PushEvent(&event);   
+      evm->postEvent("update config");
+
     }catch ( json::exception& e ){
 
     }
@@ -1015,12 +944,8 @@ int MenuScreen::onRawInputEvent( InputManager & imp, const std::string & deviceg
   swindow->dispose();
   swindow = nullptr;
 
-  SDL_Event event = {};
-  event.type = this->update_config_;
-  event.user.code = 0;
-  event.user.data1 = 0;
-  event.user.data2 = 0;
-  SDL_PushEvent(&event);   
+  evm->postEvent("update config");
+
   return 0;
 }
 

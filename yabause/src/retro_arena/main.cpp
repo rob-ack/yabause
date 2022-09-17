@@ -491,7 +491,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   int width = 1280;
   int height = 720;
 
-  if (g_full_screen == false) {
+  if (1) { //g_full_screen == false) {
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
       width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
@@ -587,38 +587,108 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   Uint32 evToggleMenu = SDL_RegisterEvents(1);
   inputmng->setToggleMenuEventCode(evToggleMenu);
 
-  Uint32  evResetMenu = SDL_RegisterEvents(1);
-  menu->setResetMenuEventCode(evResetMenu);
-
-  Uint32  evPadMenu = SDL_RegisterEvents(1);
-  menu->setTogglePadModeMenuEventCode(evPadMenu);
-
-  Uint32  evToggleFps = SDL_RegisterEvents(1);
-  menu->setToggleFpsCode(evToggleFps);
-
-  Uint32  evToggleFrameSkip = SDL_RegisterEvents(1);
-  menu->setToggleFrameSkip(evToggleFrameSkip);
-
-  Uint32  evUpdateConfig = SDL_RegisterEvents(1);
-  menu->setUpdateConfig(evUpdateConfig);
-
-  Uint32  evOpenTray = SDL_RegisterEvents(1);
-  menu->setOpenTrayMenuEventCode(evOpenTray);
-
-  Uint32  evCloseTray = SDL_RegisterEvents(1);
-  menu->setCloseTrayMenuEventCode(evCloseTray);
-
-  Uint32  evSaveState = SDL_RegisterEvents(1);
-  menu->setSaveStateEventCode(evSaveState);
-
-  Uint32  evLoadState = SDL_RegisterEvents(1);
-  menu->setLoadStateEventCode(evLoadState);
-
   Uint32  evRepeat = SDL_RegisterEvents(1);
   menu->setRepeatEventCode(evRepeat);
 
+  EventManager * evm = EventManager::getInstance();
+
+
+  evm->setEvent("reset", [](int code, void * data1, void * data2) {
+     printf("hello");
+     YabauseReset();
+     hideMenuScreen(); 
+  });
+
+  evm->setEvent("toggle fps", [](int code, void * data1, void * data2) {
+    if (g_EnagleFPS == 0) {
+      g_EnagleFPS = 1;
+    }
+    else {
+      g_EnagleFPS = 0;
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("toggle frame skip", [](int code, void * data1, void * data2) {
+    if (g_frame_skip == 0) {
+      g_frame_skip = 1;
+      EnableAutoFrameSkip();
+    }
+    else {
+      g_frame_skip = 0;
+      DisableAutoFrameSkip();
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("open tray", [](int code, void * data1, void * data2) {
+    menu->setCurrentGamePath(cdpath);
+    Cs2ForceOpenTray();
+    if (!g_emulated_bios) {
+      hideMenuScreen();
+    }
+  });
+
+  evm->setEvent("close tray", [](int code, void * data1, void * data2) {
+    if (data1 != nullptr) {
+      strcpy(cdpath, (const char*)data1);
+      free(data1);
+    }
+    Preference defpref("default");
+    defpref.setString("last play game path", cdpath);
+    Cs2ForceCloseTray(CDCORE_ISO, cdpath);
+    hideMenuScreen();
+  });
+
   std::string tmpfilename = home_dir + "tmp.png";
 
+  evm->setEvent("save state", [tmpfilename](int code, void * data1, void * data2) {
+    int ret;
+    time_t t = time(NULL);
+    YUI_LOG("MSG_SAVE_STATE");
+
+    snprintf(last_state_filename, 256, "%s/%s_%d.yss", s_savepath, cdip->itemnum, code);
+    ret = YabSaveState(last_state_filename);
+    if (ret == 0) {
+      char pngname[256];
+      snprintf(pngname, 256, "%s/%s_%d.png", s_savepath, cdip->itemnum, code);
+      fs::copy(tmpfilename, pngname, fs::copy_options::overwrite_existing);
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("load state", [tmpfilename](int code, void * data1, void * data2) {
+    int rtn;
+    YUI_LOG("MSG_LOAD_STATE");
+
+    // Find latest filename
+    sprintf(last_state_filename, "%s/%s_%d.yss", s_savepath, cdip->itemnum, code);
+    rtn = YabLoadState(last_state_filename);
+    switch (rtn) {
+    case 0:
+      YUI_LOG("Load State: OK");
+      break;
+    case -1:
+      YUI_LOG("Load State: File Not Found");
+      break;
+    case -2:
+      YUI_LOG("Load State: Bad format");
+      break;
+    case -3:
+      YUI_LOG("Load State: Bad format deep inside");
+      break;
+    default:
+      YUI_LOG("Load State: Fail unkown");
+      break;
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("update config", [](int code, void * data1, void * data2) {
+      inputmng->updateConfig();
+  });
+
+  
   // 初期設定がされていない場合はメニューを表示する
   // BIOSなしの状態でゲームが選択されていない場合も
   if (defpref->getBool("is first time",true) || (g_emulated_bios == 1 && strlen(cdpath) == 0 ) ) {
@@ -672,9 +742,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
         }
         break;
       }
-      else if( e.type == evUpdateConfig ){
-          inputmng->updateConfig();
-      }
       else if(e.type == evToggleMenu){
         if( menu_show ){
             Preference * p = new Preference(cdpath);
@@ -717,106 +784,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
         }
       }
 
-      else if(e.type == evResetMenu){
-        YabauseReset();
-        hideMenuScreen(); 
-      }
-
-      else if(e.type == evPadMenu ){
-        if( padmode == 0 ){
-          padmode = 1;
-        }else{
-          padmode = 0;
-        }
-        hideMenuScreen();         
-      }
-
-      else if(e.type == evToggleFps ){
-        if( g_EnagleFPS == 0 ){
-          g_EnagleFPS = 1;
-        }else{
-          g_EnagleFPS = 0;
-        }
-        hideMenuScreen();         
-      }
-
-      else if(e.type == evToggleFrameSkip ){
-        if( g_frame_skip == 0 ){
-          g_frame_skip = 1;
-          EnableAutoFrameSkip();
-        }else{
-          g_frame_skip = 0;
-          DisableAutoFrameSkip();
-        }
-
-        //ToggleFullscreen(wnd);
-
-        hideMenuScreen();         
-      }
-      else if(e.type == evOpenTray ){
-        menu->setCurrentGamePath(cdpath);
-        Cs2ForceOpenTray();
-        if( !g_emulated_bios ) {
-          hideMenuScreen();            
-        }
-      }
-      else if(e.type == evCloseTray ){
-        if( e.user.data1 != nullptr ){
-          strcpy( cdpath, (const char*)e.user.data1 );
-          free(e.user.data1);
-        }
-        Preference defpref("default");
-        defpref.setString("last play game path", cdpath);
-        Cs2ForceCloseTray(CDCORE_ISO, cdpath );
-        hideMenuScreen();     
-      }
-
-      else if(e.type == evSaveState ){
-
-        int ret;
-        time_t t = time(NULL);
-        YUI_LOG("MSG_SAVE_STATE");
-
-        snprintf(last_state_filename, 256, "%s/%s_%d.yss", s_savepath, cdip->itemnum, e.user.code);
-        ret = YabSaveState(last_state_filename);
-        if( ret == 0 ){
-          char pngname[256];
-          snprintf(pngname,256,"%s/%s_%d.png", s_savepath, cdip->itemnum, e.user.code);
-          fs::copy(tmpfilename, pngname, fs::copy_options::overwrite_existing );
-        }
-        hideMenuScreen();
-      }
-
-      else if(e.type == evLoadState ){
-        int rtn;
-        YUI_LOG("MSG_LOAD_STATE");
-
-        // Find latest filename
-        sprintf(last_state_filename, "%s/%s_%d.yss", s_savepath, cdip->itemnum, e.user.code);
-        rtn = YabLoadState(last_state_filename);
-        switch(rtn){
-          case 0:
-          YUI_LOG("Load State: OK");
-          break;
-        case -1:
-          YUI_LOG("Load State: File Not Found");
-          break;
-        case -2:
-          YUI_LOG("Load State: Bad format");
-           break;
-        case -3:
-          YUI_LOG("Load State: Bad format deep inside");
-          break;                    
-        default:
-          YUI_LOG("Load State: Fail unkown");
-          break;                    
-        }
-        hideMenuScreen();
-      }
       else if (e.type == evRepeat) {
        string keycode((char*)e.user.data1);
         menu->keyboardEvent(keycode,0,e.user.code,0);
         delete[] e.user.data1;
+      }
+      else {
+        evm->procEvent(e.type, e.user.code, e.user.data1);
       }
 
       inputmng->parseEvent(e);

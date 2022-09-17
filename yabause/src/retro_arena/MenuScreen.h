@@ -35,6 +35,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include "EventManager.h"
+
 
 #include "InputConfig.h"
 
@@ -117,6 +119,7 @@ class MenuScreen : public nanogui::Screen
 {
 public:
     //Widget *activeWindow = nullptr;
+    EventManager * evm = EventManager::getInstance();
     Widget *tools = nullptr;
     std::vector<PlayerConfig> player_configs_;
 /*    
@@ -153,35 +156,8 @@ public:
     virtual bool keyboardEvent( const std::string & keycode , int scancode, int action, int modifiers);
     virtual void draw(NVGcontext *ctx);
 
-	uint32_t reset_ = 0;
-	void setResetMenuEventCode( uint32_t type ){ reset_ = type; }
-
-	uint32_t pad_ = 0;
-	void setTogglePadModeMenuEventCode( uint32_t type ){ pad_ = type; }
-
-	uint32_t toggile_fps_ = 0;
-	void setToggleFpsCode( uint32_t type ){ toggile_fps_ = type; }
-
-	uint32_t toggile_frame_skip_ = 0;
-	void setToggleFrameSkip( uint32_t type ){ toggile_frame_skip_ = type; }
-
-	uint32_t update_config_ = 0;
-	void setUpdateConfig( uint32_t type ){ update_config_ = type; }
-
-	uint32_t open_tray_ = 0;
-	void setOpenTrayMenuEventCode( uint32_t type ){ open_tray_ = type; }
-
-	uint32_t close_tray_ = 0;
-	void setCloseTrayMenuEventCode( uint32_t type ){ close_tray_ = type; }
-
     std::string current_game_path_;
     void setCurrentGamePath( const char * path ){ current_game_path_ = path; }
-
-    uint32_t save_state_ = 0;
-    void setSaveStateEventCode( uint32_t code ){ save_state_ = code; }
-
-    uint32_t load_state_ = 0;
-    void setLoadStateEventCode( uint32_t code ){ load_state_ = code; }
 
     uint32_t repeat_ = 0;
     void setRepeatEventCode(uint32_t code) { repeat_ = code; }

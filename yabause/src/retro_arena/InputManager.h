@@ -35,6 +35,7 @@ class Timer;
 
 using std::string;
 
+
 struct MenuInput {
 	uint32_t select_button_ = -1;
 	SDL_JoystickID select_device_ = -1;
@@ -116,6 +117,7 @@ public:
 	std::vector<MenuInput> menu_inputs_;
 
 	AnalogType _analogType;
+
 
 public:
 	static void genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid );

@@ -611,9 +611,29 @@ void MenuScreen::getSelectedGUID( int user_index, std::string & selguid ){
     userid = ss.str();
     if( j.find(userid) != j.end() ) {
       InputManager::genJoyString( selguid, j[userid]["DeviceID"], j[userid]["deviceName"], j[userid]["deviceGUID"] );
+
+      // This device is connected??
+      int index = 0;
+      int selindex = -1;
+      for (auto it = joysticks_.begin(); it != joysticks_.end(); ++it) {
+        SDL_Joystick* joy = it->second;
+        SDL_JoystickID joyId = SDL_JoystickInstanceID(joy);
+        char guid[65];
+        SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joy), guid, 65);
+        string key_string;
+        InputManager::genJoyString(key_string, joyId, SDL_JoystickName(joy), guid);
+        if (selguid == key_string) {
+          selindex = index;
+        }
+      }
+
+      if (selindex == -1) {
+        selguid = "-1_Keyboard_-1"; // not found force keyboard
+      }
+
     }
   }catch ( json::exception& e ){
-
+    selguid = "-1_Keyboard_-1"; // not found force keyboard
   }
 
 }
@@ -664,6 +684,7 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
     InputManager::genJoyString( key_string, joyId, SDL_JoystickName(joy), guid );
     if( selguid  == key_string ){
       selindex = index;
+      cuurent_deviceguid_ = key_string;
     }
     printf("listguid = %d:%s\n", index, key_string.c_str() );
     index++;
@@ -675,6 +696,10 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   if( selindex != -1 ){
     cb->setSelectedIndex(selindex);
   }
+  else {
+    cuurent_deviceguid_ = "-1_Keyboard_-1"; // not found force keyboard
+  }
+
   printf("selguid = %d:%s\n", selindex, selguid.c_str() );
 
   Popup *cbpopup = cb->popup(); 
@@ -1106,7 +1131,7 @@ void MenuScreen::setCurrentInputDevices( std::map<SDL_JoystickID, SDL_Joystick*>
       itemsShort.push_back(SDL_JoystickName(joy));
   }  
   itemsShort.push_back("KeyBoard");
-  items.push_back("Keyboard_-1");
+  items.push_back("-1_Keyboard_-1");
   itemsShort.push_back("Disable");
   items.push_back("Disable_-2");
 

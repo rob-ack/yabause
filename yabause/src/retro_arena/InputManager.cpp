@@ -261,24 +261,24 @@ void InputManager::genJoyString( string & out, SDL_JoystickID id, const string &
 int setDefalutSettings( void * padbits ){
 
     // Set Defaults
-    PerSetKey(SDLK_UP,PERPAD_UP, padbits);
-    PerSetKey(SDLK_DOWN,PERPAD_DOWN, padbits);
-    PerSetKey(SDLK_LEFT,PERPAD_LEFT, padbits);
-    PerSetKey(SDLK_LEFT,PERPAD_RIGHT, padbits);
-    PerSetKey(SDLK_RETURN, PERPAD_START, padbits);
-    PerSetKey(SDLK_z,PERPAD_A, padbits);
-    PerSetKey(SDLK_x,PERPAD_B, padbits);
-    PerSetKey(SDLK_c,PERPAD_C, padbits);
-    PerSetKey(SDLK_a,PERPAD_X, padbits);
-    PerSetKey(SDLK_s,PERPAD_Y, padbits);
-    PerSetKey(SDLK_d,PERPAD_Z, padbits);
-    PerSetKey(SDLK_q,PERPAD_LEFT_TRIGGER, padbits);
-    PerSetKey(SDLK_e,PERPAD_RIGHT_TRIGGER, padbits); 
+    PerSetKey(SDLK_UP | KEYBOARD_MASK,PERPAD_UP, padbits);
+    PerSetKey(SDLK_DOWN | KEYBOARD_MASK,PERPAD_DOWN, padbits);
+    PerSetKey(SDLK_LEFT | KEYBOARD_MASK,PERPAD_LEFT, padbits);
+    PerSetKey(SDLK_RIGHT | KEYBOARD_MASK,PERPAD_RIGHT, padbits);
+    PerSetKey(SDLK_RETURN | KEYBOARD_MASK, PERPAD_START, padbits);
+    PerSetKey(SDLK_z | KEYBOARD_MASK,PERPAD_A, padbits);
+    PerSetKey(SDLK_x | KEYBOARD_MASK,PERPAD_B, padbits);
+    PerSetKey(SDLK_c | KEYBOARD_MASK,PERPAD_C, padbits);
+    PerSetKey(SDLK_a | KEYBOARD_MASK,PERPAD_X, padbits);
+    PerSetKey(SDLK_s | KEYBOARD_MASK,PERPAD_Y, padbits);
+    PerSetKey(SDLK_d | KEYBOARD_MASK,PERPAD_Z, padbits);
+    PerSetKey(SDLK_q | KEYBOARD_MASK,PERPAD_LEFT_TRIGGER, padbits);
+    PerSetKey(SDLK_e | KEYBOARD_MASK,PERPAD_RIGHT_TRIGGER, padbits);
 
     return 0;
 }
 
-int mapKeys( const json & configs ){
+int mapKeys( const json & configs, std::string config_fname ){
   void * padbits;
   int user = 0;
   PerPortReset();
@@ -287,6 +287,7 @@ int mapKeys( const json & configs ){
 
     PADLOG("No joy stic is found force to keyboard\n");
     padbits = PerPadAdd(&PORTDATA1);
+        
     if( configs.find("player1") == configs.end() ){
       return setDefalutSettings(padbits);
     }
@@ -299,6 +300,22 @@ int mapKeys( const json & configs ){
         setPlayerKeys( padbits, 0, -1, dev );
         return 0;
       }
+    }
+    else {
+
+      // Force to use keyboard
+      json j;
+      std::ifstream fin(config_fname);
+      fin >> j;
+      fin.close();
+      j["player1"]["deviceGUID"] = "-1";
+      j["player1"]["DeviceID"] = -1;
+      j["player1"]["deviceName"] = "Keyboard";
+      j["player1"]["padmode"] = 0;
+      std::ofstream out(config_fname);
+      out << j.dump(2);
+      out.close();
+
     }
 #if 0    
     if( configs.find("player2") == configs.end() ){
@@ -460,7 +477,7 @@ void InputManager::updateConfig(){
   std::ifstream fin( config_fname_ );
   fin >> j;
   fin.close();
-  mapKeys(j);
+  mapKeys(j, config_fname_);
 }
 
 int InputManager::getCurrentPadMode( int user ){
@@ -484,7 +501,7 @@ void InputManager::setGamePadomode( int user, int mode ){
   if( user == 0 ){
     PADLOG("User mode %d\n", mode );
     j["player1"]["padmode"] = mode;
-    mapKeys(j);
+    mapKeys(j, config_fname_);
     std::ofstream out(config_fname_);
     out << j.dump(2);
     out.close();
@@ -692,7 +709,7 @@ void InputManager::init( const std::string & fname )
   fin >> j;
   std::cout << std::setw(2) << j << "\n\n";
 
-  mapKeys(j);
+  mapKeys(j, config_fname_);
 
   menu_inputs_.clear();
   std::map<SDL_JoystickID, InputConfig*>::iterator it;

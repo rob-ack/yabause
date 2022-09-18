@@ -76,6 +76,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
   current_game_path_ = game;
   swindow = nullptr;
   imageWindow = nullptr;
+  dirSelectWindow = nullptr;
 
   int image_pix_size_w = this->width() / 2;
   int image_pix_size_h = this->height() / 2;
@@ -695,9 +696,9 @@ void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const v
     auto vscroll = new VScrollPanel(swindow);
     vscroll->setPosition(Vector2i(0, 20));
     vscroll->setFixedSize({dialog_width, dialog_height - 28});
-    
     auto wrapper = new Widget(vscroll);
-    wrapper->setFixedSize({dialog_width, dialog_height });
+    wrapper->setPosition(Vector2i(0, 20));
+    wrapper->setFixedSize({dialog_width, dialog_height - 28});
     wrapper->setLayout(new GroupLayout());
     
 
@@ -1057,6 +1058,13 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
     showInputCheckDialog("start");
   });
+
+  b = new Button(popup, "SELECT");
+  b->setCallback([this, user_index] {
+    getSelectedGUID(user_index, this->cuurent_deviceguid_);
+    showInputCheckDialog("select");
+  });
+
 
   b = new Button(popup, "A");
   b->setCallback([this, user_index]{

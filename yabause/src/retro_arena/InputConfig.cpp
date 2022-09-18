@@ -94,6 +94,9 @@ InputConfig::InputConfig(int deviceId, const std::string& deviceName, const std:
   mapInput("start", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_LEFTSTICK, 1, true));
   mapInput("select", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_START, 1, true));
 
+  mapInput("down analog", Input(deviceId, TYPE_AXIS, 1, 1, true));
+  mapInput("up analog", Input(deviceId, TYPE_AXIS, 1, -1, true));
+
 }
 
 void InputConfig::clear()

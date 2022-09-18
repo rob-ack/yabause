@@ -522,6 +522,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     else if ((x == "-nf" || x == "--no_frame_skip")) {
       g_frame_skip = 0;
     }
+    else if ((x == "-w" || x == "--window")) {
+      g_full_screen = false;
+    }
     else if ((x == "-v" || x == "--version")) {
       printf("YabaSanshiro version %s(%s)\n", YAB_VERSION, GIT_SHA1);
       return 0;

@@ -229,22 +229,21 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("z") != player.end()) PerSetKey(genidjson(user,joyId,player["z"]),PERPAD_Z, padbits);
     if( player.find("l") != player.end()) PerSetKey(genidjson(user,joyId,player["l"]),PERPAD_LEFT_TRIGGER, padbits);
     if( player.find("r") != player.end())PerSetKey(genidjson(user,joyId,player["r"]),PERPAD_RIGHT_TRIGGER, padbits);    
-
-    if( player.find("analogx") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
-      InputManager::getInstance()->_analogType[joyId] = 0;
+    if( player.find("analogx") != player.end())  {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
+	      InputManager::getInstance()->_analogType[joyId] = 0;
     }
     if( player.find("analogy") != player.end()) {
         PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
         InputManager::getInstance()->_analogType[joyId] = 0; 
     }
-    if( player.find("analogleft") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS4, padbits);
-      InputManager::getInstance()->_analogType[joyId] = 1;
+    if( player.find("analogl") != player.end()) {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogl"]), PERANALOG_AXIS4, padbits);
+	      InputManager::getInstance()->_analogType[joyId] = 1;
     }
-    if( player.find("analogright") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS3, padbits);  
-      InputManager::getInstance()->_analogType[joyId] = 1; 
+    if( player.find("analogr") != player.end()) {
+	      PerSetKey(genidAnalogjson(user,joyId,player["analogr"]), PERANALOG_AXIS3, padbits);  
+	      InputManager::getInstance()->_analogType[joyId] = 1; 
     }
 
     return 0;
@@ -278,7 +277,7 @@ int setDefalutSettings( void * padbits ){
     return 0;
 }
 
-int mapKeys( const json & configs, std::string config_fname ){
+int mapKeys( const json & configs, std::string config_fname, std::vector<MenuInput> & menu_inputs_){
   void * padbits;
   int user = 0;
   PerPortReset();
@@ -383,6 +382,14 @@ int mapKeys( const json & configs, std::string config_fname ){
         if( configs.find(name_guid) != configs.end()){
           json dev = configs[ name_guid ];
           setPlayerKeys( padbits, user, joyId, dev );
+          if (dev.find("select") != dev.end()) {
+            menu_inputs_.clear();
+            MenuInput tmp;
+            tmp.select_device_ = joyId;
+            tmp.select_button_ = dev["select"]["id"];
+            printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_);
+            menu_inputs_.push_back(tmp);
+          }
         }
       }
     }
@@ -477,7 +484,7 @@ void InputManager::updateConfig(){
   std::ifstream fin( config_fname_ );
   fin >> j;
   fin.close();
-  mapKeys(j, config_fname_);
+  mapKeys(j, config_fname_, menu_inputs_);
 }
 
 int InputManager::getCurrentPadMode( int user ){
@@ -501,7 +508,7 @@ void InputManager::setGamePadomode( int user, int mode ){
   if( user == 0 ){
     PADLOG("User mode %d\n", mode );
     j["player1"]["padmode"] = mode;
-    mapKeys(j, config_fname_);
+    mapKeys(j, config_fname_, menu_inputs_);
     std::ofstream out(config_fname_);
     out << j.dump(2);
     out.close();
@@ -709,22 +716,27 @@ void InputManager::init( const std::string & fname )
   fin >> j;
   std::cout << std::setw(2) << j << "\n\n";
 
-  mapKeys(j, config_fname_);
-
   menu_inputs_.clear();
-  std::map<SDL_JoystickID, InputConfig*>::iterator it;
+  mapKeys(j, config_fname_, menu_inputs_);
 
-  for ( it = mInputConfigs.begin(); it != mInputConfigs.end(); it++ ){
-    MenuInput tmp;
-    Input result;
-    it->second->getInputByName("select", &result);
-    if( result.id == -1 ){
-      it->second->getInputByName("hotkeyenable", &result);
+
+
+  
+  if( menu_inputs_.size() == 0 ) {
+    std::map<SDL_JoystickID, InputConfig*>::iterator it;
+
+    for (it = mInputConfigs.begin(); it != mInputConfigs.end(); it++) {
+      MenuInput tmp;
+      Input result;
+      it->second->getInputByName("select", &result);
+      if (result.id == -1) {
+        it->second->getInputByName("hotkeyenable", &result);
+      }
+      tmp.select_device_ = it->second->getDeviceId();
+      tmp.select_button_ = result.id;
+      printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_);
+      menu_inputs_.push_back(tmp);
     }
-    tmp.select_device_ = it->second->getDeviceId();    
-    tmp.select_button_ = result.id;
-    printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_ );
-    menu_inputs_.push_back(tmp);
   }
 }
 
@@ -1029,6 +1041,12 @@ int InputManager::handleJoyEvents(void) {
 static const int DEADZONE = 23000;
 
 void InputManager::setMenuLayer( MenuScreen * menu_layer ){
+
+  if (currentTimer != nullptr) {
+    delete currentTimer;
+    currentTimer = nullptr;
+  }
+
   menu_layer_ = menu_layer;
   if( menu_layer_ != nullptr ){
     menu_layer_->setCurrentInputDevices( mJoysticks );
@@ -1051,12 +1069,38 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
           normValue = 1;
         else
           normValue = -1;
+
       //window->input(getInputConfigByDevice(ev.jaxis.which), Input(ev.jaxis.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       InputConfig* cfg = getInputConfigByDevice(ev.jbutton.which);
       evstr = cfg->getMappedTo(Input(ev.jbutton.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       if( evstr.size() > 0 ){
+
+        {
+          if (currentTimer != nullptr) {
+            delete currentTimer;
+            currentTimer = nullptr;
+          }
+
+          if (ev.jhat.value != 0) {
+            currentTimer = new Timer();
+            string evvv = evstr[0];
+            currentTimer->start(std::chrono::milliseconds(500), std::chrono::milliseconds(80), [this, ev, evvv, normValue] {
+              menu_layer_->sendRepeatEvent((const string)evvv, 0, normValue, 0);
+            });
+          }
+
+        }
+
         menu_layer_->keyboardEvent(evstr[0],0,normValue,0);
+      
       }
+      else {
+        if (currentTimer != nullptr) {
+          delete currentTimer;
+          currentTimer = nullptr;
+        }
+      }
+
       causedEvent = true;
     }
     mPrevAxisValues[ev.jaxis.which][ev.jaxis.axis] = ev.jaxis.value;
@@ -1117,7 +1161,6 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
             currentTimer = new Timer();
             string evvv = evstr[0];
             currentTimer->start(std::chrono::milliseconds(500), std::chrono::milliseconds(80), [this, ev, evvv] {
-              std::puts("Hello!");
               menu_layer_->sendRepeatEvent( (const string)evvv, 0, (ev.jhat.value != 0), 0);
             });
           }

@@ -557,7 +557,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   int width = 1280;
   int height = 720;
 
-  if (1) { //g_full_screen == false) {
+  if (g_full_screen == false) {
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
       width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 

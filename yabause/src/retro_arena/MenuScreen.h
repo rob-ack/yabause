@@ -148,8 +148,6 @@ public:
     nanogui::Window *swindow;
     nanogui::Window *imageWindow;
     nanogui::Window *dirSelectWindow;
-
-    LRU_Cache * imageCache = new LRU_Cache(32);
     
     
     MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game  );
@@ -194,6 +192,9 @@ public:
 
     void setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
     void listdir(const string & dirname, int indent, vector<string> & files);
+
+    void setupGameDirsMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
+
 
 public:  // events
     int onBackButtonPressed();    

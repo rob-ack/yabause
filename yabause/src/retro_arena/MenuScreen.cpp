@@ -303,13 +303,96 @@ void MenuScreen::setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> 
 
 }
 
+bool selectDirectory(std::string & out);
+
+void MenuScreen::setupGameDirsMenu(PopupButton *parent, std::shared_ptr<Preference> preference) {
+
+  Popup *popup = parent->popup();
+  new Label(popup, "Game Directories");
+  Button *b0 = new Button(popup, "Select");
+  b0->setCallback([this,b0]() {
+
+    std::shared_ptr<Preference> preference(new Preference("default"));
+
+    int image_pix_size_w = this->width() / 2;
+    int image_pix_size_h = this->height() / 2;
+    dirSelectWindow = new Window(this, "Select Game Directories");
+    dirSelectWindow->setPosition(Vector2i(0, 0));
+    dirSelectWindow->setLayout(new GridLayout(
+      Orientation::Horizontal,
+      2,
+      Alignment::Fill,
+      8,
+      8
+    ));
+   
+
+    auto gdir = preference->getStringArray("game directories");
+
+    for (int i=0; i<gdir.size(); i++) {
+      new Label(dirSelectWindow, gdir[i] );
+      auto delBtn = new Button(dirSelectWindow, "Delete" );
+      delBtn->setCallback([this, i]() {
+        std::shared_ptr<Preference> preference(new Preference("default"));
+        auto gdir = preference->getStringArray("game directories");
+        gdir.erase( gdir.begin() + i );
+        preference->setStringArray("game directories", gdir);
+        this->popActiveMenu();
+        if (this->dirSelectWindow != nullptr) {
+          this->dirSelectWindow->dispose();
+          this->dirSelectWindow = nullptr;
+        }
+      });
+    }
+
+    auto addBtn = new Button(dirSelectWindow, "Add");
+    addBtn->setCallback([this]() {
+      string dir;
+      if (selectDirectory(dir) == true) {
+        std::shared_ptr<Preference> preference(new Preference("default"));
+        auto gdir = preference->getStringArray("game directories");
+        gdir.push_back(dir);
+        preference->setStringArray("game directories", gdir);
+        this->popActiveMenu();
+        if (this->dirSelectWindow != nullptr) {
+          this->dirSelectWindow->dispose();
+          this->dirSelectWindow = nullptr;
+        }
+
+      }
+    });
+
+    new Label(dirSelectWindow, "");
+
+    Button *btn = new Button(dirSelectWindow, "Close");
+    btn->setCallback([this]() {
+      this->popActiveMenu();
+      if (this->dirSelectWindow != nullptr) {
+        this->dirSelectWindow->dispose();
+        this->dirSelectWindow = nullptr;
+      }
+    });
+
+    dirSelectWindow->center();
+    dirSelectWindow->setModal(true);
+    dirSelectWindow->requestFocus();
+
+    pushActiveMenu(dirSelectWindow, b0);
+
+
+  });
+
+}
+
 void MenuScreen::showConfigDialog( PopupButton *parent ){
 
   // Todo setCurrentGamePath
   std::shared_ptr<Preference> preference(new Preference("default"));
 
-  setupBiosMenu(parent, preference);
+  setupGameDirsMenu(parent, preference);
 
+  setupBiosMenu(parent, preference);
+  
   Popup *popup = parent->popup();    
   popup->setLayout(new GroupLayout(4,2,2,2)); 
   new Label(popup, "Resolution");
@@ -363,7 +446,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     preference->setInt("Aspect rate",idx);
   });
 
-  new Label(popup, "Rotate screen resolution");
+  new Label(popup, "Rotate screen");
   cb = new ComboBox(popup);  
   items.clear();
   items.push_back("Original");
@@ -395,7 +478,8 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   });
 
 
-  ba = new Button(popup,"Rotate screen");  
+  new Label(popup, "Screen orientation");
+  ba = new Button(popup,"Rotate");  
   ba->setFlags(Button::ToggleButton); 
   ba->setPushed( preference->getBool("Rotate screen",false) );
   ba->setChangeCallback([this,preference](bool state) { 
@@ -403,6 +487,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
     VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, state);
   });
 
+  
 }
 
 void MenuScreen::showSaveStateDialog( Popup *popup ){
@@ -1356,13 +1441,21 @@ int MenuScreen::onBackButtonPressed(){
     return 1;    
   }
 
+  if (dirSelectWindow != nullptr) {
+    this->popActiveMenu();
+    dirSelectWindow->dispose();
+    dirSelectWindow = nullptr;
+    return 1;
+  }
+
+/*
   if( imageWindow != nullptr ){
     this->popActiveMenu();
     imageWindow->dispose();
     imageWindow = nullptr;    
     return 1;
   }
-  
+*/  
  //if( swindow != nullptr ){ 
  //  printf("swindow != null\n");
  //  return 1; 

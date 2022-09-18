@@ -157,19 +157,19 @@ extern "C" {
 #endif
 
 
-static SDL_Window* wnd;
-static SDL_Window* subwnd;
-static SDL_GLContext glc;
-static SDL_GLContext subglc;
-int g_EnagleFPS = 0;
-int g_resolution_mode = 0;
-int g_keep_aspect_rate = 0;
-int g_scsp_sync = 1;
-int g_frame_skip = 1;
-int g_emulated_bios = 1;
-bool g_full_screen = false;
-InputManager* inputmng;
-MenuScreen * menu;
+  static SDL_Window* wnd;
+  static SDL_Window* subwnd;
+  static SDL_GLContext glc;
+  static SDL_GLContext subglc;
+  int g_EnagleFPS = 0;
+  int g_resolution_mode = 0;
+  int g_keep_aspect_rate = 0;
+  int g_scsp_sync = 1;
+  int g_frame_skip = 1;
+  int g_emulated_bios = 1;
+  bool g_full_screen = false;
+  InputManager* inputmng;
+  MenuScreen * menu;
 
   using std::string;
   string g_keymap_filename;
@@ -196,46 +196,44 @@ MenuScreen * menu;
     SetOSDToggle(g_EnagleFPS);
   }
 
-int YuiRevokeOGLOnThisThread(){
-  LOG("revoke thread\n");
+  int YuiRevokeOGLOnThisThread() {
+    LOG("revoke thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-  int rc = -1;
-  int retry=0;
-  while( rc != 0 ){
-    YabThreadUSleep(16666);
-    retry++;
-    rc = SDL_GL_MakeCurrent(subwnd,subglc);
-    if( rc != 0 ){ LOG("fail revoke thread\n"); }
-    if( retry > 100){
-      LOG("out of retry cont\n");
-      abort();
+    int rc = -1;
+    int retry = 0;
+    while (rc != 0) {
+      YabThreadUSleep(16666);
+      retry++;
+      rc = SDL_GL_MakeCurrent(subwnd, subglc);
+      if (rc != 0) { LOG("fail revoke thread\n"); }
+      if (retry > 100) {
+        LOG("out of retry cont\n");
+        abort();
+      }
     }
-  }
 #else
     SDL_GL_MakeCurrent(wnd, nullptr);
 #endif  
-#endif
     return 0;
   }
 
-int YuiUseOGLOnThisThread(){
-  LOG("use thread\n");
+  int YuiUseOGLOnThisThread() {
+    LOG("use thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-  int rc = -1;
-  int retry=0;
-  while( rc != 0 ){
-    YabThreadUSleep(16666);
-    retry++;
-    rc = SDL_GL_MakeCurrent(wnd,glc);
-    if( rc != 0 ){ LOG("fail revoke thread\n"); }
-    if( retry > 100){
-      LOG("out of retry cont\n");
-      abort();
+    int rc = -1;
+    int retry = 0;
+    while (rc != 0) {
+      YabThreadUSleep(16666);
+      retry++;
+      rc = SDL_GL_MakeCurrent(wnd, glc);
+      if (rc != 0) { LOG("fail revoke thread\n"); }
+      if (retry > 100) {
+        LOG("out of retry cont\n");
+        abort();
+      }
     }
-  }
 #else
     SDL_GL_MakeCurrent(wnd, glc);
-#endif
 #endif
     return 0;
   }
@@ -358,6 +356,69 @@ void ToggleFullscreen(SDL_Window* Window) {
   SDL_SetWindowFullscreen(Window, g_full_screen ? 0 : FullscreenFlag);
   SDL_ShowCursor(g_full_screen);
 }
+
+
+int __stdcall BrowseCallbackProc(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData) {
+  TCHAR dir[MAX_PATH];
+  ITEMIDLIST *lpid;
+  HWND hEdit;
+
+  switch (uMsg) {
+  case BFFM_INITIALIZED:  //      ダイアログボックス初期化時
+    SendMessage(hWnd, BFFM_SETSELECTION, (WPARAM)TRUE, lpData);     //      コモンダイアログの初期ディレクトリ
+    break;
+  case BFFM_VALIDATEFAILED:       //      無効なフォルダー名が入力された
+    //MessageBox(hWnd, (TCHAR*)lParam, _TEXT("無効なフォルダー名が入力されました"), MB_OK);
+    //hEdit = FindWindowEx(hWnd, NULL, _TEXT("EDIT"), NULL);     //      エディットボックスのハンドルを取得する
+    //SetWindowText(hEdit, _TEXT(""));
+    return 1;       //      ダイアログボックスを閉じない
+    break;
+  case BFFM_IUNKNOWN:
+    break;
+  case BFFM_SELCHANGED:   //      選択フォルダーが変化した場合
+    //lpid = (ITEMIDLIST *)lParam;
+    //SHGetPathFromIDList(lpid, dir);
+    //hEdit = FindWindowEx(hWnd, NULL, _TEXT("EDIT"), NULL);     //      エディットボックスのハンドルを取得する
+    //SetWindowText(hEdit, dir);
+    break;
+  }
+  return 0;
+}
+
+bool selectDirectory(std::string & out) {
+
+  char path[_MAX_PATH];
+
+  BROWSEINFOA bInfo;
+  LPITEMIDLIST pIDList;
+
+  SDL_SysWMinfo wmInfo;
+  SDL_VERSION(&wmInfo.version);
+  SDL_GetWindowWMInfo(wnd, &wmInfo);
+  HWND hWnd = wmInfo.info.win.window;
+
+  memset(&bInfo, 0, sizeof(bInfo));
+  bInfo.hwndOwner = hWnd; // ダイアログの親ウインドウのハンドル 
+  bInfo.pidlRoot = NULL; // ルートフォルダをデスクトップフォルダとする 
+  bInfo.pszDisplayName = path; //フォルダ名を受け取るバッファへのポインタ 
+  bInfo.lpszTitle = "Choose game directory"; // ツリービューの上部に表示される文字列 
+  bInfo.ulFlags = BIF_RETURNONLYFSDIRS | BIF_EDITBOX | BIF_VALIDATE | BIF_NEWDIALOGSTYLE; // 表示されるフォルダの種類を示すフラグ 
+  bInfo.lpfn = BrowseCallbackProc; // BrowseCallbackProc関数のポインタ 
+  //bInfo.lParam = (LPARAM)def_dir;
+  pIDList = SHBrowseForFolderA(&bInfo);
+  if (pIDList == NULL) {
+    path[0] = '\0';
+    return false; //何も選択されなかった場合 
+  }
+
+   if (!SHGetPathFromIDListA(pIDList, path))
+      return false;//変換に失敗 
+
+   CoTaskMemFree(pIDList);// pIDListのメモリを開放 
+   out = path;
+   return true;
+}
+
 
 //#undef main
 //int main(int argc, char** argv)

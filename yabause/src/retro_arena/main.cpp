@@ -164,7 +164,7 @@ extern "C" {
   int g_EnagleFPS = 0;
   int g_resolution_mode = 0;
   int g_keep_aspect_rate = 0;
-  int g_scsp_sync = 1;
+  int g_scsp_sync = 32;
   int g_frame_skip = 1;
   int g_emulated_bios = 1;
   bool g_full_screen = false;
@@ -496,7 +496,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
   g_resolution_mode = defpref->getInt("Resolution", 0);
   g_keep_aspect_rate = defpref->getInt("Aspect rate", 0);
-  g_scsp_sync = defpref->getInt("sound sync count per a frame", 4);
+  g_scsp_sync = defpref->getInt("sound sync count per a frame", 32);
   g_frame_skip = defpref->getBool("frame skip", false);
   g_full_screen = defpref->getBool("Full screen", false);
   g_EnagleFPS = defpref->getBool("Show Fps", false);

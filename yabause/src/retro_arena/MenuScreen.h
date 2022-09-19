@@ -192,6 +192,7 @@ public:
 
     void setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
     void listdir(const string & dirname, int indent, vector<string> & files);
+    void checkdir(const string & dirname, int indent, vector<string> & files);
 
     void setupGameDirsMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
 

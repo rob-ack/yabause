@@ -634,6 +634,42 @@ void MenuScreen::listdir(const string & dirname, int indent, vector<string> & fi
   closedir(dir);
 }
 
+
+void MenuScreen::checkdir(const string & dirname, int indent, vector<string> & files)
+{
+  DIR *dir;
+  struct dirent *entry;
+
+  if (!(dir = opendir(dirname.c_str())))
+    return;
+
+  while ((entry = readdir(dir)) != NULL) {
+    if (entry->d_type == DT_DIR) {
+      char path[1024];
+      if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0)
+        continue;
+      snprintf(path, sizeof(path), "%s/%s", dirname.c_str(), entry->d_name);
+      printf("%*s[%s]\n", indent, "", entry->d_name);
+      checkdir(string(path), indent + 2, files);
+      if (files.size() != 0) {
+        closedir(dir);
+        return;
+      }
+    }
+    else {
+      printf("%*s- %s\n", indent, "", entry->d_name);
+      string dname = dirname + "/" + entry->d_name;
+      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+        files.push_back(dname);
+        closedir(dir);
+        return;
+      }
+    }
+  }
+  closedir(dir);
+}
+
 void MenuScreen::checkGameFiles(Widget * parent, const vector<std::string> & base_paths) {
   DIR *dir;
   struct dirent *ent;
@@ -642,7 +678,7 @@ void MenuScreen::checkGameFiles(Widget * parent, const vector<std::string> & bas
   vector<string> files;
   int indent;
   for (int i = 0; i < base_paths.size(); i++) {
-    listdir(base_paths[i], indent, files);
+    checkdir(base_paths[i], indent, files);
     filecount = files.size();
     if (filecount != 0) {
       break;
@@ -840,7 +876,7 @@ void MenuScreen::getSelectedGUID( int user_index, std::string & selguid ){
 
 void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, const std::string & label, ComboBox **cbo ){
   player->setFixedWidth(248);
-  Popup *popup = player->popup();     
+  Popup *popup = player->popup();
   popup->setLayout(new GroupLayout(4,2,2,2)); 
   new Label(popup, label);
 

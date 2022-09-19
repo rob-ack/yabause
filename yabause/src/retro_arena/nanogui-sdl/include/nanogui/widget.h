@@ -262,6 +262,7 @@ public:
     }
 
     Widget * getNearestWidget(Widget *parent, int dir );
+  
 
 protected:
     /// Free all resources used by the widget and any children
@@ -271,6 +272,8 @@ protected:
     Widget *mParent;
     ref<Theme> mTheme;
     ref<Layout> mLayout;
+    bool mClickable;
+    int a[3];
     std::string mId;
     Vector2i mPos, mSize, mFixedSize;
     std::vector<Widget *> mChildren;

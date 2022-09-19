@@ -32,7 +32,7 @@ public:
     void setChevronIcon(int icon) { mChevronIcon = icon; }
     int chevronIcon() const { return mChevronIcon; }
 
-    Popup *popup() { return mPopup; }
+    Popup *popup();// { return mPopup; }
     const Popup *popup() const { return mPopup; }
 
     virtual void draw(NVGcontext* ctx) override;

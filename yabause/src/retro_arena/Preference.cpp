@@ -43,6 +43,7 @@ Preference::Preference( const std::string & filename){
       defaults["last play game path"] = "";
       defaults["Full screen"] = true;
       defaults["Show Fps"] = false;
+      defaults["target display"] = 0;
       std::vector<string> gamedirs;
       gamedirs.push_back(home_dir + "games");
       json j_array(gamedirs);

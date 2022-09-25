@@ -569,10 +569,34 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
   }
   else {
+
+    int targetDisplay = defpref->getInt("target display", 0);
+
+    // enumerate displays
+    int displays = SDL_GetNumVideoDisplays();
+    assert(displays > 1);  // assume we have secondary monitor
+
+    if (targetDisplay > displays || targetDisplay < 0 ) {
+      LOG("Display number is ecxeeded. force to use 0");
+      targetDisplay = 0;
+    }
+
+    // get display bounds for all displays
+    vector< SDL_Rect > displayBounds;
+    for (int i = 0; i < displays; i++) {
+      displayBounds.push_back(SDL_Rect());
+      SDL_GetDisplayBounds(i, &displayBounds.back());
+    }
+
+    int x = displayBounds[targetDisplay].x;
+    int y = displayBounds[targetDisplay].y;
+    int w = displayBounds[targetDisplay].w;
+    int h = displayBounds[targetDisplay].h;
+
     width = dsp.w;
     height = dsp.h;
-    wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+    wnd = SDL_CreateWindow("Yaba Snashiro", x, y,
+      w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;

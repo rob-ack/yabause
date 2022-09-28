@@ -9,7 +9,15 @@
       "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
       "name": "Retroarch Core",
       "exe": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/retroarch.exe",
-      "deployDirectory": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/cores"
+      "deployDirectory": "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/cores",
+      "args": [
+        "-L",
+        "${cmake.buildRoot}/src/libretro/yabause_libretro.dll",
+        "--config",
+        "C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/retroarch.cfg",
+        "\"C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/downloads/Mystaria/Mystaria.cue\"",
+        "--verbose"
+      ]
     },
     {
       "type": "dll",
@@ -43,14 +51,60 @@
       "debuggerConfiguration": "gdb",
       "MIMode": "gdb",
       "args": [
-        "-L /opt/retropie/libretrocores/lr-yabasanshiro-rob/libyabause_libretro.so --config /opt/retropie/configs/saturn/retroarch.cfg",
-        "/home/pi/RetroPie/roms/saturn/Mystaria - The Realms Of Lore/Mystaria.cue",
+        "-L",
+        "/opt/retropie/libretrocores/lr-yabasanshiro-rob/libyabause_libretro.so",
+        "--config",
+        "/opt/retropie/configs/saturn/retroarch.cfg",
+        "\\\"/home/pi/RetroPie/roms/saturn/Mystaria - The Realms Of Lore/Mystaria.cue\\\"",
         "--verbose",
         "--appendconfig",
         "/dev/shm/retroarch.cfg"
       ],
       "env": {},
       "program": "/opt/retropie/emulators/retroarch/bin/retroarch"
+    },
+    {
+      "type": "cppgdb",
+      "name": "gdb run remote",
+      "project": "CMakeLists.txt",
+      "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "debuggerConfiguration": "gdb",
+      "MIMode": "gdb",
+      "stopOnEntry": false,
+      "args": [
+        "-L",
+        "${debugInfo.fullTargetPath}",
+        "--config",
+        "/opt/retropie/configs/saturn/retroarch.cfg",
+        "\"/home/pi/RetroPie/roms/saturn/Mystaria/Mystaria.cue\"",
+        "--verbose",
+        "--appendconfig",
+        "/dev/shm/retroarch.cfg"
+      ],
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+      "env": {},
+      "preDebugCommand": ""
+    },
+    {
+      "type": "cppgdb",
+      "name": "run remote",
+      "project": "CMakeLists.txt",
+      "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "args": [
+        "-L",
+        "${debugInfo.fullTargetPath}",
+        "--config",
+        "/opt/retropie/configs/saturn/retroarch.cfg",
+        "\"/home/pi/RetroPie/roms/saturn/Mystaria/Mystaria.cue\"",
+        "--verbose",
+        "--appendconfig",
+        "/dev/shm/retroarch.cfg"
+      ],
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+      "env": {},
+      "preDebugCommand": ""
     }
   ]
 }

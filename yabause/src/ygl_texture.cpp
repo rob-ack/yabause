@@ -18,6 +18,10 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#if defined _OGLES3_
+#include "GL/glew.h"
+#endif
+
 extern "C" {
 #include "ygl.h"
 #include "yui.h"

@@ -88,18 +88,51 @@ set(yabause_ra_SOURCES
   Preference.cpp
   EventManager.h
   EventManager.cpp
+  GameInfo.h
+  GameInfo.cpp
+  GameListPanel.h
+  GameListPanel.cpp
   ../about.h
   ../about.c
 ) 
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
-include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
+include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${sqlite3_source_path} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
 set(APP_ICON_RESOURCE_WINDOWS application.rc)
 add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+
+
+# OpenSSL for https
+if(WIN32) 
+
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR}/include )
+
+# 64bit
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libssl.lib)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x64/libcrypto.lib)
+else()
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libssl-1_1.lib)
+	target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_SOURCE_DIR}/lib/x86/libcrypto-1_1.lib)
+endif()
+
+else()
+	
+  find_package(OpenSSL REQUIRED) 
+	if( OpenSSL_FOUND )
+		include_directories(${OPENSSL_INCLUDE_DIRS})
+		link_directories(${OPENSSL_LIBRARIES})
+		message(STATUS "Using OpenSSL ${OPENSSL_VERSION}")
+		target_link_libraries(yabause-retro-arena ${OPENSSL_LIBRARIES})
+  endif()
+
+endif()
+
 
 target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
-add_dependencies(yabause-retro-arena Json png zlib libchd nanogui )
+target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_BINARY_DIR}/lib/sqlite3.lib )
+add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
 yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 

@@ -30,6 +30,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <stack>
 #include <vector>
 
+using std::shared_ptr;
+
 #if defined(_MSC_VER) 
 #undef snprintf
 #endif
@@ -46,6 +48,8 @@ using namespace nanogui;
 
 class InputManager;
 class Preference;
+class GameInfo;
+class GameInfoManager;
 
 struct PreMenuInfo {
     Widget* window = nullptr;
@@ -148,6 +152,8 @@ public:
     nanogui::Window *swindow;
     nanogui::Window *imageWindow;
     nanogui::Window *dirSelectWindow;
+
+    LRU_Cache * imageCache = new LRU_Cache(32);
     
     
     MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game  );
@@ -190,8 +196,8 @@ public:
     void showLoadStateDialog( Popup *popup );
     void showConfigDialog( PopupButton *popup );
 
-    void setupBiosMenu(PopupButton *parent, std::shared_ptr<Preference> preference);
-    void listdir(const string & dirname, int indent, vector<string> & files);
+    void setupBiosMenu(PopupButton *parent, shared_ptr<Preference> preference);
+    void listdir(const string & dirname, int indent, vector<shared_ptr<GameInfo>> & files);
     void checkdir(const string & dirname, int indent, vector<string> & files);
 
     void setupGameDirsMenu(PopupButton *parent, std::shared_ptr<Preference> preference);

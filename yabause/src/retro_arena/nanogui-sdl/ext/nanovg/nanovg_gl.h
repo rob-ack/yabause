@@ -1087,7 +1087,7 @@ static void glnvg__renderFlush(void* uptr)
 		glStencilMask(0xffffffff);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 		glStencilFunc(GL_ALWAYS, 0, 0xffffffff);
-		glActiveTexture(GL_TEXTURE0);
+		glActiveTextureEx(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, 0);
 		#if NANOVG_GL_USE_STATE_FILTER
 		gl->boundTexture = 0;

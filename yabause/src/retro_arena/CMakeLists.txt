@@ -95,6 +95,12 @@ set(yabause_ra_SOURCES
   ../about.h
   ../about.c
 ) 
+
+if (YAB_WANT_VULKAN)
+set( yabause_ra_SOURCES ${yabause_ra_SOURCES} ../vulkan/Window_sdl.cpp )
+endif()
+
+
 link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
 include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${sqlite3_source_path} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
 set(APP_ICON_RESOURCE_WINDOWS application.rc)
@@ -132,6 +138,9 @@ target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_BINARY_DIR}/lib/sqlite3.lib )
+if (YAB_WANT_VULKAN)
+target_link_libraries( yabause-retro-arena ${GLFW_LIBRARIES} ${LIBVULKAN} ${SHADERC_LIBRARIES} )
+endif()
 add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
 yab_port_success(yabause-retro-arena)
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)

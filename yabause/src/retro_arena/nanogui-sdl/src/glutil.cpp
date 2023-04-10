@@ -18,6 +18,8 @@
 #define GLX_GLXEXT_PROTOTYPES 1
 //#include <EGL/egl.h>
 
+#include <SDL_opengl.h>
+
 
 //void GLAPIENTRY glActiveTexture(GLenum texture) {
 //

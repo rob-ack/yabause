@@ -57,13 +57,22 @@ public:
   uint32_t GetFrameBufferCount() { return _swapchain_image_count; }
   VkImageView getDepthStencilImageView() { return _depth_stencil_image_view; }
 
-  VkImage getCurrentImage() { return _swapchain_images[_active_swapchain_image_id]; }
-  VkFormat getColorFormat() { return _surface_format.format; }
-
-  VkSurfaceTransformFlagBitsKHR GetPreTransFlag() { return _surface_capabilities.currentTransform; }
-#if defined(__ANDROID__)
-  void setNativeWindow(void *nativeWindow) { window = (ANativeWindow *)nativeWindow; }
-  ANativeWindow *window;
+  VkImage getCurrentImage() {
+    return _swapchain_images[_active_swapchain_image_id];
+  }
+  VkFormat getColorFormat() {
+    return _surface_format.format;
+  }
+#if defined(__ANDROID__)  
+  void setNativeWindow(void * nativeWindow) {
+    window = (ANativeWindow*)nativeWindow;
+  }
+  ANativeWindow*             window;
+#elif defined(HAVE_LIBSDL2) 
+  void setNativeWindow(void * nativeWindow) {
+    window = (SDL_Window *)nativeWindow;
+  }
+  SDL_Window *             window;
 #else
   void setNativeWindow(void *nativeWindow) {}
   GLFWwindow *getWindowHandle() { return _glfw_window; }

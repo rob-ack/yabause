@@ -46,14 +46,17 @@ Window::Window(Renderer *renderer, uint32_t size_x, uint32_t size_y, std::string
 #if defined(__ANDROID__)
   window = (ANativeWindow *)nativeWindow;
 #endif
-  _InitOSWindow();
-  _InitSurface();
-  _InitSwapchain();
-  _InitSwapchainImages();
-  _InitDepthStencilImage();
-  _InitRenderPass();
-  _InitFramebuffers();
-  _InitSynchronizations();
+#if defined(HAVE_LIBSDL2)  
+    window = (SDL_Window*)nativeWindow;
+#endif
+	_InitOSWindow();
+	_InitSurface();
+	_InitSwapchain();
+	_InitSwapchainImages();
+	_InitDepthStencilImage();
+	_InitRenderPass();
+	_InitFramebuffers();
+	_InitSynchronizations();
 }
 
 Window::~Window() {

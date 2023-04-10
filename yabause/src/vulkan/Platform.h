@@ -85,4 +85,11 @@ void AddRequiredPlatformInstanceExtensions(std::vector<const char *> *instance_e
 #error Platform not yet supported
 #endif
 
+#if defined(HAVE_LIBSDL2) 
+
+#include <SDL.h>
+#include <SDL_vulkan.h>
+
+#endif
+
 #include <vulkan/vulkan.h>

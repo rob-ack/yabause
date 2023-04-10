@@ -1309,10 +1309,11 @@ void vdp2VBlankOUT(void) {
     // if Plot Trigger mode == 0x02 draw start
     if (Vdp1External.frame_change_plot == 1 || Vdp1External.status == VDP1_STATUS_RUNNING ){
       FRAMELOG("[VDP1] frame_change_plot == 1 start drawing immidiatly", Vdp1Regs->EDSR);
-      LOG("[VDP1] Start Drawing");
+      LOG("[VDP1] Start Drawing %d", yabsys.LineCount);
       Vdp1Regs->addr = 0;
       Vdp1Regs->COPR = 0;
       Vdp1Draw();
+      LOG("[VDP1] End Drawing %d", yabsys.LineCount);
       isrender = 1;
     }
   }
@@ -1332,7 +1333,7 @@ void vdp2VBlankOUT(void) {
   }
 
 #if defined(YAB_ASYNC_RENDERING)
-  if (isrender){
+  if (isrender) {
     YabAddEventQueue(vdp1_rcv_evqueue, 0);
   }
 #else
@@ -1340,18 +1341,20 @@ void vdp2VBlankOUT(void) {
 #endif
 
   if (Vdp2Regs->TVMD & 0x8000) {
-     FRAMELOG("Vdp2DrawScreens");
+     FRAMELOG("Vdp2DrawScreens Start %d", yabsys.LineCount);
     VIDCore->Vdp2DrawScreens();
+    FRAMELOG("Vdp2DrawScreens End %d", yabsys.LineCount);
   }
 
   if (isrender){
-     FRAMELOG("Vdp1DrawEnd");
+     FRAMELOG("Vdp1DrawEnd %d", yabsys.LineCount);
     VIDCore->Vdp1DrawEnd();
 #if !defined(YAB_ASYNC_RENDERING)
     yabsys.wait_line_count += 45;
     yabsys.wait_line_count %= yabsys.VBlankLineCount;
 #endif
   }
+
 
    FPSDisplay();
 #if 1

@@ -48,10 +48,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <string.h>
 
 #include "osdcore.h"
+#include "threads.h"
 
 //////////////////////////////////////////////////////////////////////////////
 
+YabMutex * dbugMutex = NULL;
+
 Debug * DebugInit(const char * n, DebugOutType t, char * s) {
+
+  dbugMutex = YabThreadCreateMutex();
+
 	Debug * d;
 
         if ((d = (Debug *) malloc(sizeof(Debug))) == NULL)
@@ -185,10 +191,13 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
     break;
   case DEBUG_CALLBACK:
     {
+
+    
       int i=0;
       int strnewhash = 0;
 #if !defined(ANDROID)
       static FILE * dfp = NULL;
+      YabThreadLock(dbugMutex);
       if (dfp == NULL){
         dfp = fopen("debug.txt", "w");
       }
@@ -215,6 +224,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
 #endif
       //}
       //strhash = strnewhash;
+      YabThreadUnLock(dbugMutex);
     }
     break;
   }

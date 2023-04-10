@@ -71,10 +71,24 @@ extern "C" {
 #include "libpng16/png.h"
 }
 
+#if HAVE_VULKAN
+#include <SDL_vulkan.h>
+#include "../vulkan/VIDVulkanCInterface.h"
+#include "../vulkan/VIDVulkan.h"
+#include "../vulkan/Renderer.h"
+#include "../vulkan/Window.h"
+#else
+#define VIDCORE_VULKAN 0xFF
+#endif
+
+
 #include "InputManager.h"
 #include "MenuScreen.h"
 #include "Preference.h"
 #include "EventManager.h"
+
+
+int g_vidcoretype = VIDCORE_OGL;
 
 #define YUI_LOG printf
 
@@ -143,6 +157,9 @@ extern "C" {
   VideoInterface_struct *VIDCoreList[] = {
     &VIDDummy,
     &VIDOGL,
+#if HAVE_VULKAN
+    &CVIDVulkan,
+#endif
     NULL
   };
 
@@ -151,6 +168,9 @@ extern "C" {
 #include "nanovg/nanovg_osdcore.h"
   OSD_struct *OSDCoreList[] = {
     &OSDNnovg,
+#if HAVE_VULKAN
+    &OSDNnovgVulkan,
+#endif
     &OSDDummy,
     NULL
   };
@@ -192,8 +212,16 @@ extern "C" {
 
   void YuiSwapBuffers(void)
   {
+#if HAVE_VULKAN
+    if (g_vidcoretype == VIDCORE_VULKAN) {
+      VIDVulkan::getInstance()->present();
+      SetOSDToggle(g_EnagleFPS);
+      return;
+    }
+#endif
     SDL_GL_SwapWindow(wnd);
     SetOSDToggle(g_EnagleFPS);
+
   }
 
   int YuiRevokeOGLOnThisThread() {
@@ -258,8 +286,16 @@ int yabauseinit()
 #else
   yinit.sh2coretype = 3;
 #endif  
+
+
+  yinit.sh2coretype = 1;
   //yinit.vidcoretype = VIDCORE_SOFT;
+#if HAVE_VULKAN
+  g_vidcoretype = VIDCORE_VULKAN;
+  yinit.vidcoretype = g_vidcoretype;
+#else
   yinit.vidcoretype = 1;
+#endif
   yinit.sndcoretype = SNDCORE_SDL;
   //yinit.sndcoretype = SNDCORE_DUMMY;
   //yinit.cdcoretype = CDCORE_DEFAULT;
@@ -312,7 +348,7 @@ int yabauseinit()
   //padmode = inputmng->getCurrentPadMode( 0 );
 #if !defined(__PC__)  
   OSDInit(0);
-  OSDChangeCore(OSDCORE_NANOVG);
+  OSDChangeCore(OSDCORE_NANOVG_VULKAN);
 #endif
   LogStart();
   LogChangeOutput(DEBUG_CALLBACK, NULL);
@@ -560,12 +596,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   int width = 1280;
   int height = 720;
 
+  int winflg = SDL_WINDOW_OPENGL;
+#if HAVE_VULKAN
+  winflg = SDL_WINDOW_VULKAN;
+#else
+
+#endif
+
   if (g_full_screen == false) {
+
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+      width, height, winflg | SDL_WINDOW_SHOWN);
 
     subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+      width, height, winflg | SDL_WINDOW_HIDDEN);
 
   }
   else {
@@ -596,7 +640,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     width = dsp.w;
     height = dsp.h;
     wnd = SDL_CreateWindow("Yaba Snashiro", x, y,
-      w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+      w, h, winflg | SDL_WINDOW_SHOWN );
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;
@@ -629,42 +673,43 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     return -1;
   }
 #endif  
-  glc = SDL_GL_CreateContext(wnd);
-  if(glc == nullptr ) {
-    printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError() );
-    return -1;
-  }
 
-  printf("context renderer string: \"%s\"\n", glGetString(GL_RENDERER));
-  printf("context vendor string: \"%s\"\n", glGetString(GL_VENDOR));
-  printf("version string: \"%s\"\n", glGetString(GL_VERSION));
-  printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
+#if HAVE_VULKAN
+  Renderer *r = NULL;
+  g_vidcoretype = VIDCORE_VULKAN;
+#endif
 
-/*
-  if (strlen(cdpath) <= 0 ) {
-    strcpy(cdpath, home_dir.c_str());
-    p = new Preference(cdpath);
+  if (g_vidcoretype == VIDCORE_VULKAN) {
+    r = new Renderer();
+    r->setNativeWindow((void*)wnd);
+    VIDVulkan::getInstance()->setRenderer(r);
   }
   else {
-    p = new Preference("default");
+    glc = SDL_GL_CreateContext(wnd);
+    if (glc == nullptr) {
+      printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError());
+      return -1;
+    }
+    printf("context renderer string: \"%s\"\n", glGetString(GL_RENDERER));
+    printf("context vendor string: \"%s\"\n", glGetString(GL_VENDOR));
+    printf("version string: \"%s\"\n", glGetString(GL_VERSION));
+    printf("Extentions: %s\n", glGetString(GL_EXTENSIONS));
+    SDL_GL_MakeCurrent(wnd, glc);
   }
-*/
-
-  SDL_GL_MakeCurrent(wnd, glc);
 
   inputmng->init(g_keymap_filename);
-  menu = new MenuScreen(wnd,width,height, g_keymap_filename, cdpath);
-  menu->setConfigFile(g_keymap_filename);  
+
+#if HAVE_VULKAN
+#else
+  menu = new MenuScreen(wnd, width, height, g_keymap_filename, cdpath);
+  menu->setConfigFile(g_keymap_filename);
   menu->setCurrentGamePath(cdpath);
-  
+#endif
 
-  if( yabauseinit() == -1 ) {
-      printf("Fail to yabauseinit Bye! (%s)", SDL_GetError() );
-      return -1;
+  if (yabauseinit() == -1) {
+    printf("Fail to yabauseinit Bye! (%s)", SDL_GetError());
+    return -1;
   }
-
-  
-  VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
   VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
@@ -681,7 +726,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   inputmng->setToggleMenuEventCode(evToggleMenu);
 
   Uint32  evRepeat = SDL_RegisterEvents(1);
+#if HAVE_VULKAN
+#else
   menu->setRepeatEventCode(evRepeat);
+#endif
 
   EventManager * evm = EventManager::getInstance();
 

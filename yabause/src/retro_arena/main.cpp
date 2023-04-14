@@ -189,12 +189,14 @@ extern "C" {
   int g_emulated_bios = 1;
   bool g_full_screen = false;
   InputManager* inputmng;
-  MenuScreen * menu;
+  MenuScreen * menu = nullptr;
 
   using std::string;
   string g_keymap_filename;
 
   void hideMenuScreen();
+
+  NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
 
   //----------------------------------------------------------------------------------------------
   NVGcontext * getGlobalNanoVGContext() {
@@ -699,13 +701,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
   inputmng->init(g_keymap_filename);
 
-#if HAVE_VULKAN
-#else
-  menu = new MenuScreen(wnd, width, height, g_keymap_filename, cdpath);
-  menu->setConfigFile(g_keymap_filename);
-  menu->setCurrentGamePath(cdpath);
-#endif
-
   if (yabauseinit() == -1) {
     printf("Fail to yabauseinit Bye! (%s)", SDL_GetError());
     return -1;
@@ -928,12 +923,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
             VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
             delete p;
           hideMenuScreen();           
-        }else{
+        }
+        else {
           menu_show = true;
           SDL_ShowCursor(SDL_TRUE);
           ScspMuteAudio(1);
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-          SDL_GL_MakeCurrent(subwnd,nullptr);
+          SDL_GL_MakeCurrent(subwnd, nullptr);
           VdpRevoke();
           YuiUseOGLOnThisThread();
 #else
@@ -942,12 +938,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
           fflush(stdout_fp);
           fflush(stderr_fp);
+
+          if (menu == nullptr) {
+            menu = new MenuScreen(wnd, width, height, g_keymap_filename, cdpath);
+            menu->setConfigFile(g_keymap_filename);
+            menu->setCurrentGamePath(cdpath);
+          }
+
           
           char pngname_base[256];
           snprintf(pngname_base,256,"%s/%s_", s_savepath, cdip->itemnum);
           menu->setCurrentGameId(pngname_base);
 
           inputmng->setMenuLayer(menu);
+          saveScreenshot(tmpfilename.c_str());
+          menu->setBackGroundImage(tmpfilename);
+
+#if 0
           saveScreenshot(tmpfilename.c_str());
           glUseProgram(0);
           glGetError();
@@ -961,6 +968,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
           glDisable(GL_STENCIL_TEST);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);   
           menu->setBackGroundImage( tmpfilename );
+#endif
         }
       }
 
@@ -983,10 +991,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     if( menu_show ){
 
       if( event_count > 0 ){
+
+#if 0
         glClearColor(0.0f, 0.0f, 0.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         menu->drawAll();
         SDL_GL_SwapWindow(wnd);
+#else
+        //NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+        //OSDDisplayMessages(NULL, 0, 0);
+
+        VIDVulkan::getInstance()->renderExternal([&](
+            VkDevice device,
+            VkPhysicalDevice gpu,
+            VkRenderPass renderPass,
+            VkCommandBuffer commandBuffer
+          ){
+
+          //       InitNanoGuiVg( device,  gpu, renderPass, commandBuffer);
+            menu->drawAll(device, gpu, renderPass, commandBuffer );
+
+        });
+        
+#endif
+        
       }else{
         YabThreadUSleep( 16*1000 );
       }
@@ -1048,24 +1076,43 @@ int saveScreenshot( const char * filename ){
     int rtn = -1;
   
     SDL_GetWindowSize( wnd, &width, &height);
-    buf = (unsigned char *)malloc(width*height*4);
-    if( buf == NULL ) {
+
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+
+      for (int i = 0; VIDCoreList[i] != NULL; i++)
+      {
+        if (VIDCoreList[i]->id == g_vidcoretype)
+        {
+          VIDCoreList[i]->GetScreenshot((void **)&buf, &width, &height);
+          break;
+        }
+      }
+
+    }
+    else {
+
+      buf = (unsigned char *)malloc(width*height * 4);
+      if (buf == NULL) {
         YUI_LOG("not enough memory\n");
         goto FINISH;
+      }
+
+      glReadBuffer(GL_BACK);
+      pmode = GL_RGBA;
+      glGetError();
+      glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
+      if ((glerror = glGetError()) != GL_NO_ERROR) {
+        YUI_LOG("glReadPixels %04X\n", glerror);
+        goto FINISH;
+      }
+
     }
 
-    glReadBuffer(GL_BACK);
-    pmode = GL_RGBA;
-    glGetError();
-    glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-    if( (glerror = glGetError()) != GL_NO_ERROR ){
-        YUI_LOG("glReadPixels %04X\n",glerror);
-         goto FINISH;
+    for (u = 3; u < width*height * 4; u += 4) {
+      buf[u] = 0xFF;
     }
-	
-	for( u = 3; u <width*height*4; u+=4 ){
-		buf[u]=0xFF;
-	}
+
     row_pointers = (png_byte**)malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
@@ -1152,7 +1199,13 @@ int saveScreenshot( const char * filename ){
     rtn = 0;
 FINISH: 
     if(outfile) fclose(outfile);
-    if(buf) free(buf);
+    if (g_vidcoretype == VIDCORE_VULKAN) {
+
+    }
+    else {
+      if (buf) free(buf);
+    }
+
     if(bufRGB) free(bufRGB);
     if(row_pointers) free(row_pointers);
     return rtn;

@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #define NANOVG_VULKAN_IMPLEMENTATION
 #include "nanovg.h"
-#include "nanovg_vk.h"
+//#include "nanovg_vk.h"
 
 //#include "Roboto-Bold.h"
 //#include "Roboto-Regular.h"
@@ -73,7 +73,7 @@ extern "C" {
 
 
 
-static NVGcontext* vg = NULL;
+NVGcontext* vg = NULL;
 static int fontNormal, fontBold;
 
 #define MAX_HISTORY 4
@@ -89,8 +89,13 @@ static FrameProfileInfo frameinfo_histroy[MAX_HISTORY];
 static int current_history_index = 0;
 static int profile_index = 0;
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag) {
+
+NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+void deleteNanoGuiVg(NVGcontext * vg);
+
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer) {
   
+#if 0
   VKNVGCreateInfo createInfo={0};
   createInfo.device = device;
   createInfo.gpu = gpu;
@@ -108,6 +113,8 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
     printf("Could not init nanovg.\n");
     return -1;
   }
+#endif
+  vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
   OSDNanovgVInit();
   return 0;
 
@@ -117,7 +124,7 @@ extern "C" {
 
 static int OSDNanovgVInit(void)
 {
-  VKNVGCreateInfo create_info = { 0 };
+  //VKNVGCreateInfo create_info = { 0 };
   //create_info.device = device->device;
   //create_info.gpu = device->gpu;
   //create_info.renderpass = fb.render_pass;
@@ -148,7 +155,8 @@ static int OSDNanovgVInit(void)
 
 static void OSDNanovgVDeInit(void)
 {
-  nvgDeleteVk(vg);
+  //nvgDeleteVk(vg);
+  deleteNanoGuiVg(vg);
   vg = NULL;
 
 }

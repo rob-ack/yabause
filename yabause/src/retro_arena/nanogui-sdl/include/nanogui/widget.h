@@ -166,8 +166,21 @@ public:
       return *widget;
     }
 
+    template<typename WidgetClass>
+    WidgetClass *findParent() {
+      Widget *widget = this;
+      while (widget) {
+        WidgetClass *parentw = dynamic_cast<WidgetClass *>(widget);
+        if (parentw)
+          return parentw;
+        widget = widget->parent();
+      }
+      return nullptr;
+    }
+
     /// Walk up the hierarchy and return the parent window
     Window *window();
+    Screen *screen();
 
     /// Associate this widget with an ID value (optional)
     void setId(const std::string &id) { mId = id; }

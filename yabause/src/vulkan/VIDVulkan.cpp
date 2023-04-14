@@ -471,23 +471,112 @@ void VIDVulkan::Vdp2DrawStart(void) {
   vm->reset();
 }
 
-void VIDVulkan::Vdp2DrawEnd(void) {
-  if (_renderer == nullptr)
-    return;
+void VIDVulkan::renderExternal(const std::function<void(
+  VkDevice device,
+  VkPhysicalDevice gpu,
+  VkRenderPass renderPass,
+  VkCommandBuffer commandBuffer)>& f) {
+
+  if (_renderer == nullptr) return;
   const VkDevice device = _renderer->GetVulkanDevice();
-  if (device == VK_NULL_HANDLE)
-    return;
+  if (device == VK_NULL_HANDLE) return;
 
-  int ci = getCurrentCommandIndex();
+
   int fi = _renderer->getWindow()->BeginRender();
-  // LOGD("====== commandBuffer is %d/%d/%d ========", ci,fi,frameCount);
 
-  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
-    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
-    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
+  VkCommandBufferBeginInfo command_buffer_begin_info{};
+  command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  VkRect2D render_area{};
+  render_area.offset.x = 0;
+  render_area.offset.y = 0;
+  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
+
+  std::array<VkClearValue, 2> clear_values{};
+  clear_values[1].depthStencil.depth = 0.0f;
+  clear_values[1].depthStencil.stencil = 0;
+  clear_values[0].color.float32[0] = 0.0;
+  clear_values[0].color.float32[1] = 0.0;
+  clear_values[0].color.float32[2] = 0.0;
+  clear_values[0].color.float32[3] = 0.0f;
+
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+  render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+  render_pass_begin_info.renderArea = render_area;
+  render_pass_begin_info.clearValueCount = clear_values.size();
+  render_pass_begin_info.pClearValues = clear_values.data();
+
+
+  vkBeginCommandBuffer(_command_buffers[fi], &command_buffer_begin_info);
+
+  vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(_command_buffers[fi]);
+  vk::Viewport viewport;
+  vk::Rect2D scissor;
+  viewport.width = render_area.extent.width;
+  viewport.height = render_area.extent.height;
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  c.setViewport(0, 1, &viewport);
+
+  scissor.extent.width = render_area.extent.width;
+  scissor.extent.height = render_area.extent.height;
+  scissor.offset.x = 0;
+  scissor.offset.y = 0;
+  c.setScissor(0, 1, &scissor);
+  
+  //NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+  
+  f(device,
+    this->getPhysicalDevice(),
+    _renderer->getWindow()->GetVulkanRenderPass(),
+    _command_buffers[fi]);
+   
+  vkCmdEndRenderPass(_command_buffers[fi]);
+  vkEndCommandBuffer(_command_buffers[fi]);
+  VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+  VkSemaphore graphicsWaitSemaphores[] = { rbgGenerator->getCompleteSemaphore() };
+
+  vector<VkSemaphore> waitSem;
+
+  VkSemaphore texSem = tm->getCompleteSemaphore();
+  if (texSem != VK_NULL_HANDLE) {
+    waitSem.push_back(texSem);
   }
 
-#if 1
+  VkSemaphore rbgSem = rbgGenerator->getCompleteSemaphore();
+  if (rbgSem != VK_NULL_HANDLE) {
+    waitSem.push_back(rbgSem);
+  }
+
+  // Submit command buffer
+  VkSubmitInfo submit_info{};
+  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info.waitSemaphoreCount = waitSem.size();
+  submit_info.pWaitSemaphores = waitSem.data();
+  submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &_command_buffers[fi];
+  submit_info.signalSemaphoreCount = 1;
+  submit_info.pSignalSemaphores = &_render_complete_semaphore;
+  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
+  YuiSwapBuffers();
+}
+
+
+
+void VIDVulkan::Vdp2DrawEnd(void)
+{
+  if (_renderer == nullptr) return;
+  const VkDevice device = _renderer->GetVulkanDevice();
+  if (device == VK_NULL_HANDLE) return;
+
   backPiepline->moveToVertexBuffer(backPiepline->vertices, backPiepline->indices);
   backPiepline->setSampler(VdpPipeline::bindIdTexture, backColor.imageView, backColor.sampler);
 

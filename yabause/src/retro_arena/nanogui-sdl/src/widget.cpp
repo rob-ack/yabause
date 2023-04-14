@@ -248,6 +248,8 @@ Window *Widget::window() {
     }
 }
 
+Screen *Widget::screen() { return findParent<Screen>(); }
+
 void Widget::requestFocus() {
     Widget *widget = this;
     while (widget->parent())

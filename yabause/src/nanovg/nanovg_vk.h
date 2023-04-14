@@ -892,7 +892,7 @@ static void vknvg_setUniforms(VKNVGcontext *vk, VkDescriptorSet descSet, int uni
   writes[1].dstBinding = 1;
 
   VkDescriptorImageInfo image_info;
-  if (image != 0) {
+  if (image > 0) {
     VKNVGtexture *tex = vknvg_findTexture(vk, image);
 
     image_info.imageLayout = tex->imageLayout;

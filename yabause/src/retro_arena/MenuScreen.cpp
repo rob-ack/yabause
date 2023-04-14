@@ -129,17 +129,26 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
   int image_pix_size_h = this->height() / 2;
   imageWindow = new Window(this, "About");                                                                                                         
   imageWindow->setPosition(Vector2i(0, 0));                                                                                                                   
-  imageWindow->setLayout(new GroupLayout(0,0,0));                                                                                                                     
+  imageWindow->setLayout(new GroupLayout(0,0,0));     
+  /*
   GLTexture t;    
   t.load(about_png,about_png_size);  
   float scale = (float)image_pix_size_w / t.width();
-  auto imageView = new ImageView(imageWindow,t);  
+  */
+
+  auto data = nvgCreateImageMem(this->nvgContext(), 0, (unsigned char*)about_png, about_png_size);
+  int iw, ih;
+  nvgImageSize(this->nvgContext(), data, &iw, &ih);
+  float scale = (float)image_pix_size_w / iw;
+  auto imageView = new ImageView(imageWindow);  
+  imageView->bindImage(data);
   imageView->setScale(scale);
   imageView->setFixedScale(true);
   imageView->setFixedOffset(true);
   imageView->setFixedWidth(image_pix_size_w);
   imageView->setFixedHeight(image_pix_size_h);
   imageWindow->center();
+
   //imageWindow->setModal(true);
 
   std::string title = "Yaba Sanshiro "+ std::string(YAB_VERSION) +" Menu";
@@ -245,7 +254,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           MENU_LOG("toggle frame skip\n");  
           evm->postEvent("toggle frame skip");
         });        
-#if 0
+ 
         Button *b4 = new Button(tools, "About");
         b4->setFixedWidth(248);
         b4->setCallback([this,b4]() { 
@@ -254,11 +263,17 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           imageWindow = new Window(this, "About");                                                                                                         
           imageWindow->setPosition(Vector2i(0, 0));                                                                                                                   
           imageWindow->setLayout(new GroupLayout(0,0,0));                                                                                                                     
-          GLTexture t;    
-          t.load(about_png,about_png_size);  
-          float scale = (float)image_pix_size_w / t.width();
+          //GLTexture t;    
+          //t.load(about_png,about_png_size);  
+          //float scale = (float)image_pix_size_w / t.width();
           //float offset = (t.width() - image_pix_size) / 2;
-          auto imageView = new ImageView(imageWindow,t);  
+          //auto imageView = new ImageView(imageWindow,t);  
+          auto data = nvgCreateImageMem(this->nvgContext(), 0, about_png, about_png_size);
+          int iw, ih;
+          nvgImageSize(this->nvgContext(), data, &iw, &ih);
+          float scale = (float)image_pix_size_w / iw;
+          auto imageView = new ImageView(imageWindow);
+          imageView->bindImage(data);
           imageView->setScale(scale);
           imageView->setFixedScale(true);
           imageView->setFixedOffset(true);
@@ -281,7 +296,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           pushActiveMenu(imageWindow,b4);
 
         });
-#endif
+
         player_configs_[0].player->focusEvent(true);
         player_configs_[0].player->mouseEnterEvent(player_configs_[0].player->absolutePosition(),true);
         mFocus = player_configs_[0].player;

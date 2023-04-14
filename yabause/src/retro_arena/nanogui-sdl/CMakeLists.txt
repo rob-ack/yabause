@@ -27,7 +27,8 @@ option(NANOGUISDL_BUILD_SHARED  "Build NanoGUI as a shared library?" OFF)
 #    message(FATAL_ERROR "Unknown GL implementaion. Use one of gl2, gl3, gles2, gles3.")
 #endif()
 
-add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+#add_definitions(-DNANOVG_GL3_IMPLEMENTATION)
+add_definitions(-DNANOVG_VULKAN_IMPLEMENTATION)
 #add_definitions(-DNANOVG_GLES3_IMPLEMENTATION)
 
 # Required libraries for linking against nanogui (all targets)

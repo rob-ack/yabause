@@ -344,9 +344,9 @@ public:
         float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
         return Color(luminance < 0.5f ? 1.f : 0.f, 1.f);
     }
-
+public:
     /// Allows for conversion between this Color and NanoVG's representation.
-    inline operator const NVGcolor &() const;
+    operator const NVGcolor &() const;
 };
 
 // skip the forward declarations for the docs

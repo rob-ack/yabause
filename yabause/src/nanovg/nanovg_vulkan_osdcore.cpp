@@ -89,13 +89,13 @@ static FrameProfileInfo frameinfo_histroy[MAX_HISTORY];
 static int current_history_index = 0;
 static int profile_index = 0;
 
-
 NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
 void deleteNanoGuiVg(NVGcontext * vg);
 
-int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer) {
+
+int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag) {
   
-#if 0
+#if defined(ANDROID)
   VKNVGCreateInfo createInfo={0};
   createInfo.device = device;
   createInfo.gpu = gpu;
@@ -113,8 +113,9 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
     printf("Could not init nanovg.\n");
     return -1;
   }
-#endif
+#else
   vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
+#endif
   OSDNanovgVInit();
   return 0;
 
@@ -155,8 +156,11 @@ static int OSDNanovgVInit(void)
 
 static void OSDNanovgVDeInit(void)
 {
-  //nvgDeleteVk(vg);
+#if defined(ANDROID)
+  nvgDeleteVk(vg);
+#else
   deleteNanoGuiVg(vg);
+#endif
   vg = NULL;
 
 }

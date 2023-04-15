@@ -542,13 +542,16 @@ class GameInfo : Model() {
             if (game_title == "FINALIST") {
                 Log.d("debugg", "FINALIST")
             }
-
+/*
             // JSONをパース
             image_url = try {
                 jsonObj.getString("image_url")
             } catch (e: JSONException) {
                 null
             }
+ */
+            image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
+
             rating = try {
                 jsonObj.getInt("rating")
             } catch (e: JSONException) {

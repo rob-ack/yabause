@@ -63,6 +63,7 @@ public:
   VkFormat getColorFormat() {
     return _surface_format.format;
   }
+  VkSurfaceTransformFlagBitsKHR GetPreTransFlag() { return _surface_capabilities.currentTransform; }
 #if defined(__ANDROID__)  
   void setNativeWindow(void * nativeWindow) {
     window = (ANativeWindow*)nativeWindow;
@@ -72,7 +73,7 @@ public:
   void setNativeWindow(void * nativeWindow) {
     window = (SDL_Window *)nativeWindow;
   }
-  SDL_Window *             window;
+  SDL_Window *             window;  
 #else
   void setNativeWindow(void *nativeWindow) {}
   GLFWwindow *getWindowHandle() { return _glfw_window; }

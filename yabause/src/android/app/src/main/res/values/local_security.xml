@@ -37,7 +37,7 @@
     <string name="key_getTokenAndDelete" translatable="false" >pass</string>
     <string name="url_getLoginPinIn" translatable="false" >"https://localhost:3000/getLoginPinIn"</string>
     <string name="url_getTokenAndDelete" translatable="false" >"https://localhost:3000/getTokenAndDelete"</string>
-
+    <string name="boxart_sigin" translatable="false">""</string>
     <string name="game_id" translatable="false" >123456</string>
 
 </resources>

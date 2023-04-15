@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <array>
 #include <chrono>
 
-
+#define MAX_COMMANDBUFFER_COUNT (4)
 struct Vertex2v {
   glm::vec4 pos;
   glm::vec4 texCoord;

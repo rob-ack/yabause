@@ -273,7 +273,7 @@ void Window::_InitSwapchain() {
   swapchain_create_info.clipped = VK_TRUE;
   swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
-  ErrorCheck( vkCreateSwapchainKHR( _renderer->GetVulkanDevice(), &swapchain_create_info, nullptr, &_swapchain ) );
+  ErrorCheck(vkCreateSwapchainKHR(_renderer->GetVulkanDevice(), &swapchain_create_info, nullptr, &_swapchain));
 
   ErrorCheck(vkGetSwapchainImagesKHR(_renderer->GetVulkanDevice(), _swapchain, &_swapchain_image_count, nullptr));
 }
@@ -418,6 +418,15 @@ void Window::_InitRenderPass() {
   attachments[0].initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+  attachments[1].flags = 0;
+  attachments[1].format = _depth_stencil_format;
+  attachments[1].samples = VK_SAMPLE_COUNT_1_BIT;
+  attachments[1].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[1].storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+  attachments[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+  attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
+  attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	attachments[ 1 ].flags						= 0;
 	attachments[ 1 ].format						= _depth_stencil_format;
@@ -436,7 +445,7 @@ void Window::_InitRenderPass() {
   std::array<VkAttachmentReference, 1> sub_pass_0_color_attachments{};
   sub_pass_0_color_attachments[0].attachment = 0;
   sub_pass_0_color_attachments[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   std::array<VkSubpassDescription, 1> sub_passes{};
   sub_passes[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   sub_passes[0].colorAttachmentCount = sub_pass_0_color_attachments.size();

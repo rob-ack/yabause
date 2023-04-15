@@ -481,7 +481,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 #endif
   }
 
-  FILE * stdout_fp = freopen( string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
+#if 1
+  AllocConsole();
+  FILE * stdout_fp = freopen("CONOUT$", "wb", stdout);
+  FILE * stderr_fp = freopen("CONOUT$", "wb", stderr);
+#else
+  FILE * stdout_fp = freopen(string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
   FILE * stderr_fp = freopen(string(home_dir + "/stderr.txt").c_str(), "wb", stderr);
 
   std::string games_dir = home_dir + "games";
@@ -1211,7 +1216,9 @@ FINISH:
     return rtn;
 }
 
-
+const char * YuiGetShaderCachePath() {
+  return "./";
+}
 
 extern "C" {
 

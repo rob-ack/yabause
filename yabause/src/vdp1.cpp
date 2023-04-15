@@ -250,7 +250,6 @@ extern "C" int Vdp1Init(void) {
    Vdp1External.status = VDP1_STATUS_IDLE;
    Vdp1External.disptoggle = 1;
 
-   memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
    Vdp1Regs->TVMR = 0;
    Vdp1Regs->FBCR = 0;
    Vdp1Regs->PTMR = 0;
@@ -334,14 +333,14 @@ extern "C" void VideoDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" void Vdp1Reset(void) {
-  //memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
+  memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
    Vdp1Regs->TVMR = 0;
-   //Vdp1Regs->EWDR = 0;
-   //Vdp1Regs->EWLR = 0;
-   //Vdp1Regs->EWRR = 0;
-   //Vdp1Regs->ENDR = 0;
+   Vdp1Regs->EWDR = 0;
+   Vdp1Regs->EWLR = 0;
+   Vdp1Regs->EWRR = 0;
+   Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
 
    Vdp1Regs->userclipX1 = 0;
@@ -842,8 +841,10 @@ extern "C" int Vdp1SaveState(FILE *fp)
 {
    int offset;
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
    int i = 0;
    u16 back_framebuffer[0x20000] = { 0 };
+#endif
 
    offset = StateWriteHeader(fp, "VDP1", 1);
 
@@ -852,6 +853,8 @@ extern "C" int Vdp1SaveState(FILE *fp)
 
    // Write VDP1 ram
    ywrite(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
+
+#ifdef IMPROVED_SAVESTATES
 
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
@@ -866,7 +869,7 @@ extern "C" int Vdp1SaveState(FILE *fp)
    VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
 
    ywrite(&check, (void *)back_framebuffer, 0x40000, 1, fp);
-
+#endif
    return StateFinishHeader(fp, offset);
 }
 
@@ -875,8 +878,10 @@ extern "C" int Vdp1SaveState(FILE *fp)
 extern "C" int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
 {
    IOCheck_struct check = { 0, 0 };
+#ifdef IMPROVED_SAVESTATES
    int i = 0;
    u16 back_framebuffer[0x20000] = { 0 };
+#endif
 
    // Read registers
    yread(&check, (void *)Vdp1Regs, sizeof(Vdp1), 1, fp);
@@ -884,6 +889,7 @@ extern "C" int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    // Read VDP1 ram
    yread(&check, (void *)Vdp1Ram, 0x80000, 1, fp);
 
+#ifdef IMPROVED_SAVESTATES
 
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out) = VIDCore->Vdp1ReadFrameBuffer;
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val) = VIDCore->Vdp1WriteFrameBuffer;
@@ -899,6 +905,7 @@ extern "C" int Vdp1LoadState(FILE *fp, UNUSED int version, int size)
    VIDCore->Vdp1ReadFrameBuffer = Vdp1ReadFrameBuffer;
    VIDCore->Vdp1WriteFrameBuffer = Vdp1WriteFrameBuffer;
 
+#endif
    return size;
 }
 

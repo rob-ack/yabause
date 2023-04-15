@@ -18,6 +18,7 @@
 */
 package org.uoyabause.android.phone
 
+import android.app.Activity
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -187,7 +188,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                                         "yab_fail_load_image", bundle
                                     )
 
-                                    return false
+                                    return true
                                 }
 
                                 override fun onResourceReady(
@@ -197,8 +198,11 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                                     dataSource: com.bumptech.glide.load.DataSource?,
                                     isFirstResource: Boolean
                                 ): Boolean {
-                                    if (resource != null) imageView.setImageDrawable(resource)
-                                    return false
+                                    val ac = holder.rootview.context as Activity
+                                    ac?.runOnUiThread {
+                                        if (resource != null) imageView.setImageDrawable(resource)
+                                    }
+                                    return true
                                 }
                             })
                         .submit()

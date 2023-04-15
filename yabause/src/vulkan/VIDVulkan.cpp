@@ -570,13 +570,23 @@ void VIDVulkan::renderExternal(const std::function<void(
 }
 
 
-
-void VIDVulkan::Vdp2DrawEnd(void)
-{
-  if (_renderer == nullptr) return;
+void VIDVulkan::Vdp2DrawEnd(void) {
+  if (_renderer == nullptr)
+    return;
   const VkDevice device = _renderer->GetVulkanDevice();
-  if (device == VK_NULL_HANDLE) return;
+  if (device == VK_NULL_HANDLE)
+    return;
 
+  int ci = getCurrentCommandIndex();
+  int fi = _renderer->getWindow()->BeginRender();
+  // LOGD("====== commandBuffer is %d/%d/%d ========", ci,fi,frameCount);
+
+  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
+    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
+    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
+  }
+
+#if 1
   backPiepline->moveToVertexBuffer(backPiepline->vertices, backPiepline->indices);
   backPiepline->setSampler(VdpPipeline::bindIdTexture, backColor.imageView, backColor.sampler);
 

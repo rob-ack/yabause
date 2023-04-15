@@ -149,13 +149,13 @@ void FramebufferRenderer::setupShaders() {
 FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
   this->vulkan = vulkan;
 
-  Vertex a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  Vertex2v a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
   vertices.push_back(a);
-  Vertex b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+  Vertex2v b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
   vertices.push_back(b);
-  Vertex c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  Vertex2v c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
   vertices.push_back(c);
-  Vertex d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  Vertex2v d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
   vertices.push_back(d);
 
   indices.push_back(0);
@@ -185,9 +185,7 @@ FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
     } ubo;
 
     layout(location = 0) in vec4 a_position;
-    layout(location = 1) in vec4 inColor;
-    layout(location = 2) in vec4 a_texcoord;
-
+    layout(location = 1) in vec4 a_texcoord;
     layout (location = 0) out vec4 v_texcoord;
 
     void main() {
@@ -970,7 +968,7 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
 //----------------------------------------------------------------------------------------
 // protected
 
-void FramebufferRenderer::createVertexBuffer(const std::vector<Vertex> & vertices) {
+void FramebufferRenderer::createVertexBuffer(const std::vector<Vertex2v> & vertices) {
   const VkDevice device = vulkan->getDevice();
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
@@ -1185,8 +1183,8 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-  auto bindingDescription = Vertex::getBindingDescription();
-  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+  auto bindingDescription = Vertex2v::getBindingDescription();
+  auto attributeDescriptions = Vertex2v::getAttributeDescriptions();
 
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());

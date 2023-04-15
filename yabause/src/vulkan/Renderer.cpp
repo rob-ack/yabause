@@ -336,8 +336,9 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
-    //features.robustBufferAccess = VK_TRUE;
-
+#ifdef _WINDOWS
+    features.samplerAnisotropy = VK_TRUE;
+#endif
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pEnabledFeatures = &features;
@@ -374,8 +375,10 @@ void Renderer::_InitDevice()
       features.tessellationShader = VK_TRUE;
       features.geometryShader = VK_TRUE;
     }
-    //features.robustBufferAccess = VK_TRUE;
-
+#ifdef _WINDOWS
+    // I don't know hwy this is needed. but validation error happed when samplerAnisotropy is false
+    features.samplerAnisotropy = VK_TRUE;
+#endif
     VkDeviceCreateInfo device_create_info{};
     device_create_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
     device_create_info.pEnabledFeatures = &features;

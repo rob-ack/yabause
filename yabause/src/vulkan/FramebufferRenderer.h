@@ -145,10 +145,10 @@ protected:
 
   std::vector<UniformBuffer> ubuffer;
 
-  std::vector<Vertex> vertices;
+  std::vector<Vertex2v> vertices;
   std::vector<uint16_t> indices;
 
-  void createVertexBuffer(const std::vector<Vertex> & vertices);
+  void createVertexBuffer(const std::vector<Vertex2v> & vertices);
   void createIndexBuffer(const std::vector<uint16_t> & indices);
 
   VkBuffer _vertexBuffer;

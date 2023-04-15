@@ -43,7 +43,78 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "VulkanTools.h"
 
-#define ENABLE_VULKAN_DEBUG 0
+#define _DEBUG_ (1)
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+  VkDebugUtilsMessageTypeFlagsEXT messageType,
+  const VkDebugUtilsMessengerCallbackDataEXT *pCallbackData,
+  void *pUserData) {
+
+  std::ostringstream stream;
+  stream << "VKDBG: ";
+
+  if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+    stream << "VERBOSE : ";
+  }
+  else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+    stream << "INFO : ";
+  }
+  else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    stream << "WARNING : ";
+  }
+  else if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+    stream << "ERROR : ";
+  }
+
+  if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT) {
+    stream << "GENERAL";
+  }
+  else {
+    if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+      stream << "VALIDATION";
+      //validation_error = 1;
+    }
+    if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT) {
+      if (messageType & VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT) {
+        stream << "|";
+      }
+      stream << "PERFORMANCE";
+    }
+  }
+
+
+  stream << "@[" << pCallbackData->messageIdNumber << " " << pCallbackData->pMessageIdName << "]: ";
+  stream << pCallbackData->pMessage << std::endl;
+
+
+  if (pCallbackData->cmdBufLabelCount > 0) {
+    char tmp_message[500];
+    sprintf(tmp_message, "\n\tCommand Buffer Labels - %d\n", pCallbackData->cmdBufLabelCount);
+    //strcat(message, tmp_message);
+    stream << tmp_message;
+    for (uint32_t cmd_buf_label = 0; cmd_buf_label < pCallbackData->cmdBufLabelCount; ++cmd_buf_label) {
+      sprintf(tmp_message, "\t\tLabel[%d] - %s { %f, %f, %f, %f}\n", cmd_buf_label,
+        pCallbackData->pCmdBufLabels[cmd_buf_label].pLabelName, pCallbackData->pCmdBufLabels[cmd_buf_label].color[0],
+        pCallbackData->pCmdBufLabels[cmd_buf_label].color[1], pCallbackData->pCmdBufLabels[cmd_buf_label].color[2],
+        pCallbackData->pCmdBufLabels[cmd_buf_label].color[3]);
+      stream << tmp_message;
+    }
+  }
+
+
+  std::cout << stream.str();
+
+#if defined(ANDROID)
+  LOGE("%s", stream.str().c_str());
+#endif
+
+//#if defined( _WIN32 )
+//  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
+//    //MessageBox( NULL, stream.str().c_str(), _T("Vulkan Error!"), 0 );
+//  }
+//#endif
+  return false;
+}
 
 Renderer::Renderer()
 {
@@ -51,13 +122,13 @@ Renderer::Renderer()
   InitPlatform();
   LOGI("InitPlatform out");
   _SetupLayersAndExtensions();
-#if  ENABLE_VULKAN_DEBUG //_DEBUG
+#if _DEBUG_
   _SetupDebug();
 #endif
   LOGI("_InitInstance in");
   _InitInstance();
   LOGI("_InitInstance out");
-#if ENABLE_VULKAN_DEBUG //_DEBUG
+#if _DEBUG_
   _InitDebug();
 #endif
   LOGI("_InitDevice in");
@@ -70,7 +141,7 @@ Renderer::~Renderer()
   delete _window;
 
   _DeInitDevice();
-#if ENABLE_VULKAN_DEBUG //_DEBUG
+#if _DEBUG_
   _DeInitDebug();
 #endif
   _DeInitInstance();
@@ -172,7 +243,7 @@ void Renderer::_InitInstance()
   application_info.engineVersion = 1;
   application_info.apiVersion = VK_API_VERSION_1_0;
 
-
+ 
   VkInstanceCreateInfo instance_create_info{};
   instance_create_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
   instance_create_info.pApplicationInfo = &application_info;
@@ -180,7 +251,20 @@ void Renderer::_InitInstance()
   instance_create_info.ppEnabledLayerNames = _instance_layers.data();
   instance_create_info.enabledExtensionCount = _instance_extensions.size();
   instance_create_info.ppEnabledExtensionNames = _instance_extensions.data();
-  instance_create_info.pNext = &_debug_callback_create_info;
+
+#if _DEBUG_
+  dbg_messenger_create_info.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+  dbg_messenger_create_info.pNext = NULL;
+  dbg_messenger_create_info.flags = 0;
+  dbg_messenger_create_info.messageSeverity =
+    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+  dbg_messenger_create_info.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+    VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+    VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+  dbg_messenger_create_info.pfnUserCallback = debug_messenger_callback;
+  dbg_messenger_create_info.pUserData = this;
+  instance_create_info.pNext = &dbg_messenger_create_info;
+#endif
 
   ErrorCheck(vkCreateInstance(&instance_create_info, nullptr, &_instance));
 }
@@ -370,6 +454,27 @@ VulkanDebugCallback(
   return false;
 }
 
+
+static VkBool32 demo_check_layers(uint32_t check_count, char **check_names, uint32_t layer_count, VkLayerProperties *layers) {
+  for (uint32_t i = 0; i < check_count; i++) {
+    VkBool32 found = 0;
+    for (uint32_t j = 0; j < layer_count; j++) {
+      if (!strcmp(check_names[i], layers[j].layerName)) {
+        found = 1;
+        break;
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "Cannot find layer: %s\n", check_names[i]);
+      return 0;
+    }
+  }
+  return 1;
+}
+
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+
 void Renderer::_SetupDebug()
 {
 
@@ -383,14 +488,51 @@ void Renderer::_SetupDebug()
     /*VK_DEBUG_REPORT_DEBUG_BIT_EXT |*/
     0;
 
+  int enabled_extension_count = 0;
+  int enabled_layer_count = 0;
 
+  VkResult err;
+  uint32_t instance_extension_count = 0;
+  uint32_t instance_layer_count = 0;
+  char *instance_validation_layers[] = { "VK_LAYER_KHRONOS_validation" };
+
+  VkBool32 validation_found = 0;
+  err = vkEnumerateInstanceLayerProperties(&instance_layer_count, NULL);
+  assert(!err);
+
+  if (instance_layer_count > 0) {
+     VkLayerProperties *instance_layers = (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * instance_layer_count);
+     err = vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers);
+     assert(!err);
+
+     validation_found = demo_check_layers(ARRAY_SIZE(instance_validation_layers), instance_validation_layers,
+        instance_layer_count, instance_layers);
+      if (validation_found) {
+        enabled_layer_count = ARRAY_SIZE(instance_validation_layers);
+        //enabled_layers[0] = "VK_LAYER_KHRONOS_validation";
+      }
+      free(instance_layers);
+    }
+
+    if (!validation_found) {
+/*
+      ERR_EXIT(
+        "vkEnumerateInstanceLayerProperties failed to find required validation layer.\n\n"
+        "Please look at the Getting Started guide for additional information.\n",
+        "vkCreateInstance Failure");
+*/
+      exit(-1);
+    }
+    
+
+  _instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   _instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-  //#if defined(ANDROID)
-  //#else
+  #if defined(ANDROID)
+  #else
   _instance_layers.push_back("VK_LAYER_KHRONOS_validation");
-  //#endif
+  #endif
 
-    //_instance_layers.push_back( "VK_LAYER_LUNARG_standard_validation" );
+   //_instance_layers.push_back( "VK_LAYER_LUNARG_standard_validation" );
   /*
     _instance_layers.push_back( "VK_LAYER_LUNARG_threading" );
     _instance_layers.push_back( "VK_LAYER_GOOGLE_threading" );
@@ -404,27 +546,72 @@ void Renderer::_SetupDebug()
 
 }
 
+PFN_vkCreateDebugUtilsMessengerEXT CreateDebugUtilsMessengerEXT;
+PFN_vkDestroyDebugUtilsMessengerEXT DestroyDebugUtilsMessengerEXT;
+PFN_vkSubmitDebugUtilsMessageEXT SubmitDebugUtilsMessageEXT;
+PFN_vkCmdBeginDebugUtilsLabelEXT CmdBeginDebugUtilsLabelEXT;
+PFN_vkCmdEndDebugUtilsLabelEXT CmdEndDebugUtilsLabelEXT;
+PFN_vkCmdInsertDebugUtilsLabelEXT CmdInsertDebugUtilsLabelEXT;
+PFN_vkSetDebugUtilsObjectNameEXT SetDebugUtilsObjectNameEXT;
+VkDebugUtilsMessengerEXT dbg_messenger;
+
 PFN_vkCreateDebugReportCallbackEXT		fvkCreateDebugReportCallbackEXT = nullptr;
 PFN_vkDestroyDebugReportCallbackEXT		fvkDestroyDebugReportCallbackEXT = nullptr;
 
 void Renderer::_InitDebug()
 {
-  fvkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugReportCallbackEXT");
-  fvkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(_instance, "vkDestroyDebugReportCallbackEXT");
-  if (nullptr == fvkCreateDebugReportCallbackEXT || nullptr == fvkDestroyDebugReportCallbackEXT) {
-    assert(0 && "Vulkan ERROR: Can't fetch debug function pointers.");
-    std::exit(-1);
+
+  CreateDebugUtilsMessengerEXT =
+    (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
+  DestroyDebugUtilsMessengerEXT =
+    (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkDestroyDebugUtilsMessengerEXT");
+  SubmitDebugUtilsMessageEXT =
+    (PFN_vkSubmitDebugUtilsMessageEXT)vkGetInstanceProcAddr(_instance, "vkSubmitDebugUtilsMessageEXT");
+  CmdBeginDebugUtilsLabelEXT =
+    (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(_instance, "vkCmdBeginDebugUtilsLabelEXT");
+  CmdEndDebugUtilsLabelEXT =
+    (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(_instance, "vkCmdEndDebugUtilsLabelEXT");
+  CmdInsertDebugUtilsLabelEXT =
+    (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(_instance, "vkCmdInsertDebugUtilsLabelEXT");
+  SetDebugUtilsObjectNameEXT =
+    (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(_instance, "vkSetDebugUtilsObjectNameEXT");
+
+  if (NULL == CreateDebugUtilsMessengerEXT || NULL == DestroyDebugUtilsMessengerEXT ||
+    NULL == SubmitDebugUtilsMessageEXT || NULL == CmdBeginDebugUtilsLabelEXT ||
+    NULL == CmdEndDebugUtilsLabelEXT || NULL == CmdInsertDebugUtilsLabelEXT ||
+    NULL == SetDebugUtilsObjectNameEXT) {
+
+    fvkCreateDebugReportCallbackEXT = (PFN_vkCreateDebugReportCallbackEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugReportCallbackEXT");
+    fvkDestroyDebugReportCallbackEXT = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(_instance, "vkDestroyDebugReportCallbackEXT");
+    if (nullptr == fvkCreateDebugReportCallbackEXT || nullptr == fvkDestroyDebugReportCallbackEXT) {
+      assert(0 && "Vulkan ERROR: Can't fetch debug function pointers.");
+      std::exit(-1);
+    }
+
+    fvkCreateDebugReportCallbackEXT(_instance, &_debug_callback_create_info, nullptr, &_debug_report);
+  }
+  else {
+    
+    CreateDebugUtilsMessengerEXT(_instance, &dbg_messenger_create_info, NULL, &dbg_messenger);
   }
 
-  fvkCreateDebugReportCallbackEXT(_instance, &_debug_callback_create_info, nullptr, &_debug_report);
+  
 
   //	vkCreateDebugReportCallbackEXT( _instance, nullptr, nullptr, nullptr );
 }
 
 void Renderer::_DeInitDebug()
 {
-  fvkDestroyDebugReportCallbackEXT(_instance, _debug_report, nullptr);
-  _debug_report = VK_NULL_HANDLE;
+  if (_debug_report != VK_NULL_HANDLE) {
+    fvkDestroyDebugReportCallbackEXT(_instance, _debug_report, nullptr);
+    _debug_report = VK_NULL_HANDLE;
+  }
+
+  if (dbg_messenger != VK_NULL_HANDLE) {
+    DestroyDebugUtilsMessengerEXT(_instance, dbg_messenger, nullptr);
+    dbg_messenger = VK_NULL_HANDLE;
+  }
+
 }
 
 #else

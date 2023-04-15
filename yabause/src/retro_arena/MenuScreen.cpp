@@ -254,7 +254,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           MENU_LOG("toggle frame skip\n");  
           evm->postEvent("toggle frame skip");
         });        
- 
+#if 0
         Button *b4 = new Button(tools, "About");
         b4->setFixedWidth(248);
         b4->setCallback([this,b4]() { 
@@ -296,7 +296,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           pushActiveMenu(imageWindow,b4);
 
         });
-
+#endif
         player_configs_[0].player->focusEvent(true);
         player_configs_[0].player->mouseEnterEvent(player_configs_[0].player->absolutePosition(),true);
         mFocus = player_configs_[0].player;

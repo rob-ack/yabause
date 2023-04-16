@@ -44,6 +44,7 @@ using std::vector;
 #include <queue> 
 
 #define FRAMEBUFFER_COUNT (2)
+#define DESC_COUNT (4)
 
 class Vdp1Renderer {
 
@@ -206,6 +207,8 @@ protected:
 #endif
   }
 
+  
+  int currentDesc = 0;
 
   VkBuffer _vertexBuffer;
   VkDeviceMemory _vertexBufferMemory;
@@ -213,7 +216,7 @@ protected:
   VkDeviceMemory _indexBufferMemory;
   VkBuffer _clearUniformBuffer;
   VkDeviceMemory _clearUniformBufferMemory;
-  VkDescriptorSet _descriptorSet[2];
+  VkDescriptorSet _descriptorSet[DESC_COUNT];
   VkDescriptorSetLayout _descriptorSetLayout;
   VkDescriptorPool _descriptorPool;
   VkShaderModule _vertShaderModule;
@@ -251,3 +254,6 @@ protected:
   POLYGONMODE proygonMode;
 
 };
+
+
+void vkDebugNameObject(VkDevice device, VkObjectType object_type, uint64_t vulkan_handle, const char *format, ...);

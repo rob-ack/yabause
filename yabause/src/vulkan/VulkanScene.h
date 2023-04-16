@@ -165,7 +165,7 @@ public:
   }
 
   const VkQueue getVulkanComputeQueue() {
-    return _renderer->GetVulkanQueue();
+    return _renderer->GetComputeQueue();
   }
 
   const uint32_t getFrameBufferCount() {
@@ -225,3 +225,4 @@ protected:
 
 };
 
+void vkDebugNameObject(VkDevice device, VkObjectType object_type, uint64_t vulkan_handle, const char *format, ...);

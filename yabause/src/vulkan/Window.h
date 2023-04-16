@@ -56,7 +56,7 @@ public:
   VkSwapchainKHR getSwapChain() { return _swapchain; }
   uint32_t GetFrameBufferCount() { return _swapchain_image_count; }
   VkImageView getDepthStencilImageView() { return _depth_stencil_image_view; }
-
+  VkImage getDepthStencilImage() { return _depth_stencil_image;  }
   VkImage getCurrentImage() {
     return _swapchain_images[_active_swapchain_image_id];
   }
@@ -160,3 +160,5 @@ private:
   xcb_intern_atom_reply_t *_xcb_atom_window_reply = nullptr;
 #endif
 };
+
+void vkDebugNameObject(VkDevice device, VkObjectType object_type, uint64_t vulkan_handle, const char *format, ...);

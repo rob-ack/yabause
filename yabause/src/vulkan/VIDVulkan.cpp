@@ -481,8 +481,13 @@ void VIDVulkan::renderExternal(const std::function<void(
   const VkDevice device = _renderer->GetVulkanDevice();
   if (device == VK_NULL_HANDLE) return;
 
-
+  int ci = getCurrentCommandIndex();
   int fi = _renderer->getWindow()->BeginRender();
+
+//  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
+//    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
+//    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
+//  }
 
   VkCommandBufferBeginInfo command_buffer_begin_info{};
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -509,12 +514,50 @@ void VIDVulkan::renderExternal(const std::function<void(
   render_pass_begin_info.clearValueCount = clear_values.size();
   render_pass_begin_info.pClearValues = clear_values.data();
 
+  VkCommandBuffer commandBuffer = _command_buffers[ci];
 
-  vkBeginCommandBuffer(_command_buffers[fi], &command_buffer_begin_info);
 
-  vkCmdBeginRenderPass(_command_buffers[fi], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+  vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
-  auto c = vk::CommandBuffer(_command_buffers[fi]);
+  VkImageMemoryBarrier imageBarrier = {};
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+  imageBarrier.image = tm->geTextureImage();
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  imageBarrier.image = _renderer->getWindow()->getCurrentImage();
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+
+  VkImageMemoryBarrier simageBarrier = {};
+  simageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  simageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  simageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  simageBarrier.srcAccessMask = 0;
+  simageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  simageBarrier.image = _renderer->getWindow()->getDepthStencilImage();
+  simageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  simageBarrier.subresourceRange.baseMipLevel = 0;
+  simageBarrier.subresourceRange.levelCount = 1;
+  simageBarrier.subresourceRange.baseArrayLayer = 0;
+  simageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &simageBarrier);
+
+
+  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(commandBuffer);
   vk::Viewport viewport;
   vk::Rect2D scissor;
   viewport.width = render_area.extent.width;
@@ -536,10 +579,10 @@ void VIDVulkan::renderExternal(const std::function<void(
   f(device,
     this->getPhysicalDevice(),
     _renderer->getWindow()->GetVulkanRenderPass(),
-    _command_buffers[fi]);
+    commandBuffer);
    
-  vkCmdEndRenderPass(_command_buffers[fi]);
-  vkEndCommandBuffer(_command_buffers[fi]);
+  vkCmdEndRenderPass(commandBuffer);
+  vkEndCommandBuffer(commandBuffer);
   VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
   VkSemaphore graphicsWaitSemaphores[] = { rbgGenerator->getCompleteSemaphore() };
 
@@ -562,11 +605,12 @@ void VIDVulkan::renderExternal(const std::function<void(
   submit_info.pWaitSemaphores = waitSem.data();
   submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
   submit_info.commandBufferCount = 1;
-  submit_info.pCommandBuffers = &_command_buffers[fi];
+  submit_info.pCommandBuffers = &commandBuffer;
   submit_info.signalSemaphoreCount = 1;
   submit_info.pSignalSemaphores = &_render_complete_semaphore;
   ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
   YuiSwapBuffers();
+  frameCount++;
 }
 
 
@@ -692,6 +736,40 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
+  VkImageMemoryBarrier imageBarrier = {};
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+  imageBarrier.image = tm->geTextureImage();
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  imageBarrier.image = _renderer->getWindow()->getCurrentImage();
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+
+  VkImageMemoryBarrier simageBarrier = {};
+  simageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  simageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  simageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  simageBarrier.srcAccessMask = 0;
+  simageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  simageBarrier.image = _renderer->getWindow()->getDepthStencilImage();
+  simageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  simageBarrier.subresourceRange.baseMipLevel = 0;
+  simageBarrier.subresourceRange.levelCount = 1;
+  simageBarrier.subresourceRange.baseArrayLayer = 0;
+  simageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &simageBarrier);
 
 
     int u_dir = 0;
@@ -1120,6 +1198,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   }
 
 ENDEND:
+
   vkEndCommandBuffer(commandBuffer);
 
   vector<VkSemaphore> waitSem;
@@ -6009,6 +6088,7 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
   if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
     throw std::runtime_error("failed to create texture image view!");
   }
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "DynamicTexture");
 
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -6196,6 +6276,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.image));
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.image, "offscreenPass.image");
   vkGetImageMemoryRequirements(device, offscreenPass.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6241,6 +6322,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.depth.image, "offscreenPass.depth.image");
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6766,6 +6848,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.color.image));
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.color.image, "subRenderTarget.color.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.color.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6806,6 +6889,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.depth.image));
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.depth.image, "subRenderTarget.depth.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -7097,6 +7181,7 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
 
     // Create the image
     VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
+    vkDebugNameObject(getDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)dstScreenImage, "dstScreenImage");
     // Create memory to back up the image
     VkMemoryRequirements memRequirements;
     VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -7291,9 +7376,9 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
           unsigned char *srcrow = &data[ (height-1-y) *subResourceLayout.rowPitch];
           unsigned char *dstrow = &dstbuf[y*width * 4];
           for (uint32_t x = 0; x < width; x++) {
-            dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
+            dstrow[x * 4 + 0] = srcrow[x * 4 + 2];
             dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
-            dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
+            dstrow[x * 4 + 2] = srcrow[x * 4 + 0];
             dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
           }
         }

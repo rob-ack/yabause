@@ -42,8 +42,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <sstream>
 
 #include "VulkanTools.h"
+#include <inttypes.h>
+#include "object_type_string_helper.h"
 
-#define _DEBUG_ (1)
+#define _DEBUG_ (0)
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -85,6 +87,34 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
 
   stream << "@[" << pCallbackData->messageIdNumber << " " << pCallbackData->pMessageIdName << "]: ";
   stream << pCallbackData->pMessage << std::endl;
+
+  if (pCallbackData->objectCount > 0) {
+    char tmp_message[500];
+    sprintf(tmp_message, "\n\tObjects - %d\n", pCallbackData->objectCount);
+    stream <<  tmp_message << std::endl;
+    for (uint32_t object = 0; object < pCallbackData->objectCount; ++object) {
+      sprintf(tmp_message, "\t\tObject[%d] - %s", object, string_VkObjectType(pCallbackData->pObjects[object].objectType));
+      stream << tmp_message;
+
+      VkObjectType t = pCallbackData->pObjects[object].objectType;
+      if (t == VK_OBJECT_TYPE_INSTANCE || t == VK_OBJECT_TYPE_PHYSICAL_DEVICE || t == VK_OBJECT_TYPE_DEVICE ||
+        t == VK_OBJECT_TYPE_COMMAND_BUFFER || t == VK_OBJECT_TYPE_QUEUE) {
+        sprintf(tmp_message, ", Handle %p", (void *)(uintptr_t)(pCallbackData->pObjects[object].objectHandle));
+        stream << tmp_message;
+      }
+      else {
+        sprintf(tmp_message, ", Handle Ox%" PRIx64, (pCallbackData->pObjects[object].objectHandle));
+        stream << tmp_message;
+      }
+
+      if (NULL != pCallbackData->pObjects[object].pObjectName && strlen(pCallbackData->pObjects[object].pObjectName) > 0) {
+        sprintf(tmp_message, ", Name \"%s\"", pCallbackData->pObjects[object].pObjectName);
+        stream << tmp_message;
+      }
+      
+      stream <<  tmp_message << std::endl;
+    }
+  }
 
 
   if (pCallbackData->cmdBufLabelCount > 0) {
@@ -560,6 +590,30 @@ VkDebugUtilsMessengerEXT dbg_messenger;
 
 PFN_vkCreateDebugReportCallbackEXT		fvkCreateDebugReportCallbackEXT = nullptr;
 PFN_vkDestroyDebugReportCallbackEXT		fvkDestroyDebugReportCallbackEXT = nullptr;
+
+
+void vkDebugNameObject(VkDevice device, VkObjectType object_type, uint64_t vulkan_handle, const char *format, ...) {
+ #if  _DEBUG_
+  VkResult err;
+  char name[1024];
+  va_list argptr;
+  va_start(argptr, format);
+  vsnprintf(name, sizeof(name), format, argptr);
+  va_end(argptr);
+  name[sizeof(name) - 1] = '\0';
+
+  VkDebugUtilsObjectNameInfoEXT obj_name;
+  obj_name.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
+  obj_name.pNext = NULL;
+  obj_name.objectType = object_type;
+  obj_name.objectHandle = vulkan_handle;
+  obj_name.pObjectName = name;
+  
+  err = SetDebugUtilsObjectNameEXT(device, &obj_name);
+  assert(!err);
+#endif
+}
+
 
 void Renderer::_InitDebug()
 {

@@ -75,6 +75,11 @@ public:
     return _textureImageView;
   }
 
+  VkImage geTextureImage() {
+    return _textureImage;
+  }
+
+
   VkSampler getTextureSampler() {
     return _textureSampler;
   }

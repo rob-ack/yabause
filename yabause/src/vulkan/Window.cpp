@@ -366,6 +366,8 @@ void Window::_InitDepthStencilImage() {
 
   ErrorCheck(vkCreateImage(_renderer->GetVulkanDevice(), &image_create_info, nullptr, &_depth_stencil_image));
 
+  vkDebugNameObject(_renderer->GetVulkanDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)_depth_stencil_image, "Window _depth_stencil_image");
+
   VkMemoryRequirements image_memory_requirements{};
   vkGetImageMemoryRequirements(_renderer->GetVulkanDevice(), _depth_stencil_image, &image_memory_requirements);
 

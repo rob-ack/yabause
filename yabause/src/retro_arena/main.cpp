@@ -1111,11 +1111,9 @@ int saveScreenshot( const char * filename ){
         YUI_LOG("glReadPixels %04X\n", glerror);
         goto FINISH;
       }
-
-    }
-
-    for (u = 3; u < width*height * 4; u += 4) {
-      buf[u] = 0xFF;
+      for (u = 3; u < width*height * 4; u += 4) {
+        buf[u] = 0xFF;
+      }
     }
 
     row_pointers = (png_byte**)malloc(sizeof(png_bytep) * height);

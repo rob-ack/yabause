@@ -266,6 +266,8 @@ void Vdp1Renderer::prepareOffscreen() {
   // Depth stencil attachment
   image.format = fbDepthFormat;
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  image.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
@@ -397,9 +399,16 @@ void Vdp1Renderer::prepareOffscreen() {
   // offscreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   // offscreenPass.descriptor.imageView = offscreenPass.color[0].view;
   // offscreenPass.descriptor.sampler = offscreenPass.sampler;
+  
+  //vulkan->transitionImageLayout(offscreenPass.color[0].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+  //  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-  // vulkan->transitionImageLayout(offscreenPass.color.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-  // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  //vulkan->transitionImageLayout(offscreenPass.color[1].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+  //  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+
+
+
 }
 
 void Vdp1Renderer::createCommandPool() {
@@ -543,13 +552,14 @@ void Vdp1Renderer::erase() {
   std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
 
   descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].dstSet = _descriptorSet[readframe];
+  descriptorWrites[0].dstSet = _descriptorSet[currentDesc];
   descriptorWrites[0].dstBinding = 0;
   descriptorWrites[0].dstArrayElement = 0;
   descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   descriptorWrites[0].descriptorCount = 1;
   descriptorWrites[0].pBufferInfo = &bufferInfo;
 
+  
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
   VkClearValue clearValues[2];
@@ -566,8 +576,38 @@ void Vdp1Renderer::erase() {
 
   VkCommandBuffer cb = getNextCommandBuffer();
 
+
   VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
   vkBeginCommandBuffer(cb, &cmdBufInfo);
+
+  VkImageMemoryBarrier imageBarrier = {};
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  imageBarrier.image = offscreenPass.color[readframe].image;
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  imageBarrier.image = offscreenPass.depth.image;
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+
   vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport =
@@ -615,7 +655,7 @@ void Vdp1Renderer::erase() {
   // VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
-  vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSet[readframe], 0,
+  vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSet[currentDesc], 0,
                           nullptr);
 
   vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
@@ -665,6 +705,10 @@ void Vdp1Renderer::erase() {
   offscreenPass.color[readframe].renderFences.push(fence);
 
   clearCount++;
+  currentDesc++;
+  currentDesc &= (DESC_COUNT - 1);
+
+
   // vkQueueWaitIdle(vulkan->getVulkanQueue());
   // vkDeviceWaitIdle(device);
 }
@@ -2086,21 +2130,25 @@ void Vdp1Renderer::genClearPipeline() {
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = 2;
+  poolInfo.maxSets = DESC_COUNT;
 
   if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
   }
 
-  VkDescriptorSetLayout layouts[] = {_descriptorSetLayout};
+  VkDescriptorSetLayout layouts[] = {_descriptorSetLayout,_descriptorSetLayout ,_descriptorSetLayout ,_descriptorSetLayout };
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = _descriptorPool;
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = layouts;
-
+  
   ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[0]));
   ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[1]));
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[2]));
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[3]));
+
+  //ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[1]));
 
   Compiler compiler;
   CompileOptions options;
@@ -2307,23 +2355,17 @@ void Vdp1Renderer::genClearPipeline() {
   bufferInfo.offset = 0;
   bufferInfo.range = sizeof(ClearUbo);
 
-  std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+  std::array<VkWriteDescriptorSet, DESC_COUNT> descriptorWrites = {};
 
-  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].dstSet = _descriptorSet[0];
-  descriptorWrites[0].dstBinding = 0;
-  descriptorWrites[0].dstArrayElement = 0;
-  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrites[0].descriptorCount = 1;
-  descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-  descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[1].dstSet = _descriptorSet[1];
-  descriptorWrites[1].dstBinding = 0;
-  descriptorWrites[1].dstArrayElement = 0;
-  descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrites[1].descriptorCount = 1;
-  descriptorWrites[1].pBufferInfo = &bufferInfo;
+  for (int i = 0; i < DESC_COUNT; i++) {
+    descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[i].dstSet = _descriptorSet[i];
+    descriptorWrites[i].dstBinding = 0;
+    descriptorWrites[i].dstArrayElement = 0;
+    descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrites[i].descriptorCount = 1;
+    descriptorWrites[i].pBufferInfo = &bufferInfo;
+  }
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 

@@ -135,6 +135,8 @@ public:
 */    
     Button *bAnalog = nullptr;
     Button *bCdTray = nullptr;
+    Button * btnPlay = nullptr;
+    Button * btnRecord = nullptr;
     bool is_cdtray_open_ = false;
 
     std::map<SDL_JoystickID, SDL_Joystick*> joysticks_;

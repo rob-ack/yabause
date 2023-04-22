@@ -113,12 +113,17 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
     printf("Could not init nanovg.\n");
     return -1;
   }
-#else
-  vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
-#endif
   OSDNanovgVInit();
+#else
+  if (vg == NULL) {
+    vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
+    OSDNanovgVInit();
+  }
+  else {
+    InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
+  }
+#endif
   return 0;
-
 }
 
 extern "C" {

@@ -192,6 +192,25 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
           evm->postEvent("reset");
         });        
 
+        btnPlay = new Button(tools, "Play");
+        btnPlay->setFixedWidth(248);
+        btnPlay->setCallback([this]() {
+          evm->postEvent("play");
+        });
+
+        btnRecord = new Button(tools, "Record");
+        btnRecord->setFixedWidth(248);
+        btnRecord->setCallback([this]() {
+          evm->postEvent("record");
+          if (btnRecord->caption() == "Record") {
+            btnRecord->setCaption("Stop Record");
+          }
+          else {
+            btnRecord->setCaption("Record");
+          }
+        });
+
+
         PopupButton * ps = new PopupButton(tools, "Save State");
         ps->setFixedWidth(248);
         ps->setCallback([this,ps]() {      

@@ -71,6 +71,8 @@ extern "C" {
 #include "libpng16/png.h"
 }
 
+#include "PlayRecorder.h"
+
 #if HAVE_VULKAN
 #include <SDL_vulkan.h>
 #include "../vulkan/VIDVulkanCInterface.h"
@@ -103,6 +105,8 @@ extern "C" {
   static char buppath[256] = "./back.bin";
   static char mpegpath[256] = "\0";
   static char cartpath[256] = "\0";
+  static string s_playdatadir = "";
+  static string s_playrecord_path = "";
   static bool menu_show = false;
 
 #define LOG printf
@@ -176,6 +180,11 @@ extern "C" {
   };
 #endif
 
+  enum PlayMode {
+    NORMAL,
+    RECORD,
+    PLAY
+  };
 
   static SDL_Window* wnd;
   static SDL_Window* subwnd;
@@ -188,8 +197,32 @@ extern "C" {
   int g_frame_skip = 1;
   int g_emulated_bios = 1;
   bool g_full_screen = false;
+  int g_emulation_speed_mode = 0;
   InputManager* inputmng;
   MenuScreen * menu = nullptr;
+
+  static PlayMode g_playMode = NORMAL;
+  static PlayRecorder *sPlayer = nullptr;
+
+
+  int saveScreenshot(const char * filename);
+
+  class ScreenRecorder
+  {
+  public:
+    void setScreenshotCallback(PlayRecorder *p)
+    {
+      using std::placeholders::_1;
+      p->f_takeScreenshot = std::bind(&ScreenRecorder::takeScreenshot, this, _1);
+    }
+    void takeScreenshot(const char *fname)
+    {
+      ::saveScreenshot(fname);
+    }
+  };
+
+  ScreenRecorder gsc;
+
 
   using std::string;
   string g_keymap_filename;
@@ -270,7 +303,6 @@ extern "C" {
 
 }
 
-int saveScreenshot( const char * filename );
 
 //int padmode = 0;
 
@@ -290,7 +322,7 @@ int yabauseinit()
 #endif  
 
 
-  yinit.sh2coretype = 1;
+  yinit.sh2coretype = 3;
   //yinit.vidcoretype = VIDCORE_SOFT;
 #if HAVE_VULKAN
   g_vidcoretype = VIDCORE_VULKAN;
@@ -329,7 +361,7 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
 #if defined(__JETSON__) || defined(__SWITCH__) || defined(_WINDOWS)
-  yinit.scsp_main_mode = 1;
+  yinit.scsp_main_mode = 0;
 #else
   yinit.scsp_main_mode = 1;
 #endif
@@ -341,6 +373,14 @@ int yabauseinit()
 #endif
 
   yinit.use_sh2_cache = 1;
+  yinit.framelimit = g_emulation_speed_mode;
+
+  if (g_playMode == PLAY) {
+    sPlayer = PlayRecorder::getInstance();
+    gsc.setScreenshotCallback(sPlayer);
+    sPlayer->startPlay(s_playdatadir.c_str(), false, &yinit);
+  }
+
 
   res = YabauseInit(&yinit);
   if( res == -1) {
@@ -457,7 +497,6 @@ bool selectDirectory(std::string & out) {
    return true;
 }
 
-
 //#undef main
 //int main(int argc, char** argv)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
@@ -503,6 +542,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   strcpy(s_savepath, home_dir.c_str());
   g_keymap_filename = home_dir + "/keymapv2.json";
 
+  s_playrecord_path = home_dir + "/record/";
+  s_playdatadir = home_dir + "/record/GS-9039/";
+
+
   Preference * defpref = new Preference("default");
 
   std::string current_exec_name = argv[0]; // Name of the current exec program
@@ -544,6 +587,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   g_full_screen = defpref->getBool("Full screen", false);
   g_EnagleFPS = defpref->getBool("Show Fps", false);
 
+  g_EnagleFPS = true;
+
   for (int i = 0; i < all_args.size(); i++) {
     string x = all_args[i];
     if ((x == "-b" || x == "--bios") && (i + 1 < all_args.size())) {
@@ -567,6 +612,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     }
     else if ((x == "-w" || x == "--window")) {
       g_full_screen = false;
+    }
+    else if ((x == "-rc" || x == "--record")) {
+      g_playMode = RECORD;
+    }
+    else if ((x == "-p" || x == "--play") && (i + 1 < all_args.size()) ) {
+      g_playMode = PLAY;
+      s_playdatadir = all_args[i + 1];
+    }
+    else if ((x == "-sp" || x == "--emulation_speed_mode" ) && (i + 1 < all_args.size())) {
+      g_emulation_speed_mode = std::stoi(all_args[i + 1]);
     }
     else if ((x == "-v" || x == "--version")) {
       printf("YabaSanshiro version %s(%s)\n", YAB_VERSION, GIT_SHA1);
@@ -599,6 +654,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
+
 
   int width = 1280;
   int height = 720;
@@ -868,6 +924,48 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     hideMenuScreen();
   });
 
+#if 0
+  evm->setEvent("play", [tmpfilename](int code, void * data1, void * data2) {
+    int ret;
+    time_t t = time(NULL);
+    YUI_LOG("MSG_PLAY");
+
+    PlayRecorder *p = PlayRecorder::getInstance();
+    if (p->getStatus() == PlayRecorder::IDLE)
+    {
+      gsc.setScreenshotCallback(p);
+      p->startPlay(s_playdatadir.c_str(), true, NULL);
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("record", [tmpfilename](int code, void * data1, void * data2) {
+    int ret;
+    time_t t = time(NULL);
+    YUI_LOG("MSG_RECORD");
+
+    PlayRecorder *p = PlayRecorder::getInstance();
+    if (p->getStatus() == PlayRecorder::IDLE)
+    {
+      gsc.setScreenshotCallback(p);
+      p->setBaseDir(s_playrecord_path.c_str());
+      p->startRocord();
+    }
+    else if (p->getStatus() == 0)
+    {
+      p->stopRocord();
+    }
+    hideMenuScreen();
+  });
+#endif
+
+  if (g_playMode == RECORD) {
+    sPlayer = PlayRecorder::getInstance();
+    gsc.setScreenshotCallback(sPlayer);
+    sPlayer->setBaseDir(s_playrecord_path.c_str());
+    sPlayer->startRocord();
+  }
+
   
   // 初期設定がされていない場合はメニューを表示する
   // BIOSなしの状態でゲームが選択されていない場合も
@@ -898,24 +996,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     while(SDL_PollEvent(&e)) {
       event_count++;
       if(e.type == SDL_QUIT){
-        glClearColor(0.0,0.0,0.0,1.0);
-        glClear(GL_COLOR_BUFFER_BIT);        
-        SDL_GL_SwapWindow(wnd);
-        YabauseDeInit();
-        SDL_Quit();
-        return 0;
+        goto FINISH;
       }
 
       else if (e.type == SDL_WINDOWEVENT) {
 
         switch (e.window.event) {
         case SDL_WINDOWEVENT_CLOSE:   // exit game
-          glClearColor(0.0, 0.0, 0.0, 1.0);
-          glClear(GL_COLOR_BUFFER_BIT);
-          SDL_GL_SwapWindow(wnd);
-          YabauseDeInit();
-          SDL_Quit();
-          return 0;
+          goto FINISH;
           break;
         default:
           break;
@@ -1030,11 +1118,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     }
   }
 
+FINISH:
   fclose(stdout_fp);
   fclose(stderr_fp);
 
+  if (sPlayer != nullptr && g_playMode == RECORD) {
+    sPlayer->stopRocord();
+  }
+
   YabauseDeInit();
-//  SDL_FreeCursor(cursor);
+  //SDL_FreeCursor(cursor);
   SDL_Quit();
   return 0;
 }
@@ -1079,6 +1172,7 @@ int saveScreenshot( const char * filename ){
     png_infop info_ptr;
     int number_of_passes;
     int rtn = -1;
+
   
     SDL_GetWindowSize( wnd, &width, &height);
 
@@ -1115,6 +1209,7 @@ int saveScreenshot( const char * filename ){
         buf[u] = 0xFF;
       }
     }
+
 
     row_pointers = (png_byte**)malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
@@ -1221,16 +1316,11 @@ const char * YuiGetShaderCachePath() {
 extern "C" {
 
   int YabauseThread_IsUseBios() {
-    //if( s_biospath == NULL){
-    //    return 1;
-    //}
-    return 0;
-
+    return g_emulated_bios;
   }
 
   const char * YabauseThread_getBackupPath() {
-    //return s_buppath;
-    return NULL;
+    return buppath;
   }
 
   void YabauseThread_setUseBios(int use) {
@@ -1240,21 +1330,20 @@ extern "C" {
 
   char tmpbakcup[256];
   void YabauseThread_setBackupPath( const char * buf) {
-      //strcpy(tmpbakcup,buf);
-      //s_buppath = tmpbakcup;
+      strcpy(buppath,buf);
   }
 
   void YabauseThread_resetPlaymode() {
-      //if( s_playrecord_path != NULL ){
-      //    free(s_playrecord_path);
-      //    s_playrecord_path = NULL;
-      //}
-      //s_buppath = GetMemoryPath();
+      s_playrecord_path = "";
+      std::string home_dir;
+      getHomeDir(home_dir);
+      std::string bckup_dir = home_dir + "/backup.bin";
+      strcpy(buppath, bckup_dir.c_str());
   }
 
   void YabauseThread_coldBoot() {
-    //YabauseDeInit();
-    //YabauseInit();
-    //YabauseReset();
+    YabauseDeInit();
+    yabauseinit();
+    YabauseReset();
   }
 }

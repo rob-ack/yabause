@@ -57,10 +57,10 @@ public:
     vkDeviceWaitIdle(device);
 
 #if 1 // Driver BUG??? can not free these memorys
-    std::cout << "freeBlock " << " stagingBuffer=" << stagingBuffer << " stagingBufferMemory=" << stagingBufferMemory << std::endl;
+//    std::cout << "freeBlock " << " stagingBuffer=" << stagingBuffer << " stagingBufferMemory=" << stagingBufferMemory << std::endl;
     vkUnmapMemory(device, stagingBufferMemory);
 
-    std::cout << "freeBlock " << " istagingBuffer=" << istagingBuffer << " istagingBufferMemory=" << istagingBufferMemory << std::endl;
+//    std::cout << "freeBlock " << " istagingBuffer=" << istagingBuffer << " istagingBufferMemory=" << istagingBufferMemory << std::endl;
     vkUnmapMemory(device, istagingBufferMemory);
 
     if (stagingBuffer != 0) {

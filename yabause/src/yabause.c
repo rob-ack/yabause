@@ -659,8 +659,9 @@ u64 getM68KCounter();
 u64 g_m68K_dec_cycle = 0;
 
 
+
 int YabauseEmulate(void) {
-   int oneframeexec = 0;
+  int oneframeexec = 0;
    yabsys.frame_count++;
    PlayRecorder_proc(yabsys.frame_count);
 

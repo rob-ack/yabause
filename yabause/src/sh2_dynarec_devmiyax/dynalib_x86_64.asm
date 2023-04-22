@@ -1847,14 +1847,15 @@ continue3:
 ; 
 ; size = 69 + 135 + 132 + 38 = 374 
 ;===============================================================
-opdesc DIV1, 428,65,6,0xFF,0xFF,0xFF
+opdesc DIV1, 432,67,6,0xFF,0xFF,0xFF
 opfunc DIV1
 
 ; 69
 mov  rbp,rdi                 ;2 Get R[0] Adress 
 xor  eax,eax                 ;2 Clear esi
 mov  al, byte 00             ;3 save n(8-11)
-mov  r15d,eax                 ;2
+push r15
+mov  r15d,eax                ;2
 add  rbp,r15                 ;2 Get R[n]
 mov  eax,[rbp]               ;3 R[n]
 mov  ecx,[rbx]               ;2 SR
@@ -2052,7 +2053,7 @@ cmp  eax,r13d                  ;2
 jne  NO_Q_M                   ;2
 or   dword [rbx], 0x00000001  ;6 Set T Flg
 NO_Q_M:
-
+pop r15
 
 
 ;======================================================

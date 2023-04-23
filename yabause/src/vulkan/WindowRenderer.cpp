@@ -709,6 +709,7 @@ void WindowRenderer::prepareOffscreen() {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.color.image));
+  printf("offscreenPass.color.image = %llx\n", offscreenPass.color.image);
   vkGetImageMemoryRequirements(device, offscreenPass.color.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   //memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -750,6 +751,7 @@ void WindowRenderer::prepareOffscreen() {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = vulkan->findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);

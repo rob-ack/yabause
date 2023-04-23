@@ -39,7 +39,7 @@ namespace fs = std::experimental::filesystem ;
 #elif defined(_WINDOWS)
 #include <windows.h>
 #include <commdlg.h>
-
+#include <shellscalingapi.h>
 #include <direct.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -411,12 +411,20 @@ void getHomeDir( std::string & homedir ) {
   homedir = getenv("HOME");
   homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
+
+  homedir = "./";
+  return;
   
   WCHAR * path;
   if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {
-    std::wstring tmp;
-    tmp = path;
-    narrow(tmp, homedir);
+    //std::wstring tmp;
+    //tmp = path;
+    //narrow(tmp, homedir);
+
+    int bufferSize = WideCharToMultiByte(CP_OEMCP, 0, path, -1, nullptr, 0, nullptr, nullptr);
+    std::vector<char> buffer(bufferSize);
+    WideCharToMultiByte(CP_OEMCP, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
+    homedir = buffer.data();
     homedir += "/YabaSanshiro/";
     CoTaskMemFree(path);
   }
@@ -520,7 +528,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 #endif
   }
 
-#if 1
+#if 0
   AllocConsole();
   FILE * stdout_fp = freopen("CONOUT$", "wb", stdout);
   FILE * stderr_fp = freopen("CONOUT$", "wb", stderr);
@@ -587,7 +595,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   g_full_screen = defpref->getBool("Full screen", false);
   g_EnagleFPS = defpref->getBool("Show Fps", false);
 
-  g_EnagleFPS = true;
+  //g_EnagleFPS = true;
 
   for (int i = 0; i < all_args.size(); i++) {
     string x = all_args[i];
@@ -629,6 +637,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     }
   }
 
+  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
   defpref->setString("last play game path", cdpath);
 
   if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {

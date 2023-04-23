@@ -735,7 +735,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   // vkQueueWaitIdle(_renderer->GetVulkanQueue());
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
-
+#if 1
   VkImageMemoryBarrier imageBarrier = {};
   imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -750,13 +750,19 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   imageBarrier.subresourceRange.layerCount = 1;
   vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
 
+
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  imageBarrier.image = vdp1->getFrameBufferVkImage();
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
   imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
   imageBarrier.image = _renderer->getWindow()->getCurrentImage();
   vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-
-
+  
   VkImageMemoryBarrier simageBarrier = {};
   simageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   simageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -770,7 +776,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   simageBarrier.subresourceRange.baseArrayLayer = 0;
   simageBarrier.subresourceRange.layerCount = 1;
   vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &simageBarrier);
-
+#endif
 
     int u_dir = 0;
 
@@ -6065,6 +6071,7 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
   vulkan->createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
                       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                       image, memory);
+  printf("DynamicTexture image = %llx\n", image);
   vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   vulkan->copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -6276,6 +6283,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.image));
+  printf("offscreenPass.image = %llx\n", offscreenPass.image);
   vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.image, "offscreenPass.image");
   vkGetImageMemoryRequirements(device, offscreenPass.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
@@ -6322,6 +6330,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
   vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.depth.image, "offscreenPass.depth.image");
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
@@ -6848,6 +6857,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.color.image));
+  printf("subRenderTarget.color.image = %llx\n", subRenderTarget.color.image);
   vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.color.image, "subRenderTarget.color.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.color.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
@@ -6889,6 +6899,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.depth.image));
+  printf("subRenderTarget.depth.image = %llx\n", subRenderTarget.depth.image);
   vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.depth.image, "subRenderTarget.depth.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
@@ -7181,6 +7192,7 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
 
     // Create the image
     VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
+    printf("dstScreenImage = %llx\n", dstScreenImage);
     vkDebugNameObject(getDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)dstScreenImage, "dstScreenImage");
     // Create memory to back up the image
     VkMemoryRequirements memRequirements;

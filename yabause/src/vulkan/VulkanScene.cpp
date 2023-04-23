@@ -137,6 +137,8 @@ void VulkanScene::createImage(uint32_t width, uint32_t height, VkFormat format, 
     throw std::runtime_error("failed to create image!");
   }
 
+  printf("VulkanScene image = %llx\n", image);
+
   vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "VulkanScene image");
 
   VkMemoryRequirements memRequirements;
@@ -464,7 +466,7 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
 
     // Create the image
     VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
-
+    printf("dstScreenImage = %llx\n", dstScreenImage);
     vkDebugNameObject(getDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)dstScreenImage, "VulkanScene dstScreenImage");
 
     // Create memory to back up the image

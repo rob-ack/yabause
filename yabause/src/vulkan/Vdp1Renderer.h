@@ -107,6 +107,7 @@ public:
   void setTextureRatio(int vdp2widthratio, int vdp2heightratio);
   
   VkImageView getFrameBufferImage();
+  VkImage getFrameBufferVkImage();
 
   VkSemaphore getFrameBufferSem() {
     if (offscreenPass.color[readframe].updated) {

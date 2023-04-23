@@ -323,7 +323,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         Preference pref("default");
         string base_path;
         vector<string> base_path_array = pref.getStringArray("game directories");
-        if (base_path_array.size() >= 0) {
+        if (base_path_array.size() > 0) {
           base_path = base_path_array[0];
           checkGameFiles(this, base_path_array);
         }

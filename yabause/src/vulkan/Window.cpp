@@ -317,9 +317,9 @@ void Window::_DeInitSwapchainImages() {
 void Window::_InitDepthStencilImage() {
   {
     std::vector<VkFormat> try_formats{
-        // VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D24_UNORM_S8_UINT
-        // VK_FORMAT_D16_UNORM_S8_UINT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
         // VK_FORMAT_D32_SFLOAT,
         // VK_FORMAT_D16_UNORM
     };
@@ -335,13 +335,11 @@ void Window::_InitDepthStencilImage() {
       assert(0 && "Depth stencil format not selected.");
       std::exit(-1);
     }
-    /*
+   
     if( ( _depth_stencil_format == VK_FORMAT_D32_SFLOAT_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_D16_UNORM_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_S8_UINT ) ) {
-      */
-    if (_depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT) {
       _stencil_available = true;
     }
   }
@@ -365,7 +363,7 @@ void Window::_InitDepthStencilImage() {
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   ErrorCheck(vkCreateImage(_renderer->GetVulkanDevice(), &image_create_info, nullptr, &_depth_stencil_image));
-
+  printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
   vkDebugNameObject(_renderer->GetVulkanDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)_depth_stencil_image, "Window _depth_stencil_image");
 
   VkMemoryRequirements image_memory_requirements{};

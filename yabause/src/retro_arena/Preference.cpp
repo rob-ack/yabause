@@ -7,6 +7,44 @@
 namespace fs = std::experimental::filesystem;
 
 #define LOG printf
+using std::wstring;
+
+#include <Windows.h>
+
+std::string ConvertWideStringToMultiByteString(const std::string& utf8_str)
+{
+  if (utf8_str.empty()) {
+    return std::string();
+  }
+
+  int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), NULL, 0);
+  std::wstring wstrFrom(size_needed, 0);
+  MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), &wstrFrom[0], size_needed);
+
+  size_needed = WideCharToMultiByte(CP_ACP, 0, wstrFrom.c_str(), (int)wstrFrom.size(), NULL, 0, NULL, NULL);
+  std::string sjis_str(size_needed, 0);
+  WideCharToMultiByte(CP_ACP, 0, wstrFrom.c_str(), (int)wstrFrom.size(), &sjis_str[0], size_needed, NULL, NULL);
+
+  return sjis_str;
+}
+
+std::string ConvertMultiByteStringToWideString(const std::string& sjis_str)
+{
+  if (sjis_str.empty()) {
+    return std::string();
+  }
+
+  int size_needed = MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), NULL, 0);
+  std::wstring wstrTo(size_needed, 0);
+  MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), &wstrTo[0], size_needed);
+
+  size_needed = WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), NULL, 0, NULL, NULL);
+  std::string utf8_str(size_needed, 0);
+  WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), &utf8_str[0], size_needed, NULL, NULL);
+
+  return utf8_str;
+}
+
 
 Preference::Preference( const std::string & filename){
 
@@ -46,7 +84,11 @@ Preference::Preference( const std::string & filename){
       defaults["target display"] = 0;
       std::vector<string> gamedirs;
       gamedirs.push_back(home_dir + "games");
-      json j_array(gamedirs);
+      std::vector<string> warray;
+      for (int i = 0; i < gamedirs.size(); i++) {
+        warray.push_back(ConvertMultiByteStringToWideString(gamedirs[i]));
+      }
+      json j_array(warray);
       defaults["game directories"] = j_array;
       std::ofstream out(this->filename);
       out << defaults.dump(2);
@@ -73,6 +115,8 @@ Preference::~Preference(){
   out << j.dump(2);
   out.close();  
 }   
+
+
 
 int Preference::getInt( const std::string & key , int defaultv = 0  ){
   try {
@@ -114,7 +158,14 @@ void Preference::setBool( const std::string & key , bool value ){
 std::vector<string> Preference::getStringArray(const std::string & key) {
   try {
     LOG("Preference: getStringArray %s:%d\n", key.c_str(), j[key].get<std::vector<string>>());
-    return j[key].get<std::vector<string>>();
+    auto warray = j[key].get<std::vector<string>>();
+    std::vector<string> array;
+
+    for (int i = 0; i < warray.size(); i++) {
+      array.push_back(ConvertWideStringToMultiByteString(warray[i]));
+    }
+
+    return array;
   }
   catch (json::type_error & e) {
   }
@@ -125,8 +176,15 @@ std::vector<string> Preference::getStringArray(const std::string & key) {
 }
 
 
+
 void Preference::setStringArray(const string & key, const std::vector<string> array) {
-  json j_array(array);
+
+  std::vector<string> warray;
+  for (int i = 0; i < array.size(); i++) {
+    warray.push_back(ConvertMultiByteStringToWideString(array[i]));
+  }
+
+  json j_array(warray);
   j[key] = j_array;
   std::ofstream out(this->filename);
   out << j.dump(2);
@@ -136,7 +194,7 @@ void Preference::setStringArray(const string & key, const std::vector<string> ar
 string Preference::getString(const string & key, const string & defaultv) {
   try {
     LOG("Preference: getString %s:%d\n", key.c_str(), j[key].get<string>());
-    return j[key].get<string>();
+    return ConvertWideStringToMultiByteString(j[key].get<string>());
   }
   catch (json::type_error & e) {
   }
@@ -145,7 +203,7 @@ string Preference::getString(const string & key, const string & defaultv) {
 }
 
 void Preference::setString(const string & key, const string & value) {
-  j[key] = value;
+  j[key] = ConvertMultiByteStringToWideString(value);
   std::ofstream out(this->filename);
   out << j.dump(2);
   out.close();

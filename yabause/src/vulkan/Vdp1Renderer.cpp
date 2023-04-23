@@ -223,6 +223,8 @@ void Vdp1Renderer::prepareOffscreen() {
     }
 
     VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.color[i].image));
+    printf("offscreenPass.color[%d].image = %llx\n", i,offscreenPass.color[i].image);
+    vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.color[i].image, "offscreenPass.color[i].image");
     vkGetImageMemoryRequirements(device, offscreenPass.color[i].image, &memReqs);
     memAlloc.allocationSize = memReqs.size;
     // memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits,
@@ -270,6 +272,8 @@ void Vdp1Renderer::prepareOffscreen() {
 
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.depth.image, "offscreenPass.depth.image");
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = vulkan->findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -537,7 +541,7 @@ void Vdp1Renderer::erase() {
   clearUbo.clearColor.r = (color & 0x1F) / 31.0f;
   clearUbo.clearColor.g = ((color >> 5) & 0x1F) / 31.0f;
   clearUbo.clearColor.b = ((color >> 10) & 0x1F) / 31.0f;
-  clearUbo.clearColor.a = alpha / 255.0f;
+  clearUbo.clearColor.a =  alpha / 255.0f;
 
   void *data;
   vkMapMemory(device, _clearUniformBufferMemory, 0, sizeof(clearUbo), 0, &data);
@@ -2124,7 +2128,7 @@ void Vdp1Renderer::genClearPipeline() {
 
   std::array<VkDescriptorPoolSize, 1> poolSizes = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = 2;
+  poolSizes[0].descriptorCount = 4;
 
   VkDescriptorPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -3625,6 +3629,13 @@ VkImageView Vdp1Renderer::getFrameBufferImage() {
   return offscreenPass.color[readframe].view;
 }
 
+
+VkImage Vdp1Renderer::getFrameBufferVkImage() {
+  blitCpuWrittenFramebuffer(readframe);
+  VkDevice device = vulkan->getDevice();
+  return offscreenPass.color[readframe].image;
+}
+
 int Vdp1Renderer::genPolygon(YglSprite *input, CharTexture *output, float *colors, TextureCache *c, int cash_flg) {
 
   unsigned int x, y;
@@ -3958,6 +3969,8 @@ void Vdp1Renderer::readFrameBuffer(u32 type, u32 addr, void *out) {
 
         // Create the image
         VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &dstDeviceImage));
+        printf("dstDeviceImage = %llx\n", dstDeviceImage);
+        vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)dstDeviceImage, "dstDeviceImage");
         // Create memory to back up the image
         VkMemoryRequirements memRequirements;
         VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -3988,6 +4001,8 @@ void Vdp1Renderer::readFrameBuffer(u32 type, u32 addr, void *out) {
 
       // Create the image
       VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &dstImage));
+      printf("dstImage = %llx\n", dstImage);
+      vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)dstImage, "dstImage");
       // Create memory to back up the image
       VkMemoryRequirements memRequirements;
       VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -4248,6 +4263,8 @@ void Vdp1Renderer::blitCpuWrittenFramebuffer(int target) {
 
       // Create the image
       VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &writeImage));
+      printf("writeImage = %llx\n", writeImage);
+      vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)writeImage, "writeImage");
       // Create memory to back up the image
       VkMemoryRequirements memRequirements;
       VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());

@@ -641,7 +641,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       if (layers[i][j]->interuput_texture != VK_NULL_HANDLE) {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, layers[i][j]->interuput_texture, tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, tm->geTextureImageView(), tm->getTextureSampler());
-      } else {
+      }
+      else {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, tm->geTextureImageView(), tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, lineColor.imageView, lineColor.sampler);
       }
@@ -689,27 +690,28 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    glm::vec4 viewportData;
-    int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
-    int deviceOriginX = originx;
-    int deviceOriginY = originy;
-    if( resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0 ){
-      deviceWidth = renderWidth;
-      deviceHeight = renderHeight;
-      deviceOriginX = 0;
-      deviceOriginY = 0;
-    }
+  glm::vec4 viewportData;
+  int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  int deviceOriginX = originx;
+  int deviceOriginY = originy;
+  if (resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0) {
+    deviceWidth = renderWidth;
+    deviceHeight = renderHeight;
+    deviceOriginX = 0;
+    deviceOriginY = 0;
+  }
 
   int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
   VkRect2D render_area{};
   render_area.offset.x = 0;
   render_area.offset.y = 0;
   if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
-      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
     render_area.extent.width = deviceHeight;
     render_area.extent.height = deviceWidth;
-  } else {
+  }
+  else {
     render_area.extent.width = deviceWidth;
     render_area.extent.height = deviceHeight;
   }
@@ -735,48 +737,20 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   // vkQueueWaitIdle(_renderer->GetVulkanQueue());
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
-#if 1
+
   VkImageMemoryBarrier imageBarrier = {};
   imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   imageBarrier.srcAccessMask = 0;
-  imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
-  imageBarrier.image = tm->geTextureImage();
   imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
   imageBarrier.subresourceRange.baseMipLevel = 0;
   imageBarrier.subresourceRange.levelCount = 1;
   imageBarrier.subresourceRange.baseArrayLayer = 0;
   imageBarrier.subresourceRange.layerCount = 1;
-  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-
-
-  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
   imageBarrier.image = vdp1->getFrameBufferVkImage();
   vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-
-  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
-  imageBarrier.image = _renderer->getWindow()->getCurrentImage();
-  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
-  
-  VkImageMemoryBarrier simageBarrier = {};
-  simageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  simageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  simageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-  simageBarrier.srcAccessMask = 0;
-  simageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-  simageBarrier.image = _renderer->getWindow()->getDepthStencilImage();
-  simageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
-  simageBarrier.subresourceRange.baseMipLevel = 0;
-  simageBarrier.subresourceRange.levelCount = 1;
-  simageBarrier.subresourceRange.baseArrayLayer = 0;
-  simageBarrier.subresourceRange.layerCount = 1;
-  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &simageBarrier);
-#endif
 
     int u_dir = 0;
 

@@ -404,11 +404,11 @@ void Vdp1Renderer::prepareOffscreen() {
   // offscreenPass.descriptor.imageView = offscreenPass.color[0].view;
   // offscreenPass.descriptor.sampler = offscreenPass.sampler;
   
-  //vulkan->transitionImageLayout(offscreenPass.color[0].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-  //  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  vulkan->transitionImageLayout(offscreenPass.color[0].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-  //vulkan->transitionImageLayout(offscreenPass.color[1].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-  //  VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+  vulkan->transitionImageLayout(offscreenPass.color[1].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
 
 
@@ -788,22 +788,44 @@ void Vdp1Renderer::drawEnd(void) {
 
   // tm->updateTextureImage();
 
-  VkImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+  VkImageMemoryBarrier barrier_from_readonly_to_attachment = {};
+  barrier_from_readonly_to_attachment.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  barrier_from_readonly_to_attachment.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  barrier_from_readonly_to_attachment.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  barrier_from_readonly_to_attachment.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier_from_readonly_to_attachment.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+  barrier_from_readonly_to_attachment.image = offscreenPass.color[drawframe].image; 
+  barrier_from_readonly_to_attachment.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  barrier_from_readonly_to_attachment.subresourceRange.baseMipLevel = 0;
+  barrier_from_readonly_to_attachment.subresourceRange.levelCount = 1;
+  barrier_from_readonly_to_attachment.subresourceRange.baseArrayLayer = 0;
+  barrier_from_readonly_to_attachment.subresourceRange.layerCount = 1;
+  barrier_from_readonly_to_attachment.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+  barrier_from_readonly_to_attachment.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+  // レンダリングコマンドの開始前にバリアを発行
+  vkCmdPipelineBarrier(cb,
+    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+    0,
+    0, nullptr,
+    0, nullptr,
+    1, &barrier_from_readonly_to_attachment);
+
+  /*
+  imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   imageMemoryBarrier.srcAccessMask = 0;
-  imageMemoryBarrier.dstAccessMask = 0;
-  imageMemoryBarrier.image = offscreenPass.color[drawframe].image;
-  imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  imageMemoryBarrier.image = offscreenPass.depth.image;
+  imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
   imageMemoryBarrier.subresourceRange.levelCount = 1;
   imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
   imageMemoryBarrier.subresourceRange.layerCount = 1;
-
-  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0,
-                       nullptr, 1, &imageMemoryBarrier);
-
+  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+  */
   vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport =
@@ -3631,8 +3653,6 @@ VkImageView Vdp1Renderer::getFrameBufferImage() {
 
 
 VkImage Vdp1Renderer::getFrameBufferVkImage() {
-  blitCpuWrittenFramebuffer(readframe);
-  VkDevice device = vulkan->getDevice();
   return offscreenPass.color[readframe].image;
 }
 

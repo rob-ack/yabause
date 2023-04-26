@@ -1,10 +1,13 @@
-#include "Preference.h"
+﻿#include "Preference.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include "common.h"
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
+
+#include <locale.h>
+#include <charsetdetect.h>
 
 #define LOG printf
 using std::wstring;
@@ -28,12 +31,61 @@ std::string ConvertWideStringToMultiByteString(const std::string& utf8_str)
   return sjis_str;
 }
 
+// 文字コードを判定する関数
+std::string detect_encoding(const char* data, size_t length)
+{
+  std::string encoding;
+
+  const char *input_charset = NULL;
+  csd_t detect_handle = csd_open();
+  csd_consider(detect_handle, data, length);
+  input_charset = csd_close(detect_handle);
+
+  if (input_charset == NULL) {
+    printf("Failed to detect encoding.\n");
+    return "";
+  }
+
+  encoding = input_charset;
+
+  return encoding;
+}
+
+
+// 文字列をUTF-8に変換する関数
+std::string to_utf8(const std::string& str, const std::string& encoding)
+{
+  std::string result;
+
+  if (encoding == "UTF-8") {
+    result = str;
+  }
+  else {
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+    std::wstring wide_string = converter.from_bytes(str.data(), str.data() + str.size());
+    result = converter.to_bytes(wide_string);
+  }
+
+  return result;
+}
+
+// 判定と変換を行う関数
+std::string convert_to_utf8(const char* data, size_t length)
+{
+  std::string encoding = detect_encoding(data, length);
+  std::string utf8_string = to_utf8(std::string(data, length), encoding);
+  return utf8_string;
+}
+
 std::string ConvertMultiByteStringToWideString(const std::string& sjis_str)
 {
   if (sjis_str.empty()) {
     return std::string();
   }
-
+  
+  std::string utf8_str = convert_to_utf8(sjis_str.data(), sjis_str.size());
+  
+/*
   int size_needed = MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), NULL, 0);
   std::wstring wstrTo(size_needed, 0);
   MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), &wstrTo[0], size_needed);
@@ -41,6 +93,7 @@ std::string ConvertMultiByteStringToWideString(const std::string& sjis_str)
   size_needed = WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), NULL, 0, NULL, NULL);
   std::string utf8_str(size_needed, 0);
   WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), &utf8_str[0], size_needed, NULL, NULL);
+*/
 
   return utf8_str;
 }

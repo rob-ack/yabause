@@ -412,8 +412,8 @@ void getHomeDir( std::string & homedir ) {
   homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
 
-  homedir = "./";
-  return;
+  //homedir = "./";
+  //return;
   
   WCHAR * path;
   if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {

@@ -124,7 +124,7 @@ include_directories(
 
 set(APP_ICON_RESOURCE_WINDOWS application.rc)
 
-add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS} ${CMAKE_CURRENT_SOURCE_DIR}/res/utf8.manifest )
 
 
 # OpenSSL for https

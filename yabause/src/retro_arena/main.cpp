@@ -981,7 +981,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   if (g_playMode == RECORD) {
     sPlayer = PlayRecorder::getInstance();
     gsc.setScreenshotCallback(sPlayer);
-    sPlayer->setBaseDir(s_playrecord_path.c_str());
+    sPlayer->setBaseDir("./");
     sPlayer->startRocord();
   }
 
@@ -1031,7 +1031,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
       }
       else if(e.type == evToggleMenu){
         if( menu_show ){
-            Preference * p = new Preference(cdpath);
+            Preference * p = new Preference("default");
             VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
             delete p;
           hideMenuScreen();           
@@ -1132,7 +1132,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
       }
     }else{
       //printf("\033[%d;%dH Frmae = %d \n", 0, 0, frame_cont);
-      //frame_cont++;
+      frame_cont++;
+      if (sPlayer != nullptr && g_playMode == RECORD) {
+        if (frame_cont > 3000) {
+          goto FINISH;
+        }
+      }
       YabauseExec(); // exec one frame
     }
   }

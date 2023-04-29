@@ -533,6 +533,7 @@ void MenuScreen::showConfigDialog( PopupButton *parent ){
   cb->setCallbackSelect([this,preference]( int32_t idx ) {
     popActiveMenu();
     preference->setInt("Aspect rate",idx);
+    VideoSetSetting(VDP_SETTING_RBG_RESOLUTION_MODE, idx);
   });
 
   new Label(popup, "Rotate screen");

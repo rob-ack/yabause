@@ -7214,22 +7214,26 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
   if (supportsBlit)
   {
     // Define the region to blit (we will blit the whole swapchain image)
-    VkOffset3D blitSize;
+    VkOffset3D oblitSize;
+    oblitSize.x = viewportData.z;
+    oblitSize.y = viewportData.w;
+    oblitSize.z = 1;
+
+    VkOffset3D sblitSize;
+    sblitSize.x = deviceWidth - viewportData.x;
+    sblitSize.y = deviceHeight - viewportData.y;
+    sblitSize.z = 1;
 
 
-    blitSize.x = viewportData.z;
-    blitSize.y = viewportData.w;
-
-    blitSize.z = 1;
     VkImageBlit imageBlitRegion{};
     imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.srcSubresource.layerCount = 1;
     imageBlitRegion.srcOffsets[0].x = viewportData.x;    
     imageBlitRegion.srcOffsets[0].y = viewportData.y;    
-    imageBlitRegion.srcOffsets[1] = blitSize;
+    imageBlitRegion.srcOffsets[1] = sblitSize;
     imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.dstSubresource.layerCount = 1;
-    imageBlitRegion.dstOffsets[1] = blitSize;
+    imageBlitRegion.dstOffsets[1] = oblitSize;
 
     // Issue the blit command
     vkCmdBlitImage(
@@ -7362,9 +7366,9 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
           unsigned char *srcrow = &data[ (height-1-y) *subResourceLayout.rowPitch];
           unsigned char *dstrow = &dstbuf[y*width * 4];
           for (uint32_t x = 0; x < width; x++) {
-            dstrow[x * 4 + 0] = srcrow[x * 4 + 2];
+            dstrow[x * 4 + 0] = srcrow[x * 4 + 0];
             dstrow[x * 4 + 1] = srcrow[x * 4 + 1];
-            dstrow[x * 4 + 2] = srcrow[x * 4 + 0];
+            dstrow[x * 4 + 2] = srcrow[x * 4 + 2];
             dstrow[x * 4 + 3] = srcrow[x * 4 + 3];
           }
         }

@@ -10,93 +10,6 @@ namespace fs = std::experimental::filesystem;
 #include <charsetdetect.h>
 
 #define LOG printf
-using std::wstring;
-
-#include <Windows.h>
-
-std::string ConvertWideStringToMultiByteString(const std::string& utf8_str)
-{
-  if (utf8_str.empty()) {
-    return std::string();
-  }
-
-  int size_needed = MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), NULL, 0);
-  std::wstring wstrFrom(size_needed, 0);
-  MultiByteToWideChar(CP_UTF8, 0, utf8_str.c_str(), (int)utf8_str.size(), &wstrFrom[0], size_needed);
-
-  size_needed = WideCharToMultiByte(CP_ACP, 0, wstrFrom.c_str(), (int)wstrFrom.size(), NULL, 0, NULL, NULL);
-  std::string sjis_str(size_needed, 0);
-  WideCharToMultiByte(CP_ACP, 0, wstrFrom.c_str(), (int)wstrFrom.size(), &sjis_str[0], size_needed, NULL, NULL);
-
-  return sjis_str;
-}
-
-// 文字コードを判定する関数
-std::string detect_encoding(const char* data, size_t length)
-{
-  std::string encoding;
-
-  const char *input_charset = NULL;
-  csd_t detect_handle = csd_open();
-  csd_consider(detect_handle, data, length);
-  input_charset = csd_close(detect_handle);
-
-  if (input_charset == NULL) {
-    printf("Failed to detect encoding.\n");
-    return "";
-  }
-
-  encoding = input_charset;
-
-  return encoding;
-}
-
-
-// 文字列をUTF-8に変換する関数
-std::string to_utf8(const std::string& str, const std::string& encoding)
-{
-  std::string result;
-
-  if (encoding == "UTF-8") {
-    result = str;
-  }
-  else {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    std::wstring wide_string = converter.from_bytes(str.data(), str.data() + str.size());
-    result = converter.to_bytes(wide_string);
-  }
-
-  return result;
-}
-
-// 判定と変換を行う関数
-std::string convert_to_utf8(const char* data, size_t length)
-{
-  std::string encoding = detect_encoding(data, length);
-  std::string utf8_string = to_utf8(std::string(data, length), encoding);
-  return utf8_string;
-}
-
-std::string ConvertMultiByteStringToWideString(const std::string& sjis_str)
-{
-  if (sjis_str.empty()) {
-    return std::string();
-  }
-  
-  std::string utf8_str = convert_to_utf8(sjis_str.data(), sjis_str.size());
-  
-/*
-  int size_needed = MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), NULL, 0);
-  std::wstring wstrTo(size_needed, 0);
-  MultiByteToWideChar(CP_OEMCP, 0, sjis_str.c_str(), (int)sjis_str.size(), &wstrTo[0], size_needed);
-
-  size_needed = WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), NULL, 0, NULL, NULL);
-  std::string utf8_str(size_needed, 0);
-  WideCharToMultiByte(CP_UTF8, 0, wstrTo.c_str(), (int)wstrTo.size(), &utf8_str[0], size_needed, NULL, NULL);
-*/
-
-  return utf8_str;
-}
 
 
 Preference::Preference( const std::string & filename){
@@ -139,7 +52,7 @@ Preference::Preference( const std::string & filename){
       gamedirs.push_back(home_dir + "games");
       std::vector<string> warray;
       for (int i = 0; i < gamedirs.size(); i++) {
-        warray.push_back(ConvertMultiByteStringToWideString(gamedirs[i]));
+        warray.push_back(gamedirs[i]);
       }
       json j_array(warray);
       defaults["game directories"] = j_array;
@@ -211,13 +124,7 @@ void Preference::setBool( const std::string & key , bool value ){
 std::vector<string> Preference::getStringArray(const std::string & key) {
   try {
     LOG("Preference: getStringArray %s:%d\n", key.c_str(), j[key].get<std::vector<string>>());
-    auto warray = j[key].get<std::vector<string>>();
-    std::vector<string> array;
-
-    for (int i = 0; i < warray.size(); i++) {
-      array.push_back(ConvertWideStringToMultiByteString(warray[i]));
-    }
-
+    auto array = j[key].get<std::vector<string>>();
     return array;
   }
   catch (json::type_error & e) {
@@ -231,13 +138,7 @@ std::vector<string> Preference::getStringArray(const std::string & key) {
 
 
 void Preference::setStringArray(const string & key, const std::vector<string> array) {
-
-  std::vector<string> warray;
-  for (int i = 0; i < array.size(); i++) {
-    warray.push_back(ConvertMultiByteStringToWideString(array[i]));
-  }
-
-  json j_array(warray);
+  json j_array(array);
   j[key] = j_array;
   std::ofstream out(this->filename);
   out << j.dump(2);
@@ -247,7 +148,7 @@ void Preference::setStringArray(const string & key, const std::vector<string> ar
 string Preference::getString(const string & key, const string & defaultv) {
   try {
     LOG("Preference: getString %s:%d\n", key.c_str(), j[key].get<string>());
-    return ConvertWideStringToMultiByteString(j[key].get<string>());
+    return j[key].get<string>();
   }
   catch (json::type_error & e) {
   }
@@ -256,7 +157,7 @@ string Preference::getString(const string & key, const string & defaultv) {
 }
 
 void Preference::setString(const string & key, const string & value) {
-  j[key] = ConvertMultiByteStringToWideString(value);
+  j[key] = value;
   std::ofstream out(this->filename);
   out << j.dump(2);
   out.close();

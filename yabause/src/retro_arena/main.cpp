@@ -400,11 +400,13 @@ int yabauseinit()
 #include <Shlobj.h>
 
 void narrow(const std::wstring &src, std::string &dest) {
+  setlocale(LC_ALL, "ja_JP.UTF-8");
   char *mbs = new char[src.length() * MB_CUR_MAX + 1];
   wcstombs(mbs, src.c_str(), src.length() * MB_CUR_MAX + 1);
   dest = mbs;
   delete[] mbs;
 }
+
 
 void getHomeDir( std::string & homedir ) {
 #if defined(ARCH_IS_LINUX)
@@ -414,17 +416,21 @@ void getHomeDir( std::string & homedir ) {
 
   //homedir = "./";
   //return;
-  
   WCHAR * path;
   if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {
-    //std::wstring tmp;
-    //tmp = path;
-    //narrow(tmp, homedir);
+    std::wstring tmp;
+    tmp = path;
+    narrow(tmp, homedir);
 
-    int bufferSize = WideCharToMultiByte(CP_OEMCP, 0, path, -1, nullptr, 0, nullptr, nullptr);
-    std::vector<char> buffer(bufferSize);
-    WideCharToMultiByte(CP_OEMCP, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
-    homedir = buffer.data();
+    //int bufferSize = WideCharToMultiByte(CP_OEMCP, 0, path, -1, nullptr, 0, nullptr, nullptr);
+    //std::vector<char> buffer(bufferSize);
+    //WideCharToMultiByte(CP_OEMCP, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
+
+    //int bufferSize = WideCharToMultiByte(CP_UTF8, 0, path, -1, nullptr, 0, nullptr, nullptr);
+    //std::vector<char> buffer(bufferSize);
+    //WideCharToMultiByte(CP_UTF8, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
+    //homedir = buffer.data();
+
     homedir += "/YabaSanshiro/";
     CoTaskMemFree(path);
   }
@@ -509,6 +515,10 @@ bool selectDirectory(std::string & out) {
 //int main(int argc, char** argv)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
 {
+
+  UINT value = GetACP();
+  SetConsoleOutputCP(value);
+  setlocale(LC_ALL, "ja_JP.UTF-8");
   inputmng = InputManager::getInstance();
 
   char** argv = __argv;

@@ -43,6 +43,7 @@ namespace fs = std::experimental::filesystem ;
 
 using namespace std;
 
+#include "common.h"
 #include "InputManager.h"
 
 
@@ -240,7 +241,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
 
             Preference pref("default");
             vector<string> base_path_array = pref.getStringArray("game directories");
-            if (base_path_array.size() >= 0) {
+            if (base_path_array.size() > 0) {
               base_path = base_path_array[0];
             }
 
@@ -692,6 +693,14 @@ void MenuScreen::showLoadStateDialog( Popup *popup ){
 
 }
 
+std::string getExtension(const std::string& filename) {
+  size_t dotPos = filename.rfind('.');
+  if (dotPos != std::string::npos) {
+    return filename.substr(dotPos + 1);
+  }
+  return "";
+}
+
 void MenuScreen::listdir(const string & dirname, int indent, vector<shared_ptr<GameInfo>> & files )
 {
   DIR *dir;
@@ -717,12 +726,15 @@ void MenuScreen::listdir(const string & dirname, int indent, vector<shared_ptr<G
     else {
       printf("%*s- %s\n", indent, "", entry->d_name);
       string dname = dirname + "/" + entry->d_name;
-      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      //std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
       //if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
       //  files.push_back(dname);
       //}
 
-      if (ends_with(dname, ".cue") ) {
+      auto extention = getExtension(dname);
+      std::transform(extention.begin(), extention.end(), extention.begin(), ::tolower);
+
+      if (ends_with(dname, "cue") ) {
         shared_ptr<GameInfo> p = GameInfo::genGameInfoFromCUE(dname);
         if (p != nullptr) {
           files.push_back(p);
@@ -733,7 +745,7 @@ void MenuScreen::listdir(const string & dirname, int indent, vector<shared_ptr<G
         }
       }
 
-      if (ends_with(dname, ".chd")) {
+      if (ends_with(dname, "chd")) {
         shared_ptr<GameInfo> p = GameInfo::genGameInfoFromCHD(dname);
         if (p != nullptr) {
           files.push_back(p);
@@ -778,8 +790,10 @@ void MenuScreen::checkdir(const string & dirname, int indent, vector<string> & f
     else {
       printf("%*s- %s\n", indent, "", entry->d_name);
       string dname = dirname + "/" + entry->d_name;
-      std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
-      if (ends_with(dname, ".cue") || ends_with(dname, ".mdf") || ends_with(dname, ".ccd") || ends_with(dname, ".chd")) {
+      //std::transform(dname.begin(), dname.end(), dname.begin(), ::tolower);
+      auto extention = getExtension(dname);
+      std::transform(extention.begin(), extention.end(), extention.begin(), ::tolower);
+      if (ends_with(extention, "cue") || ends_with(extention, "mdf") || ends_with(extention, "ccd") || ends_with(extention, "chd")) {
         files.push_back(dname);
         closedir(dir);
         return;

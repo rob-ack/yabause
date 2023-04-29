@@ -141,6 +141,19 @@ static int OSDNanovgVInit(void)
     return 0;
   }
 
+#if 1
+  fontNormal = nvgCreateFont(vg, "sans", "./fonts/NotoSansJP-Medium.ttf");
+  if (fontNormal == -1) {
+    printf("Could not add font italic.\n");
+    return -1;
+  }
+  fontBold = nvgCreateFont(vg, "sans-bold", "./fonts/NotoSansJP-Bold.ttf");
+  if (fontBold == -1) {
+    printf("Could not add font bold.\n");
+    return -1;
+  }
+
+#else
   fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
   if (fontNormal == -1) {
     printf("Could not add font italic.\n");
@@ -151,6 +164,9 @@ static int OSDNanovgVInit(void)
     printf("Could not add font bold.\n");
     return -1;
   }
+#endif
+
+
 
   memset(frameinfo_histroy, 0, sizeof(FrameProfileInfo)*MAX_HISTORY);
   current_history_index = 0;

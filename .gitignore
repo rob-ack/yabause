@@ -17,3 +17,6 @@ yabause/src/android/app/.settings/*
 
 yabause/.vs/
 yabause/src/sh2_dynarec_devmiyax/.vs/
+.vs/yabause/v17/
+.vs/yabause/FileContentIndex/
+.vs/

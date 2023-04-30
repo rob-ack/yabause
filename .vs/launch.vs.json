@@ -1,0 +1,54 @@
+{
+    "version": "0.2.1",
+    "defaults": {},
+    "configurations": [
+      {
+        "type": "dll",
+        "project": "yabause\\CMakeLists.txt",
+        "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
+        "projectTarget": "kronos_libretro.dll (src\\libretro\\kronos_libretro.dll)",
+        "name": "Retro x64",
+        "exe": "C:/RetroArch-Win64/retroarch.exe",
+        "deployDirectory": "C:/RetroArch-Win64/retroarch.exe/cores",
+        "args": [
+          "-L",
+          "${cmake.buildRoot}/src/libretro/kronos_libretro.dll",
+          "--config",
+          "C:/RetroArch-Win64/retroarch.cfg",
+          "\"C:/Users/rober/Downloads/RetroArch/RetroArch-MSVC10-Win32/downloads/Mystaria/Mystaria.cue\"",
+          "--verbose"
+        ]
+      },
+      {
+        "type": "cppgdb",
+        "name": "retropie retroarch devmiyax",
+        "project": "yabause\\CMakeLists.txt",
+        "projectTarget": "libkronos_libretro.so",
+        "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+        "debuggerConfiguration": "gdb",
+        "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+        "args": [
+          "--config=/opt/retropie/configs/saturn/retroarch.cfg",
+          "--verbose",
+          "--libretro=${debugInfo.fullTargetPath}",
+          "/home/pi/RetroPie/roms/saturn/Story of Thor 2, The (Europe)/Story of Thor 2, The (Europe).cue"
+        ],
+        "env": {},
+        "showDisplayString": false,
+        "stopOnEntry": false
+      },
+      {
+        "type": "default",
+        "project": "yabause\\CMakeLists.txt",
+        "projectTarget": "kronos.exe (src\\port\\qt\\kronos.exe)",
+        "name": "kronos.exe (src\\port\\qt\\kronos.exe)"
+      },
+      {
+        "type": "dll",
+        "exe": "",
+        "project": "yabause\\CMakeLists.txt",
+        "projectTarget": "kronos_libretro.dll (src\\libretro\\kronos_libretro.dll)",
+        "name": "kronos_libretro.dll (src\\libretro\\kronos_libretro.dll)"
+      }
+    ]
+  }

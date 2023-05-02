@@ -619,7 +619,7 @@ int YabauseEmulate(void) {
     {
         CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series);
         once = true;
-}
+    }
     PCV_SPAN spanFrame;
     CvEnterSpan(series, &spanFrame, L"Frame");
 #endif

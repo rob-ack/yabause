@@ -5493,6 +5493,13 @@ void ScspExec(){
 #include <inttypes.h>
 #define __STDC_FORMAT_MACROS
 
+#if defined CV_SUPPORT
+#include "cvmarkers.h"
+#include <stdbool.h>
+PCV_MARKERSERIES series;
+PCV_PROVIDER provider;
+#endif
+
 void ScspAsynMainCpuTime( void * p ){
 
   u64 before;
@@ -5535,6 +5542,17 @@ void ScspAsynMainCpuTime( void * p ){
       if (thread_running == 0) break;
     } while (m68k_cycle == 0);
 
+#if defined CV_SUPPORT
+    static once = false;
+    if (!once)
+    {
+        CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series);
+        once = true;
+    }
+    PCV_SPAN spanFrame;
+    CvEnterSpan(series, &spanFrame, L"SCSP Frame");
+#endif
+
     m68k_inc += m68k_cycle;
     pre_m68k_cycle = m68k_integer_part;
 
@@ -5571,6 +5589,9 @@ void ScspAsynMainCpuTime( void * p ){
       }
     }
     setM68kDoneCounter(pre_m68k_cycle);
+#if defined CV_SUPPORT
+    CvLeaveSpan(spanFrame);
+#endif
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }
@@ -5620,7 +5641,18 @@ void ScspAsynMainRealtime(void * p) {
   now = 0;
   before = 0;
   while (thread_running) {
+#if defined CV_SUPPORT
+    static once = false;
+    if (!once)
+    {
+        CvCreateDefaultMarkerSeriesOfDefaultProvider(&provider, &series);
+        once = true;
+    }
+    PCV_SPAN spanFrame;
+    CvEnterSpan(series, &spanFrame, L"SCSP Frame");
+#endif
     while (g_scsp_lock) { YabThreadUSleep(1000); }
+
     // Run 1 sample(44100Hz)
     for (i = 0; i < samplecnt; i += step) {
       MM68KExec(step);
@@ -5628,7 +5660,6 @@ void ScspAsynMainRealtime(void * p) {
     }
 
     wait_clock = 0;
-
     if (use_new_scsp) {
       new_scsp_exec((samplecnt << 1));
     }
@@ -5745,6 +5776,9 @@ void ScspAsynMainRealtime(void * p) {
       //printf("vsynctime = %d(%d) %"PRIu64"-%"PRIu64"=(%"PRId64")\n", (s32)(checktime - before),16666666/frame_div,now,before,initsleeptime);
       before = checktime;
     }
+#if defined CV_SUPPORT
+    CvLeaveSpan(spanFrame);
+#endif
   }
   YabThreadWake(YAB_THREAD_SCSP);
 }

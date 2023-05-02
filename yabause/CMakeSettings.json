@@ -70,14 +70,14 @@
       "generator": "Ninja",
       "configurationType": "Debug",
       "buildRoot": "${projectDir}\\out\\build\\${name}",
-      "installRoot": "C:\\Users\\rober\\Downloads\\RetroArch\\RetroArch-MSVC10-Win32\\cores",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
       "buildCommandArgs": "",
       "ctestCommandArgs": "",
       "inheritEnvironments": [ "msvc_x86" ],
       "variables": [
         {
           "name": "YAB_WANT_DYNAREC_DEVMIYAX",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -122,7 +122,7 @@
         },
         {
           "name": "YAB_WANT_DYNAREC_KRONOS",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {
@@ -552,6 +552,38 @@
           "name": "ENABLE_CONCURENCY_VISUALIZER_SUPPORT",
           "value": "True",
           "type": "BOOL"
+        }
+      ]
+    },
+    {
+      "name": "x64-Release-libretro",
+      "generator": "Ninja",
+      "configurationType": "RelWithDebInfo",
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": "",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "variables": [
+        {
+          "name": "YAB_WANT_DYNAREC_DEVMIYAX",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "SH2_TRACE",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_USE_QT5",
+          "value": "False",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_PORTS",
+          "value": "libretro",
+          "type": "STRING"
         }
       ]
     }

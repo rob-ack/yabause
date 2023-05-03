@@ -981,7 +981,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   if (g_playMode == RECORD) {
     sPlayer = PlayRecorder::getInstance();
     gsc.setScreenshotCallback(sPlayer);
-    sPlayer->setBaseDir("./");
+    sPlayer->setBaseDir("./record/");
     sPlayer->startRocord();
   }
 

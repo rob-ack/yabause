@@ -262,6 +262,11 @@ extern "C" {
   int YuiRevokeOGLOnThisThread() {
     LOG("revoke thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+      return 0;
+    }
+
     int rc = -1;
     int retry = 0;
     while (rc != 0) {
@@ -272,7 +277,7 @@ extern "C" {
       if (retry > 100) {
         LOG("out of retry cont\n");
         abort();
-      }
+      } 
     }
 #else
     SDL_GL_MakeCurrent(wnd, nullptr);
@@ -283,6 +288,11 @@ extern "C" {
   int YuiUseOGLOnThisThread() {
     LOG("use thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+      return 0;
+    }
+
     int rc = -1;
     int retry = 0;
     while (rc != 0) {

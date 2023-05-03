@@ -89,7 +89,7 @@ endif()
 string(COMPARE EQUAL ${YAB_PORTS} "retro_arena" retro_arena)
 if( retro_arena )
   add_definitions(-D__RETORO_ARENA__)
-  #add_definitions(-DYAB_ASYNC_RENDERING)
+  add_definitions(-DYAB_ASYNC_RENDERING)
 endif()
 
 if ("${CMAKE_SYSTEM_NAME}" STREQUAL "Switch")

@@ -108,8 +108,12 @@ void retro_set_environment(retro_environment_t cb)
       { "yabasanshiro_addon_cart", "Addon Cartridge (restart); 4M_extended_ram|1M_extended_ram" },
       { "yabasanshiro_multitap_port1", "6Player Adaptor on Port 1; disabled|enabled" },
       { "yabasanshiro_multitap_port2", "6Player Adaptor on Port 2; disabled|enabled" },
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX && DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|kronos|interpreter" },
+#elif defined DYNAREC_DEVMIYAX
       { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|interpreter" },
+#elif defined DYNAREC_KRONOS
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
 #endif
 #ifdef ALLOW_POLYGON_MODE
       { "yabasanshiro_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },
@@ -734,13 +738,15 @@ void check_variables(void)
          g_rbg_use_compute_shader = 0;
    }
 
-#ifdef DYNAREC_DEVMIYAX
+#if defined DYNAREC_DEVMIYAX || DYNAREC_KRONOS
    var.key = "yabasanshiro_sh2coretype";
    var.value = NULL;
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
    {
       if (strcmp(var.value, "dynarec") == 0)
          g_sh2coretype = 3;
+      else if (strcmp(var.value, "kronos") == 0)
+          g_sh2coretype = 8;
       else if (strcmp(var.value, "interpreter") == 0)
          g_sh2coretype = SH2CORE_INTERPRETER;
    }

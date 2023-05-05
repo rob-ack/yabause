@@ -72,6 +72,9 @@ public:
     else {
       pgid = prg->second;
     }
+    if (pgid == nullptr) {
+      printf("fail to find shader");
+    }
     return pgid;
   }
 

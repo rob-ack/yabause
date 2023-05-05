@@ -69,6 +69,19 @@ extern "C" {
   extern const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_hblank_f[];
   extern const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f[];
   extern const GLchar Yglprg_vdp2_drawfb_cram_eiploge_vulkan_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[];
+
+  extern const GLchar Yglprg_vdp2_drawfb_cram_less_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_equal_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_more_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_msb_color_add_f[];
+
+  extern const GLchar Yglprg_vdp2_drawfb_line_blend_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_line_add_f[];
+
 }
 
 
@@ -632,22 +645,33 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         else { // Line Color Insertion
           switch (SPCCCS)
           {
-          case 0:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE;
-            pgid = pipelines["less_color_col_line"];
-            break;
-          case 1:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE;
-            pgid = pipelines["equal_color_col_line"];
-            break;
-          case 2:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE;
-            pgid = pipelines["more_color_col_line"];
-            break;
-          case 3:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE;
-            pgid = pipelines["msb_color_col_line"];
-            break;
+          case 0:{
+            string a = Yglprg_vdp2_drawfb_cram_less_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("less_color_col_line", a.c_str(), NONE);
+          }
+          break;
+          
+          case 1: {
+            string a = Yglprg_vdp2_drawfb_cram_equal_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("equal_color_col_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 2: {
+            string a = Yglprg_vdp2_drawfb_cram_more_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("more_color_col_line", a.c_str(), NONE);
+          }
+          break;
+          
+          case 3: {
+            string a = Yglprg_vdp2_drawfb_cram_msb_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("msb_color_col_line", a.c_str(), NONE);
+          }
+          break;
           }
         }
       }
@@ -665,23 +689,35 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         else {
           switch (SPCCCS)
           {
-          case 0:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE;
-            pgid = pipelines["less_destalpha_line"];
-            break;
-          case 1:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE;
-            pgid = pipelines["equal_destalpha_line"];
-            break;
-          case 2:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE;
-            pgid = pipelines["more_destalpha_line"];
-            break;
-          case 3:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE;
-            pgid = pipelines["msb_destalpha_line"];
-            break;
+          case 0: {
+            string a = Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("less_destalpha_line", a.c_str(), NONE);
           }
+          break;
+
+          case 1: {
+            string a = Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("equal_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 2: {
+            string a = Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("more_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 3: {
+            string a = Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("msb_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+          }
+
         }
       }
     }
@@ -730,23 +766,53 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         }
       }
       else {
+
+        switch (SPCCCS)
+        {
+        case 0: {
+          string a = Yglprg_vdp2_drawfb_cram_less_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("less_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 1: {
+          string a = Yglprg_vdp2_drawfb_cram_equal_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("equal_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 2: {
+          string a = Yglprg_vdp2_drawfb_cram_more_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("more_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 3: {
+          string a = Yglprg_vdp2_drawfb_cram_msb_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("more_color_add_line", a.c_str(), ADD);
+        }
+                break;
+        }
+
+
+
         switch (SPCCCS)
         {
         case 0:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE;
-          pgid = pipelines["less_color_add_line"];
+          pgid = findShader("less_color_add_line", Yglprg_vdp2_drawfb_cram_less_color_add_f, ADD);
           break;
         case 1:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE;
-          pgid = pipelines["less_color_add_line"];
+          pgid = findShader("equal_color_add_line", Yglprg_vdp2_drawfb_cram_equal_color_add_f, ADD);
           break;
         case 2:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE;
-          pgid = pipelines["more_color_add_line"];
+          pgid = findShader("more_color_add_line", Yglprg_vdp2_drawfb_cram_more_color_add_f, ADD);
           break;
         case 3:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE;
-          pgid = pipelines["msb_color_add_line"];
+          pgid = findShader("more_color_add_line", Yglprg_vdp2_drawfb_cram_msb_color_add_f, ADD);
           break;
         }
       }
@@ -761,6 +827,10 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
     else {
       pgid = findShader("no_color_col", Yglprg_vdp2_drawfb_cram_no_color_col_f, NONE);
     }
+  }
+
+  if (pgid == nullptr) {
+    printf("Fail to find shader");
   }
 
 
@@ -1333,6 +1403,10 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
   pipelines[key] = graphicsPipeline;
 
+  if (graphicsPipeline == nullptr) {
+    printf("failed to create graphics pipeline!");
+  }
+
   return graphicsPipeline;
 
 }
@@ -1850,6 +1924,7 @@ void FramebufferRenderer::updateDescriptorSets(int index) {
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }
+
 
 
 

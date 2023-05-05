@@ -649,7 +649,6 @@ void Vdp1Renderer::erase() {
     right = 0;
   if (left < 0)
     left = 0;
-
   int width = right - left + wrate;
   int height = bottom - top + (interlace*hrate);
   if (width <= 0)
@@ -660,6 +659,12 @@ void Vdp1Renderer::erase() {
     width = offscreenPass.width;
   if (height >= offscreenPass.height)
     height = offscreenPass.height;
+
+  // すべて0の場合は画面全体をクリアする
+  if (top == 0 && bottom == 0 && right == 0 && left == 0) {
+    width = offscreenPass.width;
+    height = offscreenPass.height;
+  }
 
   VkRect2D scissor = vks::initializers::rect2D(width, height, left, top);
   // VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);

@@ -54,11 +54,14 @@ static bool one_frame_rendered = false;
 
 static bool libretro_supports_bitmasks = false;
 static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1};
- 
+
+#ifdef DYNAREC_KRONOS
+#include "sh2int_kronos.h"
+#endif
+
 #ifdef DYNAREC_DEVMIYAX
 static int g_sh2coretype = 3;
 #elif DYNAREC_KRONOS
-#include "sh2int_kronos.h"
 static int g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
 #else
 static int g_sh2coretype = SH2CORE_INTERPRETER;

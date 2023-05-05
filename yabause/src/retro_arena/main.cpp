@@ -1343,8 +1343,25 @@ FINISH:
     return rtn;
 }
 
+std::string shaderCacheDir = "";
+
 const char * YuiGetShaderCachePath() {
-  return "./";
+
+  if (shaderCacheDir == "") {
+    std::string home_dir;
+    getHomeDir(home_dir);
+    shaderCacheDir = home_dir + "/cache/";
+    struct stat st = { 0 };
+    if (stat(shaderCacheDir.c_str(), &st) == -1) {
+#if defined(_WINDOWS)
+      mkdir(shaderCacheDir.c_str());
+#else
+      mkdir(shaderCacheDir.c_str(), 0700);
+#endif
+    }
+
+  }
+  return shaderCacheDir.c_str();
 }
 
 extern "C" {

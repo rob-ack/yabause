@@ -46,6 +46,8 @@ class VdpPipelineWindow;
 
 #define WINDOW_CLIP_MODE (WINDOW_CLIP_STENCIL)
 
+#define MAX_VERTEX_COUNT (1024)
+
 struct WindowUbo {
   glm::mat4 model;
   int windowBit;

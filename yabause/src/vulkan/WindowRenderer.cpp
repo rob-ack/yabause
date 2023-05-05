@@ -79,7 +79,7 @@ Vdp2Window::Vdp2Window() {
 int Vdp2Window::init(int id, VIDVulkan * vulkan, VkRenderPass offscreenPass) {
 
   this->id = id;
-  VkDeviceSize bufferSize = sizeof(Vertex) * 512;
+  VkDeviceSize bufferSize = sizeof(Vertex) * MAX_VERTEX_COUNT;
   const VkDevice device = vulkan->getDevice();
 
   this->vulkan = vulkan;
@@ -121,7 +121,7 @@ int Vdp2Window::flush(VkCommandBuffer commandBuffer) {
   copyRegion.size = vertexcnt * sizeof(Vertex);
   vkCmdCopyBuffer(commandBuffer, stagingBuffer, vertexBuffer, 1, &copyRegion);
 
-  VkDeviceSize bufferSize = sizeof(Vertex) * 512;
+  VkDeviceSize bufferSize = sizeof(Vertex) * MAX_VERTEX_COUNT;
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, (void**)&vertex);
 
   return 0;
@@ -593,8 +593,8 @@ void WindowRenderer::generateWindowInfo(Vdp2 * fixVdp2Regs, int which) {
             }
           }
 
-          if (w->vertexcnt >= 1024) {
-            w->vertexcnt = 1023;
+          if (w->vertexcnt >= MAX_VERTEX_COUNT) {
+            w->vertexcnt = MAX_VERTEX_COUNT-1;
           }
 
           preHStart = HStart;

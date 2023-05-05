@@ -58,6 +58,7 @@ class Vdp1Renderer {
     bool updated;
     bool readed;
     std::queue<VkFence> renderFences;
+    VkImageLayout layout;
   };
   struct OffscreenPass {
     int32_t width, height;
@@ -107,7 +108,7 @@ public:
   void setTextureRatio(int vdp2widthratio, int vdp2heightratio);
   
   VkImageView getFrameBufferImage();
-  VkImage getFrameBufferVkImage();
+  void useImageAsShaderRead(VkCommandBuffer commandBuffer);
 
   VkSemaphore getFrameBufferSem() {
     if (offscreenPass.color[readframe].updated) {

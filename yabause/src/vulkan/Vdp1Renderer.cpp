@@ -407,10 +407,12 @@ void Vdp1Renderer::prepareOffscreen() {
   vulkan->transitionImageLayout(offscreenPass.color[0].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
+  offscreenPass.color[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
   vulkan->transitionImageLayout(offscreenPass.color[1].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
     VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-
+  offscreenPass.color[1].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 
 }
@@ -585,18 +587,22 @@ void Vdp1Renderer::erase() {
   vkBeginCommandBuffer(cb, &cmdBufInfo);
 
   VkImageMemoryBarrier imageBarrier = {};
-  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  imageBarrier.srcAccessMask = 0;
-  imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-  imageBarrier.image = offscreenPass.color[readframe].image;
-  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  imageBarrier.subresourceRange.baseMipLevel = 0;
-  imageBarrier.subresourceRange.levelCount = 1;
-  imageBarrier.subresourceRange.baseArrayLayer = 0;
-  imageBarrier.subresourceRange.layerCount = 1;
-  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+  if (offscreenPass.color[readframe].layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.oldLayout = offscreenPass.color[readframe].layout;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    imageBarrier.srcAccessMask = 0;
+    imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    imageBarrier.image = offscreenPass.color[readframe].image;
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0;
+    imageBarrier.subresourceRange.levelCount = 1;
+    imageBarrier.subresourceRange.baseArrayLayer = 0;
+    imageBarrier.subresourceRange.layerCount = 1;
+    vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+    offscreenPass.color[readframe].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  }
 
   imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -751,7 +757,7 @@ void Vdp1Renderer::drawEnd(void) {
   vkUnmapMemory(device, _uniformBufferMemory);
 
   while (offscreenPass.color[drawframe].renderFences.size() > 0) {
-	  ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, UINT64_MAX));
+	  ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, 1000));
 	  vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
 	  offscreenPass.color[drawframe].renderFences.pop();
   }
@@ -788,29 +794,36 @@ void Vdp1Renderer::drawEnd(void) {
 
   // tm->updateTextureImage();
 
-  VkImageMemoryBarrier barrier_from_readonly_to_attachment = {};
-  barrier_from_readonly_to_attachment.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-  barrier_from_readonly_to_attachment.oldLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  barrier_from_readonly_to_attachment.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-  barrier_from_readonly_to_attachment.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier_from_readonly_to_attachment.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier_from_readonly_to_attachment.image = offscreenPass.color[drawframe].image; 
-  barrier_from_readonly_to_attachment.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-  barrier_from_readonly_to_attachment.subresourceRange.baseMipLevel = 0;
-  barrier_from_readonly_to_attachment.subresourceRange.levelCount = 1;
-  barrier_from_readonly_to_attachment.subresourceRange.baseArrayLayer = 0;
-  barrier_from_readonly_to_attachment.subresourceRange.layerCount = 1;
-  barrier_from_readonly_to_attachment.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
-  barrier_from_readonly_to_attachment.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+  vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-  // レンダリングコマンドの開始前にバリアを発行
-  vkCmdPipelineBarrier(cb,
-    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-    0,
-    0, nullptr,
-    0, nullptr,
-    1, &barrier_from_readonly_to_attachment);
+  if (offscreenPass.color[drawframe].layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+
+    VkImageMemoryBarrier barrier_from_readonly_to_attachment = {};
+    barrier_from_readonly_to_attachment.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier_from_readonly_to_attachment.oldLayout = offscreenPass.color[drawframe].layout;
+    barrier_from_readonly_to_attachment.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier_from_readonly_to_attachment.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier_from_readonly_to_attachment.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier_from_readonly_to_attachment.image = offscreenPass.color[drawframe].image;
+    barrier_from_readonly_to_attachment.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier_from_readonly_to_attachment.subresourceRange.baseMipLevel = 0;
+    barrier_from_readonly_to_attachment.subresourceRange.levelCount = 1;
+    barrier_from_readonly_to_attachment.subresourceRange.baseArrayLayer = 0;
+    barrier_from_readonly_to_attachment.subresourceRange.layerCount = 1;
+    barrier_from_readonly_to_attachment.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier_from_readonly_to_attachment.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    // レンダリングコマンドの開始前にバリアを発行
+    vkCmdPipelineBarrier(cb,
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      0,
+      0, nullptr,
+      0, nullptr,
+      1, &barrier_from_readonly_to_attachment);
+
+    offscreenPass.color[drawframe].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  }
 
   /*
   imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -826,7 +839,6 @@ void Vdp1Renderer::drawEnd(void) {
   imageMemoryBarrier.subresourceRange.layerCount = 1;
   vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
   */
-  vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport =
       vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
@@ -3652,8 +3664,25 @@ VkImageView Vdp1Renderer::getFrameBufferImage() {
 }
 
 
-VkImage Vdp1Renderer::getFrameBufferVkImage() {
-  return offscreenPass.color[readframe].image;
+void Vdp1Renderer::useImageAsShaderRead( VkCommandBuffer commandBuffer ) {
+
+  if (offscreenPass.color[readframe].layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    VkImageMemoryBarrier imageBarrier = {};
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.srcAccessMask = 0;
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0;
+    imageBarrier.subresourceRange.levelCount = 1;
+    imageBarrier.subresourceRange.baseArrayLayer = 0;
+    imageBarrier.subresourceRange.layerCount = 1;
+    imageBarrier.oldLayout = offscreenPass.color[readframe].layout;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    imageBarrier.image = offscreenPass.color[readframe].image;
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+    offscreenPass.color[readframe].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  }
+  
 }
 
 int Vdp1Renderer::genPolygon(YglSprite *input, CharTexture *output, float *colors, TextureCache *c, int cash_flg) {

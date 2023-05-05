@@ -288,7 +288,7 @@
         },
         {
           "name": "YAB_WANT_DYNAREC_DEVMIYAX",
-          "value": "False",
+          "value": "True",
           "type": "BOOL"
         },
         {
@@ -567,7 +567,7 @@
       "variables": [
         {
           "name": "YAB_WANT_DYNAREC_DEVMIYAX",
-          "value": "True",
+          "value": "False",
           "type": "BOOL"
         },
         {
@@ -584,6 +584,11 @@
           "name": "YAB_PORTS",
           "value": "libretro",
           "type": "STRING"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     }

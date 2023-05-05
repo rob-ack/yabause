@@ -4,7 +4,7 @@
   "configurations": [
     {
       "type": "dll",
-      "name": "Retro x64",
+      "name": "Retro x64 Debug",
       "project": "yabause\\CMakeLists.txt",
       "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
       "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
@@ -13,6 +13,23 @@
       "args": [
         "-L",
         "\"C:/Projects/yabause-yaba/yabause/out/build/x64-Debug-libretro/src/libretro/yabause_libretro.dll\"",
+        "--config",
+        "C:/RetroArch-Win64/retroarch.cfg",
+        "\"C:/Users/rober/Downloads/Sega Saturn/Soviet Strike (Germany)/Soviet Strike (Germany).cue\"",
+        "--verbose"
+      ]
+    },
+    {
+      "type": "dll",
+      "name": "Retro x64 Release",
+      "project": "yabause\\CMakeLists.txt",
+      "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
+      "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
+      "exe": "C:/RetroArch-Win64/retroarch.exe",
+      "deployDirectory": "C:/RetroArch-Win64/retroarch.exe/cores",
+      "args": [
+        "-L",
+        "\"C:/Projects/yabause-yaba/yabause/out/build/x64-Release-libretro/src/libretro/yabause_libretro.dll\"",
         "--config",
         "C:/RetroArch-Win64/retroarch.cfg",
         "\"C:/Users/rober/Downloads/Sega Saturn/Soviet Strike (Germany)/Soviet Strike (Germany).cue\"",
@@ -100,7 +117,7 @@
         "--config=/opt/retropie/configs/saturn/retroarch.cfg",
         "--verbose",
         "--libretro=${debugInfo.fullTargetPath}",
-        "/home/pi/RetroPie/roms/saturn/Soviet Strike (Europe).zip"
+        "/home/pi/RetroPie/roms/saturn/Soviet Strike (Germany)/Soviet Strike (Germany).cue"
       ],
       "env": {},
       "showDisplayString": false,

@@ -57,6 +57,9 @@ static int16_t libretro_input_bitmask[12] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1
  
 #ifdef DYNAREC_DEVMIYAX
 static int g_sh2coretype = 3;
+#elif DYNAREC_KRONOS
+#include "sh2int_kronos.h"
+static int g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
 #else
 static int g_sh2coretype = SH2CORE_INTERPRETER;
 #endif
@@ -458,6 +461,9 @@ SH2Interface_struct *SH2CoreList[] = {
     &SH2DebugInterpreter,
 #ifdef DYNAREC_DEVMIYAX
     &SH2Dyn,
+#endif
+#ifdef DYNAREC_KRONOS
+    &SH2KronosInterpreter,
 #endif
     NULL
 };

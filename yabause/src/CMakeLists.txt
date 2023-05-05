@@ -231,6 +231,7 @@ if (YAB_WANT_DYNAREC_KRONOS)
 	include_directories(sh2_kronos/include)
 	set(yabause_SOURCES ${yabause_SOURCES}
 		sh2_kronos/include/memory_sh2.h
+		sh2_kronos/include/sh2int_kronos.h
 		sh2_kronos/src/memory_sh2.cpp
 		sh2_kronos/src/sh2int_kronos.c
 		sh2_kronos/src/sh2_opcodes_kronos.c

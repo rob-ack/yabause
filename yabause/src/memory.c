@@ -932,6 +932,7 @@ u16 FASTCALL MappedMemoryReadWordNocache(u32 addr, u32 * cycle)
 u16 MappedMemoryReadInst(u32 addr, u32 * cycle) {
   return MappedMemoryReadWord(addr,cycle);
 }
+
 u16 FASTCALL MappedMemoryReadWord(u32 addr, u32 * cycle)
 #endif
 {

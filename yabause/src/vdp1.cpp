@@ -333,13 +333,13 @@ extern "C" void VideoDeInit(void) {
 //////////////////////////////////////////////////////////////////////////////
 
 extern "C" void Vdp1Reset(void) {
-  memset(Vdp1Regs, 0, sizeof(Vdp1Regs));
+  
    Vdp1Regs->PTMR = 0;
    Vdp1Regs->MODR = 0x1000; // VDP1 Version 1
-   Vdp1Regs->TVMR = 0;
-   Vdp1Regs->EWDR = 0;
-   Vdp1Regs->EWLR = 0;
-   Vdp1Regs->EWRR = 0;
+   //Vdp1Regs->TVMR = 0; // undefined when reset
+   //Vdp1Regs->EWDR = 0; // undefined when reset
+   //Vdp1Regs->EWLR = 0; // undefined when reset
+   //Vdp1Regs->EWRR = 0; // undefined when reset
    Vdp1Regs->ENDR = 0;
    VIDCore->Vdp1Reset();
 

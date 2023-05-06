@@ -126,8 +126,8 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
   imageWindow = nullptr;
   dirSelectWindow = nullptr;
 
-  int image_pix_size_w = this->width() / 2;
-  int image_pix_size_h = this->height() / 2;
+  int image_pix_size_w = this->width() / 2 / this->pixelRatio();
+  int image_pix_size_h = this->height() / 2 / this->pixelRatio();
   imageWindow = new Window(this, "About");                                                                                                         
   imageWindow->setPosition(Vector2i(0, 0));                                                                                                                   
   imageWindow->setLayout(new GroupLayout(0,0,0));     
@@ -192,7 +192,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
         b1->setCallback([this]() { 
           evm->postEvent("reset");
         });        
-
+#if 0
         btnPlay = new Button(tools, "Play");
         btnPlay->setFixedWidth(248);
         btnPlay->setCallback([this]() {
@@ -210,7 +210,7 @@ MenuScreen::MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std:
             btnRecord->setCaption("Record");
           }
         });
-
+#endif
 
         PopupButton * ps = new PopupButton(tools, "Save State");
         ps->setFixedWidth(248);
@@ -856,10 +856,13 @@ void MenuScreen::checkGameFiles(Widget * parent, const vector<std::string> & bas
 }
 
 void MenuScreen::showFileSelectDialog( Widget * parent, Widget * toback, const vector<std::string> & base_paths ){
-  const int dialog_width = 512;
-  const int dialog_height = this->size()[1] - 20 ;
+  const int dialog_width = 512 ;
+  const int dialog_height = (this->size()[1] / this->pixelRatio() - 20) ;
     swindow = new Window(this, "Select Game");
-    swindow->setPosition(Vector2i(  this->size()[0]/2 - (dialog_width/2) ,   this->size()[1]/2 - (dialog_height/2) ));
+    swindow->setPosition(Vector2i( 
+      (this->size()[0]/2 / this->pixelRatio()) - (dialog_width/2) ,  
+      (this->size()[1]/2 / this->pixelRatio()) - (dialog_height/2) ));
+
     swindow->setFixedSize({dialog_width, dialog_height});
     //swindow->setLayout(new GroupLayout());
 
@@ -1463,6 +1466,8 @@ void MenuScreen::setBackGroundImage( const std::string & fname ){
   imageid_ = nvgCreateImage(mNVGContext, fname.c_str(), 0 );
   nvgImageSize(mNVGContext, imageid_, &imgw_, &imgh_);
   MENU_LOG("imageid_:%d w:%d h:%d\n",imageid_,imgw_,imgh_);
+  imgw_ /= this->pixelRatio();
+  imgh_ /= this->pixelRatio();
 	imgPaint_ = nvgImagePattern(mNVGContext, 0, 0, imgw_,imgh_, 0, imageid_, 0.5f);
 }
 
@@ -1478,6 +1483,10 @@ void MenuScreen::setTmpBackGroundImage( const std::string & fname ){
   imageid_tmp_ = nvgCreateImage(mNVGContext, fname.c_str(), 0 );
   nvgImageSize(mNVGContext, imageid_, &imgw_, &imgh_);
   MENU_LOG("imageid_:%d w:%d h:%d\n",imageid_,imgw_,imgh_);
+
+  imgw_ /= this->pixelRatio();
+  imgh_ /= this->pixelRatio();
+
 	imgPaint_ = nvgImagePattern(mNVGContext, 0, 0, imgw_,imgh_, 0, imageid_tmp_, 0.5f);
 }
 
@@ -1486,6 +1495,8 @@ void MenuScreen::setDefalutBackGroundImage(){
     return;
   }
   nvgImageSize(mNVGContext, imageid_, &imgw_, &imgh_);
+  imgw_ /= this->pixelRatio();
+  imgh_ /= this->pixelRatio();
 	imgPaint_ = nvgImagePattern(mNVGContext, 0, 0, imgw_,imgh_, 0, imageid_, 0.5f);
 }
 

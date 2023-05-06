@@ -302,6 +302,13 @@ void Screen::initialize(SDL_Window* window)
     _window = window;    
     SDL_GetWindowSize( window, &mSize[0], &mSize[1]);
     SDL_GetWindowSize( window, &mFBSize[0], &mFBSize[1]);
+
+    float ddpi, hdpi, vdpi;
+    SDL_GetDisplayDPI(0, &ddpi, &hdpi, &vdpi);
+    mPixelRatio = ddpi / 96.0f;
+    if (mPixelRatio == 0.0f) {
+      mPixelRatio = 1.0f;
+    }
     
     int flags = NVG_STENCIL_STROKES | NVG_ANTIALIAS;
 #ifdef NDEBUG
@@ -408,11 +415,8 @@ void Screen::drawWidgets()
     //SDL_GL_MakeCurrent( _window, _glcontext );
     SDL_GL_GetDrawableSize(_window, &mFBSize[0], &mFBSize[1]);
     SDL_GetWindowSize( _window, &mSize[0], &mSize[1]);
-    //glViewport(0, 0, mFBSize[0], mFBSize[1]);  
 
-    /* Calculate pixel ratio for hi-dpi devices. */
-    mPixelRatio = (float) mFBSize[0] / (float) mSize[0];
-    
+   
     nvgBeginFrame(mNVGContext, mSize[0], mSize[1], mPixelRatio);
 
     draw(mNVGContext);
@@ -488,7 +492,7 @@ bool Screen::keyboardCharacterEvent(unsigned int codepoint) {
 }
 
 bool Screen::cursorPosCallbackEvent(double x, double y) {
-    Vector2i p((int) x, (int) y);
+    Vector2i p((int) (x/mPixelRatio) , (int) (y/mPixelRatio));
     bool ret = false;
     mLastInteraction = SDL_GetTicks();
     try {
@@ -680,7 +684,7 @@ void Screen::centerWindow(Window *window) {
         window->setSize(window->preferredSize(mNVGContext));
         window->performLayout(mNVGContext);
     }
-    window->setPosition((mSize - window->size()) / 2);
+    window->setPosition(((mSize / mPixelRatio) - window->size()) / 2);
 }
 
 void Screen::moveWindowToFront(Window *window) {

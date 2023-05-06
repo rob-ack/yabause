@@ -829,7 +829,7 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
     }
   }
 
-  if (pgid == nullptr) {
+  if (pgid == 0) {
     printf("Fail to find shader");
   }
 
@@ -1395,7 +1395,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
 
   pipelines[key] = graphicsPipeline;
 
-  if (graphicsPipeline == nullptr) {
+  if (graphicsPipeline == 0) {
     printf("failed to create graphics pipeline!");
   }
 

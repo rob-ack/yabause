@@ -38,7 +38,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #define NANOVG_VULKAN_IMPLEMENTATION
 #include "nanovg.h"
-//#include "nanovg_vk.h"
+#if defined(ANDROID)
+#include "nanovg_vk.h"
+#endif
 
 //#include "Roboto-Bold.h"
 //#include "Roboto-Regular.h"

@@ -757,7 +757,7 @@ void Vdp1Renderer::drawEnd(void) {
   vkUnmapMemory(device, _uniformBufferMemory);
 
   while (offscreenPass.color[drawframe].renderFences.size() > 0) {
-	  ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, 1000));
+	  ErrorCheck(vkWaitForFences(device, 1, &offscreenPass.color[drawframe].renderFences.front(), VK_TRUE, UINT64_MAX));
 	  vkDestroyFence(device, offscreenPass.color[drawframe].renderFences.front(), nullptr);
 	  offscreenPass.color[drawframe].renderFences.pop();
   }

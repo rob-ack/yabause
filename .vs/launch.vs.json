@@ -4,7 +4,7 @@
   "configurations": [
     {
       "type": "dll",
-      "name": "Retro x64 Debug",
+      "name": "Retro x64 Debug Soviet Strike (Germany)",
       "project": "yabause\\CMakeLists.txt",
       "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
       "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
@@ -21,7 +21,24 @@
     },
     {
       "type": "dll",
-      "name": "Retro x64 Release",
+      "name": "Retro x64 Debug Guardian Heroes (Europe)",
+      "project": "yabause\\CMakeLists.txt",
+      "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
+      "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
+      "exe": "C:/RetroArch-Win64/retroarch.exe",
+      "deployDirectory": "C:/RetroArch-Win64/retroarch.exe/cores",
+      "args": [
+        "-L",
+        "\"C:/Projects/yabause-yaba/yabause/out/build/x64-Debug-libretro/src/libretro/yabause_libretro.dll\"",
+        "--config",
+        "C:/RetroArch-Win64/retroarch.cfg",
+        "\"C:/Users/rober/Downloads/Sega Saturn/Guardian Heroes (Europe)/Guardian Heroes (Europe).cue\"",
+        "--verbose"
+      ]
+    },
+    {
+      "type": "dll",
+      "name": "Retro x64 Release Soviet Strike (Germany)",
       "project": "yabause\\CMakeLists.txt",
       "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
       "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
@@ -33,6 +50,23 @@
         "--config",
         "C:/RetroArch-Win64/retroarch.cfg",
         "\"C:/Users/rober/Downloads/Sega Saturn/Soviet Strike (Germany)/Soviet Strike (Germany).cue\"",
+        "--verbose"
+      ]
+    },
+    {
+      "type": "dll",
+      "name": "Retro x64 Release Guardian Heroes (Europe)",
+      "project": "yabause\\CMakeLists.txt",
+      "defaultWorkingDirectory": "C:/RetroArch-Win64/retroarch.exe",
+      "projectTarget": "yabause_libretro.dll (src\\libretro\\yabause_libretro.dll)",
+      "exe": "C:/RetroArch-Win64/retroarch.exe",
+      "deployDirectory": "C:/RetroArch-Win64/retroarch.exe/cores",
+      "args": [
+        "-L",
+        "\"C:/Projects/yabause-yaba/yabause/out/build/x64-Release-libretro/src/libretro/yabause_libretro.dll\"",
+        "--config",
+        "C:/RetroArch-Win64/retroarch.cfg",
+        "\"C:/Users/rober/Downloads/Sega Saturn/Guardian Heroes (Europe)/Guardian Heroes (Europe).cue\"",
         "--verbose"
       ]
     },

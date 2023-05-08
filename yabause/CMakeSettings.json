@@ -62,6 +62,31 @@
           "name": "YAB_PORTS",
           "value": "libretro",
           "type": "STRING"
+        },
+        {
+          "name": "YAB_EXEC_FROM_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_SH2_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_OPTIMIZED_DMA",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_MULTIBUILD",
+          "value": "True",
+          "type": "BOOL"
         }
       ]
     },
@@ -587,6 +612,16 @@
         },
         {
           "name": "YAB_WANT_DYNAREC_KRONOS",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_EXEC_FROM_CACHE",
+          "value": "True",
+          "type": "BOOL"
+        },
+        {
+          "name": "YAB_MULTIBUILD",
           "value": "True",
           "type": "BOOL"
         }

@@ -79,7 +79,7 @@ set(yabause_SOURCES
 	frameprofile.cpp
 	scspdsp.c scu.c sh2core.c sh2d.c sh2iasm.c sh2idle.c sh2int.c sh2trace.c smpc.c snddummy.c
 	titan/titan.c
-	vdp1.cpp vdp2.cpp vdp2debug.c vidogl.c vidshared.c vidsoft.c
+	vdp1.cpp vdp1.drawFunctions.cpp vdp2.cpp vdp2debug.c vidogl.cpp vidshared.c vidsoft.c
 	yabause.c
 	Counter.cpp
 	ygl_texture.cpp
@@ -232,6 +232,8 @@ if (YAB_WANT_DYNAREC_KRONOS)
 	set(yabause_SOURCES ${yabause_SOURCES}
 		sh2_kronos/include/memory_sh2.h
 		sh2_kronos/include/sh2int_kronos.h
+		sh2_kronos/include/opcode_functions_define.h
+		sh2_kronos/include/sh2_functions.inc
 		sh2_kronos/src/memory_sh2.cpp
 		sh2_kronos/src/sh2int_kronos.c
 		sh2_kronos/src/sh2_opcodes_kronos.c

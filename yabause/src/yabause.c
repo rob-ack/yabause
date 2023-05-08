@@ -898,7 +898,6 @@ int YabauseEmulate(void) {
    return 0;
 }
 
-
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
   if (g_scsp_main_mode == 0) {

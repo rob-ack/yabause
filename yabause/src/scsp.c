@@ -5685,7 +5685,7 @@ void ScspAsynMainRealtime(void * p) {
       u64 checktime = 0;
       u64 sleepchecktime = 0;
       m68kcycle = 0;
-      sh2_read_req = 0;
+//      sh2_read_req = 0;
       do {
         now = YabauseGetTicks() * 1000000000L / yabsys.tickfreq;
         if (now >= before){
@@ -5700,7 +5700,10 @@ void ScspAsynMainRealtime(void * p) {
           initnow = now; 
           initbefore = before;
         }
-        if( sleeptime < 0 ) break;
+        if (sleeptime < 0) 
+        {
+            break;
+        }
 #if defined(ANDROID)
         //tm.tv_sec = 0;
         //tm.tv_nsec = sleeptime;

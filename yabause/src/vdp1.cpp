@@ -75,7 +75,6 @@ atomic<int> vdp1_clock{ 0 };
 condition_variable vdp1_clock_cv;
 mutex vdp1_clock_mtx;
 
-
 void Vdp1_onHblank() {
 #if 0
   {
@@ -508,6 +507,11 @@ extern "C" void FASTCALL Vdp1WriteLong(u32 addr, UNUSED u32 val) {
 
 //////////////////////////////////////////////////////////////////////////////
 
+extern "C" int Vdp1NormalSpriteDraw(vdp1cmd_struct* const cmd, u8* ram, Vdp1* regs, u8* back_framebuffer);
+extern "C" int Vdp1ScaledSpriteDraw(vdp1cmd_struct * cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+extern "C" int Vdp1DistortedSpriteDraw(vdp1cmd_struct * cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+extern "C" int Vdp1PolygonDraw(vdp1cmd_struct * cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+
 extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
   std::unique_lock<std::mutex> lk(vdp1_clock_mtx);
@@ -528,6 +532,8 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
    int command_count = 0;
    u32 returnAddr = 0xffffffff;
 
+   vdp1cmd_struct cmd;
+
    while (!(command & 0x8000) && command_count < 4096) { // fix me
       regs->COPR = regs->addr >> 3;
       u32 to = 0;
@@ -545,35 +551,44 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       if (!(command & 0x4000)) { // if (!skip)
          switch (command & 0x000F) {
          case 0: // normal sprite draw
-            VIDCore->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer);
+            Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+            Vdp1NormalSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 1: // scaled sprite draw
-            VIDCore->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             Vdp1ScaledSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 2: // distorted sprite draw
          case 3: /* this one should be invalid, but some games
                  (Hardcore 4x4 for instance) use it instead of 2 */
-            VIDCore->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             Vdp1DistortedSpriteDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 4: // polygon draw
-            VIDCore->Vdp1PolygonDraw(ram, regs, back_framebuffer);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             Vdp1PolygonDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 5: // polyline draw
          case 7: // undocumented mirror
-            VIDCore->Vdp1PolylineDraw(ram, regs, back_framebuffer);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1PolylineDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 6: // line draw
-            VIDCore->Vdp1LineDraw(ram, regs, back_framebuffer);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1LineDraw(&cmd, ram, regs, back_framebuffer);
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            VIDCore->Vdp1UserClipping(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1UserClipping(&cmd, ram, regs);
             break;
          case 9: // system clipping coordinates
-            VIDCore->Vdp1SystemClipping(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1SystemClipping(&cmd, ram, regs);
             break;
          case 10: // local coordinate
-            VIDCore->Vdp1LocalCoordinate(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1LocalCoordinate(&cmd, ram, regs);
             break;
          default: // Abort
             VDP1LOG("VDP1: Bad command: %x\n", command);
@@ -658,6 +673,7 @@ extern "C" void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
    u16 command = T1ReadWord(ram, regs->addr);
    u32 commandCounter = 0;
    u32 returnAddr = 0xffffffff;
+   vdp1cmd_struct cmd;
 
    while (!(command & 0x8000) && commandCounter < 2000) { // fix me
       // First, process the command
@@ -675,13 +691,16 @@ extern "C" void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
             break;
          case 8: // user clipping coordinates
          case 11: // undocumented mirror
-            VIDCore->Vdp1UserClipping(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+            VIDCore->Vdp1UserClipping(&cmd, ram, regs);
             break;
          case 9: // system clipping coordinates
-            VIDCore->Vdp1SystemClipping(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1SystemClipping(&cmd, ram, regs);
             break;
          case 10: // local coordinate
-            VIDCore->Vdp1LocalCoordinate(ram, regs);
+             Vdp1ReadCommand(&cmd, regs->addr, Vdp1Ram);
+             VIDCore->Vdp1LocalCoordinate(&cmd, ram, regs);
             break;
          default: // Abort
             VDP1LOG("vdp1\t: Bad command: %x\n", command);
@@ -1657,72 +1676,11 @@ void ToggleVDP1(void)
 //////////////////////////////////////////////////////////////////////////////
 // Dummy Video Interface
 //////////////////////////////////////////////////////////////////////////////
-int VIDDummyInit(void);
-void VIDDummyDeInit(void);
-void VIDDummyResize(int, int, unsigned int, unsigned int, int, int );
-int VIDDummyIsFullscreen(void);
-int VIDDummyVdp1Reset(void);
-void VIDDummyVdp1DrawStart(void);
-void VIDDummyVdp1DrawEnd(void);
-void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer);
-void VIDDummyVdp1UserClipping(u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1SystemClipping(u8 * ram, Vdp1 * regs);
-void VIDDummyVdp1LocalCoordinate(u8 * ram, Vdp1 * regs);
-int VIDDummyVdp2Reset(void);
-void VIDDummyVdp2DrawStart(void);
-void VIDDummyVdp2DrawEnd(void);
-void VIDDummyVdp2DrawScreens(void);
-void VIDDummyGetGlSize(int *width, int *height);
-void VIDDummVdp1ReadFrameBuffer(u32 type, u32 addr, void * out);
-void VIDDummVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val);
 void VIDDummSetFilterMode(int typei,int a ){};
 void VIDDummErase(int i) {};
 void VIDDummSync(){};
-void VIDDummyGetNativeResolution(int *width, int * height, int *interlace);
-void VIDDummyVdp2DispOff(void);
 void VIDDummyOnUpdateColorRamWord(u32 addr) {};
 void VIDDummyVulkanGetScreenshot(void ** outbuf, int * width, int * height) { return; }
-
-VideoInterface_struct VIDDummy = {
-	VIDCORE_DUMMY,
-	"Dummy Video Interface",
-	VIDDummyInit,
-	VIDDummyDeInit,
-	VIDDummyResize,
-	VIDDummyIsFullscreen,
-	VIDDummyVdp1Reset,
-	VIDDummyVdp1DrawStart,
-	VIDDummyVdp1DrawEnd,
-	VIDDummyVdp1NormalSpriteDraw,
-	VIDDummyVdp1ScaledSpriteDraw,
-	VIDDummyVdp1DistortedSpriteDraw,
-	VIDDummyVdp1PolygonDraw,
-	VIDDummyVdp1PolylineDraw,
-	VIDDummyVdp1LineDraw,
-	VIDDummyVdp1UserClipping,
-	VIDDummyVdp1SystemClipping,
-	VIDDummyVdp1LocalCoordinate,
-	VIDDummVdp1ReadFrameBuffer,
-	VIDDummVdp1WriteFrameBuffer,
-  VIDDummErase,
-  VIDDummSync,
-	VIDDummyVdp2Reset,
-	VIDDummyVdp2DrawStart,
-	VIDDummyVdp2DrawEnd,
-	VIDDummyVdp2DrawScreens,
-	VIDDummyGetGlSize,
-	VIDDummSetFilterMode,
-	VIDDummSync,
-	VIDDummyGetNativeResolution,
-	VIDDummyVdp2DispOff,
-  VIDDummyOnUpdateColorRamWord,
-  VIDDummyVulkanGetScreenshot
-};
 
 //////////////////////////////////////////////////////////////////////////////
 
@@ -1771,55 +1729,55 @@ void VIDDummyVdp1DrawEnd(void)
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1NormalSpriteDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1ScaledSpriteDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1DistortedSpriteDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1PolygonDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1PolylineDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
+void VIDDummyVdp1LineDraw(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1UserClipping(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1UserClipping(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1SystemClipping(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1SystemClipping(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs)
 {
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
-void VIDDummyVdp1LocalCoordinate(u8 * ram, Vdp1 * regs)
+void VIDDummyVdp1LocalCoordinate(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs)
 {
 }
 
@@ -1882,3 +1840,40 @@ void VIDDummyGetNativeResolution(int *width, int * height, int * interlace)
 void VIDDummyVdp2DispOff(void)
 {
 }
+
+
+VideoInterface_struct VIDDummy = {
+    VIDCORE_DUMMY,
+    "Dummy Video Interface",
+    VIDDummyInit,
+    VIDDummyDeInit,
+    VIDDummyResize,
+    VIDDummyIsFullscreen,
+    VIDDummyVdp1Reset,
+    VIDDummyVdp1DrawStart,
+    VIDDummyVdp1DrawEnd,
+    VIDDummyVdp1NormalSpriteDraw,
+    VIDDummyVdp1ScaledSpriteDraw,
+    VIDDummyVdp1DistortedSpriteDraw,
+    VIDDummyVdp1PolygonDraw,
+    VIDDummyVdp1PolylineDraw,
+    VIDDummyVdp1LineDraw,
+    VIDDummyVdp1UserClipping,
+    VIDDummyVdp1SystemClipping,
+    VIDDummyVdp1LocalCoordinate,
+    VIDDummVdp1ReadFrameBuffer,
+    VIDDummVdp1WriteFrameBuffer,
+  VIDDummErase,
+  VIDDummSync,
+    VIDDummyVdp2Reset,
+    VIDDummyVdp2DrawStart,
+    VIDDummyVdp2DrawEnd,
+    VIDDummyVdp2DrawScreens,
+    VIDDummyGetGlSize,
+    VIDDummSetFilterMode,
+    VIDDummSync,
+    VIDDummyGetNativeResolution,
+    VIDDummyVdp2DispOff,
+  VIDDummyOnUpdateColorRamWord,
+  VIDDummyVulkanGetScreenshot
+};

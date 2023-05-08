@@ -83,6 +83,43 @@ typedef struct {
 
 typedef struct
 {
+    u16 CMDCTRL;
+    u16 CMDLINK;
+    u16 CMDPMOD;
+    u16 CMDCOLR;
+    u16 CMDSRCA;
+    u16 CMDSIZE;
+    s16 CMDXA;
+    s16 CMDYA;
+    s16 CMDXB;
+    s16 CMDYB;
+    s16 CMDXC;
+    s16 CMDYC;
+    s16 CMDXD;
+    s16 CMDYD;
+    u16 CMDGRDA;
+
+    //additional data not part of the actual specification
+    u32 COLOR[4];
+    float G[4*4];
+    u32 priority;
+    u32 w;
+    u32 h;
+    u32 flip;
+    u32 type;
+    u32 SPCTL;
+    s32 B[4];
+    u32 nbStep;
+    float uAstepx;
+    float uAstepy;
+    float uBstepx;
+    float uBstepy;
+    u32 pad[2];
+
+} vdp1cmd_struct;
+
+typedef struct
+{
    int id;
    const char *Name;
    int (*Init)(void);
@@ -93,15 +130,15 @@ typedef struct
    int (*Vdp1Reset)(void);
    void (*Vdp1DrawStart)(void);
    void (*Vdp1DrawEnd)(void);
-   void(*Vdp1NormalSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1ScaledSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1DistortedSpriteDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1PolygonDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1PolylineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1LineDraw)(u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
-   void(*Vdp1UserClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1SystemClipping)(u8 * ram, Vdp1 * regs);
-   void(*Vdp1LocalCoordinate)(u8 * ram, Vdp1 * regs);
+   void(*Vdp1NormalSpriteDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1ScaledSpriteDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1DistortedSpriteDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolygonDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1PolylineDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1LineDraw)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs, u8 * back_framebuffer);
+   void(*Vdp1UserClipping)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs);
+   void(*Vdp1SystemClipping)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs);
+   void(*Vdp1LocalCoordinate)(vdp1cmd_struct* cmd, u8 * ram, Vdp1 * regs);
    void(*Vdp1ReadFrameBuffer)(u32 type, u32 addr, void * out);
    void(*Vdp1WriteFrameBuffer)(u32 type, u32 addr, u32 val);
    void(*Vdp1EraseWrite)(int isDraw);
@@ -161,25 +198,6 @@ typedef struct {
 } Vdp1External_struct;
 
 extern Vdp1External_struct Vdp1External;
-
-typedef struct
-{
-   u16 CMDCTRL;
-   u16 CMDLINK;
-   u16 CMDPMOD;
-   u16 CMDCOLR;
-   u16 CMDSRCA;
-   u16 CMDSIZE;
-   s16 CMDXA;
-   s16 CMDYA;
-   s16 CMDXB;
-   s16 CMDYB;
-   s16 CMDXC;
-   s16 CMDYC;
-   s16 CMDXD;
-   s16 CMDYD;
-   u16 CMDGRDA;   
-} vdp1cmd_struct;
 
 int Vdp1Init(void);
 void Vdp1DeInit(void);

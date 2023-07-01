@@ -23,14 +23,13 @@ include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 
 set( CD_INSTALL_DIR  ${CMAKE_CURRENT_BINARY_DIR})
 
-ExternalProject_Add( libcharsetdetect
-     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libcharsetdetect
-	 CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CD_INSTALL_DIR}
-     GIT_REPOSITORY https://github.com/batterseapower/libcharsetdetect.git
-)
-ExternalProject_Get_Property(libcharsetdetect SOURCE_DIR)
-
-set( libcharsetdetect_dir ${SOURCE_DIR} )
+#ExternalProject_Add( libcharsetdetect
+#     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libcharsetdetect#
+#	 CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CD_INSTALL_DIR
+#     GIT_REPOSITORY https://github.com/batterseapower/libcharsetdetect.git
+#)
+#ExternalProject_Get_Property(libcharsetdetect SOURCE_DIR)
+#set( libcharsetdetect_dir ${SOURCE_DIR} )
 
 set( sqlite3_source_path ${CMAKE_CURRENT_BINARY_DIR}/external/sqlite3/src/external_sqlite3/ )
 set( sqlite3_cmake_file_path ${sqlite3_source_path}/CMakeLists.txt )
@@ -115,7 +114,7 @@ link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} ${CMAKE_CURRENT_BINARY_
 
 include_directories( 
   ${PORT_INCLUDE_DIRS} 
-  ${libcharsetdetect_dir} 
+  #${libcharsetdetect_dir} 
   ${Boost_INCLUDE_DIR} 
   ${sqlite3_source_path} 
   "nanogui-sdl/include" 
@@ -163,10 +162,10 @@ target_link_libraries( yabause-retro-arena ${GLFW_LIBRARIES} ${LIBVULKAN} ${SHAD
 endif()
 add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
 
-add_dependencies(yabause-retro-arena libcharsetdetect)
-target_include_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib)
-target_link_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib/.libs)
-target_link_libraries(yabause-retro-arena PRIVATE charsetdetect)
+#add_dependencies(yabause-retro-arena libcharsetdetect)
+#target_include_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib)
+#target_link_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib/.libs)
+#target_link_libraries(yabause-retro-arena PRIVATE charsetdetect)
 
 
 yab_port_success(yabause-retro-arena)

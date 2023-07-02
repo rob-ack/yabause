@@ -38,7 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #define NANOVG_VULKAN_IMPLEMENTATION
 #include "nanovg.h"
-#if defined(ANDROID)
+#if defined(ANDROID) || !defined(__RETORO_ARENA__)
 #include "nanovg_vk.h"
 #endif
 
@@ -97,26 +97,8 @@ void deleteNanoGuiVg(NVGcontext * vg);
 
 int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag) {
   
-#if defined(ANDROID)
-  VKNVGCreateInfo createInfo={0};
-  createInfo.device = device;
-  createInfo.gpu = gpu;
-  createInfo.renderpass = renderPass;
-  createInfo.cmdBuffer = cmdBuffer;
-  createInfo.pretransformFlag = preTransformFlag;
-
-  if (vg != NULL) {
-    nvgUpdateVk(vg,createInfo);
-    return 0;
-  }
-
-  vg = nvgCreateVk(createInfo, NVG_ANTIALIAS);
-  if (vg == NULL) {
-    printf("Could not init nanovg.\n");
-    return -1;
-  }
-  OSDNanovgVInit();
-#else
+#if defined(__RETORO_ARENA__)
+ 
   if (vg == NULL) {
     vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
     OSDNanovgVInit();
@@ -124,6 +106,25 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
   else {
     InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
   }
+#else
+  VKNVGCreateInfo createInfo = { 0 };
+  createInfo.device = device;
+  createInfo.gpu = gpu;
+  createInfo.renderpass = renderPass;
+  createInfo.cmdBuffer = cmdBuffer;
+  createInfo.pretransformFlag = preTransformFlag;
+
+  if (vg != NULL) {
+    nvgUpdateVk(vg, createInfo);
+    return 0;
+}
+
+  vg = nvgCreateVk(createInfo, NVG_ANTIALIAS);
+  if (vg == NULL) {
+    printf("Could not init nanovg.\n");
+    return -1;
+  }
+  OSDNanovgVInit();
 #endif
   return 0;
 }
@@ -142,19 +143,8 @@ static int OSDNanovgVInit(void)
     printf("Could not init nanovg.\n");
     return 0;
   }
-#if defined(ANDROID)
-  fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
-  if (fontNormal == -1) {
-    printf("Could not add font italic.\n");
-    return -1;
-  }
-  fontBold = nvgCreateFontMem(vg, "sans", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
-  if (fontBold == -1) {
-    printf("Could not add font bold.\n");
-    return -1;
-  }
-#else
-  fontNormal = nvgCreateFont(vg, "sans", "./fonts/NotoSansJP-Medium.ttf" );
+#if defined(__RETORO_ARENA__)
+  fontNormal = nvgCreateFont(vg, "sans", "./fonts/NotoSansJP-Medium.ttf");
   if (fontNormal == -1) {
     printf("Could not add font italic.\n");
     fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
@@ -170,7 +160,19 @@ static int OSDNanovgVInit(void)
     if (fontBold == -1) {
       printf("Could not add font bold.\n");
       return -1;
-    }    
+    }
+  }
+
+#else
+  fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
+  if (fontNormal == -1) {
+    printf("Could not add font italic.\n");
+    return -1;
+  }
+  fontBold = nvgCreateFontMem(vg, "sans", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
+  if (fontBold == -1) {
+    printf("Could not add font bold.\n");
+    return -1;
   }
 #endif
 
@@ -185,10 +187,10 @@ static int OSDNanovgVInit(void)
 
 static void OSDNanovgVDeInit(void)
 {
-#if defined(ANDROID)
-  nvgDeleteVk(vg);
-#else
+#if defined(__RETORO_ARENA__)
   deleteNanoGuiVg(vg);
+#else
+  nvgDeleteVk(vg); 
 #endif
   vg = NULL;
 

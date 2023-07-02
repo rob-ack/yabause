@@ -46,7 +46,7 @@ Window::Window(Renderer *renderer, uint32_t size_x, uint32_t size_y, std::string
 #if defined(__ANDROID__)
   window = (ANativeWindow *)nativeWindow;
 #endif
-#if defined(HAVE_LIBSDL2)  
+#if defined(__RETORO_ARENA__)  
     window = (SDL_Window*)nativeWindow;
 #endif
 	_InitOSWindow();

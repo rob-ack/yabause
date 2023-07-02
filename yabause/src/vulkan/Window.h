@@ -69,7 +69,7 @@ public:
     window = (ANativeWindow*)nativeWindow;
   }
   ANativeWindow*             window;
-#elif defined(HAVE_LIBSDL2) 
+#elif defined(__RETORO_ARENA__) 
   void setNativeWindow(void * nativeWindow) {
     window = (SDL_Window *)nativeWindow;
   }

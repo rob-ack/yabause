@@ -3356,6 +3356,7 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
     for (i = 0; i < sprite->h; i++) {
       endcnt = 0;
       for (j = 0; j < sprite->w; j++) {
+
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
         if (endcnt >= 2) {
@@ -3377,6 +3378,7 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
             *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
+
       }
       texture->textdata += texture->w;
     }

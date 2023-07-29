@@ -76,8 +76,8 @@ android {
         minSdkVersion 24
         targetSdkVersion 33
         multiDexEnabled true
-        versionCode 82
-        versionName '1.12.2'
+        versionCode 83
+        versionName '1.12.3'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro

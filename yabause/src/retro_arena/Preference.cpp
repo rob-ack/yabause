@@ -7,7 +7,7 @@
 namespace fs = std::experimental::filesystem;
 
 #include <locale.h>
-#include <charsetdetect.h>
+//#include <charsetdetect.h>
 
 #define LOG printf
 

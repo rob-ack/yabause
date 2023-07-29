@@ -240,12 +240,12 @@ dependencies {
 
     implementation 'com.firebaseui:firebase-ui-auth:6.4.0'
     implementation 'com.google.firebase:firebase-core:21.1.1'
-    implementation 'com.google.firebase:firebase-auth:22.0.0'
+    implementation 'com.google.firebase:firebase-auth:22.1.0'
     implementation 'com.google.firebase:firebase-database:20.2.2'
     implementation 'com.google.firebase:firebase-storage:20.2.1'
-    implementation 'com.google.firebase:firebase-ads:22.1.0'
-    implementation 'com.google.firebase:firebase-messaging:23.1.2'
-    implementation 'com.google.firebase:firebase-config:21.4.0'
+    implementation 'com.google.firebase:firebase-ads:22.2.0'
+    implementation 'com.google.firebase:firebase-messaging:23.2.0'
+    implementation 'com.google.firebase:firebase-config:21.4.1'
     implementation 'com.google.android.gms:play-services-analytics:18.0.3'
     //implementation 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
     implementation files('libs/activeandroid-3.1.0-SNAPSHOT.jar')
@@ -256,7 +256,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.9.0'
     implementation 'androidx.multidex:multidex:2.0.1'
     implementation 'com.google.firebase:firebase-analytics-ktx:21.3.0'
-    implementation 'com.google.firebase:firebase-crashlytics-ndk:18.3.7'
+    implementation 'com.google.firebase:firebase-crashlytics-ndk:18.4.0'
     implementation 'net.cattaka:adapter-toolbox:0.5.2'
     implementation "com.google.android.material:material:1.9.0"
     implementation 'com.google.android.play:core-ktx:1.8.1'

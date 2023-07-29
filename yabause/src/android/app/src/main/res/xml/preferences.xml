@@ -47,15 +47,15 @@
 
     <PreferenceCategory android:title="@string/setting_general">
 
-<!--
-        <ListPreference
-            android:key="pref_game_download_directory"
-            android:title="@string/download_to"
-            android:dialogTitle="@string/choose_download_to"
-            android:entries="@array/entries_game_download_directory"
-            android:entryValues="@array/values_game_download_directory"
-            android:defaultValue="0" />
--->
+        <!--
+                <ListPreference
+                    android:key="pref_game_download_directory"
+                    android:title="@string/download_to"
+                    android:dialogTitle="@string/choose_download_to"
+                    android:entries="@array/entries_game_download_directory"
+                    android:entryValues="@array/values_game_download_directory"
+                    android:defaultValue="0" />
+        -->
 
         <ListPreference
             android:key="pref_bios"
@@ -85,12 +85,21 @@
         <CheckBoxPreference
             android:key="pref_use_cpu_affinity"
             android:title="@string/use_cpu_affinity"
-            android:defaultValue="true" />
+            android:summary="@string/perf_use_cpu_affinity_detail"
+            android:defaultValue="false" />
 
         <CheckBoxPreference
             android:key="pref_use_sh2_cache"
             android:title="@string/use_sh2_cache"
+            android:summary="@string/pref_use_sh2_cache_detail"
             android:defaultValue="true" />
+
+        <CheckBoxPreference
+            android:key="pref_auto_state_save"
+            android:title="@string/pref_auto_state_save_title"
+            android:summary="@string/pref_auto_state_save_detail"
+            android:defaultValue="false" />
+
 <!--
         <ListPreference
             android:key="pref_cpu_sync_per_line"

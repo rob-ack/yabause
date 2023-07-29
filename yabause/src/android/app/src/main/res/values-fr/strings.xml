@@ -250,4 +250,12 @@
     <string name="msg_fail_to_zip_backup_data">Impossible de compresser les données de sauvegarde</string>
     <string name="msg_success_to_upload_backup_data_to_cloud">Le téléchargement des données de sauvegarde vers le cloud a réussi.</string>
 
+    <string name="perf_use_cpu_affinity_detail">Dans le cas d\'un processeur multicœur asymétrique, les cœurs à plus haute fréquence sont utilisés de manière préférentielle. Cependant, selon l\'appareil, les performances peuvent diminuer en sens inverse.</string>
+    <string name="pref_use_sh2_cache_detail">L\'activation de l\'émulation du traitement du cache SH2 améliore la compatibilité. Cependant, cela se fait au détriment de la vitesse d\'émulation.</string>
+    <string name="pref_auto_state_save_title">Activer la sauvegarde automatique de l\'état</string>
+    <string name="pref_auto_state_save_detail">Sauvegarde automatiquement l\'état à la sortie. La prochaine fois qu\'il démarre, il peut reprendre à partir du point enregistré. Cependant, il peut y avoir des cas où la reproduction n\'est pas réussie.</string>
+
+    <string name="auto_state_save_data_found">Données de sauvegarde automatique trouvées !</string>
+    <string name="auto_state_detail">Voulez-vous charger l\'état ? Malheureusement, cela peut ne pas être très fiable. Si cela ne fonctionne pas correctement, veuillez appuyer sur Annuler.</string>
+
 </resources>

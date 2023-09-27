@@ -43,13 +43,21 @@ import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.RectF
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
 import androidx.preference.PreferenceManager
-import java.util.HashMap
 import org.devmiyax.yabasanshiro.R
+import java.lang.Math.PI
+import java.lang.Math.atan2
+import java.lang.Math.sqrt
+import kotlin.math.pow
 
 internal open class PadButton {
     protected var rect: RectF
@@ -58,13 +66,20 @@ internal open class PadButton {
     protected var pointid_: Int
     var back: Paint? = null
     var scale: Float
+    var centerX: Float = 0.0f
+    var centerY: Float = 0.0f
+
     fun updateRect(x1: Int, y1: Int, x2: Int, y2: Int) {
         rect[x1.toFloat(), y1.toFloat(), x2.toFloat()] = y2.toFloat()
+        centerX = rect.centerX()
+        centerY = rect.centerY()
     }
 
     fun updateRect(matrix: Matrix, x1: Int, y1: Int, x2: Int, y2: Int) {
         rect[x1.toFloat(), y1.toFloat(), x2.toFloat()] = y2.toFloat()
         matrix.mapRect(rect)
+        centerX = rect.centerX()
+        centerY = rect.centerY()
     }
 
     fun updateScale(scale: Float) {
@@ -91,7 +106,7 @@ internal open class PadButton {
         pointId = index
     }
 
-    fun Off() {
+    open fun Off() {
         pointId = -1
         pointid_ = -1
     }
@@ -137,7 +152,7 @@ internal class StartButton : PadButton() {
 internal class ActionButton(
     private val width: Int,
     private val text: String,
-    private val textsize: Int
+    private val textsize: Int,
 ) : PadButton() {
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
         super.draw(canvas, nomal_back, active_back, front)
@@ -148,10 +163,178 @@ internal class ActionButton(
     }
 }
 
+
+data class DpadState(var left: Boolean, var right: Boolean, var up: Boolean, var down: Boolean)
+
+internal class Dpad(
+    private val width: Int,
+    private val deadZone: Int,
+) : PadButton() {
+
+    data class Point(val x: Double, val y: Double)
+
+    fun normalizeRadian(radian: Double): Double {
+        return ((radian % (2 * PI) + 2 * PI) % (2 * PI))
+    }
+
+    fun angleBetweenPoints(point1: Point, point2: Point): Double {
+        val deltaX = point2.x - point1.x
+        val deltaY = point2.y - point1.y
+        return normalizeRadian(atan2(deltaY, deltaX))
+    }
+
+    fun radiansToDegrees(radians: Double): Double {
+        return radians * (180 / PI)
+    }
+
+    fun degreesToRadians(degrees: Double): Double {
+        return degrees * (PI / 180)
+    }
+
+    fun distance(x1: Double, y1: Double, x2: Double, y2: Double): Double {
+        return sqrt((x2 - x1).pow(2) + (y2 - y1).pow(2))
+    }
+
+    var ds = DpadState(false,false,false, false)
+
+    fun getState(x: Int, y: Int ) : DpadState {
+
+        if( distance( centerX.toDouble(),centerY.toDouble(), x.toDouble(),y.toDouble() ) < deadZone ){
+            ds.up    = false
+            ds.right = false
+            ds.down  = false
+            ds.left  = false
+            return ds
+        }
+
+        val pos = degreesToRadians(22.5)
+        val rad = angleBetweenPoints(  Point(centerX.toDouble(),centerY.toDouble()), Point(x.toDouble(),y.toDouble())  )
+        if( rad >= 0 && rad < pos ){
+            ds.up    = false
+            ds.right = true
+            ds.down  = false
+            ds.left  = false
+        }else if( rad >= pos && rad < pos + (pos*2) ){
+            ds.up    = false
+            ds.right = true
+            ds.down  = true
+            ds.left  = false
+        }else if( rad >= pos + (pos*2) && rad < pos + (pos*4) ){
+            ds.up    = false
+            ds.right = false
+            ds.down  = true
+            ds.left  = false
+        }else if( rad >= pos + (pos*4) && rad < pos + (pos*6) ){
+            ds.up    = false
+            ds.right = false
+            ds.down  = true
+            ds.left  = true
+        }else if( rad >= pos + (pos*6) && rad < pos + (pos*8) ){
+            ds.up    = false
+            ds.right = false
+            ds.down  = false
+            ds.left  = true
+        }else if( rad >= pos + (pos*8) && rad < pos + (pos*10) ){
+            ds.up    = true
+            ds.right = false
+            ds.down  = false
+            ds.left  = true
+        }else if( rad >= pos + (pos*10) && rad < pos + (pos*12) ) {
+            ds.up    = true
+            ds.right = false
+            ds.down  = false
+            ds.left  = false
+        }else if( rad >= pos + (pos*12) && rad < pos + (pos*14) ){
+            ds.up    = true
+            ds.right = true
+            ds.down  = false
+            ds.left  = false
+        }else if( rad >= pos + (pos*14) && rad < (pos*16) ){
+            ds.up    = false
+            ds.right = true
+            ds.down  = false
+            ds.left  = false
+        }
+/*
+        val xv = (x - rect.centerX()) / (width * scale/2)
+        ds.right = xv > deadZone / (width * scale/2)
+        ds.left = xv < -(deadZone / (width * scale/2))
+
+        var yv = (y - rect.centerY()) / (width * scale/2)
+        ds.down = yv > deadZone/(width * scale/2)
+        ds.up = yv < - (deadZone/(width * scale/2))
+*/
+        return ds
+    }
+
+    private val pushPaint = Paint().apply {
+        style = Paint.Style.FILL // 塗りつぶしスタイルを設定
+        color = 0x80FFFFFF.toInt() // 色を設定（この例では緑）
+    }
+
+    private val transPaint = Paint().apply {
+        style = Paint.Style.FILL // 塗りつぶしスタイルを設定
+        color = 0xFF000000.toInt() // 色を設定（この例では緑）
+    }
+
+
+    override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
+
+        var dstate = 0
+        var startDir = 0.0f
+        if (ds.left) {
+            dstate = dstate or 0x01
+        }
+        if (ds.right) {
+            dstate = dstate or 0x02
+        }
+        if (ds.up) {
+            dstate = dstate or 0x04
+        }
+        if (ds.down) {
+            dstate = dstate or 0x08
+        }
+
+        if( dstate == 0 ) return
+
+        if( dstate == 0x02 ){ startDir = -22.5f }
+        if( dstate == 0x0A ){ startDir = -22.5f + 45.0f  }
+        if( dstate == 0x08 ){ startDir = -22.5f + (45.0f*2) }
+        if( dstate == 0x09 ){ startDir = -22.5f + (45.0f*3) }
+        if( dstate == 0x01 ){ startDir = -22.5f + (45.0f*4) }
+        if( dstate == 0x05 ){ startDir = -22.5f + (45.0f*5) }
+        if( dstate == 0x04 ){ startDir = -22.5f + (45.0f*6) }
+        if( dstate == 0x06 ){ startDir = -22.5f + (45.0f*7) }
+
+        val newWidth = rect.width() * 1.5f
+        val newHeight = rect.height() * 1.5f
+
+        // 新しいRectFオブジェクトを作成
+        val drect = RectF(
+            centerX - newWidth / 2,
+            centerY - newHeight / 2,
+            centerX + newWidth / 2,
+            centerY + newHeight / 2
+        )
+        canvas.drawArc(drect, startDir, 45.0f, true, pushPaint)
+        canvas.drawCircle(centerX, centerY, deadZone * scale, transPaint)
+    }
+
+    override fun Off(){
+        ds.right = false
+        ds.left = false
+        ds.down = false
+        ds.up = false
+        super.Off()
+    }
+}
+
+
+
 internal class AnalogPad(
     private val width: Int,
     private val text: String,
-    private val textsize: Int
+    private val textsize: Int,
 ) : PadButton() {
     private val paint = Paint()
     fun getXvalue(posx: Int): Int {
@@ -174,7 +357,7 @@ internal class AnalogPad(
         sy: Int,
         nomal_back: Paint?,
         active_back: Paint?,
-        front: Paint?
+        front: Paint?,
     ) {
         super.draw(canvas, nomal_back, active_back, front)
         // canvas.drawCircle(rect.centerX(), rect.centerY(), width * this.scale, back);
@@ -202,6 +385,7 @@ class YabausePad : View, OnTouchListener {
     private lateinit var buttons: Array<PadButton?>
     private var listener: OnPadListener? = null
     private var active: HashMap<Int, Int>? = null
+    private var vibrator: Vibrator? = null
 
     // private DisplayMetrics metrics = null;
     var width_ = 0
@@ -226,6 +410,7 @@ class YabausePad : View, OnTouchListener {
     var statusString: String? = null
         private set
     private var _analog_pad: AnalogPad? = null
+    lateinit private var _dpad : Dpad
     private var _axi_x = 128
     private var _axi_y = 128
     private var _pad_mode = 0
@@ -240,9 +425,9 @@ class YabausePad : View, OnTouchListener {
             bitmap_pad_left = null
             bitmap_pad_right = null
         } else {
-            bitmap_pad_left = BitmapFactory.decodeResource(resources, R.drawable.pad_l)
-            bitmap_pad_right = BitmapFactory.decodeResource(resources, R.drawable.pad_r)
-            bitmap_pad_middle = BitmapFactory.decodeResource(resources, R.drawable.pad_m)
+            bitmap_pad_left = BitmapFactory.decodeResource(resources, R.drawable.pad_l_new)
+            bitmap_pad_right = BitmapFactory.decodeResource(resources, R.drawable.pad_r_new)
+            bitmap_pad_middle = BitmapFactory.decodeResource(resources, R.drawable.pad_m_new)
         }
         invalidate()
     }
@@ -284,10 +469,27 @@ class YabausePad : View, OnTouchListener {
         ypos = sharedPref.getFloat("pref_pad_pos", 0.1f)
         trans = sharedPref.getFloat("pref_pad_trans", 0.7f)
         buttons = arrayOfNulls(PadEvent.BUTTON_LAST)
+/*
         buttons[PadEvent.BUTTON_UP] = DPadButton()
         buttons[PadEvent.BUTTON_RIGHT] = DPadButton()
         buttons[PadEvent.BUTTON_DOWN] = DPadButton()
         buttons[PadEvent.BUTTON_LEFT] = DPadButton()
+
+*/
+        vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val vibratorManager =
+                context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+            vibratorManager.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        }
+        if (vibrator == null) {
+            Log.e("Vibration", "Vibrator service is not available")
+        } else if (vibrator?.hasVibrator() != true) {
+            Log.e("Vibration", "This device does not support vibration")
+            vibrator = null
+        }
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER] = DPadButton()
         buttons[PadEvent.BUTTON_LEFT_TRIGGER] = DPadButton()
         buttons[PadEvent.BUTTON_START] = StartButton()
@@ -298,6 +500,7 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_Y] = ActionButton(72, "", 25)
         buttons[PadEvent.BUTTON_Z] = ActionButton(72, "", 25)
         _analog_pad = AnalogPad(256, "", 40)
+        _dpad = Dpad(256, 92)
         active = HashMap()
     }
 
@@ -322,33 +525,135 @@ class YabausePad : View, OnTouchListener {
         canvas.drawBitmap(bitmap_pad_right!!, matrix_right, mPaint)
         canvas.drawBitmap(bitmap_pad_middle!!, matrix_center, mPaint)
         canvas.setMatrix(null)
-        /*
+
+
         canvas.save();
-    	canvas.concat(matrix_left);
-        buttons[PadEvent.BUTTON_UP].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_DOWN].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_LEFT].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_RIGHT].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_START].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_LEFT_TRIGGER].draw(canvas, paint, apaint, tpaint);
+
+        //buttons[PadEvent.BUTTON_UP]?.draw(canvas, paint, apaint, tpaint);
+        //for( i in 4 until 13) {
+            //if( buttons[i]?.isOn() == true ){
+        //        buttons[i]?.draw(canvas, paint, apaint, tpaint);
+            //}
+        //}
+/*
+    	//canvas.concat(matrix_left);
+        buttons[PadEvent.BUTTON_UP]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_DOWN]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_LEFT]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_RIGHT]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_START]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
         
-        canvas.restore();
-        canvas.concat(matrix_right);
-        buttons[PadEvent.BUTTON_A].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_B].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_C].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_X].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_Y].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_Z].draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_RIGHT_TRIGGER].draw(canvas, paint, apaint, tpaint);
-*/if (_pad_mode == 1) {
+        //canvas.restore();
+        //canvas.concat(matrix_right);
+        buttons[PadEvent.BUTTON_A]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_B]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_C]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_X]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_Y]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_Z]?.draw(canvas, paint, apaint, tpaint);
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
+*/
+        if (_pad_mode == 1) {
             _analog_pad!!.draw(canvas, _axi_x, _axi_y, paint, apaint, tpaint)
+        }else{
+            _dpad.draw(canvas, paint, apaint, tpaint)
         }
     }
 
     fun setOnPadListener(listener: OnPadListener?) {
         this.listener = listener
     }
+
+    var preDstate = 0
+
+    fun viberate(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            vibrator?.vibrate(
+                VibrationEffect.createOneShot(
+                    16,
+                    VibrationEffect.DEFAULT_AMPLITUDE
+                )
+            )
+        }
+    }
+
+    fun actionDpadState(dpadState : DpadState ){
+        var dstate = 0
+        if (!padTestestMode) {
+            if (dpadState.left) {
+                YabauseRunnable.press(PadEvent.BUTTON_LEFT, 0)
+            } else {
+                YabauseRunnable.release(PadEvent.BUTTON_LEFT, 0)
+            }
+            if (dpadState.right) {
+                YabauseRunnable.press(PadEvent.BUTTON_RIGHT, 0)
+            } else {
+                YabauseRunnable.release(PadEvent.BUTTON_RIGHT, 0)
+            }
+            if (dpadState.up) {
+                YabauseRunnable.press(PadEvent.BUTTON_UP, 0)
+            } else {
+                YabauseRunnable.release(PadEvent.BUTTON_UP, 0)
+            }
+            if (dpadState.down) {
+                YabauseRunnable.press(PadEvent.BUTTON_DOWN, 0)
+            } else {
+                YabauseRunnable.release(PadEvent.BUTTON_DOWN, 0)
+            }
+        }
+
+        if (dpadState.left) {
+            dstate = dstate or 0x01
+        }
+        if (dpadState.right) {
+            dstate = dstate or 0x02
+        }
+        if (dpadState.up) {
+            dstate = dstate or 0x04
+        }
+        if (dpadState.down) {
+            dstate = dstate or 0x08
+        }
+
+        if( preDstate != dstate){
+            if( dstate != 0 ){
+                viberate()
+            }
+            preDstate = dstate
+        }
+
+    }
+
+
+
+    private fun updateDPad(hittest: RectF, posx: Int, posy: Int, pointerId: Int) {
+        if (_dpad.intersects(hittest)) {
+            _dpad.On(pointerId)
+            invalidate()
+            val dpadState = _dpad.getState(posx,posy)
+            actionDpadState(dpadState)
+        } else if (_dpad.isOn(pointerId)) {
+            val dpadState = _dpad.getState(posx,posy)
+            invalidate()
+            actionDpadState(dpadState)
+        }
+    }
+
+    private fun releaseDPad(pointerId: Int) {
+        if (_dpad.isOn(pointerId)) {
+            _dpad.Off()
+            if (!padTestestMode) {
+                YabauseRunnable.release(PadEvent.BUTTON_LEFT, 0)
+                YabauseRunnable.release(PadEvent.BUTTON_RIGHT, 0)
+                YabauseRunnable.release(PadEvent.BUTTON_UP, 0)
+                YabauseRunnable.release(PadEvent.BUTTON_DOWN, 0)
+                preDstate = 0
+            }
+            invalidate()
+        }
+    }
+
 
     private fun updatePad(hittest: RectF, posx: Int, posy: Int, pointerId: Int) {
         if (_analog_pad!!.intersects(hittest)) {
@@ -363,10 +668,6 @@ class YabausePad : View, OnTouchListener {
         } else if (_analog_pad!!.isOn(pointerId)) {
             _axi_x = _analog_pad!!.getXvalue(posx)
             _axi_y = _analog_pad!!.getYvalue(posy)
-
-            // _analog_pad.Off();
-            // _axi_x = 128;
-            // _axi_y = 128;
             invalidate()
             if (!padTestestMode) {
                 YabauseRunnable.axis(PadEvent.PERANALOG_AXIS_X, 0, _axi_x)
@@ -402,31 +703,41 @@ class YabausePad : View, OnTouchListener {
             (posy + hitsize).toFloat())
         when (action) {
             MotionEvent.ACTION_DOWN -> {
-                var btnindex = 0
+                var btnindex = 4
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.intersects(hittest)) {
+                        if( buttons[btnindex]!!.isOn(pointerId) != true ){
+                            viberate()
+                        }
                         buttons[btnindex]!!.On(pointerId)
                     }
                     btnindex++
                 }
                 if (_pad_mode == 1) {
                     updatePad(hittest, posx, posy, pointerId)
+                }else{
+                    updateDPad(hittest, posx, posy, pointerId)
                 }
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
-                var btnindex = 0
+                var btnindex = 4
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.intersects(hittest)) {
+                        if( buttons[btnindex]!!.isOn(pointerId) != true ){
+                            viberate()
+                        }
                         buttons[btnindex]!!.On(pointerId)
                     }
                     btnindex++
                 }
                 if (_pad_mode == 1) {
                     updatePad(hittest, posx, posy, pointerId)
+                }else{
+                    updateDPad(hittest, posx, posy, pointerId)
                 }
             }
             MotionEvent.ACTION_POINTER_UP -> {
-                var btnindex = 0
+                var btnindex = 4
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.isOn() && buttons[btnindex]!!.pointId == pointerId) {
                         buttons[btnindex]!!.Off()
@@ -435,10 +746,12 @@ class YabausePad : View, OnTouchListener {
                 }
                 if (_pad_mode == 1) {
                     releasePad(pointerId)
+                }else{
+                    releaseDPad(pointerId)
                 }
             }
             MotionEvent.ACTION_CANCEL, MotionEvent.ACTION_UP -> {
-                var btnindex = 0
+                var btnindex = 4
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.isOn() && buttons[btnindex]!!.pointId == pointerId) {
                         buttons[btnindex]!!.Off()
@@ -447,6 +760,8 @@ class YabausePad : View, OnTouchListener {
                 }
                 if (_pad_mode == 1) {
                     releasePad(pointerId)
+                }else{
+                    releaseDPad(pointerId)
                 }
             }
             MotionEvent.ACTION_MOVE -> {
@@ -459,6 +774,7 @@ class YabausePad : View, OnTouchListener {
                         (y2 - hitsize).toFloat(),
                         (x2 + hitsize).toFloat(),
                         (y2 + hitsize).toFloat())
+/*
                     if (buttons[PadEvent.BUTTON_DOWN]!!
                             .isOn() && eventID2 == buttons[PadEvent.BUTTON_DOWN]!!.pointId
                     ) {
@@ -515,6 +831,7 @@ class YabausePad : View, OnTouchListener {
 //                        }
                         buttons[PadEvent.BUTTON_RIGHT]!!.On(eventID2)
                     }
+*/
                     var btnindex = PadEvent.BUTTON_RIGHT_TRIGGER
                     while (btnindex < PadEvent.BUTTON_LAST) {
                         if (eventID2 == buttons[btnindex]!!.pointId) {
@@ -528,6 +845,8 @@ class YabausePad : View, OnTouchListener {
                     }
                     if (_pad_mode == 1) {
                         updatePad(hittest2, x2.toInt(), y2.toInt(), eventID2)
+                    }else{
+                        updateDPad(hittest2, x2.toInt(), y2.toInt(), eventID2)
                     }
                     index++
                 }
@@ -535,7 +854,7 @@ class YabausePad : View, OnTouchListener {
         }
         if (!padTestestMode) {
             if (_pad_mode == 0) {
-                for (btnindex in 0 until PadEvent.BUTTON_LAST) {
+                for (btnindex in 4 until PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.isOn()) {
                         YabauseRunnable.press(btnindex, 0)
                     } else {
@@ -568,14 +887,41 @@ class YabausePad : View, OnTouchListener {
             statusString = ""
             statusString += "START:"
             if (buttons[PadEvent.BUTTON_START]!!.isOn()) statusString += "ON " else statusString += "OFF "
+
+            statusString += "\nDpad: "
+            if (_dpad.ds.up){
+                if (_dpad.ds.left){
+                    statusString += "\u2196"
+                }else if(_dpad.ds.right){
+                    statusString += "\u2197"
+                }else{
+                    statusString += "\u2191"
+                }
+            }else if(_dpad.ds.down){
+                if (_dpad.ds.left){
+                    statusString += "\u2199"
+                }else if(_dpad.ds.right){
+                    statusString += "\u2198"
+                }else{
+                    statusString += "\u2193"
+                }
+            }else{
+                if (_dpad.ds.left){
+                    statusString += "\u2190"
+                }else if(_dpad.ds.right) {
+                    statusString += "\u2192"
+                }
+            }
+/*
             statusString += "\nUP:"
-            if (buttons[PadEvent.BUTTON_UP]!!.isOn()) statusString += "ON " else statusString += "OFF "
+            if (_dpad.ds.up) statusString += "ON " else statusString += "OFF "
             statusString += "DOWN:"
-            if (buttons[PadEvent.BUTTON_DOWN]!!.isOn()) statusString += "ON " else statusString += "OFF "
+            if (_dpad.ds.down) statusString += "ON " else statusString += "OFF "
             statusString += "LEFT:"
-            if (buttons[PadEvent.BUTTON_LEFT]!!.isOn()) statusString += "ON " else statusString += "OFF "
+            if (_dpad.ds.left) statusString += "ON " else statusString += "OFF "
             statusString += "RIGHT:"
-            if (buttons[PadEvent.BUTTON_RIGHT]!!.isOn()) statusString += "ON " else statusString += "OFF "
+            if (_dpad.ds.right) statusString += "ON " else statusString += "OFF "
+ */
             statusString += "\nA:"
             if (buttons[PadEvent.BUTTON_A]!!.isOn()) statusString += "ON " else statusString += "OFF "
             statusString += "B:"
@@ -647,14 +993,17 @@ class YabausePad : View, OnTouchListener {
         _analog_pad!!.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
         _analog_pad!!.updateScale(scale * wscale)
 
-        // buttons[PadEvent.BUTTON_UP].updateRect(matrix_left, 303, 497, 303+ 89,497+180);
-        buttons[PadEvent.BUTTON_UP]!!.updateRect(matrix_left, 130, 512, 130 + 429, 512 + 151)
+        _dpad.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
+        _dpad.updateScale(scale * wscale)
+/*
         // buttons[PadEvent.BUTTON_DOWN].updateRect(matrix_left,303,752,303+89,752+180);
         buttons[PadEvent.BUTTON_DOWN]!!.updateRect(matrix_left, 130, 784, 130 + 429, 784 + 151)
         // buttons[PadEvent.BUTTON_RIGHT].updateRect(matrix_left,392,671,392+162,671+93);
         buttons[PadEvent.BUTTON_RIGHT]!!.updateRect(matrix_left, 436, 533, 436 + 128, 533 + 378)
         // buttons[PadEvent.BUTTON_LEFT].updateRect(matrix_left,141,671,141+162,671+93);
         buttons[PadEvent.BUTTON_LEFT]!!.updateRect(matrix_left, 148, 533, 148 + 128, 533 + 378)
+
+ */
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_left, 56, 57, 56 + 376, 57 + 92)
         // buttons[PadEvent.BUTTON_START].updateRect(matrix_left,510,1013,510+182,1013+57);
         buttons[PadEvent.BUTTON_START]!!

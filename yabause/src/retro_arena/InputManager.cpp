@@ -178,6 +178,23 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     return 0;
 }
 
+SDL_JoystickID findJoyIdFromGuid(const string & deviceGuid) {
+  SDL_JoystickID joyId = -1;
+  for (int i = 0; i < SDL_NumJoysticks(); i++) {
+    char cguid[65];
+    string joy_name_and_guid;
+    SDL_Joystick* joy = SDL_JoystickOpen(i);
+    if (joy != NULL) {
+      joyId = SDL_JoystickInstanceID(joy);
+      SDL_JoystickGetGUIDString(SDL_JoystickGetGUID(joy), cguid, 65);
+      if (string(cguid) == deviceGuid)
+        break;
+    }
+  }
+  return joyId;
+}
+
+
 void InputManager::genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid ){
   std::stringstream ss;
   ss << id << "_" << name << "_" << guid;
@@ -248,8 +265,83 @@ int mapKeys( const json & configs ){
   json p1 = configs["player1"];
 
   try {
-    if( !p1.is_null() ){
+    if (!p1.is_null()) {
 
+      auto p1pad = p1["pad"];
+
+      padbits = Per3DPadAdd(&PORTDATA1);
+      if (p1pad.find("up") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["up"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["up"]), PERPAD_UP, padbits);
+      }
+      if (p1pad.find("down") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["down"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["down"]), PERPAD_DOWN, padbits);
+      }
+      if (p1pad.find("left") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["down"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["left"]), PERPAD_LEFT, padbits);
+      }
+      if (p1pad.find("right") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["down"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["right"]), PERPAD_RIGHT, padbits);
+      }
+      if (p1pad.find("start") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["start"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["start"]), PERPAD_START, padbits);
+      }
+      if (p1pad.find("a") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["a"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["a"]), PERPAD_A, padbits);
+      }
+      if (p1pad.find("b") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["b"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["b"]), PERPAD_B, padbits);
+      }
+      if (p1pad.find("c") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["c"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["c"]), PERPAD_C, padbits);
+      }
+      if (p1pad.find("x") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["x"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["x"]), PERPAD_X, padbits);
+      }
+      if (p1pad.find("y") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["y"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["y"]), PERPAD_Y, padbits);
+      }
+      if (p1pad.find("z") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["z"]["deviceGUID"]);
+        PerSetKey(genidjson(user, joyId, p1pad["z"]), PERPAD_Z, padbits);
+      }
+      if (p1pad.find("analogx") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["analogx"]["deviceGUID"]);
+        PerSetKey(genidAnalogjson(user, joyId, p1pad["analogx"]), PERANALOG_AXIS1, padbits);
+        InputManager::getInstance()->_analogType[joyId] = 0;
+      }
+      if (p1pad.find("analogy") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["analogy"]["deviceGUID"]);
+        PerSetKey(genidAnalogjson(user, joyId, p1pad["analogy"]), PERANALOG_AXIS2, padbits);
+        InputManager::getInstance()->_analogType[joyId] = 0;
+      }
+      if (p1pad.find("analogl") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["analogl"]["deviceGUID"]);
+        PerSetKey(genidAnalogjson(user, joyId, p1pad["analogl"]), PERANALOG_AXIS4, padbits);
+        InputManager::getInstance()->_analogType[joyId] = 0;
+      }
+      if (p1pad.find("analogr") != p1pad.end()) {
+        auto joyId = findJoyIdFromGuid(p1pad["analogr"]["deviceGUID"]);
+        PerSetKey(genidAnalogjson(user, joyId, p1pad["analogr"]), PERANALOG_AXIS3, padbits);
+        InputManager::getInstance()->_analogType[joyId] = 0;
+      }
+    }
+  }
+  catch (json::type_error & e) {
+    std::cout << "message: " << e.what() << '\n'
+      << "exception id: " << e.id << std::endl;
+    return -1;
+  }
+#if 0
       string name_guid;
       SDL_JoystickID u_joyId = p1["DeviceID"];
       string u_JoyName = p1["deviceName"];
@@ -377,6 +469,7 @@ int mapKeys( const json & configs ){
                    << "exception id: " << e.id << std::endl;
         return -1;
   }
+#endif
   return 0;
 }
 
@@ -525,7 +618,7 @@ void InputManager::saveInputConfig( const std::string & guid , const std::string
   fin >> j;
   fin.close();
 
-  j[guid][key] = { { "type", type },{ "id", id },{ "value", value } };
+  j["player1"]["pad"][key] = { {"deviceGUID",guid},{ "type", type },{ "id", id },{ "value", value } };
 
   std::ofstream out( config_fname_ );
   out << j.dump(2);
@@ -657,9 +750,9 @@ void InputManager::addJoystickByDeviceIndex(int id)
   mInputConfigs[joyId] = new InputConfig(joyId, SDL_JoystickName(joy), guid);
   if(!loadInputConfig(mInputConfigs[joyId]))
   {
-    cout << "Added unconfigured joystick " << SDL_JoystickName(joy) << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ")." << endl;
+    cout << "Added unconfigured joystick " << SDL_JoystickName(joy) << " Type: " << SDL_JoystickGetDeviceType(id) << " (GUID: " << guid << ", instance ID: " << joyId << ", device index: " << id << ")." << endl;
   }else{
-    cout << "Added known joystick " << SDL_JoystickName(joy) << " (instance ID: " << joyId << ", device index: " << id << ")"  << endl;
+    cout << "Added known joystick " << SDL_JoystickName(joy) << " Type: " << SDL_JoystickGetDeviceType(id) << " (instance ID: " << joyId << ", device index: " << id << ")"  << endl;
   }
 
   // set up the prevAxisValues
@@ -670,6 +763,62 @@ void InputManager::addJoystickByDeviceIndex(int id)
   int numHats = SDL_JoystickNumHats(joy);
   mHatValues[joyId] = new u8[numHats];
   std::fill(mHatValues[joyId], mHatValues[joyId] + numHats, 0); //initialize array to 0
+
+  //if (SDL_JOYSTICK_TYPE_WHEEL != SDL_JoystickGetDeviceType(id)) return;
+
+  SDL_Haptic *haptic = SDL_HapticOpenFromJoystick(joy);
+  if (!haptic) {
+    printf("Failed to open haptic device: %s\n", SDL_GetError());
+    return;
+  }
+
+
+/*
+  if (SDL_HapticRumbleInit(haptic) != 0) {
+    printf("Failed to initialize rumble: %s\n", SDL_GetError());
+    return;
+  }
+
+  // Play a rumble effect at 50% strength for 2 seconds
+  if (SDL_HapticRumblePlay(haptic, 1.0, 2000) != 0) {
+    printf("Failed to play rumble effect: %s\n", SDL_GetError());
+    return;
+  }
+*/
+
+  u32 hflgs = SDL_HapticQuery(haptic);
+
+  SDL_HapticSetAutocenter(haptic, 100);
+
+
+  // Define a constant force effect to center the wheel
+  SDL_HapticEffect effect;
+  memset(&effect, 0, sizeof(SDL_HapticEffect));
+  effect.type = SDL_HAPTIC_CONSTANT;
+  effect.constant.direction.type = SDL_HAPTIC_POLAR;
+  effect.constant.direction.dir[0] = 18000;  // Direction (180 degrees, but you'll need to adjust based on your needs)
+  effect.constant.length = SDL_HAPTIC_INFINITY;  // Effect duration
+  effect.constant.level = 0x7FFF;  // Force strength (you'll need to adjust based on your needs)
+
+  if (SDL_HapticEffectSupported(haptic, &effect)) {
+    int effect_id = SDL_HapticNewEffect(haptic, &effect);
+    if (effect_id < 0) {
+      printf("Error creating haptic effect: %s\n", SDL_GetError());
+      //SDL_HapticClose(haptic);
+      //SDL_JoystickClose(jp);
+      //SDL_Quit();
+      return;
+    }
+
+    // Play the effect
+    if (SDL_HapticRunEffect(haptic, effect_id, 1) < 0) {
+      printf("Error playing haptic effect: %s\n", SDL_GetError());
+      //SDL_HapticClose(haptic);
+      //SDL_JoystickClose(joystick);
+      //SDL_Quit();
+      return;
+    }
+  }
 
 }
 
@@ -798,7 +947,7 @@ int InputManager::handleJoyEventsMenu(void) {
       }
       if( cur != joymap_[joy_name_and_guid][i] ) {
 	      joymap_[joy_name_and_guid][i] = cur; 
-        menu_layer_->onRawInputEvent(*this, joy_name_and_guid.c_str(), "axis", i, cur);
+        menu_layer_->onRawInputEvent(*this, guid, "axis", i, cur);
       }
     }
     for ( i = 0; i < SDL_JoystickNumHats( joy ); i++ )
@@ -818,7 +967,7 @@ int InputManager::handleJoyEventsMenu(void) {
         hatValue = SDL_HAT_VALUES[ j ];
         if ( ~oldHatState & hatValue && newHatState & hatValue )
         {
-          if( menu_layer_->onRawInputEvent(*this, joy_name_and_guid.c_str(), "hat", i, hatValue) != -1 ){
+          if( menu_layer_->onRawInputEvent(*this, guid, "hat", i, hatValue) != -1 ){
             return 0;
           }
         }
@@ -862,7 +1011,7 @@ int InputManager::handleJoyEvents(void) {
       if( _analogType[joyId] == 1 ){ 
         PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8));
       }else{
-	PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8)-128 );
+	      PerAxisValue((joyId << 18) | SDL_MEDIUM_AXIS_VALUE | i, (u8)(((int)cur+32768) >> 8) );
       }
 
       if ( cur < -SDL_MEDIUM_AXIS_VALUE )
@@ -938,9 +1087,9 @@ static const int DEADZONE = 23000;
 
 void InputManager::setMenuLayer( MenuScreen * menu_layer ){
   menu_layer_ = menu_layer;
-  if( menu_layer_ != nullptr ){
-    menu_layer_->setCurrentInputDevices( mJoysticks );
-  }
+  //if( menu_layer_ != nullptr ){
+  //  menu_layer_->setCurrentInputDevices( mJoysticks );
+  //}
 }
 
 bool InputManager::parseEventMenu(const SDL_Event& ev ){
@@ -990,7 +1139,7 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
         );
 
         if( SDL_JOYBUTTONDOWN == ev.type ){
-          if( menu_layer_->onRawInputEvent(*this,joy_name_and_guid.c_str(),"button",ev.jbutton.button,1) != -1 ){
+          if( menu_layer_->onRawInputEvent(*this, guid,"button",ev.jbutton.button,1) != -1 ){
             return true;
           }
         }
@@ -1070,6 +1219,7 @@ bool InputManager::parseEvent(const SDL_Event& ev)
   switch(ev.type)
   {
   case SDL_JOYBUTTONUP:{
+/*
     for( int i=0; i<menu_inputs_.size(); i++  ){
          if( ev.jbutton.button == menu_inputs_[i].select_button_ && 
              ev.jbutton.which == menu_inputs_[i].select_device_ ){
@@ -1082,6 +1232,7 @@ bool InputManager::parseEvent(const SDL_Event& ev)
         return true;
       }   
     }
+*/
     return true;
   }    
   case SDL_KEYDOWN:

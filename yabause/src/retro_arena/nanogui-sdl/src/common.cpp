@@ -44,7 +44,7 @@ void init()
         setlocale(LC_NUMERIC, "C");
     #endif
 
-    int rc = SDL_Init(SDL_INIT_VIDEO);
+    int rc = SDL_Init(SDL_INIT_EVERYTHING);
     if (rc != 0)
       throw std::runtime_error("Unable to initialize SDL!");
 

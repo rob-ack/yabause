@@ -255,7 +255,7 @@ internal class Dpad(
 
     fun getState(x: Int, y: Int ) : DpadState {
 
-        if( distance( centerX.toDouble(),centerY.toDouble(), x.toDouble(),y.toDouble() ) < deadZone ){
+        if( distance( centerX.toDouble(),centerY.toDouble(), x.toDouble(),y.toDouble() ) < deadZone*scale ){
             ds.up    = false
             ds.right = false
             ds.down  = false
@@ -580,7 +580,7 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_Y] = ActionButton(72, "", 25)
         buttons[PadEvent.BUTTON_Z] = ActionButton(72, "", 25)
         _analog_pad = AnalogPad(256, "", 40)
-        _dpad = Dpad(256, 92)
+        _dpad = Dpad(256, 60)
         active = HashMap()
     }
 

@@ -59,6 +59,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
+import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.documentfile.provider.DocumentFile
@@ -241,6 +243,37 @@ class Yabause : AppCompatActivity(),
         progressBar = findViewById(R.id.llProgressBar)
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
+
+        val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+
+        val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+        analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
+        analogSwitch.setOnCheckedChangeListener { _, isChecked ->
+            val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
+            if (isChecked) {
+
+                padManager.analogMode = PadManager.MODE_ANALOG
+                YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG)
+                padv.setPadMode(PadManager.MODE_ANALOG)
+
+                val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+                val editor = hprefernce.edit()
+                editor.putBoolean("pref_analog_pad", true)
+                editor.apply()
+
+            } else {
+                // The switch isn't checked.
+                YabauseRunnable.switch_padmode(PadManager.MODE_HAT)
+                padManager.analogMode = PadManager.MODE_HAT
+                padv.setPadMode(PadManager.MODE_HAT)
+
+                val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+                val editor = hprefernce.edit()
+                editor.putBoolean("pref_analog_pad", false)
+                editor.apply()
+
+            }
+        }
 /*
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {

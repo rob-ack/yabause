@@ -42,6 +42,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RectF
 import android.os.Build
 import android.os.VibrationEffect
@@ -69,10 +70,20 @@ internal open class PadButton {
     var centerX: Float = 0.0f
     var centerY: Float = 0.0f
 
+    val pushPaint = Paint().apply {
+        style = Paint.Style.FILL // 塗りつぶしスタイルを設定
+        color = 0x80FFFFFF.toInt() // 色を設定（この例では緑）
+    }
+
+    open fun recalc(){
+
+    }
+
     fun updateRect(x1: Int, y1: Int, x2: Int, y2: Int) {
         rect[x1.toFloat(), y1.toFloat(), x2.toFloat()] = y2.toFloat()
         centerX = rect.centerX()
         centerY = rect.centerY()
+        recalc()
     }
 
     fun updateRect(matrix: Matrix, x1: Int, y1: Int, x2: Int, y2: Int) {
@@ -80,6 +91,7 @@ internal open class PadButton {
         matrix.mapRect(rect)
         centerX = rect.centerX()
         centerY = rect.centerY()
+        recalc()
     }
 
     fun updateScale(scale: Float) {
@@ -112,19 +124,11 @@ internal open class PadButton {
     }
 
     fun isOn(index: Int): Boolean {
-        return if (pointId == index) {
-            true
-        } else {
-            false
-        }
+        return pointId == index
     }
 
     fun isOn(): Boolean {
-        return if (pointId != -1) {
-            true
-        } else {
-            false
-        }
+        return pointId != -1
     }
 
     init {
@@ -138,14 +142,34 @@ internal open class PadButton {
 internal class DPadButton : PadButton() {
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
         super.draw(canvas, nomal_back, active_back, front)
-        canvas.drawRect(rect, back!!)
+        if ( isOn() ) {
+             canvas.drawRect(rect, pushPaint!!)
+        }else {
+           // canvas.drawRect(rect, pushPaint!!)
+        }
     }
 }
 
 internal class StartButton : PadButton() {
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
         super.draw(canvas, nomal_back, active_back, front)
-        canvas.drawOval(RectF(rect), back!!)
+        if ( isOn() ) {
+
+            val newWidth = rect.width() * 1.5f
+            val newHeight = rect.height() * 1.5f
+
+            // 新しいRectFオブジェクトを作成
+            val drect = RectF(
+                centerX - newWidth / 2,
+                centerY - newHeight / 2,
+                centerX + newWidth / 2,
+                centerY + newHeight / 2
+            )
+
+            canvas.drawOval(drect, pushPaint)
+        }else{
+            //canvas.drawOval(rect, pushPaint)
+        }
     }
 }
 
@@ -156,7 +180,11 @@ internal class ActionButton(
 ) : PadButton() {
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
         super.draw(canvas, nomal_back, active_back, front)
-        canvas.drawCircle(rect.centerX(), rect.centerY(), width * scale, back!!)
+        if ( isOn() ) {
+            canvas.drawCircle(rect.centerX(), rect.centerY(), width * scale * 1.5f, pushPaint)
+        }else{
+           //canvas.drawCircle(rect.centerX(), rect.centerY(), width * scale, pushPaint)
+        }
         // front.setTextSize(textsize);
         // front.setTextAlign(Paint.Align.CENTER);
         // canvas.drawText(text, rect.centerX() , rect.centerY() , front);
@@ -170,6 +198,34 @@ internal class Dpad(
     private val width: Int,
     private val deadZone: Int,
 ) : PadButton() {
+
+    val path = Path()
+    val drect = RectF()
+
+    override fun recalc() {
+        val newWidth = rect.width() * 1.5f
+        val newHeight = rect.height() * 1.5f
+
+        // 新しいRectFオブジェクトを作成
+        drect.set(
+            centerX - newWidth / 2,
+            centerY - newHeight / 2,
+            centerX + newWidth / 2,
+            centerY + newHeight / 2
+        )
+
+        val outerRadius = Math.min(newWidth, newWidth) / 2f
+        val innerRadius = (deadZone * scale)
+        path.apply {
+            reset()
+            addCircle(centerX, centerY, outerRadius, Path.Direction.CW)
+            addCircle(centerX, centerY, innerRadius, Path.Direction.CCW)
+        }
+    }
+
+    init {
+        recalc()
+    }
 
     data class Point(val x: Double, val y: Double)
 
@@ -255,22 +311,9 @@ internal class Dpad(
             ds.down  = false
             ds.left  = false
         }
-/*
-        val xv = (x - rect.centerX()) / (width * scale/2)
-        ds.right = xv > deadZone / (width * scale/2)
-        ds.left = xv < -(deadZone / (width * scale/2))
-
-        var yv = (y - rect.centerY()) / (width * scale/2)
-        ds.down = yv > deadZone/(width * scale/2)
-        ds.up = yv < - (deadZone/(width * scale/2))
-*/
         return ds
     }
 
-    private val pushPaint = Paint().apply {
-        style = Paint.Style.FILL // 塗りつぶしスタイルを設定
-        color = 0x80FFFFFF.toInt() // 色を設定（この例では緑）
-    }
 
     private val transPaint = Paint().apply {
         style = Paint.Style.FILL // 塗りつぶしスタイルを設定
@@ -279,6 +322,8 @@ internal class Dpad(
 
 
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
+
+        //canvas.drawRect(rect,pushPaint)
 
         var dstate = 0
         var startDir = 0.0f
@@ -306,18 +351,10 @@ internal class Dpad(
         if( dstate == 0x04 ){ startDir = -22.5f + (45.0f*6) }
         if( dstate == 0x06 ){ startDir = -22.5f + (45.0f*7) }
 
-        val newWidth = rect.width() * 1.5f
-        val newHeight = rect.height() * 1.5f
-
-        // 新しいRectFオブジェクトを作成
-        val drect = RectF(
-            centerX - newWidth / 2,
-            centerY - newHeight / 2,
-            centerX + newWidth / 2,
-            centerY + newHeight / 2
-        )
+        canvas.save()
+        canvas.clipPath(path)
         canvas.drawArc(drect, startDir, 45.0f, true, pushPaint)
-        canvas.drawCircle(centerX, centerY, deadZone * scale, transPaint)
+        canvas.restore()
     }
 
     override fun Off(){
@@ -364,12 +401,15 @@ internal class AnalogPad(
         // front.setTextSize(textsize);
         // front.setTextAlign(Paint.Align.CENTER);
         // canvas.drawText(text, rect.centerX() , rect.centerY() , front);
+        //canvas.drawRect(rect,pushPaint)
+
         val dx = (sx - 128.0) / 128.0 * (width * scale / 2)
         val dy = (sy - 128.0) / 128.0 * (width * scale / 2)
         canvas.drawCircle(rect.centerX() + dx.toInt(),
             rect.centerY() + dy.toInt(),
             width * scale / 2,
             paint)
+
     }
 
     init {
@@ -392,18 +432,28 @@ class YabausePad : View, OnTouchListener {
     var height_ = 0
     var bitmap_pad_left: Bitmap? = null
     var bitmap_pad_right: Bitmap? = null
+    var bitmap_pad_top_left: Bitmap? = null
+    var bitmap_pad_top_right: Bitmap? = null
     var bitmap_pad_middle: Bitmap? = null
     private val mPaint = Paint()
     private val matrix_left = Matrix()
     private val matrix_right = Matrix()
+    private val matrix_top_left = Matrix()
+    private val matrix_top_right = Matrix()
     private val matrix_center = Matrix()
     private val paint = Paint()
     private val apaint = Paint()
     private val tpaint = Paint()
     var scale = 1.0f
-    var ypos = 0.0f
-    val basewidth = 1920.0f
-    val baseheight = 1080.0f
+    var leftYPosition = 0.0f
+    var topLeftYPosition = 0.0f
+    var centerYPosition = 0.0f
+    var rightYPosition = 0.0f
+    var topRightYPosition = 0.0f
+    var visualFeedback = true
+    var forceFeedback = true
+    var basewidth = 1920.0f
+    var baseheight = 1080.0f
     private var wscale = 0f
     private var hscale = 0f
     var padTestestMode: Boolean = false
@@ -415,6 +465,7 @@ class YabausePad : View, OnTouchListener {
     private var _axi_y = 128
     private var _pad_mode = 0
     var trans = 1.0f
+
     fun setPadMode(mode: Int) {
         _pad_mode = mode
         invalidate()
@@ -424,10 +475,18 @@ class YabausePad : View, OnTouchListener {
         if (b == false) {
             bitmap_pad_left = null
             bitmap_pad_right = null
+            bitmap_pad_top_left = null
+            bitmap_pad_top_right = null
+            bitmap_pad_middle = null
         } else {
-            bitmap_pad_left = BitmapFactory.decodeResource(resources, R.drawable.pad_l_new)
-            bitmap_pad_right = BitmapFactory.decodeResource(resources, R.drawable.pad_r_new)
-            bitmap_pad_middle = BitmapFactory.decodeResource(resources, R.drawable.pad_m_new)
+            val options = BitmapFactory.Options().apply {
+                inScaled = false
+            }
+            bitmap_pad_left = BitmapFactory.decodeResource(resources, R.drawable.pad_l_new,options)
+            bitmap_pad_right = BitmapFactory.decodeResource(resources, R.drawable.pad_r_new,options)
+            bitmap_pad_top_left = BitmapFactory.decodeResource(resources, R.drawable.pad_top_l_new,options)
+            bitmap_pad_top_right = BitmapFactory.decodeResource(resources, R.drawable.pad_top_r_new,options)
+            bitmap_pad_middle = BitmapFactory.decodeResource(resources, R.drawable.pad_m_new,options)
         }
         invalidate()
     }
@@ -450,24 +509,45 @@ class YabausePad : View, OnTouchListener {
         padTestestMode = test
     }
 
-    fun updateScale() {
+    fun getPreferences(){
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(
             context)
         scale = sharedPref.getFloat("pref_pad_scale", 0.75f)
-        ypos = sharedPref.getFloat("pref_pad_pos", 0.1f)
+        leftYPosition = sharedPref.getFloat("pref_pad_pos", 0.1f)
+        centerYPosition = sharedPref.getFloat("pref_pad_center_pos", 0.1f)
+        rightYPosition = sharedPref.getFloat("pref_pad_right_pos", 0.1f)
+        topLeftYPosition = sharedPref.getFloat("pref_pad_top_left_pos", 1.2f)
+        topRightYPosition = sharedPref.getFloat("pref_pad_top_right_pos", 1.2f)
         trans = sharedPref.getFloat("pref_pad_trans", 0.7f)
+        visualFeedback = sharedPref.getBoolean("pref_visual_feedback", true)
+        forceFeedback = sharedPref.getBoolean("pref_force_feedback", true)
+    }
+
+    fun updateScale() {
         // setPadScale( width_, height_ );
+        getPreferences()
         requestLayout()
         this.invalidate()
     }
 
     private fun init() {
+/*
+        val displayMetrics = DisplayMetrics()
+        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        windowManager.defaultDisplay.getRealMetrics(displayMetrics)
+        val tbaseheight = displayMetrics.widthPixels.toFloat()
+        val tbasewidth = displayMetrics.heightPixels.toFloat()
+
+        if( tbasewidth > tbaseheight ){
+            basewidth = tbasewidth
+            baseheight = tbaseheight
+        }else{
+            basewidth = tbaseheight
+            baseheight = tbasewidth
+        }
+*/
         setOnTouchListener(this)
-        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
-            context)
-        scale = sharedPref.getFloat("pref_pad_scale", 0.75f)
-        ypos = sharedPref.getFloat("pref_pad_pos", 0.1f)
-        trans = sharedPref.getFloat("pref_pad_trans", 0.7f)
+        getPreferences()
         buttons = arrayOfNulls(PadEvent.BUTTON_LAST)
 /*
         buttons[PadEvent.BUTTON_UP] = DPadButton()
@@ -520,32 +600,22 @@ class YabausePad : View, OnTouchListener {
         if (bitmap_pad_left == null || bitmap_pad_right == null) {
             return
         }
+
+
+
         mPaint.alpha = (255.0f * trans).toInt()
         canvas.drawBitmap(bitmap_pad_left!!, matrix_left, mPaint)
+        canvas.drawBitmap(bitmap_pad_top_left!!, matrix_top_left, mPaint)
         canvas.drawBitmap(bitmap_pad_right!!, matrix_right, mPaint)
+        canvas.drawBitmap(bitmap_pad_top_right!!, matrix_top_right, mPaint)
         canvas.drawBitmap(bitmap_pad_middle!!, matrix_center, mPaint)
         canvas.setMatrix(null)
 
 
-        canvas.save();
+        if( !visualFeedback) return
 
-        //buttons[PadEvent.BUTTON_UP]?.draw(canvas, paint, apaint, tpaint);
-        //for( i in 4 until 13) {
-            //if( buttons[i]?.isOn() == true ){
-        //        buttons[i]?.draw(canvas, paint, apaint, tpaint);
-            //}
-        //}
-/*
-    	//canvas.concat(matrix_left);
-        buttons[PadEvent.BUTTON_UP]?.draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_DOWN]?.draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_LEFT]?.draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_RIGHT]?.draw(canvas, paint, apaint, tpaint);
-        buttons[PadEvent.BUTTON_START]?.draw(canvas, paint, apaint, tpaint);
+        canvas.save();
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
-        
-        //canvas.restore();
-        //canvas.concat(matrix_right);
         buttons[PadEvent.BUTTON_A]?.draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_B]?.draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_C]?.draw(canvas, paint, apaint, tpaint);
@@ -553,12 +623,14 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_Y]?.draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_Z]?.draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
-*/
+        buttons[PadEvent.BUTTON_START]?.draw(canvas, paint, apaint, tpaint);
+
         if (_pad_mode == 1) {
             _analog_pad!!.draw(canvas, _axi_x, _axi_y, paint, apaint, tpaint)
         }else{
             _dpad.draw(canvas, paint, apaint, tpaint)
         }
+
     }
 
     fun setOnPadListener(listener: OnPadListener?) {
@@ -568,6 +640,9 @@ class YabausePad : View, OnTouchListener {
     var preDstate = 0
 
     fun viberate(){
+
+        if( !forceFeedback) return
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             vibrator?.vibrate(
                 VibrationEffect.createOneShot(
@@ -708,6 +783,7 @@ class YabausePad : View, OnTouchListener {
                     if (buttons[btnindex]!!.intersects(hittest)) {
                         if( buttons[btnindex]!!.isOn(pointerId) != true ){
                             viberate()
+                            invalidate()
                         }
                         buttons[btnindex]!!.On(pointerId)
                     }
@@ -725,6 +801,7 @@ class YabausePad : View, OnTouchListener {
                     if (buttons[btnindex]!!.intersects(hittest)) {
                         if( buttons[btnindex]!!.isOn(pointerId) != true ){
                             viberate()
+                            invalidate()
                         }
                         buttons[btnindex]!!.On(pointerId)
                     }
@@ -741,6 +818,7 @@ class YabausePad : View, OnTouchListener {
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.isOn() && buttons[btnindex]!!.pointId == pointerId) {
                         buttons[btnindex]!!.Off()
+                        invalidate()
                     }
                     btnindex++
                 }
@@ -755,6 +833,7 @@ class YabausePad : View, OnTouchListener {
                 while (btnindex < PadEvent.BUTTON_LAST) {
                     if (buttons[btnindex]!!.isOn() && buttons[btnindex]!!.pointId == pointerId) {
                         buttons[btnindex]!!.Off()
+                        invalidate()
                     }
                     btnindex++
                 }
@@ -837,6 +916,7 @@ class YabausePad : View, OnTouchListener {
                         if (eventID2 == buttons[btnindex]!!.pointId) {
                             if (buttons[btnindex]!!.intersects(hittest2) == false) {
                                 buttons[btnindex]!!.Off()
+                                invalidate()
                             }
                         } else if (buttons[btnindex]!!.intersects(hittest2)) {
                             buttons[btnindex]!!.On(eventID2)
@@ -961,40 +1041,131 @@ class YabausePad : View, OnTouchListener {
 
     fun setPadScale(width: Int, height: Int) {
         var dens = resources.displayMetrics.density
-        dens /= 2.0f
+        //dens /= 2.0f
         val bitmap_height = bitmap_pad_right!!.height
+
+        val dir = context.getResources().getConfiguration().orientation
+
+        val buttonCenterX = 347
+        val buttonCenterY = 720
+        val rectsize = 230
+        var leftPadPosX = -120F
+        var leftPadPosY = 500F
+
+        var rightPadPosX = -60F
+        var rightPadPosY = 80F
+
+
+        var triggerX = -40F
+        var triggerY = 1080f - 250f
+
         if (width > height) {
-            wscale = width.toFloat() / basewidth
-            hscale = wscale // (float) height / baseheight;
-        } else {
-            wscale = width.toFloat() / baseheight
-            hscale = wscale // (float) height / basewidth;
+            //leftPadPosX = 0F
+            leftPadPosY = 0F
+            rightPadPosY = 0F
+            triggerY = 0F
         }
+
+        //scale = 2.0f
+        wscale = 1.0F
+        hscale = 1.0F
+
         var maxpos = height - bitmap_height * scale * hscale
         if (maxpos < 0.0f) {
             maxpos = 0.0f
         }
-        var pos = ypos * maxpos
+
+        //scale = 0.5f
+        val ndxs = scale * wscale
+        val ndys = scale * hscale
+        matrix_right.apply {
+            reset()
+            postTranslate(-315f, -652f)
+            postScale(ndxs, ndys)
+            postTranslate(315f, 652f)
+            postTranslate(  width.toFloat() -( bitmap_pad_right!!.width.toFloat() + rightPadPosX) , height -(bitmap_pad_right!!.height.toFloat()+rightPadPosY)  )
+        }
+        matrix_left.apply {
+            reset()
+            postTranslate(-buttonCenterX.toFloat(), -buttonCenterY.toFloat())
+            postScale(ndxs, ndys)
+            postTranslate(buttonCenterX.toFloat(), buttonCenterY.toFloat())
+            //postTranslate(  leftPadPosX + 80F , leftPadPosY + buttonCenterY/1.5f )
+            postTranslate(  leftPadPosX, height - ((bitmap_pad_left!!.height.toFloat()) + leftPadPosY) )
+        }
+        matrix_center.apply {
+            reset()
+            postTranslate(-bitmap_pad_middle!!.width.toFloat() / 2.0F, -bitmap_pad_middle!!.height.toFloat() / 2.0F )
+            postScale(ndxs, ndys)
+            postTranslate(bitmap_pad_middle!!.width.toFloat() / 2.0F, bitmap_pad_middle!!.height.toFloat() / 2.0F )
+            postTranslate(  (width / 2).toFloat() - (bitmap_pad_middle!!.width.toFloat() / 2.0F) , height - bitmap_pad_middle!!.height.toFloat() )
+        }
+
+        matrix_top_right.reset()
+        matrix_top_right.postTranslate(-bitmap_pad_top_right!!.width.toFloat()/2f,-bitmap_pad_top_right!!.height.toFloat()/2f)
+        matrix_top_right.postScale(scale, scale)
+        matrix_top_right.postTranslate(bitmap_pad_top_right!!.width.toFloat()/2f,bitmap_pad_top_right!!.height.toFloat()/2f)
+        matrix_top_right.postTranslate(width.toFloat() - (bitmap_pad_top_right!!.width.toFloat()+triggerX), triggerY)
+
+        matrix_top_left.reset()
+        matrix_top_left.postTranslate(-bitmap_pad_top_left!!.width.toFloat()/2f,-bitmap_pad_top_left!!.height.toFloat()/2f)
+        matrix_top_left.postScale(scale , scale)
+        matrix_top_left.postTranslate(bitmap_pad_top_left!!.width.toFloat()/2f,bitmap_pad_top_left!!.height.toFloat()/2f)
+        matrix_top_left.postTranslate(triggerX, triggerY)
+
+/*
+        val rpos = rightYPosition * maxpos
         matrix_right.reset()
         matrix_right.postTranslate(-780f, -baseheight)
         matrix_right.postScale(scale * wscale, scale * hscale)
-        matrix_right.postTranslate(width.toFloat(), height - pos)
+        matrix_right.postTranslate(width.toFloat(), height - rpos)
+
+        val trp = topRightYPosition * maxpos
+        matrix_top_right.reset()
+        matrix_top_right.postTranslate(-780f, -250f)
+        matrix_top_right.postScale(scale * wscale, scale * hscale)
+        matrix_top_right.postTranslate(width.toFloat(), height - trp)
+
+
+        val lpos = leftYPosition * maxpos
         matrix_left.reset()
         matrix_left.postTranslate(0f, -baseheight)
         matrix_left.postScale(scale * wscale, scale * hscale)
-        matrix_left.postTranslate(0f, height - pos)
-        matrix_center.reset()
-        matrix_center.postTranslate(-bitmap_pad_middle!!.width.toFloat(),
-            -bitmap_pad_middle!!.height.toFloat())
-        matrix_center.postScale(scale * wscale, scale * hscale)
-        matrix_center.postTranslate((width / 2).toFloat(), height - pos)
+        matrix_left.postTranslate(0f, height - lpos)
 
+        val tlp = topLeftYPosition * maxpos
+        matrix_top_left.reset()
+        matrix_top_left.postTranslate(0f, -250f)
+        matrix_top_left.postScale(scale * wscale, scale * hscale)
+        matrix_top_left.postTranslate(0f, height - tlp)
+
+
+        val cpos = centerYPosition * maxpos
+        matrix_center.reset()
+        matrix_center.postTranslate(-bitmap_pad_middle!!.width.toFloat(), -bitmap_pad_middle!!.height.toFloat())
+        matrix_center.postScale(scale * wscale, scale * hscale)
+        matrix_center.postTranslate((width / 2).toFloat(), height - cpos)
+*/
+
+        _analog_pad!!.updateRect(matrix_left,
+            buttonCenterX-rectsize, buttonCenterY-rectsize,
+            buttonCenterX + rectsize, buttonCenterY + rectsize)
+        _analog_pad!!.updateScale(scale * wscale)
+
+        _dpad.updateRect(matrix_left,
+            buttonCenterX-rectsize, buttonCenterY -rectsize,
+            buttonCenterX+rectsize, buttonCenterY +rectsize)
+        _dpad.updateScale(scale * wscale)
+
+/*
         // Left Part
         _analog_pad!!.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
         _analog_pad!!.updateScale(scale * wscale)
 
         _dpad.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
         _dpad.updateScale(scale * wscale)
+
+ */
 /*
         // buttons[PadEvent.BUTTON_DOWN].updateRect(matrix_left,303,752,303+89,752+180);
         buttons[PadEvent.BUTTON_DOWN]!!.updateRect(matrix_left, 130, 784, 130 + 429, 784 + 151)
@@ -1004,10 +1175,10 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_LEFT]!!.updateRect(matrix_left, 148, 533, 148 + 128, 533 + 378)
 
  */
-        buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_left, 56, 57, 56 + 376, 57 + 92)
+
         // buttons[PadEvent.BUTTON_START].updateRect(matrix_left,510,1013,510+182,1013+57);
         buttons[PadEvent.BUTTON_START]!!
-            .updateRect(matrix_center, 0, 57, bitmap_pad_middle!!.width, bitmap_pad_middle!!.height)
+            .updateRect(matrix_center, 0, 53, 185, 132)
 
         // Right Part
         buttons[PadEvent.BUTTON_A]!!.updateRect(matrix_right, 59, 801, 59 + 213, 801 + 225)
@@ -1022,25 +1193,79 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_Y]!!.updateScale(scale * wscale)
         buttons[PadEvent.BUTTON_Z]!!.updateRect(matrix_right, 397, 409, 397 + 151, 409 + 152)
         buttons[PadEvent.BUTTON_Z]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_RIGHT_TRIGGER]!!.updateRect(matrix_right,
+
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_top_left,
+            50,
+            59,
+            50 + 379,
+            59 + 180)
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER]!!.updateRect(matrix_top_right,
             350,
             59,
             350 + 379,
-            59 + 91)
-        matrix_right.reset()
-        matrix_right.postTranslate(-bitmap_pad_right!!.width.toFloat(),
-            -bitmap_pad_right!!.height.toFloat())
-        matrix_right.postScale(scale * wscale / dens, scale * hscale / dens)
-        matrix_right.postTranslate(width.toFloat(), height - pos)
-        matrix_left.reset()
-        matrix_left.postTranslate(0f, -bitmap_pad_right!!.height.toFloat())
-        matrix_left.postScale(scale * wscale / dens, scale * hscale / dens)
-        matrix_left.postTranslate(0f, height - pos)
-        matrix_center.reset()
-        matrix_center.postTranslate(-bitmap_pad_middle!!.width.toFloat(),
-            -bitmap_pad_middle!!.height.toFloat())
-        matrix_center.postScale(scale * wscale / dens, scale * hscale / dens)
-        matrix_center.postTranslate((width / 2).toFloat(), height - pos)
+            59 + 180)
+
+        //scale = 0.5f
+
+        //matrix_right.reset()
+        //matrix_right.postTranslate(-bitmap_pad_right!!.width.toFloat(),-bitmap_pad_right!!.height.toFloat())
+        //matrix_right.postScale(scale * wscale / dens, scale * hscale / dens)
+        //matrix_right.postTranslate(width.toFloat(), height - rpos)
+
+
+        //matrix_left.postTranslate(0f, -bitmap_pad_left!!.height.toFloat())
+        //matrix_left.postScale(scale * wscale / dens, scale * hscale / dens)
+        //matrix_left.postTranslate(0f, height - lpos)
+
+        //scale = 0.5f
+/*
+        val xs = scale * wscale / dens
+        val ys = scale * hscale / dens
+        matrix_right.apply {
+            reset()
+            postTranslate(-315f, -652f)
+            postScale(scale, scale)
+            postTranslate(315f, 652f)
+            //postTranslate(-bitmap_pad_right!!.width.toFloat(), -bitmap_pad_right!!.height.toFloat())
+            //postScale(1.0f/dens, 1.0f/dens )
+            //postTranslate(bitmap_pad_right!!.width.toFloat(), bitmap_pad_right!!.height.toFloat())
+            postTranslate(  width.toFloat() -bitmap_pad_right!!.width.toFloat() , height -bitmap_pad_right!!.height.toFloat() )
+        }
+        matrix_left.apply {
+            reset()
+
+            postTranslate(-buttonCenterX.toFloat(), -buttonCenterY.toFloat())
+            postScale(scale, scale)
+            postTranslate(buttonCenterX.toFloat(), buttonCenterY.toFloat())
+
+            //postTranslate(0f, -bitmap_pad_left!!.height.toFloat())
+            //postScale(1.0f/dens, 1.0f/dens, )
+            //postTranslate(0f, bitmap_pad_left!!.height.toFloat())
+
+            postTranslate(  leftPadPosX, height - ((bitmap_pad_left!!.height.toFloat()) + leftPadPosY) )
+        }
+        matrix_center.apply {
+            reset()
+            postTranslate(-bitmap_pad_middle!!.width.toFloat() / 2.0F, -bitmap_pad_middle!!.height.toFloat() / 2.0F )
+            postScale(scale, scale)
+            postTranslate(bitmap_pad_middle!!.width.toFloat() / 2.0F, bitmap_pad_middle!!.height.toFloat() / 2.0F )
+            postTranslate(  (width / 2).toFloat() - (bitmap_pad_middle!!.width.toFloat() / 2.0F) , height - bitmap_pad_middle!!.height.toFloat() )
+        }
+
+        matrix_top_right.reset()
+        matrix_top_right.postTranslate(-bitmap_pad_top_right!!.width.toFloat()/2f,-bitmap_pad_top_right!!.height.toFloat()/2f)
+        matrix_top_right.postScale(scale, scale)
+        matrix_top_right.postTranslate(bitmap_pad_top_right!!.width.toFloat()/2f,bitmap_pad_top_right!!.height.toFloat()/2f)
+        matrix_top_right.postTranslate(width.toFloat() -bitmap_pad_top_right!!.width.toFloat(), triggerY)
+
+        matrix_top_left.reset()
+        matrix_top_left.postTranslate(-bitmap_pad_top_left!!.width.toFloat()/2f,-bitmap_pad_top_left!!.height.toFloat()/2f)
+        matrix_top_left.postScale(scale, scale)
+        matrix_top_left.postTranslate(bitmap_pad_top_left!!.width.toFloat()/2f,bitmap_pad_top_left!!.height.toFloat()/2f)
+        matrix_top_left.postTranslate(0.0f, triggerY)
+*/
         setMeasuredDimension(width, height)
     }
 }
+
+

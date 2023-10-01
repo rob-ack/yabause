@@ -61,6 +61,7 @@
             <SeekBar
                 android:id="@+id/button_scale"
                 android:layout_height="wrap_content"
+                android:min="50"
                 android:max="100"
                 android:progress="100"
                 android:clickable="false"
@@ -68,30 +69,92 @@
                 android:layout_width="200dp" />
 
         </LinearLayout>
+        <!--
+                <LinearLayout
+                    android:layout_width="300dp"
+                    android:layout_margin="10dp"
+                    android:layout_height="160dp"
+                    android:layout_gravity="center_horizontal">
 
-        <LinearLayout android:layout_height="wrap_content"
-            android:layout_width="300dp"
-            android:layout_margin="10dp"
-            android:layout_gravity="center_horizontal">
+                    <LinearLayout
+                        android:layout_width="100dp"
+                        android:layout_height="160dp"
+                        android:layout_gravity="center_horizontal"
+                        android:orientation="vertical"
+                        >
 
-            <TextView
-                android:id="@+id/editText4"
-                android:layout_height="wrap_content"
-                android:text="Position"
-                android:layout_width="90dp">
-            </TextView>
+                        <TextView
+                            android:id="@+id/editText4"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="Left Position"
+                            android:layout_width="90dp">
+                        </TextView>
+
+                        <SeekBar
+                            android:id="@+id/button_lypos"
+                            android:layout_width="100dp"
+                            android:layout_height="match_parent"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:rotation="270" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="100dp"
+                        android:layout_height="160dp"
+                        android:layout_gravity="center_horizontal"
+                        android:orientation="vertical"
+                        >
+
+                        <TextView
+                            android:id="@+id/editText_startpos"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="Center Position"
+                            android:layout_width="wrap_content">
+                        </TextView>
+
+                        <SeekBar
+                            android:id="@+id/button_cypos"
+                            android:layout_width="100dp"
+                            android:layout_height="match_parent"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:rotation="270" />
+
+                    </LinearLayout>
 
 
-            <SeekBar
-                android:id="@+id/button_ypos"
-                android:layout_height="wrap_content"
-                android:max="100"
-                android:progress="100"
-                android:clickable="false"
-                android:focusable="false"
-                android:layout_width="200dp" />
+                    <LinearLayout
+                        android:layout_width="100dp"
+                        android:layout_height="160dp"
+                        android:layout_gravity="center_horizontal"
 
-        </LinearLayout>
+                        android:orientation="vertical"
+                        >
+
+                        <TextView
+                            android:id="@+id/editTdddext4"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center_horizontal"
+                            android:text="Right Position"
+                            android:layout_width="wrap_content">
+                        </TextView>
+
+                        <SeekBar
+                            android:id="@+id/button_rypos"
+                            android:layout_width="100dp"
+                            android:layout_height="match_parent"
+                            android:clickable="false"
+                            android:focusable="false"
+                            android:rotation="270" />
+
+                    </LinearLayout>
+
+                </LinearLayout>
+        -->
 
 
         <LinearLayout
@@ -106,8 +169,6 @@
                 android:text="@string/transparency"
                 android:layout_width="90dip">
             </TextView>
-
-
             <SeekBar
                 android:id="@+id/button_transparent"
                 android:layout_height="wrap_content"
@@ -118,7 +179,21 @@
                 android:focusable="false"
                 android:layout_width="200dp" />
         </LinearLayout>
-	</LinearLayout>
+
+        <CheckBox
+            android:id="@+id/cb_forcefeedback"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Force feedback" />
+
+        <CheckBox
+            android:id="@+id/cb_visual_feedback"
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Visual feedback" />
+    </LinearLayout>
 
 
 </FrameLayout>

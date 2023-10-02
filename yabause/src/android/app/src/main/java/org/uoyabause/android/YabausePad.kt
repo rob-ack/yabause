@@ -1195,15 +1195,15 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_Z]!!.updateScale(scale * wscale)
 
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_top_left,
-            50,
-            59,
-            50 + 379,
-            59 + 180)
+            57,
+            48,
+            57 + 379,
+            48 + 100)
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER]!!.updateRect(matrix_top_right,
-            350,
-            59,
-            350 + 379,
-            59 + 180)
+            338,
+            48,
+            338 + 379,
+            48 + 100)
 
         //scale = 0.5f
 

@@ -173,6 +173,10 @@ class PadTestFragment : Fragment(), OnPadListener {
             }
         })
 
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
+            requireActivity())
+        mChkAnalogDpad?.isChecked = sharedPref.getBoolean("pref_show_analog_switch", false)
+
 
         tv = rootView.findViewById<View>(R.id.text_status) as TextView
         return rootView
@@ -200,7 +204,7 @@ class PadTestFragment : Fragment(), OnPadListener {
 
             editor.putBoolean("pref_force_feedback", mChkForceFeedback!!.isChecked())
             editor.putBoolean("pref_visual_feedback", mChkVIsualFeedback!!.isChecked())
-            editor.putBoolean("pref_show_analog_switch", false)
+            editor.putBoolean("pref_show_analog_switch", mChkAnalogDpad!!.isChecked())
             editor.commit()
 
             mPadView!!.saveCurrentPositionState()

@@ -216,7 +216,7 @@ class Yabause : AppCompatActivity(),
 
     override fun onUpdateAnalogDpad( a : Boolean ) {
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
-        val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+        val analogSwitch = findViewById<View>(R.id.layer_pad_mode)
         if( a ) {
             analogSwitch.visibility = View.VISIBLE
         }else {
@@ -261,15 +261,15 @@ class Yabause : AppCompatActivity(),
         val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
 
         analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
-        if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
-            analogSwitch.visibility = View.VISIBLE
-        }else {
-            analogSwitch.visibility = View.GONE
-        }
 
 
         val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
         padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+        if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+            padModeLayer.visibility = View.VISIBLE
+        }else {
+            padModeLayer.visibility = View.GONE
+        }
 
         analogSwitch.setOnCheckedChangeListener { _, isChecked ->
             val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
@@ -1996,14 +1996,14 @@ class Yabause : AppCompatActivity(),
             analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
 
             val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
-            if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
-                analogSwitch.visibility = View.VISIBLE
-            }else {
-                analogSwitch.visibility = View.GONE
-            }
 
             val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
             padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+            if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+                padModeLayer.visibility = View.VISIBLE
+            }else {
+                padModeLayer.visibility = View.GONE
+            }
 
         }
         waitingResult = false

@@ -324,7 +324,6 @@ internal class Dpad(
     override fun draw(canvas: Canvas, nomal_back: Paint?, active_back: Paint?, front: Paint?) {
 
         //canvas.drawRect(rect,pushPaint)
-
         var dstate = 0
         var startDir = 0.0f
         if (ds.left) {
@@ -417,11 +416,41 @@ internal class AnalogPad(
     }
 }
 
+class DraggableBitmap(
+    val bitmap: Bitmap,
+    var x: Float,
+    var y: Float,
+    var centerX: Float,
+    var centerY: Float,
+    var scale: Float,
+){
+    val width : Float
+        get(){return bitmap.width.toFloat() }
+    val height: Float
+        get(){ return bitmap.height.toFloat() }
+
+    var matrix : Matrix = Matrix()
+
+    fun updateMatrix() : Matrix{
+
+        matrix.reset()
+
+        matrix.postTranslate(-centerX,-centerY)
+        matrix.postScale(scale, scale)
+        matrix.postTranslate(centerX,centerY)
+        matrix.postTranslate(x,y)
+
+        return matrix
+    }
+
+}
+
 class YabausePad : View, OnTouchListener {
     interface OnPadListener {
         fun onPad(event: PadEvent?): Boolean
     }
 
+    private var isDragging = false
     private lateinit var buttons: Array<PadButton?>
     private var listener: OnPadListener? = null
     private var active: HashMap<Int, Int>? = null
@@ -430,17 +459,21 @@ class YabausePad : View, OnTouchListener {
     // private DisplayMetrics metrics = null;
     var width_ = 0
     var height_ = 0
-    var bitmap_pad_left: Bitmap? = null
-    var bitmap_pad_right: Bitmap? = null
-    var bitmap_pad_top_left: Bitmap? = null
-    var bitmap_pad_top_right: Bitmap? = null
-    var bitmap_pad_middle: Bitmap? = null
+    var bitmap_pad_left: DraggableBitmap? = null
+    var bitmap_pad_right: DraggableBitmap? = null
+    var bitmap_pad_top_left: DraggableBitmap? = null
+    var bitmap_pad_top_right: DraggableBitmap? = null
+    var bitmap_pad_middle: DraggableBitmap? = null
+
+    var bitmap_pad_left_h: DraggableBitmap? = null
+    var bitmap_pad_right_h: DraggableBitmap? = null
+    var bitmap_pad_top_left_h: DraggableBitmap? = null
+    var bitmap_pad_top_right_h: DraggableBitmap? = null
+    var bitmap_pad_middle_h: DraggableBitmap? = null
+
+    var isShow : Boolean = true
+
     private val mPaint = Paint()
-    private val matrix_left = Matrix()
-    private val matrix_right = Matrix()
-    private val matrix_top_left = Matrix()
-    private val matrix_top_right = Matrix()
-    private val matrix_center = Matrix()
     private val paint = Paint()
     private val apaint = Paint()
     private val tpaint = Paint()
@@ -466,29 +499,230 @@ class YabausePad : View, OnTouchListener {
     private var _pad_mode = 0
     var trans = 1.0f
 
+    var bitmaps: MutableList<DraggableBitmap?>? = null
+    private var draggingBitmap: DraggableBitmap? = null
+
     fun setPadMode(mode: Int) {
         _pad_mode = mode
         invalidate()
     }
 
-    fun show(b: Boolean) {
+    private fun findTouchedBitmap(x: Float, y: Float): DraggableBitmap? {
+        return bitmaps?.find { bitmap ->
+            x >= bitmap!!.x && x <= bitmap.x + bitmap.bitmap.width &&
+                    y >= bitmap.y && y <= bitmap.y + bitmap.bitmap.height
+        }
+    }
+
+    private var lastX = 0f
+    private var lastY = 0f
+
+
+    fun onTouchDragging(v: View, event: MotionEvent) : Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                lastX = event.x
+                lastY = event.y
+                draggingBitmap = findTouchedBitmap(lastX, lastY)
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if( draggingBitmap == null ){
+                    lastX = event.x
+                    lastY = event.y
+                    draggingBitmap = findTouchedBitmap(lastX, lastY)
+                }
+                draggingBitmap?.let {
+                    val x = event.x
+                    val y = event.y
+                    val deltaX = x - lastX
+                    val deltaY = y - lastY
+
+                    it.x += deltaX
+                    it.y += deltaY
+                    it.updateMatrix()
+
+                    lastX = x
+                    lastY = y
+
+                    invalidate()
+                }
+            }
+
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                isDragging = false
+                draggingBitmap = null
+                updateButtonPos()
+            }
+        }
+        return true
+    }
+
+
+    fun show(b: Boolean ) {
+        isShow = b
         if (b == false) {
-            bitmap_pad_left = null
-            bitmap_pad_right = null
             bitmap_pad_top_left = null
             bitmap_pad_top_right = null
             bitmap_pad_middle = null
+            bitmap_pad_left = null
+            bitmap_pad_right = null
+
+            bitmap_pad_top_left_h = null
+            bitmap_pad_top_right_h = null
+            bitmap_pad_middle_h = null
+            bitmap_pad_left_h = null
+            bitmap_pad_right_h = null
+
+            bitmaps?.clear()
         } else {
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
             val options = BitmapFactory.Options().apply {
                 inScaled = false
             }
-            bitmap_pad_left = BitmapFactory.decodeResource(resources, R.drawable.pad_l_new,options)
-            bitmap_pad_right = BitmapFactory.decodeResource(resources, R.drawable.pad_r_new,options)
-            bitmap_pad_top_left = BitmapFactory.decodeResource(resources, R.drawable.pad_top_l_new,options)
-            bitmap_pad_top_right = BitmapFactory.decodeResource(resources, R.drawable.pad_top_r_new,options)
-            bitmap_pad_middle = BitmapFactory.decodeResource(resources, R.drawable.pad_m_new,options)
+            val bpl = BitmapFactory.decodeResource(resources, R.drawable.pad_l_new,options)
+            bitmap_pad_left = DraggableBitmap(
+                bpl,
+                sharedPref.getFloat("bitmap_pad_left_x", -1f),
+                sharedPref.getFloat("bitmap_pad_left_y", -1f),
+                -1F,
+                -1F,
+                1.0f
+            )
+            bitmap_pad_left_h = DraggableBitmap(
+                bpl,
+                sharedPref.getFloat("bitmap_pad_left_x_h", -1f),
+                sharedPref.getFloat("bitmap_pad_left_y_h", -1f),
+                -1F,
+                -1F,
+                1.0f
+            )
+
+            val bpr = BitmapFactory.decodeResource(resources, R.drawable.pad_r_new,options)
+            bitmap_pad_right = DraggableBitmap(
+                bpr,
+                sharedPref.getFloat("bitmap_pad_right_x", -1f),
+                sharedPref.getFloat("bitmap_pad_right_y", -1f),
+                -1f,
+                -1f,
+                1.0f
+            )
+            bitmap_pad_right_h = DraggableBitmap(
+                bpr,
+                sharedPref.getFloat("bitmap_pad_right_x_h", -1f),
+                sharedPref.getFloat("bitmap_pad_right_y_h", -1f),
+                -1f,
+                -1f,
+                1.0f
+            )
+
+            val ptl = BitmapFactory.decodeResource(resources, R.drawable.pad_top_l_new,options)
+            bitmap_pad_top_left = DraggableBitmap(ptl,
+                sharedPref.getFloat("bitmap_pad_top_left_x", -1f),
+                sharedPref.getFloat("bitmap_pad_top_left_y", -1f),
+                ptl.width /2F,
+                ptl.height /2F,
+                1.0f
+            )
+            bitmap_pad_top_left_h = DraggableBitmap(ptl,
+                sharedPref.getFloat("bitmap_pad_top_left_x_h", -1f),
+                sharedPref.getFloat("bitmap_pad_top_left_y_h", -1f),
+                ptl.width /2F,
+                ptl.height /2F,
+                1.0f
+            )
+
+            val ptr = BitmapFactory.decodeResource(resources, R.drawable.pad_top_r_new,options)
+            bitmap_pad_top_right = DraggableBitmap(ptr,
+                sharedPref.getFloat("bitmap_pad_top_right_x", -1f),
+                sharedPref.getFloat("bitmap_pad_top_right_y", -1f),
+                ptr.width /2F,
+                ptr.height /2F,
+                1.0f
+            )
+            bitmap_pad_top_right_h = DraggableBitmap(ptr,
+                sharedPref.getFloat("bitmap_pad_top_right_x_h", -1f),
+                sharedPref.getFloat("bitmap_pad_top_right_y_h", -1f),
+                ptr.width /2F,
+                ptr.height /2F,
+                1.0f
+            )
+
+            val btn = BitmapFactory.decodeResource(resources, R.drawable.pad_m_new,options)
+            bitmap_pad_middle = DraggableBitmap(btn,
+                sharedPref.getFloat("bitmap_pad_middle_x", -1f),
+                sharedPref.getFloat("bitmap_pad_middle_y", -1f),
+                btn.width /2F,
+                btn.height /2F,
+                1.0f
+            )
+            bitmap_pad_middle_h = DraggableBitmap(btn,
+                sharedPref.getFloat("bitmap_pad_middle_x_h", -1f),
+                sharedPref.getFloat("bitmap_pad_middle_y_h", -1f),
+                btn.width /2F,
+                btn.height /2F,
+                1.0f
+            )
+
+            bitmaps = mutableListOf(
+                bitmap_pad_middle,
+                bitmap_pad_top_left,
+                bitmap_pad_top_right,
+                bitmap_pad_left,
+                bitmap_pad_right,
+            )
+
         }
         invalidate()
+    }
+
+    fun saveCurrentPositionState(){
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
+        val editor = sharedPref.edit()
+
+        if( bitmap_pad_left != null ) {
+            editor.putFloat("bitmap_pad_left_x", bitmap_pad_left!!.x)
+            editor.putFloat("bitmap_pad_left_y", bitmap_pad_left!!.y)
+        }
+        if( bitmap_pad_right != null ) {
+            editor.putFloat("bitmap_pad_right_x", bitmap_pad_right!!.x)
+            editor.putFloat("bitmap_pad_right_y", bitmap_pad_right!!.y)
+        }
+        if( bitmap_pad_top_left != null ) {
+            editor.putFloat("bitmap_pad_top_left_x", bitmap_pad_top_left!!.x)
+            editor.putFloat("bitmap_pad_top_left_y", bitmap_pad_top_left!!.y)
+        }
+        if( bitmap_pad_top_right != null ) {
+            editor.putFloat("bitmap_pad_top_right_x", bitmap_pad_top_right!!.x)
+            editor.putFloat("bitmap_pad_top_right_y", bitmap_pad_top_right!!.y)
+        }
+        if( bitmap_pad_middle != null ) {
+            editor.putFloat("bitmap_pad_middle_x", bitmap_pad_middle!!.x)
+            editor.putFloat("bitmap_pad_middle_y", bitmap_pad_middle!!.y)
+        }
+
+        if( bitmap_pad_left_h != null ) {
+            editor.putFloat("bitmap_pad_left_x_h", bitmap_pad_left_h!!.x)
+            editor.putFloat("bitmap_pad_left_y_h", bitmap_pad_left_h!!.y)
+        }
+        if( bitmap_pad_right_h != null ) {
+            editor.putFloat("bitmap_pad_right_x_h", bitmap_pad_right_h!!.x)
+            editor.putFloat("bitmap_pad_right_y_h", bitmap_pad_right_h!!.y)
+        }
+        if( bitmap_pad_top_left_h != null ) {
+            editor.putFloat("bitmap_pad_top_left_x_h", bitmap_pad_top_left_h!!.x)
+            editor.putFloat("bitmap_pad_top_left_y_h", bitmap_pad_top_left_h!!.y)
+        }
+        if( bitmap_pad_top_right_h != null ) {
+            editor.putFloat("bitmap_pad_top_right_x_h", bitmap_pad_top_right_h!!.x)
+            editor.putFloat("bitmap_pad_top_right_y_h", bitmap_pad_top_right_h!!.y)
+        }
+        if( bitmap_pad_middle_h != null ) {
+            editor.putFloat("bitmap_pad_middle_x_h", bitmap_pad_middle_h!!.x)
+            editor.putFloat("bitmap_pad_middle_y_h", bitmap_pad_middle_h!!.y)
+        }
+
+        editor.commit()
     }
 
     constructor(context: Context?) : super(context) {
@@ -510,8 +744,7 @@ class YabausePad : View, OnTouchListener {
     }
 
     fun getPreferences(){
-        val sharedPref = PreferenceManager.getDefaultSharedPreferences(
-            context)
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(context)
         scale = sharedPref.getFloat("pref_pad_scale", 0.75f)
         leftYPosition = sharedPref.getFloat("pref_pad_pos", 0.1f)
         centerYPosition = sharedPref.getFloat("pref_pad_center_pos", 0.1f)
@@ -521,6 +754,29 @@ class YabausePad : View, OnTouchListener {
         trans = sharedPref.getFloat("pref_pad_trans", 0.7f)
         visualFeedback = sharedPref.getBoolean("pref_visual_feedback", true)
         forceFeedback = sharedPref.getBoolean("pref_force_feedback", true)
+
+        bitmap_pad_left?.x = sharedPref.getFloat("bitmap_pad_left_x", -1F)
+        bitmap_pad_left?.y = sharedPref.getFloat("bitmap_pad_left_y", -1F)
+        bitmap_pad_right?.x = sharedPref.getFloat("bitmap_pad_right_x", -1F)
+        bitmap_pad_right?.y = sharedPref.getFloat("bitmap_pad_right_y", -1F)
+        bitmap_pad_top_right?.x = sharedPref.getFloat("bitmap_pad_top_right_x", -1F)
+        bitmap_pad_top_right?.y = sharedPref.getFloat("bitmap_pad_top_right_y", -1F)
+        bitmap_pad_top_left?.x = sharedPref.getFloat("bitmap_pad_top_left_x", -1F)
+        bitmap_pad_top_left?.y = sharedPref.getFloat("bitmap_pad_top_left_y", -1F)
+        bitmap_pad_middle?.x = sharedPref.getFloat("bitmap_pad_middle_x", -1F)
+        bitmap_pad_middle?.y = sharedPref.getFloat("bitmap_pad_middle_y", -1F)
+
+        bitmap_pad_left_h?.x = sharedPref.getFloat("bitmap_pad_left_x_h", -1F)
+        bitmap_pad_left_h?.y = sharedPref.getFloat("bitmap_pad_left_y_h", -1F)
+        bitmap_pad_right_h?.x = sharedPref.getFloat("bitmap_pad_right_x_h", -1F)
+        bitmap_pad_right_h?.y = sharedPref.getFloat("bitmap_pad_right_y_h", -1F)
+        bitmap_pad_top_right_h?.x = sharedPref.getFloat("bitmap_pad_top_right_x_h", -1F)
+        bitmap_pad_top_right_h?.y = sharedPref.getFloat("bitmap_pad_top_right_y_h", -1F)
+        bitmap_pad_top_left_h?.x = sharedPref.getFloat("bitmap_pad_top_left_x_h", -1F)
+        bitmap_pad_top_left_h?.y = sharedPref.getFloat("bitmap_pad_top_left_y_h", -1F)
+        bitmap_pad_middle_h?.x = sharedPref.getFloat("bitmap_pad_middle_x_h", -1F)
+        bitmap_pad_middle_h?.y = sharedPref.getFloat("bitmap_pad_middle_y_h", -1F)
+
     }
 
     fun updateScale() {
@@ -531,31 +787,27 @@ class YabausePad : View, OnTouchListener {
     }
 
     private fun init() {
-/*
-        val displayMetrics = DisplayMetrics()
-        val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-        val tbaseheight = displayMetrics.widthPixels.toFloat()
-        val tbasewidth = displayMetrics.heightPixels.toFloat()
-
-        if( tbasewidth > tbaseheight ){
-            basewidth = tbasewidth
-            baseheight = tbaseheight
-        }else{
-            basewidth = tbaseheight
-            baseheight = tbasewidth
-        }
-*/
         setOnTouchListener(this)
+        isLongClickable = true
+        setOnLongClickListener {
+            if( this.padTestestMode ) {
+                isDragging = true
+                var btnindex = 4
+                while (btnindex < PadEvent.BUTTON_LAST) {
+                    if (buttons[btnindex]!!.isOn() ) {
+                        buttons[btnindex]!!.Off()
+                        invalidate()
+                    }
+                    btnindex++
+                }
+                _analog_pad!!.Off()
+                _dpad.Off()
+                preDstate = 0
+            }
+            true
+        }
         getPreferences()
         buttons = arrayOfNulls(PadEvent.BUTTON_LAST)
-/*
-        buttons[PadEvent.BUTTON_UP] = DPadButton()
-        buttons[PadEvent.BUTTON_RIGHT] = DPadButton()
-        buttons[PadEvent.BUTTON_DOWN] = DPadButton()
-        buttons[PadEvent.BUTTON_LEFT] = DPadButton()
-
-*/
         vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val vibratorManager =
                 context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
@@ -597,22 +849,20 @@ class YabausePad : View, OnTouchListener {
     }
 
     public override fun onDraw(canvas: Canvas) {
-        if (bitmap_pad_left == null || bitmap_pad_right == null) {
+        if (!isShow) {
             return
         }
 
-
-
         mPaint.alpha = (255.0f * trans).toInt()
-        canvas.drawBitmap(bitmap_pad_left!!, matrix_left, mPaint)
-        canvas.drawBitmap(bitmap_pad_top_left!!, matrix_top_left, mPaint)
-        canvas.drawBitmap(bitmap_pad_right!!, matrix_right, mPaint)
-        canvas.drawBitmap(bitmap_pad_top_right!!, matrix_top_right, mPaint)
-        canvas.drawBitmap(bitmap_pad_middle!!, matrix_center, mPaint)
+        if( bitmaps != null ){
+            for (item in bitmaps!!.reversed()) {
+                canvas.drawBitmap(item!!.bitmap, item.matrix, mPaint)
+            }
+        }
+
         canvas.setMatrix(null)
-
-
         if( !visualFeedback) return
+        if( isDragging ) return
 
         canvas.save();
         buttons[PadEvent.BUTTON_LEFT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
@@ -625,7 +875,7 @@ class YabausePad : View, OnTouchListener {
         buttons[PadEvent.BUTTON_RIGHT_TRIGGER]?.draw(canvas, paint, apaint, tpaint);
         buttons[PadEvent.BUTTON_START]?.draw(canvas, paint, apaint, tpaint);
 
-        if (_pad_mode == 1) {
+        if (_pad_mode == PadManager.MODE_ANALOG) {
             _analog_pad!!.draw(canvas, _axi_x, _axi_y, paint, apaint, tpaint)
         }else{
             _dpad.draw(canvas, paint, apaint, tpaint)
@@ -764,7 +1014,14 @@ class YabausePad : View, OnTouchListener {
         }
     }
 
+
+
     override fun onTouch(v: View, event: MotionEvent): Boolean {
+
+        if( isDragging ){
+            return onTouchDragging( v, event )
+        }
+
         val action = event.actionMasked
         val touchCount = event.pointerCount
         val pointerIndex = event.actionIndex
@@ -789,7 +1046,7 @@ class YabausePad : View, OnTouchListener {
                     }
                     btnindex++
                 }
-                if (_pad_mode == 1) {
+                if (_pad_mode == PadManager.MODE_ANALOG) {
                     updatePad(hittest, posx, posy, pointerId)
                 }else{
                     updateDPad(hittest, posx, posy, pointerId)
@@ -807,7 +1064,7 @@ class YabausePad : View, OnTouchListener {
                     }
                     btnindex++
                 }
-                if (_pad_mode == 1) {
+                if (_pad_mode == PadManager.MODE_ANALOG) {
                     updatePad(hittest, posx, posy, pointerId)
                 }else{
                     updateDPad(hittest, posx, posy, pointerId)
@@ -822,7 +1079,7 @@ class YabausePad : View, OnTouchListener {
                     }
                     btnindex++
                 }
-                if (_pad_mode == 1) {
+                if (_pad_mode == PadManager.MODE_ANALOG) {
                     releasePad(pointerId)
                 }else{
                     releaseDPad(pointerId)
@@ -837,7 +1094,7 @@ class YabausePad : View, OnTouchListener {
                     }
                     btnindex++
                 }
-                if (_pad_mode == 1) {
+                if (_pad_mode == PadManager.MODE_ANALOG) {
                     releasePad(pointerId)
                 }else{
                     releaseDPad(pointerId)
@@ -853,64 +1110,6 @@ class YabausePad : View, OnTouchListener {
                         (y2 - hitsize).toFloat(),
                         (x2 + hitsize).toFloat(),
                         (y2 + hitsize).toFloat())
-/*
-                    if (buttons[PadEvent.BUTTON_DOWN]!!
-                            .isOn() && eventID2 == buttons[PadEvent.BUTTON_DOWN]!!.pointId
-                    ) {
-                        val `val` = _analog_pad!!.getYvalue(y2.toInt())
-                        if (`val` < 128 + 10) {
-                            buttons[PadEvent.BUTTON_DOWN]!!.Off()
-                        }
-                    }
-                    if (buttons[PadEvent.BUTTON_UP]!!
-                            .isOn() && eventID2 == buttons[PadEvent.BUTTON_UP]!!.pointId
-                    ) {
-                        val `val` = _analog_pad!!.getYvalue(y2.toInt())
-                        if (`val` > 128 - 10) {
-                            buttons[PadEvent.BUTTON_UP]!!.Off()
-                        }
-                    }
-                    if (buttons[PadEvent.BUTTON_RIGHT]!!
-                            .isOn() && eventID2 == buttons[PadEvent.BUTTON_RIGHT]!!.pointId
-                    ) {
-                        val `val` = _analog_pad!!.getXvalue(x2.toInt())
-                        if (`val` < 128 + 10) {
-                            buttons[PadEvent.BUTTON_RIGHT]!!.Off()
-                        }
-                    }
-                    if (buttons[PadEvent.BUTTON_LEFT]!!
-                            .isOn() && eventID2 == buttons[PadEvent.BUTTON_LEFT]!!.pointId
-                    ) {
-                        val `val` = _analog_pad!!.getXvalue(x2.toInt())
-                        if (`val` > 128 - 10) {
-                            buttons[PadEvent.BUTTON_LEFT]!!.Off()
-                        }
-                    }
-                    if (buttons[PadEvent.BUTTON_UP]!!.intersects(hittest2)) {
-//                        if( buttons[PadEvent.BUTTON_DOWN].isOn() ){
-//                            buttons[PadEvent.BUTTON_DOWN].Off();
-//                        }
-                        buttons[PadEvent.BUTTON_UP]!!.On(eventID2)
-                    }
-                    if (buttons[PadEvent.BUTTON_DOWN]!!.intersects(hittest2)) {
-//                        if( buttons[PadEvent.BUTTON_UP].isOn() ){
-//                            buttons[PadEvent.BUTTON_UP].Off();
-//                        }
-                        buttons[PadEvent.BUTTON_DOWN]!!.On(eventID2)
-                    }
-                    if (buttons[PadEvent.BUTTON_LEFT]!!.intersects(hittest2)) {
-//                        if( buttons[PadEvent.BUTTON_RIGHT].isOn() ){
-//                            buttons[PadEvent.BUTTON_RIGHT].Off();
-//                        }
-                        buttons[PadEvent.BUTTON_LEFT]!!.On(eventID2)
-                    }
-                    if (buttons[PadEvent.BUTTON_RIGHT]!!.intersects(hittest2)) {
-//                        if( buttons[PadEvent.BUTTON_LEFT].isOn() ){
-//                            buttons[PadEvent.BUTTON_LEFT].Off();
-//                        }
-                        buttons[PadEvent.BUTTON_RIGHT]!!.On(eventID2)
-                    }
-*/
                     var btnindex = PadEvent.BUTTON_RIGHT_TRIGGER
                     while (btnindex < PadEvent.BUTTON_LAST) {
                         if (eventID2 == buttons[btnindex]!!.pointId) {
@@ -992,16 +1191,6 @@ class YabausePad : View, OnTouchListener {
                     statusString += "\u2192"
                 }
             }
-/*
-            statusString += "\nUP:"
-            if (_dpad.ds.up) statusString += "ON " else statusString += "OFF "
-            statusString += "DOWN:"
-            if (_dpad.ds.down) statusString += "ON " else statusString += "OFF "
-            statusString += "LEFT:"
-            if (_dpad.ds.left) statusString += "ON " else statusString += "OFF "
-            statusString += "RIGHT:"
-            if (_dpad.ds.right) statusString += "ON " else statusString += "OFF "
- */
             statusString += "\nA:"
             if (buttons[PadEvent.BUTTON_A]!!.isOn()) statusString += "ON " else statusString += "OFF "
             statusString += "B:"
@@ -1026,11 +1215,11 @@ class YabausePad : View, OnTouchListener {
         if (listener != null) {
             listener!!.onPad(null)
         }
-        return true
+        return false
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        if (bitmap_pad_left == null || bitmap_pad_right == null) {
+        if (!isShow) {
             super.onMeasure(widthMeasureSpec, heightMeasureSpec)
             return
         }
@@ -1039,231 +1228,156 @@ class YabausePad : View, OnTouchListener {
         setPadScale(width_, height_)
     }
 
-    fun setPadScale(width: Int, height: Int) {
-        var dens = resources.displayMetrics.density
-        //dens /= 2.0f
-        val bitmap_height = bitmap_pad_right!!.height
+    val buttonCenterX = 347
+    val buttonCenterY = 720
+    val rectsize = 230
 
-        val dir = context.getResources().getConfiguration().orientation
+    fun updateButtonPos(){
+        if( bitmaps == null ) return
 
-        val buttonCenterX = 347
-        val buttonCenterY = 720
-        val rectsize = 230
-        var leftPadPosX = -120F
-        var leftPadPosY = 500F
-
-        var rightPadPosX = -60F
-        var rightPadPosY = 80F
-
-
-        var triggerX = -40F
-        var triggerY = 1080f - 250f
-
-        if (width > height) {
-            //leftPadPosX = 0F
-            leftPadPosY = 0F
-            rightPadPosY = 0F
-            triggerY = 0F
-        }
-
-        //scale = 2.0f
-        wscale = 1.0F
-        hscale = 1.0F
-
-        var maxpos = height - bitmap_height * scale * hscale
-        if (maxpos < 0.0f) {
-            maxpos = 0.0f
-        }
-
-        //scale = 0.5f
-        val ndxs = scale * wscale
-        val ndys = scale * hscale
-        matrix_right.apply {
-            reset()
-            postTranslate(-315f, -652f)
-            postScale(ndxs, ndys)
-            postTranslate(315f, 652f)
-            postTranslate(  width.toFloat() -( bitmap_pad_right!!.width.toFloat() + rightPadPosX) , height -(bitmap_pad_right!!.height.toFloat()+rightPadPosY)  )
-        }
-        matrix_left.apply {
-            reset()
-            postTranslate(-buttonCenterX.toFloat(), -buttonCenterY.toFloat())
-            postScale(ndxs, ndys)
-            postTranslate(buttonCenterX.toFloat(), buttonCenterY.toFloat())
-            //postTranslate(  leftPadPosX + 80F , leftPadPosY + buttonCenterY/1.5f )
-            postTranslate(  leftPadPosX, height - ((bitmap_pad_left!!.height.toFloat()) + leftPadPosY) )
-        }
-        matrix_center.apply {
-            reset()
-            postTranslate(-bitmap_pad_middle!!.width.toFloat() / 2.0F, -bitmap_pad_middle!!.height.toFloat() / 2.0F )
-            postScale(ndxs, ndys)
-            postTranslate(bitmap_pad_middle!!.width.toFloat() / 2.0F, bitmap_pad_middle!!.height.toFloat() / 2.0F )
-            postTranslate(  (width / 2).toFloat() - (bitmap_pad_middle!!.width.toFloat() / 2.0F) , height - bitmap_pad_middle!!.height.toFloat() )
-        }
-
-        matrix_top_right.reset()
-        matrix_top_right.postTranslate(-bitmap_pad_top_right!!.width.toFloat()/2f,-bitmap_pad_top_right!!.height.toFloat()/2f)
-        matrix_top_right.postScale(scale, scale)
-        matrix_top_right.postTranslate(bitmap_pad_top_right!!.width.toFloat()/2f,bitmap_pad_top_right!!.height.toFloat()/2f)
-        matrix_top_right.postTranslate(width.toFloat() - (bitmap_pad_top_right!!.width.toFloat()+triggerX), triggerY)
-
-        matrix_top_left.reset()
-        matrix_top_left.postTranslate(-bitmap_pad_top_left!!.width.toFloat()/2f,-bitmap_pad_top_left!!.height.toFloat()/2f)
-        matrix_top_left.postScale(scale , scale)
-        matrix_top_left.postTranslate(bitmap_pad_top_left!!.width.toFloat()/2f,bitmap_pad_top_left!!.height.toFloat()/2f)
-        matrix_top_left.postTranslate(triggerX, triggerY)
-
-/*
-        val rpos = rightYPosition * maxpos
-        matrix_right.reset()
-        matrix_right.postTranslate(-780f, -baseheight)
-        matrix_right.postScale(scale * wscale, scale * hscale)
-        matrix_right.postTranslate(width.toFloat(), height - rpos)
-
-        val trp = topRightYPosition * maxpos
-        matrix_top_right.reset()
-        matrix_top_right.postTranslate(-780f, -250f)
-        matrix_top_right.postScale(scale * wscale, scale * hscale)
-        matrix_top_right.postTranslate(width.toFloat(), height - trp)
-
-
-        val lpos = leftYPosition * maxpos
-        matrix_left.reset()
-        matrix_left.postTranslate(0f, -baseheight)
-        matrix_left.postScale(scale * wscale, scale * hscale)
-        matrix_left.postTranslate(0f, height - lpos)
-
-        val tlp = topLeftYPosition * maxpos
-        matrix_top_left.reset()
-        matrix_top_left.postTranslate(0f, -250f)
-        matrix_top_left.postScale(scale * wscale, scale * hscale)
-        matrix_top_left.postTranslate(0f, height - tlp)
-
-
-        val cpos = centerYPosition * maxpos
-        matrix_center.reset()
-        matrix_center.postTranslate(-bitmap_pad_middle!!.width.toFloat(), -bitmap_pad_middle!!.height.toFloat())
-        matrix_center.postScale(scale * wscale, scale * hscale)
-        matrix_center.postTranslate((width / 2).toFloat(), height - cpos)
-*/
-
-        _analog_pad!!.updateRect(matrix_left,
+        _analog_pad!!.updateRect(bitmaps!!.get(PAD_LEFT)!!.matrix,
             buttonCenterX-rectsize, buttonCenterY-rectsize,
             buttonCenterX + rectsize, buttonCenterY + rectsize)
-        _analog_pad!!.updateScale(scale * wscale)
+        _analog_pad!!.updateScale(scale)
 
-        _dpad.updateRect(matrix_left,
+        _dpad.updateRect(bitmaps!!.get(PAD_LEFT)!!.matrix,
             buttonCenterX-rectsize, buttonCenterY -rectsize,
             buttonCenterX+rectsize, buttonCenterY +rectsize)
-        _dpad.updateScale(scale * wscale)
-
-/*
-        // Left Part
-        _analog_pad!!.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
-        _analog_pad!!.updateScale(scale * wscale)
-
-        _dpad.updateRect(matrix_left, 130, 512, 420 + 144, 533 + 378)
-        _dpad.updateScale(scale * wscale)
-
- */
-/*
-        // buttons[PadEvent.BUTTON_DOWN].updateRect(matrix_left,303,752,303+89,752+180);
-        buttons[PadEvent.BUTTON_DOWN]!!.updateRect(matrix_left, 130, 784, 130 + 429, 784 + 151)
-        // buttons[PadEvent.BUTTON_RIGHT].updateRect(matrix_left,392,671,392+162,671+93);
-        buttons[PadEvent.BUTTON_RIGHT]!!.updateRect(matrix_left, 436, 533, 436 + 128, 533 + 378)
-        // buttons[PadEvent.BUTTON_LEFT].updateRect(matrix_left,141,671,141+162,671+93);
-        buttons[PadEvent.BUTTON_LEFT]!!.updateRect(matrix_left, 148, 533, 148 + 128, 533 + 378)
-
- */
+        _dpad.updateScale(scale)
 
         // buttons[PadEvent.BUTTON_START].updateRect(matrix_left,510,1013,510+182,1013+57);
         buttons[PadEvent.BUTTON_START]!!
-            .updateRect(matrix_center, 0, 53, 185, 132)
+            .updateRect(bitmaps!!.get(PAD_MIDDLE)!!.matrix, 0, 53, 185, 132)
 
         // Right Part
-        buttons[PadEvent.BUTTON_A]!!.updateRect(matrix_right, 59, 801, 59 + 213, 801 + 225)
-        buttons[PadEvent.BUTTON_A]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_B]!!.updateRect(matrix_right, 268, 672, 268 + 229, 672 + 221)
-        buttons[PadEvent.BUTTON_B]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_C]!!.updateRect(matrix_right, 507, 577, 507 + 224, 577 + 229)
-        buttons[PadEvent.BUTTON_C]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_X]!!.updateRect(matrix_right, 15, 602, 15 + 149, 602 + 150)
-        buttons[PadEvent.BUTTON_X]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_Y]!!.updateRect(matrix_right, 202, 481, 202 + 149, 481 + 148)
-        buttons[PadEvent.BUTTON_Y]!!.updateScale(scale * wscale)
-        buttons[PadEvent.BUTTON_Z]!!.updateRect(matrix_right, 397, 409, 397 + 151, 409 + 152)
-        buttons[PadEvent.BUTTON_Z]!!.updateScale(scale * wscale)
+        buttons[PadEvent.BUTTON_A]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 59, 801, 59 + 213, 801 + 225)
+        buttons[PadEvent.BUTTON_A]!!.updateScale(scale)
+        buttons[PadEvent.BUTTON_B]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 268, 672, 268 + 229, 672 + 221)
+        buttons[PadEvent.BUTTON_B]!!.updateScale(scale)
+        buttons[PadEvent.BUTTON_C]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 507, 577, 507 + 224, 577 + 229)
+        buttons[PadEvent.BUTTON_C]!!.updateScale(scale)
+        buttons[PadEvent.BUTTON_X]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 15, 602, 15 + 149, 602 + 150)
+        buttons[PadEvent.BUTTON_X]!!.updateScale(scale)
+        buttons[PadEvent.BUTTON_Y]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 202, 481, 202 + 149, 481 + 148)
+        buttons[PadEvent.BUTTON_Y]!!.updateScale(scale)
+        buttons[PadEvent.BUTTON_Z]!!.updateRect(bitmaps!!.get(PAD_RIGHT)!!.matrix, 397, 409, 397 + 151, 409 + 152)
+        buttons[PadEvent.BUTTON_Z]!!.updateScale(scale)
 
-        buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(matrix_top_left,
+        buttons[PadEvent.BUTTON_LEFT_TRIGGER]!!.updateRect(bitmaps!!.get(PAD_TOP_LEFT)!!.matrix,
             57,
             48,
             57 + 379,
             48 + 100)
-        buttons[PadEvent.BUTTON_RIGHT_TRIGGER]!!.updateRect(matrix_top_right,
+        buttons[PadEvent.BUTTON_RIGHT_TRIGGER]!!.updateRect(bitmaps!!.get(PAD_TOP_RIGHT)!!.matrix,
             338,
             48,
             338 + 379,
             48 + 100)
 
-        //scale = 0.5f
+    }
 
-        //matrix_right.reset()
-        //matrix_right.postTranslate(-bitmap_pad_right!!.width.toFloat(),-bitmap_pad_right!!.height.toFloat())
-        //matrix_right.postScale(scale * wscale / dens, scale * hscale / dens)
-        //matrix_right.postTranslate(width.toFloat(), height - rpos)
+    val PAD_MIDDLE = 0
+    val PAD_TOP_LEFT = 1
+    val PAD_TOP_RIGHT = 2
+    val PAD_LEFT = 3
+    val PAD_RIGHT = 4
 
+    fun setPadScale(width: Int, height: Int) {
 
-        //matrix_left.postTranslate(0f, -bitmap_pad_left!!.height.toFloat())
-        //matrix_left.postScale(scale * wscale / dens, scale * hscale / dens)
-        //matrix_left.postTranslate(0f, height - lpos)
+        var dens = resources.displayMetrics.density
+        val dir = context.getResources().getConfiguration().orientation
 
-        //scale = 0.5f
-/*
-        val xs = scale * wscale / dens
-        val ys = scale * hscale / dens
-        matrix_right.apply {
-            reset()
-            postTranslate(-315f, -652f)
-            postScale(scale, scale)
-            postTranslate(315f, 652f)
-            //postTranslate(-bitmap_pad_right!!.width.toFloat(), -bitmap_pad_right!!.height.toFloat())
-            //postScale(1.0f/dens, 1.0f/dens )
-            //postTranslate(bitmap_pad_right!!.width.toFloat(), bitmap_pad_right!!.height.toFloat())
-            postTranslate(  width.toFloat() -bitmap_pad_right!!.width.toFloat() , height -bitmap_pad_right!!.height.toFloat() )
-        }
-        matrix_left.apply {
-            reset()
+        val leftPadPosX = -120F
+        var leftPadPosY = 500F
 
-            postTranslate(-buttonCenterX.toFloat(), -buttonCenterY.toFloat())
-            postScale(scale, scale)
-            postTranslate(buttonCenterX.toFloat(), buttonCenterY.toFloat())
+        val rightPadPosX = -60F
+        var rightPadPosY = 80F
 
-            //postTranslate(0f, -bitmap_pad_left!!.height.toFloat())
-            //postScale(1.0f/dens, 1.0f/dens, )
-            //postTranslate(0f, bitmap_pad_left!!.height.toFloat())
+        val triggerX = -40F
+        var triggerY = 1080f - 250f
 
-            postTranslate(  leftPadPosX, height - ((bitmap_pad_left!!.height.toFloat()) + leftPadPosY) )
-        }
-        matrix_center.apply {
-            reset()
-            postTranslate(-bitmap_pad_middle!!.width.toFloat() / 2.0F, -bitmap_pad_middle!!.height.toFloat() / 2.0F )
-            postScale(scale, scale)
-            postTranslate(bitmap_pad_middle!!.width.toFloat() / 2.0F, bitmap_pad_middle!!.height.toFloat() / 2.0F )
-            postTranslate(  (width / 2).toFloat() - (bitmap_pad_middle!!.width.toFloat() / 2.0F) , height - bitmap_pad_middle!!.height.toFloat() )
+        // 横画面
+        if (width > height) {
+            leftPadPosY = 0F
+            rightPadPosY = 0F
+            triggerY = 0F
+            bitmaps = mutableListOf(
+                bitmap_pad_middle_h,
+                bitmap_pad_top_left_h,
+                bitmap_pad_top_right_h,
+                bitmap_pad_left_h,
+                bitmap_pad_right_h,
+            )
+        }else{
+            bitmaps = mutableListOf(
+                bitmap_pad_middle,
+                bitmap_pad_top_left,
+                bitmap_pad_top_right,
+                bitmap_pad_left,
+                bitmap_pad_right,
+            )
         }
 
-        matrix_top_right.reset()
-        matrix_top_right.postTranslate(-bitmap_pad_top_right!!.width.toFloat()/2f,-bitmap_pad_top_right!!.height.toFloat()/2f)
-        matrix_top_right.postScale(scale, scale)
-        matrix_top_right.postTranslate(bitmap_pad_top_right!!.width.toFloat()/2f,bitmap_pad_top_right!!.height.toFloat()/2f)
-        matrix_top_right.postTranslate(width.toFloat() -bitmap_pad_top_right!!.width.toFloat(), triggerY)
+        // midedle
+        bitmaps?.get(PAD_MIDDLE)?.apply {
+            if( x == -1F && y == -1F){
+                x = (width / 2).toFloat() - (this.width / 2.0F)
+                y = height - this.height
+            }
+            centerX = this.width / 2.0F
+            centerY = this.height / 2.0F
+            scale = this@YabausePad.scale
+            updateMatrix()
+        }
 
-        matrix_top_left.reset()
-        matrix_top_left.postTranslate(-bitmap_pad_top_left!!.width.toFloat()/2f,-bitmap_pad_top_left!!.height.toFloat()/2f)
-        matrix_top_left.postScale(scale, scale)
-        matrix_top_left.postTranslate(bitmap_pad_top_left!!.width.toFloat()/2f,bitmap_pad_top_left!!.height.toFloat()/2f)
-        matrix_top_left.postTranslate(0.0f, triggerY)
-*/
+        // Top left
+        bitmaps?.get(PAD_TOP_LEFT)?.apply{
+            if( x == -1F && y == -1F){
+                x = triggerX
+                y = triggerY
+            }
+            centerX = this.width / 2.0F
+            centerY = this.height / 2.0F
+            scale = this@YabausePad.scale
+            updateMatrix()
+        }
+
+        // Top right
+        bitmaps?.get(PAD_TOP_RIGHT)?.apply{
+            if( x == -1F && y == -1F){
+                x = width.toFloat() - (this.width.toFloat()+triggerX)
+                y = triggerY
+            }
+            centerX = this.width / 2.0F
+            centerY = this.height / 2.0F
+            scale = this@YabausePad.scale
+            updateMatrix()
+        }
+
+        // bitmap_pad_left
+        bitmaps?.get(PAD_LEFT)?.apply{
+            if( x == -1F && y == -1F){
+                x = leftPadPosX
+                y = height - ((this.height.toFloat()) + leftPadPosY)
+            }
+            centerX = buttonCenterX.toFloat()
+            centerY = buttonCenterY.toFloat()
+            scale = this@YabausePad.scale
+            updateMatrix()
+        }
+
+        // bitmap_pad_right
+        bitmaps?.get(PAD_RIGHT)?.apply{
+            if( x == -1F && y == -1F){
+                x = width.toFloat() -( this.width.toFloat() + rightPadPosX)
+                y = height -(this.height.toFloat()+rightPadPosY)
+            }
+            centerX = 315f
+            centerY = 652f
+            scale = this@YabausePad.scale
+            updateMatrix()
+        }
+        updateButtonPos()
         setMeasuredDimension(width, height)
     }
 }

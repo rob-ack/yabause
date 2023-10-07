@@ -48,9 +48,16 @@ class PadTestFragment : Fragment(), OnPadListener {
     var mChkVIsualFeedback: CheckBox? = null
 
 
+    var isDragging = false
+
+
     interface PadTestListener {
         fun onFinish()
         fun onCancel()
+
+        fun onUpdateTransparency(a : Float ){
+
+        }
     }
 
     var listener_: PadTestListener? = null
@@ -61,7 +68,7 @@ class PadTestFragment : Fragment(), OnPadListener {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? {
         val rootView = inflater.inflate(R.layout.padtest, container, false)
         padm = padManager
@@ -136,9 +143,9 @@ class PadTestFragment : Fragment(), OnPadListener {
             object : OnSeekBarChangeListener {
                 override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
                     mPadView!!.trans = progress.toFloat() / 100.0f
+                    listener_?.onUpdateTransparency(mPadView!!.trans)
                     mPadView!!.invalidate()
                 }
-
                 override fun onStartTrackingTouch(seekBar: SeekBar) {}
                 override fun onStopTrackingTouch(seekBar: SeekBar) {}
             }
@@ -187,6 +194,8 @@ class PadTestFragment : Fragment(), OnPadListener {
             editor.putBoolean("pref_force_feedback", mChkForceFeedback!!.isChecked())
             editor.putBoolean("pref_visual_feedback", mChkVIsualFeedback!!.isChecked())
             editor.commit()
+
+            mPadView!!.saveCurrentPositionState()
 
             if (listener_ != null) listener_!!.onFinish()
         }

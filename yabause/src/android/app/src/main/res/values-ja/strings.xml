@@ -318,4 +318,16 @@
     <string name="msg_fail_to_zip_backup_data">バックアップデータを圧縮できませんでした</string>
     <string name="msg_success_to_upload_backup_data_to_cloud">バックアップデータのクラウドへのアップロードに成功しました</string>
 
+    <string name="perf_use_cpu_affinity_detail">非対称のマルチコアCPUの場合、高クロックの物が優先的に使用されます。デバイスによっては逆にパフォーマンスが落ちる場合があります</string>
+    <string name="pref_use_sh2_cache_detail">SH2のキャッシュ処理をエミュレートを有効にすることで互換性を向上します。しかしエミュレーション速度が犠牲になります。</string>
+    <string name="pref_auto_state_save_title">自動状態保存</string>
+    <string name="pref_auto_state_save_detail">終了時に自動的に状態を保存します。次回起動時に保存したところから始められます。正常に再現できない場合があります。</string>
+
+    <string name="auto_state_save_data_found">自動状態保存データが見つかった！</string>
+    <string name="auto_state_detail">状態を読み込みますか？ 残念ながらあまり信用できません。 うまく動作しない場合は キャンセル をタップしてください</string>
+
+    <string name="force_feedback">フォース フィードバック</string>
+    <string name="visual_feedback">ビジュアル フィードバック</string>
+    <string name="show_analog_dpad_switch_button">アナログ/Dpad切り替えボタンを表示</string>
+
 </resources>

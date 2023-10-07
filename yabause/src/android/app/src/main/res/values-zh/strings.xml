@@ -217,5 +217,17 @@
     <string name="msg_fail_to_zip_backup_data">无法将备份数据打包</string>
     <string name="msg_success_to_upload_backup_data_to_cloud">上传备份数据到云成功</string>
 
+    <string name="perf_use_cpu_affinity_detail">对于非对称的多核CPU，优先使用高频核心。但是，根据设备的不同，性能可能会下降。</string>
+    <string name="pref_use_sh2_cache_detail">启用SH2缓存处理的模拟可以提高兼容性。然而，这将以模拟速度为代价。</string>
+    <string name="pref_auto_state_save_title">启用自动状态保存</string>
+    <string name="pref_auto_state_save_detail">在退出时自动保存状态。下次启动时，可以从保存的点恢复。然而，可能会出现无法成功重现的情况。</string>
+
+    <string name="auto_state_save_data_found">找到自动保存数据！</string>
+    <string name="auto_state_detail">您想加载状态吗？不幸的是，这可能不是非常可靠的。如果它运行得不好，请点击取消。</string>
+
+    <string name="force_feedback">力量反馈</string>
+    <string name="visual_feedback">视觉反馈</string>
+    <string name="show_analog_dpad_switch_button">显示模拟/Dpad切换按钮</string>
+
 </resources>
 	

@@ -80,6 +80,14 @@ class PadTestActivity : AppCompatActivity(), PadTestListener {
         finish()
     }
 
+    override fun onUpdateTransparency(a: Float) {
+
+    }
+
+    override fun onUpdateAnalogDpad(a: Boolean) {
+
+    }
+
     companion object {
         private const val CONTENT_VIEW_ID = 10101010
     }

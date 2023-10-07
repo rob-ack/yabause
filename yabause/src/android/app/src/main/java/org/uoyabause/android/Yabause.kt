@@ -214,6 +214,16 @@ class Yabause : AppCompatActivity(),
 
     private val apiscope = CoroutineScope(Dispatchers.IO)
 
+    override fun onUpdateAnalogDpad( a : Boolean ) {
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
+        val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+        if( a ) {
+            analogSwitch.visibility = View.VISIBLE
+        }else {
+            analogSwitch.visibility = View.GONE
+        }
+    }
+
     /**
      * Called when the activity is first created.
      */
@@ -244,10 +254,19 @@ class Yabause : AppCompatActivity(),
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
 
+
+
         val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
 
         val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+
         analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
+        if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+            analogSwitch.visibility = View.VISIBLE
+        }else {
+            analogSwitch.visibility = View.GONE
+        }
+
 
         val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
         padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
@@ -1970,6 +1989,22 @@ class Yabause : AppCompatActivity(),
             transaction.commit()
             val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
             padv.updateScale()
+
+            val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+
+            val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+            analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
+
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
+            if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+                analogSwitch.visibility = View.VISIBLE
+            }else {
+                analogSwitch.visibility = View.GONE
+            }
+
+            val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
+            padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+
         }
         waitingResult = false
         toggleMenu()
@@ -1987,7 +2022,6 @@ class Yabause : AppCompatActivity(),
     }
 
     override fun onUpdateTransparency(a: Float) {
-        super.onUpdateTransparency(a)
         val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
         padModeLayer?.alpha = a
     }

@@ -46,18 +46,17 @@ class PadTestFragment : Fragment(), OnPadListener {
 
     var mChkForceFeedback: CheckBox? = null
     var mChkVIsualFeedback: CheckBox? = null
-
-
-    var isDragging = false
+    var mChkAnalogDpad: CheckBox? = null
 
 
     interface PadTestListener {
         fun onFinish()
         fun onCancel()
 
-        fun onUpdateTransparency(a : Float ){
+        fun onUpdateTransparency(a : Float )
 
-        }
+        fun onUpdateAnalogDpad( a : Boolean )
+
     }
 
     var listener_: PadTestListener? = null
@@ -167,6 +166,14 @@ class PadTestFragment : Fragment(), OnPadListener {
         })
         mChkVIsualFeedback?.isChecked = mPadView!!.visualFeedback
 
+        mChkAnalogDpad = rootView.findViewById<CheckBox>(R.id.cb_show_analog_dpad_button)
+        mChkAnalogDpad?.setOnCheckedChangeListener( object : CompoundButton.OnCheckedChangeListener{
+            override fun onCheckedChanged(buttonView: CompoundButton?, isChecked: Boolean) {
+                listener_?.onUpdateAnalogDpad(isChecked)
+            }
+        })
+
+
         tv = rootView.findViewById<View>(R.id.text_status) as TextView
         return rootView
     }
@@ -193,6 +200,7 @@ class PadTestFragment : Fragment(), OnPadListener {
 
             editor.putBoolean("pref_force_feedback", mChkForceFeedback!!.isChecked())
             editor.putBoolean("pref_visual_feedback", mChkVIsualFeedback!!.isChecked())
+            editor.putBoolean("pref_show_analog_switch", false)
             editor.commit()
 
             mPadView!!.saveCurrentPositionState()

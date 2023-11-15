@@ -5558,7 +5558,13 @@ void ScspAsynMainCpuTime( void * p ){
 
     // Sync 44100KHz
     while (m68k_inc >= samplecnt) {
+        u64 const tmp = m68k_inc;
       m68k_inc = m68k_inc - samplecnt;
+        if (m68k_inc > tmp)
+        {
+            m68k_inc = 0;
+        }
+
       //LOG("[SCSP] MM68KExec %d", samplecnt);
       MM68KExec(samplecnt);
       if (use_new_scsp) {

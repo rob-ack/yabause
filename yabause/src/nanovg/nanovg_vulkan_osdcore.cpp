@@ -40,8 +40,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "nanovg.h"
 #include "nanovg_vk.h"
 
-//#include "Roboto-Bold.h"
-//#include "Roboto-Regular.h"
+#include "Roboto-Bold.h"
+#include "Roboto-Regular.h"
 
 extern "C" {
 

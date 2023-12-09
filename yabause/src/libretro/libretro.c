@@ -31,6 +31,10 @@
 #include "compat/msvc.h"
 #endif
 
+#if HAVE_VULKAN
+#include "vulkan/VIDVulkanCInterface.h"
+#endif
+
 yabauseinit_struct yinit;
 
 static char slash = path_default_slash_c();
@@ -65,6 +69,12 @@ static int g_sh2coretype = 3;
 static int g_sh2coretype = SH2CORE_KRONOS_INTERPRETER;
 #else
 static int g_sh2coretype = SH2CORE_INTERPRETER;
+#endif
+
+#if defined HAVE_VULKAN
+static int g_vidCoreType = VIDCORE_VULKAN;
+#else
+static int g_vidCoreType = VIDCORE_OGL;
 #endif
 
 static int g_frame_skip = 1;
@@ -497,6 +507,9 @@ SoundInterface_struct *SNDCoreList[] = {
 
 VideoInterface_struct *VIDCoreList[] = {
     //&VIDDummy,
+#if HAVE_VULKAN
+    &CVIDVulkan,
+#endif
     &VIDOGL,
     &VIDSoft,
     NULL
@@ -593,6 +606,10 @@ void YuiSwapBuffers(void)
    one_frame_rendered = true;
 }
 
+#if defined HAVE_VULKAN
+
+#endif
+
 static void context_reset(void)
 {
 #if !defined(_USEGLEW_)
@@ -601,6 +618,10 @@ static void context_reset(void)
 #endif
    if (first_ctx_reset == 1)
    {
+#if defined HAVE_VULKAN
+       VIDVulkanLibRetroInitRenderer();
+#endif
+
       first_ctx_reset = 0;
       YabauseInit(&yinit);
       renderer_running = true;
@@ -974,7 +995,7 @@ bool retro_load_game_common()
    if (!retro_init_hw_context())
       return false;
 
-   yinit.vidcoretype               = VIDCORE_OGL;
+   yinit.vidcoretype               = g_vidCoreType;
    yinit.percoretype               = PERCORE_LIBRETRO;
    yinit.sh2coretype               = g_sh2coretype;
    yinit.sndcoretype               = SNDCORE_LIBRETRO;
@@ -1318,20 +1339,6 @@ void retro_reset(void)
    //YabauseResetButton();
 }
 
-void reset_global_gl_state()
-{
-   glUseProgram(0);
-   glGetError();
-   glBindBuffer(GL_ARRAY_BUFFER, 0);
-   glBindBuffer(GL_PIXEL_UNPACK_BUFFER,0);
-   glDisableVertexAttribArray(0);
-   glDisableVertexAttribArray(1);
-   glDisableVertexAttribArray(2);
-   glDisable(GL_DEPTH_TEST);
-   glDisable(GL_SCISSOR_TEST);
-   glDisable(GL_STENCIL_TEST);
-   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);   
-}
 
 void retro_run(void)
 {

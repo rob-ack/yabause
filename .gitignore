@@ -22,3 +22,4 @@ yabause/src/sh2_dynarec_devmiyax/.vs/
 .vs/
 yabause/out/
 enc_temp_folder/
+*.DotSettings.user

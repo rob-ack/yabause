@@ -14,7 +14,7 @@ else()
 
         CMAKE_ARGS
             "-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>"
-            "-DCMAKE_BUILD_TYPE=Release"
+            "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
             "-DGLFW_BUILD_EXAMPLES=OFF"
             "-DGLFW_BUILD_TESTS=OFF"
             "-DGLFW_BUILD_DOCS=OFF"

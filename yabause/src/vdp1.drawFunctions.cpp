@@ -103,22 +103,22 @@ extern "C" int Vdp1NormalSpriteDraw(vdp1cmd_struct* const cmd, u8 * ram, Vdp1 * 
     cmd->CMDXD = cmd->CMDXA;
     cmd->CMDYD = cmd->CMDYA + MAX(1, cmd->h);
 
-    int area = abs((cmd->CMDXA * cmd->CMDYB - cmd->CMDXB * cmd->CMDYA) + (cmd->CMDXB * cmd->CMDYC - cmd->CMDXC * cmd->CMDYB) + (cmd->CMDXC * cmd->CMDYD - cmd->CMDXD * cmd->CMDYC) + (cmd->CMDXD * cmd->CMDYA - cmd->CMDXA * cmd->CMDYD)) / 2;
-    switch ((cmd->CMDPMOD >> 3) & 0x7) {
-    case 0:
-    case 1:
-        // 4 pixels per 16 bits
-        area = area >> 2;
-        break;
-    case 2:
-    case 3:
-    case 4:
-        // 2 pixels per 16 bits
-        area = area >> 1;
-        break;
-    default:
-        break;
-    }
+//    int area = abs((cmd->CMDXA * cmd->CMDYB - cmd->CMDXB * cmd->CMDYA) + (cmd->CMDXB * cmd->CMDYC - cmd->CMDXC * cmd->CMDYB) + (cmd->CMDXC * cmd->CMDYD - cmd->CMDXD * cmd->CMDYC) + (cmd->CMDXD * cmd->CMDYA - cmd->CMDXA * cmd->CMDYD)) / 2;
+//    switch ((cmd->CMDPMOD >> 3) & 0x7) {
+//    case 0:
+//    case 1:
+//        // 4 pixels per 16 bits
+//        area = area >> 2;
+//        break;
+//    case 2:
+//    case 3:
+//    case 4:
+//        // 2 pixels per 16 bits
+//        area = area >> 1;
+//        break;
+//    default:
+//        break;
+//    }
     //    yabsys.vdp1cycles += MIN(1000, 70 + (area));
 
     memset(cmd->G, 0, sizeof(float) * 16);
@@ -262,22 +262,22 @@ extern "C" int Vdp1ScaledSpriteDraw(vdp1cmd_struct* cmd, u8* ram, Vdp1* regs, u8
     default: break;
     }
 
-    int area = abs((cmd->CMDXA * cmd->CMDYB - cmd->CMDXB * cmd->CMDYA) + (cmd->CMDXB * cmd->CMDYC - cmd->CMDXC * cmd->CMDYB) + (cmd->CMDXC * cmd->CMDYD - cmd->CMDXD * cmd->CMDYC) + (cmd->CMDXD * cmd->CMDYA - cmd->CMDXA * cmd->CMDYD)) / 2;
-    switch ((cmd->CMDPMOD >> 3) & 0x7) {
-    case 0:
-    case 1:
-        // 4 pixels per 16 bits
-        area = area >> 2;
-        break;
-    case 2:
-    case 3:
-    case 4:
-        // 2 pixels per 16 bits
-        area = area >> 1;
-        break;
-    default:
-        break;
-    }
+//    int area = abs((cmd->CMDXA * cmd->CMDYB - cmd->CMDXB * cmd->CMDYA) + (cmd->CMDXB * cmd->CMDYC - cmd->CMDXC * cmd->CMDYB) + (cmd->CMDXC * cmd->CMDYD - cmd->CMDXD * cmd->CMDYC) + (cmd->CMDXD * cmd->CMDYA - cmd->CMDXA * cmd->CMDYD)) / 2;
+//    switch ((cmd->CMDPMOD >> 3) & 0x7) {
+//    case 0:
+//    case 1:
+//        // 4 pixels per 16 bits
+//        area = area >> 2;
+//        break;
+//    case 2:
+//    case 3:
+//    case 4:
+//        // 2 pixels per 16 bits
+//        area = area >> 1;
+//        break;
+//    default:
+//        break;
+//    }
 //    yabsys.vdp1cycles += MIN(1000, 70 + area);
 
     //gouraud
@@ -372,6 +372,7 @@ extern "C" int Vdp1DistortedSpriteDraw(vdp1cmd_struct* cmd, u8* ram, Vdp1* regs,
 }
 
 extern "C" int Vdp1PolygonDraw(vdp1cmd_struct* cmd, u8* ram, Vdp1* regs, u8* back_framebuffer) {
+//    return 0;
     Vdp2* varVdp2Regs = &Vdp2Lines[0];
 
     CONVERTCMD(cmd->CMDXA);
@@ -392,8 +393,8 @@ extern "C" int Vdp1PolygonDraw(vdp1cmd_struct* cmd, u8* ram, Vdp1* regs, u8* bac
     cmd->CMDXD += regs->localX;
     cmd->CMDYD += regs->localY;
 
-    int w = (sqrt((cmd->CMDXA - cmd->CMDXB) * (cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC) * (cmd->CMDXD - cmd->CMDXC))) / 2;
-    int h = (sqrt((cmd->CMDYA - cmd->CMDYD) * (cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC) * (cmd->CMDYB - cmd->CMDYC))) / 2;
+//    int w = (sqrt((cmd->CMDXA - cmd->CMDXB) * (cmd->CMDXA - cmd->CMDXB)) + sqrt((cmd->CMDXD - cmd->CMDXC) * (cmd->CMDXD - cmd->CMDXC))) / 2;
+//    int h = (sqrt((cmd->CMDYA - cmd->CMDYD) * (cmd->CMDYA - cmd->CMDYD)) + sqrt((cmd->CMDYB - cmd->CMDYC) * (cmd->CMDYB - cmd->CMDYC))) / 2;
 //    yabsys.vdp1cycles += MIN(1000, 16 + (w * h) + (w * 2));
 
     //gouraud

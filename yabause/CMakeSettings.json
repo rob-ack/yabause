@@ -87,6 +87,11 @@
           "name": "YAB_MULTIBUILD",
           "value": "True",
           "type": "BOOL"
+        },
+        {
+          "name": "YAB_WANT_VULKAN",
+          "value": "False",
+          "type": "BOOL"
         }
       ]
     },

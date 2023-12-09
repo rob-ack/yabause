@@ -30,6 +30,8 @@ extern "C" {
 #define VIDCORE_VULKAN   4
   extern VideoInterface_struct CVIDVulkan;
 
+  void VIDVulkanLibRetroInitRenderer();
+
   void VIDVulkanVdp2DrawStart(void);
   void VIDVulkanVdp2DrawEnd(void);
   void VIDVulkanVdp2DrawScreens(void);

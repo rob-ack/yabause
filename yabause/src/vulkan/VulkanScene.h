@@ -158,7 +158,7 @@ protected:
   uint32_t _device_width;
   uint32_t _device_height;
 
-  Renderer * _renderer;
+  Renderer* _renderer = nullptr;
 
   void createCommandPool();
   VkCommandPool _command_pool = VK_NULL_HANDLE;

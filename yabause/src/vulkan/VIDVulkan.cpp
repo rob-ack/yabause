@@ -86,15 +86,15 @@ extern "C" {
   int VIDVulkanVdp1Reset(void) { return VIDVulkan::getInstance()->Vdp1Reset(); }
   void VIDVulkanVdp1DrawStart(void) { VIDVulkan::getInstance()->Vdp1DrawStart(); }
   void VIDVulkanVdp1DrawEnd(void) { VIDVulkan::getInstance()->Vdp1DrawEnd(); }
-  void VIDVulkanVdp1NormalSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1ScaledSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1DistortedSpriteDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1PolygonDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolygonDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1PolylineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolylineDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1LineDraw(u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1LineDraw(ram, regs, back_framebuffer); }
-  void VIDVulkanVdp1UserClipping(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs); }
-  void VIDVulkanVdp1SystemClipping(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs); }
-  void VIDVulkanVdp1LocalCoordinate(u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs); }
+  void VIDVulkanVdp1NormalSpriteDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1NormalSpriteDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1ScaledSpriteDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1ScaledSpriteDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1DistortedSpriteDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1DistortedSpriteDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1PolygonDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolygonDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1PolylineDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1PolylineDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1LineDraw(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs, u8* back_framebuffer) { VIDVulkan::getInstance()->Vdp1LineDraw(ram, regs, back_framebuffer); }
+  void VIDVulkanVdp1UserClipping(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1UserClipping(ram, regs); }
+  void VIDVulkanVdp1SystemClipping(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1SystemClipping(ram, regs); }
+  void VIDVulkanVdp1LocalCoordinate(vdp1cmd_struct* const _cmd, u8 * ram, Vdp1 * regs) { VIDVulkan::getInstance()->Vdp1LocalCoordinate(ram, regs); }
   int VIDVulkanVdp2Reset(void) { return VIDVulkan::getInstance()->Vdp2Reset(); }
   void VIDVulkanVdp2DrawStart(void) { VIDVulkan::getInstance()->Vdp2DrawStart(); }
   void VIDVulkanVdp2DrawEnd(void) { VIDVulkan::getInstance()->Vdp2DrawEnd(); }
@@ -112,42 +112,6 @@ extern "C" {
   void VIDVulkanVdp2DispOff(void) { VIDVulkan::getInstance()->Vdp2DispOff(); }
   void VIDVulkanOnUpdateColorRamWord(u32 addr) { VIDVulkan::getInstance()->onUpdateColorRamWord(addr); }
   void VIDVulkanGetScreenshot(void ** outbuf, int * width, int * height) { VIDVulkan::getInstance()->getScreenshot(outbuf, *width, *height); }
-
-  VideoInterface_struct CVIDVulkan = {
-    VIDCORE_VULKAN,
-    "Vulkan Video Interface",
-    VIDVulkanInit,
-    VIDVulkanDeInit,
-    VIDVulkanResize,
-    VIDVulkanIsFullscreen,
-    VIDVulkanVdp1Reset,
-    VIDVulkanVdp1DrawStart,
-    VIDVulkanVdp1DrawEnd,
-    VIDVulkanVdp1NormalSpriteDraw,
-    VIDVulkanVdp1ScaledSpriteDraw,
-    VIDVulkanVdp1DistortedSpriteDraw,
-    VIDVulkanVdp1PolygonDraw,
-    VIDVulkanVdp1PolylineDraw,
-    VIDVulkanVdp1LineDraw,
-    VIDVulkanVdp1UserClipping,
-    VIDVulkanVdp1SystemClipping,
-    VIDVulkanVdp1LocalCoordinate,
-    VIDVulkanVdp1ReadFrameBuffer,
-    VIDVulkanVdp1WriteFrameBuffer,
-    VIDVulkanVdp1EraseWrite,
-    VIDVulkanVdp1FrameChange,
-    VIDVulkanVdp2Reset,
-    VIDVulkanVdp2DrawStart,
-    VIDVulkanVdp2DrawEnd,
-    VIDVulkanVdp2DrawScreens,
-    VIDGetGlSize,
-    VIDVulkanSetSettingValue,
-    VIDVulkanSync,
-    VIDVulkanGetNativeResolution,
-    VIDVulkanVdp2DispOff,
-    VIDVulkanOnUpdateColorRamWord,
-    VIDVulkanGetScreenshot
-  };
 
   extern int YglCalcTextureQ(float   *pnts, float *q);
 
@@ -7003,6 +6967,47 @@ void VIDVulkan::blitSubRenderTarget(VkCommandBuffer commandBuffer) {
     VK_PIPELINE_STAGE_TRANSFER_BIT,
     VK_PIPELINE_STAGE_TRANSFER_BIT,
     VkImageSubresourceRange{ VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 });
-
-
 }
+
+void VIDVulkanLibRetroInitRenderer()
+{
+    static Renderer r;
+//    r.OpenWindow()
+    VIDVulkan::getInstance()->setRenderer(&r);
+}
+
+VideoInterface_struct CVIDVulkan = {
+  VIDCORE_VULKAN,
+  "Vulkan Video Interface",
+  VIDVulkanInit,
+  VIDVulkanDeInit,
+  VIDVulkanResize,
+  VIDVulkanIsFullscreen,
+  VIDVulkanVdp1Reset,
+  VIDVulkanVdp1DrawStart,
+  VIDVulkanVdp1DrawEnd,
+  VIDVulkanVdp1NormalSpriteDraw,
+  VIDVulkanVdp1ScaledSpriteDraw,
+  VIDVulkanVdp1DistortedSpriteDraw,
+  VIDVulkanVdp1PolygonDraw,
+  VIDVulkanVdp1PolylineDraw,
+  VIDVulkanVdp1LineDraw,
+  VIDVulkanVdp1UserClipping,
+  VIDVulkanVdp1SystemClipping,
+  VIDVulkanVdp1LocalCoordinate,
+  VIDVulkanVdp1ReadFrameBuffer,
+  VIDVulkanVdp1WriteFrameBuffer,
+  VIDVulkanVdp1EraseWrite,
+  VIDVulkanVdp1FrameChange,
+  VIDVulkanVdp2Reset,
+  VIDVulkanVdp2DrawStart,
+  VIDVulkanVdp2DrawEnd,
+  VIDVulkanVdp2DrawScreens,
+  VIDGetGlSize,
+  VIDVulkanSetSettingValue,
+  VIDVulkanSync,
+  VIDVulkanGetNativeResolution,
+  VIDVulkanVdp2DispOff,
+  VIDVulkanOnUpdateColorRamWord,
+  VIDVulkanGetScreenshot
+};

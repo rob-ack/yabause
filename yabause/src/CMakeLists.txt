@@ -820,14 +820,19 @@ add_definitions(-DHAVE_VULKAN=1)
 
 include(vulkan/external_glm.cmake)
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-  include(vulkan/external_shaderc.cmake)
+if (WIN32)
+    include(vulkan/external_shaderc.cmake)
 	include(vulkan/external_glfw.cmake)
 	set(LIBVULKAN_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/include)
-	set(LIBVULKAN ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/lib/x86/vulkan-1.lib )
+
+	if(${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+		set(LIBVULKAN ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/lib/x86_64/vulkan-1.lib )
+	else()
+		set(LIBVULKAN ${CMAKE_CURRENT_SOURCE_DIR}/vulkan/lib/x86/vulkan-1.lib )
+	endif()
 else()
-  set( SHADERC_INCLUDE_DIR ${ANDROID_NDK}/sources/third_party/shaderc/include  )
-  set( SHADERC_LIBRARY_DIR ${ANDROID_NDK}/sources/third_party/shaderc/libs/c++_shared/${ANDROID_ABI}  )
+    set( SHADERC_INCLUDE_DIR ${ANDROID_NDK}/sources/third_party/shaderc/include  )
+    set( SHADERC_LIBRARY_DIR ${ANDROID_NDK}/sources/third_party/shaderc/libs/c++_shared/${ANDROID_ABI}  )
 	set( SHADERC_LIBRARIES ${ANDROID_NDK}/sources/third_party/shaderc/libs/c++_shared/${ANDROID_ABI}/libshaderc.a  )
 	set( LIBVULKAN vulkan )
 endif()
@@ -838,6 +843,8 @@ set(VULKAN_INCLUDE_DIRS ${GLM_INCLUDE_DIRS} ${GLFW_INCLUDE_DIR} ${SHADERC_INCLUD
 set(VULKAN_LIBRARIES  ${GLFW_LIBRARIES} ${SHADERC_LIBRARIES} ${LIBVULKAN} )
 
 set( VULKAN_SOURCES 
+ ${VULKAN_SOURCES}
+ vulkan/Window_glfw.cpp
  vulkan/FramebufferRenderer.cpp
  vulkan/FramebufferRenderer.h
  vulkan/TextureManager.cpp
@@ -877,10 +884,10 @@ set(yabause_SOURCES
   ${VULKAN_SOURCES}
 )
 
-#set(YABAUSE_LIBRARIES
-#  ${YABAUSE_LIBRARIES} 
-#  ${VULKAN_LIBRARIES}
-#)
+set(YABAUSE_LIBRARIES
+ ${YABAUSE_LIBRARIES} 
+ ${VULKAN_LIBRARIES}
+)
 
 endif(YAB_WANT_VULKAN)
 

@@ -53,6 +53,8 @@ void VIDOGLVdp2DrawStart(void);
 void VIDOGLVdp2DrawEnd(void);
 void VIDOGLVdp2DrawScreens(void);
 
+void reset_global_gl_state();
+
 extern VideoInterface_struct VIDOGL;
 
 #endif

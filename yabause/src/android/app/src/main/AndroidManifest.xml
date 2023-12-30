@@ -118,7 +118,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
                         android:process=":emulationmain"
-                        android:theme="@style/Theme.Gameselect.Leanback"
+                        android:theme="@style/Theme.Gameselect.Leanback"m
             android:process=":emulationmain"
         </activity>
         -->

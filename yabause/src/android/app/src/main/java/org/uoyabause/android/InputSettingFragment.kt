@@ -304,8 +304,9 @@ OnGenericMotionListener, View.OnClickListener {
     var lkeyCode = keyCode
     if (event?.deviceId != _selected_device_id) return false
     if (event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
-      event.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK
-    ) {
+      event.source and InputDevice.SOURCE_JOYSTICK == InputDevice.SOURCE_JOYSTICK ||
+      event.source and InputDevice.SOURCE_KEYBOARD == InputDevice.SOURCE_KEYBOARD
+            ) {
       val dev = InputDevice.getDevice(_selected_device_id)
       if (dev.name.contains("HuiJia")) {
         if (event.scanCode == 0) {

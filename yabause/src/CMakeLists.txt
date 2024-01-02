@@ -10,6 +10,9 @@ cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/CMakeTests)
 
+set(CMAKE_C_FLAGS "")
+set(CMAKE_CXX_FLAGS "")
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
@@ -57,8 +60,6 @@ set(yabause_HEADERS
 option(YAB_MULTIBUILD "Choose wether to build all ports or only a single one")
 set(YAB_PORT_BUILT FALSE)
 set(YAB_PORTS "qt" CACHE STRING "List of ports to build")
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT")
 		
 string(COMPARE EQUAL ${YAB_PORTS} "libretro" IS_LIBRETRO_PORT)
 if(NOT DEFINED IS_LIBRETRO_PORT)
@@ -145,10 +146,11 @@ add_definitions(-DYAB_PORT_OSD)
 add_definitions(-D_OGLES3_)
 add_definitions(-DYAB_ASYNC_RENDERING)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
+
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -fobjc-abi-version=2 -fobjc-arc -fno-aligned-allocation -isysroot ${CMAKE_OSX_SYSROOT}")
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -isysroot ${CMAKE_OSX_SYSROOT}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fobjc-abi-version=2 -fobjc-arc -std=gnu++11 -stdlib=libc++ -isysroot ${CMAKE_OSX_SYSROOT}")
 IF (${SIMULATOR})
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mios-simulator-version-min=11.0")
 ENDIF()
@@ -1091,6 +1093,8 @@ if (YAB_WERROR)
     endif()
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DJSONCPP_NO_LOCALE_SUPPORT")
+
 add_definitions(-DPACKAGE=\"${YAB_PACKAGE}\")
 add_definitions(-DVERSION=\"${YAB_VERSION}\")
 
@@ -1218,6 +1222,9 @@ message(STATUS "------ FLAGS  -------")
 message(STATUS "CMAKE_SYSTEM_NAME ${CMAKE_SYSTEM_NAME} defined")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR ${CMAKE_SYSTEM_PROCESSOR} defined")
 message(STATUS "CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} defined")
+message(STATUS "CMAKE_C_FLAGS ${CMAKE_C_FLAGS}")
+message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
+
 if(MSVC)
 message(STATUS "CMAKE_SYSTEM_VERSION ${CMAKE_SYSTEM_VERSION}")
 	if(CMAKE_VS_WINDOWS_TARGET_PLATFORM_VERSION)

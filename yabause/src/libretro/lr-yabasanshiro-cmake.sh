@@ -14,8 +14,6 @@ rp_module_id="lr-yabasanshiro-rob"
 rp_module_desc="SEGA Saturn emulator Yaba Sanshiro 2"
 rp_module_help="ROM Extensions: .iso .cue .zip .ccd .mds\n\nCopy your Sega Saturn & ST-V roms to $romdir/saturn\n\nCopy the required BIOS file saturn_bios.bin / stvbios.zip to $biosdir/yabasanshiro"
 rp_module_licence="GPL2 https://github.com/devmiyax/yabause/blob/master/LICENSE"
-#rp_module_repo="git https://github.com/libretro/yabause.git yabasanshiro 73c67668"
-#rp_module_repo="git https://github.com/devmiyax/yabause.git pi4-1-9-0"
 rp_module_repo="git https://github.com/rob-ack/yabause.git libretro-cmake-rpi4"
 rp_module_section="exp"
 rp_module_flags="!all rpi4 !videocore"
@@ -33,11 +31,11 @@ function build_lr-yabasanshiro-rob() {
     local params=()
     cd yabause/
     rm -f ./out/CMakeCache.txt
-
-    isPlatform "gles" && params+=( -DYAB_LIBRETRO_FORCE_GLES=True)
-
-    cmake -DYAB_PORTS:STRING="libretro" -DYAB_USE_QT5:BOOL=False -DSH2_DYNAREC:BOOL=False -DDYNAREC_DEVMIYAX=true -DDYNAREC_KRONOS=true -DSH2_TRACE:BOOL=False -S . -B ./out
-    cmake --build ./out --config Release -- -j4
+    cmake -G "Ninja" -DCMAKE_BUILD_TYPE="Release" -DYAB_PORTS:STRING="libretro" -DYAB_USE_QT5:BOOL=False -DYAB_WANT_DYNAREC_DEVMIYAX=ON -DYAB_WANT_DYNAREC_KRONOS=OFF -DYAB_USE_SSF=OFF -DYAB_WANT_SDL=ON -DSH2_TRACE:BOOL=False -S . -B ./out
+    cmake --build ./out --target zlib -- "-j4"
+    cmake --build ./out --target m68kmake -- "-j4"
+    cmake --build ./out --target libchdr -- "-j4"
+    cmake --build ./out --target yabause_libretro -- "-j4"
     md_ret_require="$md_build/yabause/out/src/libretro/libyabause_libretro.so"
 }
 

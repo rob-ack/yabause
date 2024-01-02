@@ -124,6 +124,8 @@ void retro_set_environment(retro_environment_t cb)
       { "yabasanshiro_sh2coretype", "SH2 Core (restart); dynarec|interpreter" },
 #elif defined DYNAREC_KRONOS
       { "yabasanshiro_sh2coretype", "SH2 Core (restart); kronos|interpreter" },
+#else
+      { "yabasanshiro_sh2coretype", "SH2 Core (restart); interpreter" },
 #endif
 #ifdef ALLOW_POLYGON_MODE
       { "yabasanshiro_polygon_mode", "Polygon Mode; perspective_correction|gpu_tesselation|cpu_tesselation" },

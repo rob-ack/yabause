@@ -36,7 +36,7 @@ function build_lr-yabasanshiro-rob() {
 
     isPlatform "gles" && params+=( -DYAB_LIBRETRO_FORCE_GLES=True)
 
-    cmake -DYAB_PORTS:STRING="libretro" -DYAB_USE_QT5:BOOL=False -DSH2_DYNAREC:BOOL=False -DSH2_TRACE:BOOL=False ${params[@]} -S . -B ./out
+    cmake -DYAB_PORTS:STRING="libretro" -DYAB_USE_QT5:BOOL=False -DSH2_DYNAREC:BOOL=False -DDYNAREC_DEVMIYAX=true -DDYNAREC_KRONOS=true -DSH2_TRACE:BOOL=False -S . -B ./out
     cmake --build ./out --config Release -- -j4
     md_ret_require="$md_build/yabause/out/src/libretro/libyabause_libretro.so"
 }

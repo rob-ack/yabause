@@ -20,7 +20,7 @@ endif()
 
 add_definitions(
 	-D__LIBRETRO__
-	-DVERSION=\"3.4.2\"
+	-DVERSION=\"3.4.3\"
 	-DHAVE_LROUND 
 	-D_7ZIP_ST 
 	-DFLAC__HAS_OGG=0 

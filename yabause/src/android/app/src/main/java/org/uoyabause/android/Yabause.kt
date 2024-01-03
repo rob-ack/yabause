@@ -258,20 +258,16 @@ class Yabause : AppCompatActivity(),
                     dialog.dismiss()
                 }
 
-                val dialogCancelButton =
-                    ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
-                dialogCancelButton.setOnClickListener {
-                    dialog.dismiss()
-                }
 
                 // ダイアログが表示されたときにアニメーションを開始する
                 dialog.setOnShowListener {
                     val observer = dialogButton.viewTreeObserver
                     observer.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
                         override fun onGlobalLayout() {
+
+                            var isCanceled = false
                             // Ensure we only call this once
                             dialogButton.viewTreeObserver.removeOnGlobalLayoutListener(this)
-
                             val valueAnimator = ValueAnimator.ofInt(0, dialogButton.width)
                             valueAnimator.addUpdateListener { animation ->
                                 val animatedValue = animation.animatedValue as Int
@@ -280,12 +276,24 @@ class Yabause : AppCompatActivity(),
                             }
                             valueAnimator.addListener(
                                 onEnd = {
-                                    dialogButtonFront.callOnClick()
+                                    if( !isCanceled ) {
+                                        dialogButtonFront.callOnClick()
+                                    }
                                 },
                                 onCancel = {
                                     // Handle cancellation
+                                    dialogButtonFront.isEnabled = false
                                 }
                             )
+
+                            val dialogCancelButton =
+                                ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
+                            dialogCancelButton.setOnClickListener {
+                                isCanceled = true
+                                valueAnimator.cancel()
+                                dialog.dismiss()
+                            }
+
                             dialogButtonFront.visibility = View.VISIBLE
                             valueAnimator.duration = 5000
                             valueAnimator.start()

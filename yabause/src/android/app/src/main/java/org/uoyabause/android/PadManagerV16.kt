@@ -633,7 +633,10 @@ internal class PadManagerV16 : PadManager() {
         (sources and InputDevice.SOURCE_KEYBOARD) == InputDevice.SOURCE_KEYBOARD
       ) {
 
-        if( dev.keyboardType == InputDevice.KEYBOARD_TYPE_NON_ALPHABETIC ) continue
+        if( ((sources and InputDevice.SOURCE_JOYSTICK) != InputDevice.SOURCE_JOYSTICK && (sources and InputDevice.SOURCE_GAMEPAD) != InputDevice.SOURCE_GAMEPAD ) &&
+          dev.keyboardType == InputDevice.KEYBOARD_TYPE_NON_ALPHABETIC ){
+          continue
+        }
 
         if (deviceIds[dev.descriptor] == null) {
 

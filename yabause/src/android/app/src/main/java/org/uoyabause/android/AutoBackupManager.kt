@@ -544,6 +544,8 @@ class AutoBackupManager(
 
             }
             return
+        }else{
+            Log.d(TAG, "current user is ${currentUser.displayName}")
         }
 
         val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
@@ -690,6 +692,7 @@ class AutoBackupManager(
                         }
                     }
                 }
+
 
                 override fun onCancelled(databaseError: DatabaseError) {
                     // データの読み取りに失敗した場合の処理

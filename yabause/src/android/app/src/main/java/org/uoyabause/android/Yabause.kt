@@ -880,6 +880,7 @@ class Yabause : AppCompatActivity(),
                 }
                 checkMaxFileCount(save_path + current_gamecode)
             }
+/*
             R.id.save_state_cloud -> {
                 if (YabauseApplication.checkDonated(this) == 0) {
                     waitingResult = true
@@ -986,6 +987,7 @@ class Yabause : AppCompatActivity(),
                     checkAuth(loginobserver)
                 }
             }
+*/
             R.id.load_state -> {
 
                 // String save_path = YabauseStorage.getStorage().getStateSavePath();

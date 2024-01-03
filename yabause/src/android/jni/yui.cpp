@@ -2287,18 +2287,10 @@ void renderLoop()
             int ret;
             YUI_LOG("MSG_SAVE_STATE");
 
-            char prefix[] = "autosave_";
-            char* result = strstr(s_savepath, prefix);
-            if( result != NULL ){
-              if (remove(s_savepath) == 0) {
-              }
-              ret = YabSaveState(s_savepath);
-            }else{
-              time_t t = time(NULL);
-              sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
-              ret = YabSaveState(last_state_filename);
-            }
-
+            time_t t = time(NULL);
+            sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+            ret = YabSaveState(last_state_filename);
+ 
             pthread_mutex_lock(&g_mtxFuncSync);
             pthread_cond_signal(&g_cndFuncSync);
             pthread_mutex_unlock(&g_mtxFuncSync);
@@ -2308,7 +2300,7 @@ void renderLoop()
         case MSG_LOAD_STATE:
         {
             int rtn;
-            YUI_LOG("MSG_LOAD_STATE");
+            YUI_LOG("MSG_LOAD_STATE %s", s_savepath);
             rtn = YabLoadState(s_savepath);
             switch (rtn)
             {

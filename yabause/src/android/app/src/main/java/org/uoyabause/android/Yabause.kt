@@ -118,6 +118,7 @@ import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
 import java.io.*
 import java.net.URLDecoder
+import java.nio.file.Paths
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -217,77 +218,85 @@ class Yabause : AppCompatActivity(),
     public override fun onStop(){
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
         if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
-            val autoSaveFile =
-                File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-            YabauseRunnable.savestate(autoSaveFile.absolutePath)
+
         }
         super.onStop()
     }
 
     fun showAutoStateLoadDialog(){
 
-        val autoSaveFile = File( YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-        if( !autoSaveFile.exists() ) return
+        val directory = Paths.get(YabauseStorage.storage.stateSavePath + "/" + gameCode ).toFile()
 
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(R.string.auto_state_save_data_found)
-        builder.setMessage(R.string.auto_state_detail)
+        // ディレクトリ内の指定した拡張子を持つファイルリストを取得
+        val files = directory.listFiles { _, name -> name.endsWith(".yss") }
 
+        if( files != null ) {
+            // 最新のファイルを見つける
+            val autoSaveFile = files.maxByOrNull { it.lastModified() }
+            if( autoSaveFile != null ) {
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle(R.string.auto_state_save_data_found)
+                builder.setMessage(R.string.auto_state_detail)
 
-        val layoutInflater = layoutInflater
-        val ProgressButton = layoutInflater.inflate(R.layout.pbutton,null,false)
-        builder.setView(ProgressButton)
+                val layoutInflater = layoutInflater
+                val ProgressButton = layoutInflater.inflate(R.layout.pbutton, null, false)
+                builder.setView(ProgressButton)
 
-        // ダイアログを表示
-        val dialog = builder.create()
+                // ダイアログを表示
+                val dialog = builder.create()
 
-        val dialogButton = ProgressButton.findViewById<Button>(R.id.progress_btn_back)
-        dialogButton.setOnClickListener{
-            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        val dialogButtonFront = ProgressButton.findViewById<Button>(R.id.progress_btn_front)
-        dialogButtonFront.setOnClickListener{
-            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        val dialogCancelButton = ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
-        dialogCancelButton.setOnClickListener{
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        // ダイアログが表示されたときにアニメーションを開始する
-        dialog.setOnShowListener {
-            //colorAnimation.start()
-
-            val valueAnimator = ValueAnimator.ofInt(0, dialogButtonFront.width)
-            valueAnimator.addUpdateListener {
-                val animatedValue = it.animatedValue as Int
-                dialogButtonFront.layoutParams.width = animatedValue
-                dialogButtonFront.requestLayout()
-            }
-
-            valueAnimator.addListener(
-                onEnd = {
-                    dialogButtonFront.callOnClick()
-                },
-                onCancel = {
-
+                val dialogButton = ProgressButton.findViewById<Button>(R.id.progress_btn_back)
+                dialogButton.setOnClickListener {
+                    YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+                    dialog.dismiss()
                 }
-            )
 
-            dialogButtonFront.visibility = View.VISIBLE
-            valueAnimator.duration = 5000
-            valueAnimator.start()
+                val dialogButtonFront =
+                    ProgressButton.findViewById<Button>(R.id.progress_btn_front)
+                dialogButtonFront.setOnClickListener {
+                    YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+                    dialog.dismiss()
+                }
 
+                val dialogCancelButton =
+                    ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
+                dialogCancelButton.setOnClickListener {
+                    dialog.dismiss()
+                }
+
+                // ダイアログが表示されたときにアニメーションを開始する
+                dialog.setOnShowListener {
+                    val observer = dialogButton.viewTreeObserver
+                    observer.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                        override fun onGlobalLayout() {
+                            // Ensure we only call this once
+                            dialogButton.viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+                            val valueAnimator = ValueAnimator.ofInt(0, dialogButton.width)
+                            valueAnimator.addUpdateListener { animation ->
+                                val animatedValue = animation.animatedValue as Int
+                                dialogButtonFront.layoutParams.width = animatedValue
+                                dialogButtonFront.requestLayout()
+                            }
+                            valueAnimator.addListener(
+                                onEnd = {
+                                    dialogButtonFront.callOnClick()
+                                },
+                                onCancel = {
+                                    // Handle cancellation
+                                }
+                            )
+                            dialogButtonFront.visibility = View.VISIBLE
+                            valueAnimator.duration = 5000
+                            valueAnimator.start()
+                        }
+                    })
+                }
+
+                dialog.show()
+            }
         }
 
-        dialog.show()
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
@@ -1144,9 +1153,27 @@ class Yabause : AppCompatActivity(),
 
                     val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
                     if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
-                        val autoSaveFile =
-                            File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-                        YabauseRunnable.savestate(autoSaveFile.absolutePath)
+
+                        val save_path = YabauseStorage.storage.stateSavePath
+                        val current_gamecode = YabauseRunnable.getCurrentGameCode()
+                        val save_root =
+                            current_gamecode?.let { File(YabauseStorage.storage.stateSavePath, it) }
+                        if (save_root != null) {
+                            if (!save_root.exists()) save_root.mkdir()
+                        }
+                        var save_filename = YabauseRunnable.savestate(save_path + current_gamecode)
+                        if (save_filename != null) {
+                            val point = save_filename!!.lastIndexOf(".")
+                            if (point != -1) {
+                                save_filename = save_filename!!.substring(0, point)
+                            }
+                            val screen_shot_save_path = "$save_filename.png"
+                            if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
+                            } else {
+                            }
+                        } else {
+                        }
+                        checkMaxFileCount(save_path + current_gamecode)
                     }
 
                     YabauseRunnable.deinit()
@@ -1163,15 +1190,14 @@ class Yabause : AppCompatActivity(),
                         val resultIntent = Intent()
                         resultIntent.putExtra("playTime",playTime)
                         setResult(RESULT_OK, resultIntent)
-
                         finish()
                         killProcess(myPid())
                     } //public void run() {
                     )
                 }
                 myThread.start()
-
             }
+
             R.id.menu_in_game_setting -> {
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()

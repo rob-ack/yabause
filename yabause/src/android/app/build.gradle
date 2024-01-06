@@ -73,11 +73,11 @@ android {
 
     defaultConfig {
         applicationId "org.devmiyax.yabasanshioro2"
-        minSdkVersion 26
+        minSdkVersion 24
         targetSdkVersion 33
         multiDexEnabled true
-        versionCode 89
-        versionName '1.14.0'
+        versionCode 90
+        versionName '1.14.1'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro

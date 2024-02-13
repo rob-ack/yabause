@@ -14257,24 +14257,7 @@ GLenum glxewContextInit (GLXEW_CONTEXT_ARG_DEF_LIST)
   GLXEW_VERSION_1_2 = GL_TRUE;
   GLXEW_VERSION_1_3 = GL_TRUE;
   GLXEW_VERSION_1_4 = GL_TRUE;
-  /* query GLX version */
-  glXQueryVersion(glXGetCurrentDisplay(), &major, &minor);
-  if (major == 1 && minor <= 3)
-  {
-    switch (minor)
-    {
-      case 3:
-      GLXEW_VERSION_1_4 = GL_FALSE;
-      break;
-      case 2:
-      GLXEW_VERSION_1_4 = GL_FALSE;
-      GLXEW_VERSION_1_3 = GL_FALSE;
-      break;
-      default:
-      return GLEW_ERROR_GLX_VERSION_11_ONLY;
-      break;
-    }
-  }
+
   /* query GLX extension string */
   extStart = 0;
   if (glXGetCurrentDisplay != NULL)

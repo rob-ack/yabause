@@ -4355,7 +4355,10 @@ void Vdp1Renderer::blitCpuWrittenFramebuffer(int target) {
 
   for (int v = 0; v < writeHeight; v++) {
     for (int u = 0; u < writeWidth; u++) {
-      data[writeWidth * (writeHeight - 1 - v) + u] = cpuWriteBuffer[cpuWidth * (cpuHeight - 1 - v) + u];
+      int index = cpuWidth * (cpuHeight - 1 - v) + u;
+      if (index > 0 && index < cpuWidth * cpuHeight) {
+        data[writeWidth * (writeHeight - 1 - v) + u] = cpuWriteBuffer[cpuWidth * (cpuHeight - 1 - v) + u];
+      }
     }
   }
 

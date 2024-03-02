@@ -636,9 +636,10 @@ void Vdp1Renderer::erase() {
     interlace *= 2.0f;
   }
 
-  float top = (((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  
+  float bottom = (vulkan->vdp2height - ((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace)) * hrate;
   float right = (((Vdp1Regs->EWRR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
-  float bottom = (((Vdp1Regs->EWRR & 0x1FF) * vdp1hratio * interlace)) * hrate;
+  float top = (vulkan->vdp2height - ((Vdp1Regs->EWLR & 0x1FF) * vdp1hratio * interlace)) * hrate;
   float left = (((Vdp1Regs->EWLR >> 9) & 0x7F) << 3) * vdp1wratio * wrate;
 
   if (top < 0)
@@ -650,7 +651,7 @@ void Vdp1Renderer::erase() {
   if (left < 0)
     left = 0;
   int width = right - left + wrate;
-  int height = bottom - top + (interlace*hrate);
+  int height = top - bottom  + (interlace*hrate);
   if (width <= 0)
     width = 1;
   if (height <= 0)
@@ -661,7 +662,7 @@ void Vdp1Renderer::erase() {
     height = offscreenPass.height;
 
 
-  VkRect2D scissor = vks::initializers::rect2D(width, height, left, top);
+  VkRect2D scissor = vks::initializers::rect2D(width, height, left, bottom);
   // VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 

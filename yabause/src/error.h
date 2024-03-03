@@ -20,6 +20,10 @@
 #ifndef ERROR_H
 #define ERROR_H
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #define YAB_ERR_UNKNOWN                 0
 #define YAB_ERR_FILENOTFOUND            1
 #define YAB_ERR_MEMORYALLOC             2
@@ -37,4 +41,9 @@
 
 void YabSetError(int type, const void *extra);
 void YabErrorMsg(const char * format, ...);
+
+#if defined (__cplusplus)
+}
+#endif
+
 #endif

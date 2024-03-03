@@ -22,6 +22,10 @@
 
 #include "core.h"
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #define M68KCORE_DEFAULT -1
 #define M68KCORE_DUMMY    0
 #define M68KCORE_C68K     1
@@ -77,5 +81,9 @@ extern M68K_struct M68KDummy;
 extern M68K_struct M68KC68K;
 extern M68K_struct M68KQ68;
 extern M68K_struct M68KMusashi;
+
+#if defined (__cplusplus)
+}
+#endif
 
 #endif

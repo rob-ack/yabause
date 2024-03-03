@@ -226,7 +226,7 @@ if (YAB_USE_SCSP2)
 	set(yabause_SOURCES ${yabause_SOURCES} scsp2.c)
 	set(yabause_HEADERS ${yabause_HEADERS} scsp2.h)
 else()
-	set(yabause_SOURCES ${yabause_SOURCES} scsp.c)
+	set(yabause_SOURCES ${yabause_SOURCES} scsp.cpp)
 endif()
 
 # Enable SCSP MIDI hooks in sound interface

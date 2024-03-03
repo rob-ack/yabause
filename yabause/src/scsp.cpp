@@ -119,6 +119,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "scsp.h"
 #include "scspdsp.h"
 #include "threads.h"
+#include <atomic>
 
 #ifndef max
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -167,18 +168,16 @@ static int g_scsp_main_mode = 0;
 
 #include "sh2core.h"
 
-#if defined(__GNUC__)
-#include <stdatomic.h>
-_Atomic u32 m68kcycle = 0;
-#else
-u32 m68kcycle = 0;
-#endif
+std::atomic<u32> m68kcycle = 0;
 
-extern volatile u64 saved_m68k_cycles;
-extern YabEventQueue * q_scsp_frame_start;
-extern YabEventQueue * q_scsp_finish;
-void setM68kCounter(u64 counter);
-u64 getM68KCounter();
+extern "C" {
+  extern volatile u64 saved_m68k_cycles;
+  extern YabEventQueue * q_scsp_frame_start;
+  extern YabEventQueue * q_scsp_finish;
+  extern void setM68kCounter(u64 counter);
+  extern u64 getM68KCounter();
+  extern void SyncSh2And68k();
+}
 
 
 #define CLOCK_SYNC_SHIFT (4)
@@ -1755,7 +1754,7 @@ typedef struct scsp_t
   u32 scilv2;           // IL2 M68000 interrupt pin state
 
   u32 mcieb;            // allow main cpu interrupt
-  u32 mcipd;            // pending main cpu interrupt
+  std::atomic<u32> mcipd;            // pending main cpu interrupt
 
   u8 *scsp_ram;         // scsp ram pointer
   void (*mintf)(void);  // main cpu interupt function pointer
@@ -1924,11 +1923,17 @@ scsp_trigger_sound_interrupt (u32 id)
 
 void scsp_main_interrupt (u32 id)
 {
-//  if (scsp.mcipd & id) return;
 //  if (id != 0x400) SCSPLOG("scsp main interrupt %.4X\n", id);
 
-  scsp.mcipd |= id;
-  WRITE_THROUGH (scsp.mcipd);
+  //scsp.mcipd |= id;
+  auto expected = scsp.mcipd.load();
+  u32 desired;
+  do {
+    desired = expected | id;
+  } while (!scsp.mcipd.compare_exchange_weak(expected, desired));
+
+  //SCSPLOG("scsp main interrupt mcipd = %04X\n", scsp.mcipd );
+  //WRITE_THROUGH (scsp.mcipd);
 
   if (scsp.mcieb & id)
     scsp_trigger_main_interrupt (id);
@@ -2858,14 +2863,32 @@ scsp_set_b (u32 a, u8 d)
     case 0x2D: // MCIPD(low byte)
       if (d & 0x20)
         scsp_main_interrupt(0x20);
+
+      SCSPLOG("scsp_set_b MCIPD %04X mcipd = %04X", d, scsp.mcipd.load());
       return;
 
     case 0x2E: // MCIRE(high byte)
-      scsp.mcipd &= ~(d << 8);
+    {
+      //scsp.mcipd &= ~(d << 8);
+      u32 expected = scsp.mcipd.load();
+      u32 desired;
+      do {
+        desired = expected & ~(d << 8);
+      } while (!scsp.mcipd.compare_exchange_weak(expected, desired));
+      SCSPLOG("scsp_set_b MCIRE %04X mcipd = %04X", d, scsp.mcipd.load());
+    }
       return;
 
     case 0x2F: // MCIRE(low byte)
-      scsp.mcipd &= ~(u32)d;
+//      scsp.mcipd &= ~(u32)d;
+    {
+      u32 expected = scsp.mcipd.load();
+      u32 desired;
+      do {
+        desired = expected & ~(u32)d;
+      } while (!scsp.mcipd.compare_exchange_weak(expected, desired));
+      SCSPLOG("scsp_set_b MCIRE %04X mcipd = %04X", d, scsp.mcipd.load());
+    }
       return;
     }
 }
@@ -2881,6 +2904,10 @@ scsp_set_w (u32 a, u16 d)
   //SCSPLOG("SCSP REG WRITE WORD: addr=%08X, val = %04X\n",a,d);
 
   *(u16 *)&scsp_ccr[a ^ 2] = d;
+
+  //if (0x2A == (a & 0x3E) 0x2C == (a & 0x3E) || 0x2E == (a & 0x3E) ) {
+  //  SCSPLOG("scsp_set_w @0x%2X %04X\n", a, d);
+  //}
 
   switch (a & 0x3E)
     {
@@ -2978,10 +3005,12 @@ scsp_set_w (u32 a, u16 d)
     case 0x2A: // MCIEB
     {
       int i;
+      SCSPLOG("scsp_set_w MCIEB %04X", d);
       scsp.mcieb = d;
+      auto mcipd = scsp.mcipd.load();
       for (i = 0; i < 11; i++)
         {
-          if (scsp.mcieb & (1 << i) && scsp.mcipd & (1 << i))
+          if (scsp.mcieb & (1 << i) && mcipd & (1 << i))
             scsp_trigger_main_interrupt ((1 << i));
         }
       return;
@@ -2989,10 +3018,17 @@ scsp_set_w (u32 a, u16 d)
 
     case 0x2C: // MCIPD
       if (d & 0x20) scsp_main_interrupt (0x20);
+      SCSPLOG("scsp_set_w MCIPD %04X mcipd = %04X", d, scsp.mcipd.load());
       return;
 
     case 0x2E: // MCIRE
-      scsp.mcipd &= ~d;
+      //scsp.mcipd &= ~d;
+      u32 expected = scsp.mcipd.load();
+      u32 desired;
+      do {
+        desired = expected & ~d;
+      } while (!scsp.mcipd.compare_exchange_weak(expected, desired));
+      SCSPLOG("scsp_set_w MCIRE %04X mcipd = %04X", d, scsp.mcipd.load());
       return;
     }
 }
@@ -3042,10 +3078,10 @@ scsp_get_b (u32 a)
       return scsp.scipd;
 
     case 0x2C: // MCIPD(high byte)
-      return (scsp.mcipd >> 8);
+      return (scsp.mcipd.load() >> 8);
 
     case 0x2D: // MCIPD(low byte)
-      return scsp.mcipd;
+      return scsp.mcipd.load();
     }
 
   return scsp_ccr[a ^ 3];
@@ -3058,7 +3094,12 @@ scsp_get_w (u32 a)
 
   if ((a != 0x20) && (a != 0x08))
     {
-      SCSPLOG("r_w scsp : reg %.2X\n", a * 2);
+      if (0x2C == a) {
+       // SCSPLOG("scsp_get_w @0x%2X v%04X\n", a , scsp.mcipd);
+      }
+      else {
+        SCSPLOG("scsp_get_w %.2X\n", a * 2);
+      }
     }
 
   switch (a)
@@ -3098,8 +3139,13 @@ scsp_get_w (u32 a)
     case 0x22:
       return scsp.scipd;
 
+    case 0xAC: // MCIPD
+      SCSPLOG("scsp_get_w MCIEB %04X", scsp.mcieb);
+      return scsp.mcieb;
+
     case 0x2C: // MCIPD
-      return scsp.mcipd;
+      SCSPLOG("scsp_get_w MCIPD %04X", scsp.mcipd.load());
+      return scsp.mcipd.load();
     default:
       SCSPLOG("SCSP: unasined read %08X\n",a );
     }
@@ -4580,7 +4626,7 @@ scsp_reset (void)
   scsp.timcsd    = 0;
 
   scsp.mcieb     = 0;
-  scsp.mcipd     = 0;
+  scsp.mcipd.store(0);
   scsp.scieb     = 0;
   scsp.scipd     = 0;
   scsp.scilv0    = 0;
@@ -4738,7 +4784,7 @@ scsp_init (u8 *scsp_ram, void (*sint_hand)(u32), void (*mint_hand)(void))
 u8 *SoundRam = NULL;
 ScspInternal *ScspInternalVars;
 static SoundInterface_struct *SNDCore = NULL;
-extern SoundInterface_struct *SNDCoreList[];
+extern "C" SoundInterface_struct *SNDCoreList[];
 
 struct sounddata
 {
@@ -4861,6 +4907,7 @@ scu_interrupt_handler (void)
 {
   // send interrupt to scu
   ScuSendSoundRequest ();
+  SCSPLOG("ScuSendSoundRequest");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -5466,7 +5513,7 @@ void ScspExec(){
 #include <inttypes.h>
 #define __STDC_FORMAT_MACROS
 
-void ScspAsynMainCpuTime( void * p ){
+extern "C" void * ScspAsynMainCpuTime( void * p ){
 
   s64 before;
   s64 now;
@@ -5546,10 +5593,11 @@ void ScspAsynMainCpuTime( void * p ){
     setM68kDoneCounter(pre_m68k_cycle);
   }
   YabThreadWake(YAB_THREAD_SCSP);
+  return NULL;
 }
 
 
-void ScspAsynMainRealtime(void * p) {
+extern "C" void * ScspAsynMainRealtime(void * p) {
 
   s64 before;
   s64 now;
@@ -5720,6 +5768,7 @@ void ScspAsynMainRealtime(void * p) {
     }
   }
   YabThreadWake(YAB_THREAD_SCSP);
+  return NULL;
 }
 
 
@@ -6256,7 +6305,8 @@ SoundSaveState (FILE *fp)
   ywrite (&check, (void *)&scsp.scilv1, 4, 1, fp);
   ywrite (&check, (void *)&scsp.scilv2, 4, 1, fp);
   ywrite (&check, (void *)&scsp.mcieb, 4, 1, fp);
-  ywrite (&check, (void *)&scsp.mcipd, 4, 1, fp);
+  auto mcipd = scsp.mcipd.load();
+  ywrite (&check, (void *)&mcipd, 4, 1, fp);
 
   ywrite (&check, (void *)scsp.stack, 4, 32 * 2, fp);
 
@@ -6602,8 +6652,9 @@ SoundLoadState (FILE *fp, int version, int size)
       yread (&check, (void *)&scsp.scilv1, 4, 1, fp);
       yread (&check, (void *)&scsp.scilv2, 4, 1, fp);
       yread (&check, (void *)&scsp.mcieb, 4, 1, fp);
-      yread (&check, (void *)&scsp.mcipd, 4, 1, fp);
-
+      u32 mcipd = 0;
+      yread (&check, (void *)&mcipd, 4, 1, fp);
+      scsp.mcipd.store(0);
       yread (&check, (void *)scsp.stack, 4, 32 * 2, fp);
 
     }

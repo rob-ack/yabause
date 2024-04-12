@@ -42,21 +42,8 @@
     NSDictionary *dic = [NSDictionary dictionaryWithContentsOfFile:path];
     NSString* keyval = [dic objectForKey:@"ADMOB_KEY"];
     NSArray* plist = [NSArray arrayWithContentsOfFile:path];
-    self.banner.adUnitID = keyval;
-    self.banner.rootViewController = self;
-    GADRequest *request = [GADRequest request];
-    //request.testDevices = @[@"2077ef9a63d2b398840261c8221a0c9b"];
-    [self.banner loadRequest:request];
    
     NSString* keyval_in = [dic objectForKey:@"ADMOB_KEY_FULLSCREEN"];
-    self.interstitial =
-    [[GADInterstitial alloc] initWithAdUnitID:keyval_in];
-    self.interstitial.delegate = self;
-    GADRequest *request_in = [GADRequest request];
-    // Request test ads on devices you specify. Your test device ID is printed to the console when
-    // an ad request is made.
-    //request.testDevices = @[ kGADSimulatorID, @"2077ef9a63d2b398840261c8221a0c9b" ];
-    [self.interstitial loadRequest:request_in];
 
 }
 
@@ -107,12 +94,7 @@
             
                 // addActionした順に左から右にボタンが配置されます
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-                    if (self.interstitial.isReady) {
-                        _ad_showing = 1;
-                        [self.interstitial presentFromRootViewController:self];
-                    } else {
                         exit(0);
-                    }
                 }]];
                 [alertController addAction:[UIAlertAction actionWithTitle:@"No" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
                     [tableView deselectRowAtIndexPath:indexPath animated:YES]; // 選択状態の解除をします。
@@ -220,9 +202,6 @@
 }
 
 
-- (void)interstitialDidDismissScreen:(GADInterstitial *)ad {
-    exit(0);
-}
 
 -(void)refreshContents {
     [self.tableView reloadData];

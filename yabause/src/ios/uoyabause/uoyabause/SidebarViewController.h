@@ -7,14 +7,12 @@
 //
 
 #import <UIKit/UIKit.h>
-@import GoogleMobileAds;
 
-@interface SidebarViewController : UITableViewController  <UITableViewDelegate, UITableViewDataSource, GADInterstitialDelegate>
-@property (weak, nonatomic) IBOutlet GADBannerView *banner;
-@property(nonatomic, strong) GADInterstitial *interstitial;
+@interface SidebarViewController : UITableViewController  <UITableViewDelegate, UITableViewDataSource>
 
 @property (strong, nonatomic) IBOutlet UILabel *showRemapControlsLabel;
 
 -(void)refreshContents;
 
 @end
+

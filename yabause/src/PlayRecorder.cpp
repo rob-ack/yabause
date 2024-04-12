@@ -259,7 +259,10 @@ extern "C" int YabMakeCleanDir(const char * dirname) {
   }
   return 0;
 }
-#elif GCC_VERSION < 9
+#elif IOS
+#include <filesystem>
+namespace fs = filesystem;
+#else
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #else

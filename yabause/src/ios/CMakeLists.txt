@@ -36,3 +36,19 @@ target_link_libraries(${LIBRARY_NAME}   ${YABAUSE_LIBRARIES} )
 #set (CMAKE_INSTALL_PREFIX "${hello-lib_SOURCE_DIR}/../hello-app/hello-app")
 #install (TARGETS hello-lib DESTINATION .)
 #install (FILES HelloIOS.h DESTINATION .)
+
+add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_BINARY_DIR}/src/zlib/install/lib/libz.a"
+        "${CMAKE_SOURCE_DIR}/src/ios/uoyabause/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_BINARY_DIR}/src/libchdr-prefix/src/libchdr-build/libflac-static.a"
+        "${CMAKE_SOURCE_DIR}/src/ios/uoyabause/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_BINARY_DIR}/src/libchdr-prefix/src/libchdr-build/liblzma-static.a"
+        "${CMAKE_SOURCE_DIR}/src/ios/uoyabause/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${CMAKE_BINARY_DIR}/src/libchdr-prefix/src/libchdr-build/libchdr-static.a"
+        "${CMAKE_SOURCE_DIR}/src/ios/uoyabause/"
+    COMMENT "Copying libraries to uoyabause directory..."
+)

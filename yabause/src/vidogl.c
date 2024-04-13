@@ -4374,8 +4374,8 @@ void SetSaturnResolution(int width, int height)
     if (_Ygl->screen_width != 0 && _Ygl->screen_height != 0) {
       GlWidth = _Ygl->screen_width;
       GlHeight = _Ygl->screen_height;
-      _Ygl->originx = 0;
-      _Ygl->originy = 0;
+      //_Ygl->originx = 0;
+      //_Ygl->originy = 0;
 
       if (_Ygl->aspect_rate_mode != FULL) {
 
@@ -4403,23 +4403,23 @@ void SetSaturnResolution(int width, int height)
               GlHeight = _Ygl->screen_width * wrate;
             }
             else {
-              _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+              _Ygl->originx += (GlWidth - GlHeight * hrate) / 2.0f;
               GlWidth = GlHeight * hrate;
             }
           }
           else {
-            _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+            _Ygl->originx += (GlWidth - GlHeight * hrate) / 2.0f;
             GlWidth = GlHeight * hrate;
           }
         }
         else {
           if (_Ygl->isFullScreen) {
             if (  (GlHeight * wrate) > GlWidth) {
-              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              _Ygl->originy += (GlHeight - GlWidth  * hrate);
               GlHeight = _Ygl->screen_width * hrate;
             }
             else {
-              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              _Ygl->originx += (GlWidth - GlHeight * wrate) / 2.0f;
               GlWidth = GlHeight * wrate;
             }
           }

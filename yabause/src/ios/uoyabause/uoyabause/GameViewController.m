@@ -1326,20 +1326,19 @@ int GetPlayer2Device(){
         }
     }
     */
-
+    UIEdgeInsets safeArea = self.view.safeAreaInsets;
     
     if( self._isFirst == YES){
-        start_emulation(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
+        start_emulation(safeArea.left*scale,safeArea.bottom*scale, (newFrame.size.width-safeArea.right-safeArea.left)*scale  , (newFrame.size.height - safeArea.top-safeArea.bottom) *scale );
         self._isFirst = NO;
 //        [view startAnimation];
     }else{
-        resize_screen(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
+        resize_screen(safeArea.left*scale,safeArea.bottom*scale, (newFrame.size.width-safeArea.right-safeArea.left)*scale  , (newFrame.size.height - safeArea.top-safeArea.bottom) *scale );
     }
     self._return = YES;
     
     //CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
     //[displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-
     //start_emulation(1920,1080);
     
 }
@@ -1376,11 +1375,11 @@ int GetPlayer2Device(){
 {
     CGFloat scale = [[UIScreen mainScreen] scale];
     CGRect newFrame = self.view.frame;
+    UIEdgeInsets safeArea = self.view.safeAreaInsets;
     @synchronized (_objectForLock){
-        resize_screen(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
+        resize_screen(safeArea.left*scale,safeArea.bottom*scale, (newFrame.size.width-safeArea.right-safeArea.left)*scale  , (newFrame.size.height - safeArea.top-safeArea.bottom) *scale );
     }
 }
-
 
 
 - (void)didEnterBackground {

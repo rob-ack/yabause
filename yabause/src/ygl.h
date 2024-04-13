@@ -571,6 +571,8 @@ typedef struct {
    int st;
    char message[512];
    int msglength;
+   int user_originx;
+   int user_originy;
    int originx;
    int originy;
    unsigned int width;

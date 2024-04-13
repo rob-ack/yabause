@@ -15,12 +15,13 @@ extern "C"{
 #include "osdcore_ios.h"
 #include "sndal.h"
 #include "sndCoreAudio.h"
+#include "ygl.h"
 }
 
 #include <stdarg.h>
 
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
+//#include <OpenGLES/ES3/gl.h>
+//#include <OpenGLES/ES3/glext.h>
 
 #define YUI_LOG printf
 #define MAKE_PAD(a,b) ((a<<24)|(b))
@@ -197,6 +198,7 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.scsp_main_mode = 0;
     yinit.use_cpu_affinity = 0;
     yinit.use_sh2_cache = 1;
+    yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -363,16 +365,19 @@ extern "C" {
   void YabauseThread_coldBoot() {
   }
 
-  void glMemoryBarrier( int a ){
-
-  }
+  //void glMemoryBarrier( int a ){
+//
+ //}
 
   void RBGGenerator_init(int width, int height) {
   }
   void RBGGenerator_resize(int width, int height) {
   }
-  void RBGGenerator_update(void * rbg ) {
+    
+  void RBGGenerator_update(RBGDrawInfo * rbg ){
+
   }
+
   GLuint RBGGenerator_getTexture( int id ) {
       return 0;
   }

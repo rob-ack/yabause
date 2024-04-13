@@ -151,6 +151,10 @@ int start_emulation( int originx, int originy, int width, int height ){
     YUI_LOG("%s",glGetString(GL_EXTENSIONS));
     //YUI_LOG("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
 
+#if !defined(YAB_ASYNC_RENDERING)
+    UseOGLOnThisThread();
+#endif    
+
     g_EnagleFPS = GetEnableFPS();
  
     glViewport(0,0,width,height);
@@ -239,6 +243,7 @@ int start_emulation( int originx, int originy, int width, int height ){
 
     OSDInit(0);
     OSDChangeCore(OSDCORE_NANOVG);
+
     
     if( s_vidcoretype == VIDCORE_OGL ){
         
@@ -254,7 +259,7 @@ int start_emulation( int originx, int originy, int width, int height ){
         //OSDChangeCore(OSDCORE_SOFT);
         //if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
         //    YUI_LOG("Fail to YuiInitProgramForSoftwareRendering");
-        //    return -1;
+        //    return -1; 
         //}
     }
 
@@ -375,3 +380,4 @@ extern "C" {
   }
 
 }
+  

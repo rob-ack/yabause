@@ -7,10 +7,10 @@
 //
 
 #import <UIKit/UIKit.h>
-#import <GLKit/GLKit.h>
+#import <MetalANGLE/MGLKViewController.h>
 #import "PadButton.h"
 
-@interface GameViewController : UIViewController
+@interface GameViewController : MGLKViewController
 {
     UInt32	 iPodIsPlaying;
     NSString *selected_file;

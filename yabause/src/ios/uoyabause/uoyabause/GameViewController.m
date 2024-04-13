@@ -6,9 +6,9 @@
 //  Copyright © 2016年 devMiyax. All rights reserved.
 //
 
-#import <QuartzCore/QuartzCore.h>
+//#import <QuartzCore/QuartzCore.h>
 #import "GameViewController.h"
-#import <OpenGLES/ES2/glext.h>
+#include <MetalANGLE/GLES3/gl3.h>
 @import GameController;
 
 #import <AVFoundation/AVFoundation.h>
@@ -18,7 +18,6 @@
 #import "SaturnControllerKeys.h"
 #import "KeyMapper.h"
 #import "SidebarViewController.h"
-#import "GLView.h"
 #import "iOSCoreAudio.h"
 
 /** @defgroup pad Pad
@@ -47,8 +46,8 @@ int enterBackGround();
 int MuteSound();
 int UnMuteSound();
 
-EAGLContext *g_context = nil;
-EAGLContext *g_share_context = nil;
+MGLContext *g_context = nil;
+MGLContext *g_share_context = nil;
 
 // Settings
 BOOL _bios =YES;
@@ -64,6 +63,7 @@ float _controller_scale = 1.0;
 
 GLuint _renderBuffer = 0;
 NSObject* _objectForLock;
+MGLLayer *glLayer = nil;
 
 @interface GameViewController () {
    int command;
@@ -72,8 +72,8 @@ NSObject* _objectForLock;
     BOOL _landscape;
 }
 
-@property (strong, nonatomic) EAGLContext *context;
-@property (strong, nonatomic) EAGLContext *share_context;
+@property (strong, nonatomic) MGLContext *context;
+@property (strong, nonatomic) MGLContext *share_context;
 @property (nonatomic, strong) GCController *controller;
 @property (nonatomic, assign) int command;
 @property (nonatomic, assign) Boolean _return;
@@ -97,20 +97,29 @@ static NSDictionary *saturnKeyToViewMappings;
 
 int swapAglBuffer ()
 {
+    if( glLayer == nil ) return 0;
+    
     @synchronized (_objectForLock){
-        EAGLContext* context = [EAGLContext currentContext];
-        glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
-        [context presentRenderbuffer:GL_RENDERBUFFER];
+        
+        MGLContext* context = [MGLContext currentContext];
+        if (![context present:glLayer])
+        {
+            //Throw(@"Failed to present framebuffer");
+        }
+        //MGLContext* context = [MGLContext currentContext];
+        //glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
+        //[context presentRenderbuffer:GL_RENDERBUFFER];
+        
     }
     return 0;
 }
 
 void RevokeOGLOnThisThread(){
-    [EAGLContext setCurrentContext:g_share_context];
+    [MGLContext setCurrentContext:g_share_context forLayer:glLayer];
 }
 
 void UseOGLOnThisThread(){
-    [EAGLContext setCurrentContext:g_context];
+    [MGLContext setCurrentContext:g_context forLayer:glLayer];
 }
 
 const char * GetBiosPath(){
@@ -978,19 +987,19 @@ int GetPlayer2Device(){
     }];
      
 }
-
+/*
 -(void)setPaused:(BOOL)paused
 {
-    GLView * gv = (GLView*) self.view;
     if( paused == YES ){
-        [gv stopAnimation];
+//    TODO    [gv stopAnimation];
+        
     }else{
         if( self->controller_edit_mode != 1 ){
-            [gv startAnimation];
+// TODO       [gv startAnimation];
         }
     }
 }
-
+*/
 /*
 -(BOOL) shouldAutorotate{
     return NO;
@@ -1016,6 +1025,9 @@ int GetPlayer2Device(){
     sharedData_ = self;
     _objectForLock = [[NSObject alloc] init];
     self._isFirst = YES;
+    
+    self.glView.drawableDepthFormat = MGLDrawableDepthFormat24;
+    self.glView.drawableStencilFormat = MGLDrawableStencilFormat8;
 
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
@@ -1080,14 +1092,14 @@ int GetPlayer2Device(){
     pad_buttons_[BUTTON_START] = [[PadButton alloc] init];
     pad_buttons_[BUTTON_START].target_ = self.start_button;
     
-    
+    self.preferredFramesPerSecond = 60;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didBecomeActive) name:UIApplicationDidBecomeActiveNotification object:nil];
     
-    self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3];
+    self.context = [[MGLContext alloc] initWithAPI:kMGLRenderingAPIOpenGLES3];
     //self.context.multiThreaded = YES;
-    self.share_context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES3 sharegroup:[self.context sharegroup] ];
+    self.share_context = [[MGLContext alloc] initWithAPI:kMGLRenderingAPIOpenGLES3 sharegroup:[self.context sharegroup] ];
 
     if (!self.context) {
         NSLog(@"Failed to create ES context");
@@ -1096,9 +1108,15 @@ int GetPlayer2Device(){
     g_share_context = self.share_context;
     g_context = self.context;
     
-    GLView * gview = (GLView*)self.view;
-    gview.context = g_context;
-    gview.controller = self;
+    self.glView.context = self.context;
+    [MGLContext setCurrentContext:self.context];
+    glLayer = self.glView.glLayer;
+    
+    [self setup];
+    
+//    GLView * gview = (GLView*)self.view;
+//    gview.context = g_context;
+//    gview.controller = self;
     
     
     //[self.view  addSubview:self.myGLKView];
@@ -1220,15 +1238,15 @@ int GetPlayer2Device(){
 
 - (void)toggleControllerEditMode {
     
-    GLView * gview = (GLView*)self.view;
+//    GLView * gview = (GLView*)self.view;
     if(controller_edit_mode==0){
         self.scale_slider.hidden = NO;
         controller_edit_mode = 1;
-        [gview stopAnimation];
+// TODO        [gview stopAnimation];
     }else{
         self.scale_slider.hidden = YES;
         controller_edit_mode = 0;
-        [gview startAnimation];
+// TODO       [gview startAnimation];
     }
 }
 
@@ -1239,8 +1257,8 @@ int GetPlayer2Device(){
     
     [self tearDownGL];
     
-    if ([EAGLContext currentContext] == self.context) {
-        [EAGLContext setCurrentContext:nil];
+    if ([MGLContext currentContext] == self.context) {
+        [MGLContext setCurrentContext:nil];
     }
 }
 
@@ -1253,8 +1271,8 @@ int GetPlayer2Device(){
         
         [self tearDownGL];
         
-        if ([EAGLContext currentContext] == self.context) {
-            [EAGLContext setCurrentContext:nil];
+        if ([MGLContext currentContext] == self.context) {
+            [MGLContext setCurrentContext:nil];
         }
         self.context = nil;
     }
@@ -1268,16 +1286,16 @@ int GetPlayer2Device(){
 
 - (void)setup
 {
-    [EAGLContext setCurrentContext:self.context];
-    GLView *view = (GLView *)self.view;
-    view.context = self.context;
-    view.contentScaleFactor = [UIScreen mainScreen].scale;
-    [view bindDrawable ];
+    [MGLContext setCurrentContext:self.context];
+//    GLView *view = (GLView *)self.view;
+//    view.context = self.context;
+//    view.contentScaleFactor = [UIScreen mainScreen].scale;
+//    [view bindDrawable ];
     
-    _renderBuffer = view._renderBuffer;
+    //_renderBuffer = view._renderBuffer;
     
     CGFloat scale = [[UIScreen mainScreen] scale];
-    printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
+    //printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
 
     CGRect newFrame = self.view.frame;
     /*
@@ -1313,7 +1331,7 @@ int GetPlayer2Device(){
     if( self._isFirst == YES){
         start_emulation(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
         self._isFirst = NO;
-        [view startAnimation];
+//        [view startAnimation];
     }else{
         resize_screen(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
     }
@@ -1328,7 +1346,7 @@ int GetPlayer2Device(){
 
 - (void)tearDownGL
 {
-    [EAGLContext setCurrentContext:self.context];
+    [MGLContext setCurrentContext:self.context];
    
 }
 
@@ -1338,14 +1356,14 @@ int GetPlayer2Device(){
 {
     
     if( self._return == YES ){
-        GLView *view = (GLView *)self.view;
-        GLint defaultFBO;
-        [view bindDrawable];
-        glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
-        printf("DEFAULT FBO: %d\n", defaultFBO);
+//        GLView *view = (GLView *)self.view;
+//        GLint defaultFBO;
+//        [view bindDrawable];
+//       glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
+//       printf("DEFAULT FBO: %d\n", defaultFBO);
         self._return = NO;
-        
     }
+
     
     emulation_step(self.command);
     self.command = 0;
@@ -1354,11 +1372,21 @@ int GetPlayer2Device(){
 
 }
 
+- (void)viewDidLayoutSubviews
+{
+    CGFloat scale = [[UIScreen mainScreen] scale];
+    CGRect newFrame = self.view.frame;
+    @synchronized (_objectForLock){
+        resize_screen(0, 0, newFrame.size.width*scale,newFrame.size.height*scale);
+    }
+}
+
+
 
 - (void)didEnterBackground {
     
-    GLView *view = (GLView *)self.view;
-    [view stopAnimation];
+//    GLView *view = (GLView *)self.view;
+//    [view stopAnimation];
     enterBackGround();
     [self setPaused:true];
 }
@@ -1370,8 +1398,8 @@ int GetPlayer2Device(){
     [self setPaused:false];
     self._return = YES;
     
-    GLView *view = (GLView *)self.view;
-    [view startAnimation];
+//    GLView *view = (GLView *)self.view;
+//    [view startAnimation];
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -1476,5 +1504,25 @@ int GetPlayer2Device(){
 -(BOOL)isCurrentlyRemappingControls {
     return self.isKeyRemappingMode;
 }
+
+- (CGSize)size
+{
+    return self.glView.drawableSize;
+}
+
+- (BOOL)update
+{
+    [self emulate_one_frame];
+    return FALSE;
+}
+
+- (void)mglkView:(MGLKView *)view drawInRect:(CGRect)rect
+{
+   
+    //glViewport(0, 0, self.size.width, self.size.height);
+    //glClearColor(0, 104.0 / 255.0, 55.0 / 255.0, 1.0);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
 
 @end

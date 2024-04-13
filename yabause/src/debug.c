@@ -176,8 +176,10 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
   case DEBUG_STREAM:
     if (d->output.stream == NULL)
       break;
-    fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, (long)line);
+    //fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, (long)line);
     vfprintf(d->output.stream, format, l);
+    printf("\n");
+ 
     break;
   case DEBUG_STRING:
     {

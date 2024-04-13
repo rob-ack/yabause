@@ -74,7 +74,7 @@
                         </barButtonItem>
                         <barButtonItem key="rightBarButtonItem" id="cRH-G1-UVn">
                             <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="N8h-Be-Hod">
-                                <rect key="frame" x="659" y="10" width="57" height="30"/>
+                                <rect key="frame" x="659" y="7" width="57" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <state key="normal" title="Settings"/>
                                 <connections>
@@ -647,7 +647,7 @@
                         <viewControllerLayoutGuide type="top" id="9Xt-o9-7xd"/>
                         <viewControllerLayoutGuide type="bottom" id="JfN-k8-Pkv"/>
                     </layoutGuides>
-                    <view key="view" contentMode="scaleToFill" id="3se-qz-xqx" customClass="GLView">
+                    <view key="view" contentMode="scaleToFill" id="3se-qz-xqx" customClass="MGLKView">
                         <rect key="frame" x="0.0" y="0.0" width="736" height="414"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>

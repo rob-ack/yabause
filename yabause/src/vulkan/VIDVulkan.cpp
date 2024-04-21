@@ -257,7 +257,9 @@ int VIDVulkan::init(void) {
   fbRender->setup();
 
   rbgGenerator = new RBGGeneratorVulkan();
-  rbgGenerator->init(this, _device_width, _device_height);
+  if( rtn = rbgGenerator->init(this, _device_width, _device_height) != 0 ){
+    return rtn;
+  }
 
   pipleLineFactory->setRenderPath(getRenderPass());
 

@@ -160,7 +160,7 @@ const char prg_generate_rbg_base[] =
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
-"      kdata = (((kdata) >> 8 & 0xFFu) | ((kdata) & 0xFFu) << 8);\n"
+"      kdata = (((kdata>>8)&0xFFu) | ((kdata << 8) & 0xFFFFFF00u))&0xFFFFu;\n"
 "    }else{\n"
 "      kdata = cram[ ((0x800u + (addr&0x7FFu))>>2)  ]; \n"
 "      if( (addr & 0x02u) != 0u ) { kdata >>= 16; } \n"
@@ -171,7 +171,7 @@ const char prg_generate_rbg_base[] =
 "    uint addr = ( uint( int(para[paramid].coeftbladdr) + (kindex<<2))&0x7FFFFu);"
 "    if( para[paramid].k_mem_type == 0) { \n"
 "	     kdata = vram[ addr>>2 ]; \n"
-"      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFF00u) | ((kdata) & 0xFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
+"      kdata = ((kdata&0xFF000000u) >> 24 | ((kdata) >> 8 & 0xFFFFFF00u) | ((kdata) & 0xFFFFFF00u) << 8 | (kdata&0x000000FFu) << 24);\n"
 "    }else{\n"
 "      kdata = cram[ ((0x800u + (addr&0x7FFu) )>>2) ]; \n"
 "      kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"
@@ -253,6 +253,8 @@ const char prg_generate_rbg_base[] =
 "  uint specialcolorfunction_in = 0u;\n"
 "  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
 "  ivec2 size = imageSize(outSurface);\n"
+"  uint flipfunction = 0u;\n"
+"  uint addr = 0u;\n"
 "  if (texel.x >= size.x || texel.y >= size.y ) return;\n"
 "  float posx = float(texel.x) * hres_scale;\n"
 "  float posy = float(texel.y) * vres_scale;\n"
@@ -377,7 +379,7 @@ const char prg_rbg_overmode_repeat[] =
 "  case 1: // OVERMODE_SELPATNAME \n"
 "    if ((fh < 0.0) || (fh > float(para[paramid].MaxH)) || (fv < 0.0) || (fv > float(para[paramid].MaxV)) ) {\n"
 "        patternname = para[paramid].over_pattern_name;\n"
-"    }"
+"    }\n"
 "    x = int(fh);\n"
 "    y = int(fv);\n"
 "    break;\n"
@@ -404,7 +406,7 @@ const char prg_rbg_get_patternaddr[] =
 "  int planenum = (x >> para[paramid].ShiftPaneX) + ((y >> para[paramid].ShiftPaneY) << 2);\n"
 "  x &= (para[paramid].MskH);\n"
 "  y &= (para[paramid].MskV);\n"
-"  uint addr = para[paramid].PlaneAddrv[planenum];\n"
+"  addr = para[paramid].PlaneAddrv[planenum];\n"
 "  addr += uint( (((y >> 9) * pagesize * planew) + \n"
 "  ((x >> 9) * pagesize) + \n"
 "  (((y & 511) >> patternshift) * pagewh) + \n"
@@ -415,10 +417,9 @@ const char prg_rbg_get_pattern_data_1w[] =
 "  if( patternname == 0xFFFFFFFFu){\n"
 "    patternname = vram[addr>>2]; \n" // WORD mode( patterndatasize == 1 )
 "    if( (addr & 0x02u) != 0u ) { patternname >>= 16; } \n"
-"    patternname = (((patternname >> 8) & 0xFFu) | ((patternname) & 0xFFu) << 8);\n"
+"    patternname = (((patternname>>8)&0xFFu) | ((patternname << 8) & 0xFFFFFF00u)) & 0xFFFFu;\n"
 "  }\n"
 "  if(colornumber==0) paladdr = ((patternname & 0xF000u) >> 12) | ((supplementdata & 0xE0u) >> 1); else paladdr = (patternname & 0x7000u) >> 8;\n" // not in 16 colors
-"  uint flipfunction;\n"
 "  switch (auxmode)\n"
 "  {\n"
 "  case 0: \n"
@@ -453,9 +454,9 @@ const char prg_rbg_get_pattern_data_2w[] =
 "  patternname = vram[addr>>2]; \n"
 "  uint tmp1 = patternname & 0x7FFFu; \n"
 "  charaddr = patternname >> 16; \n"
-"  charaddr = (((charaddr >> 8) & 0xFFu) | ((charaddr) & 0xFFu) << 8);\n"
-"  tmp1 = (((tmp1 >> 8) & 0xFFu) | ((tmp1) & 0xFFu) << 8);\n"
-"  uint flipfunction = (tmp1 & 0xC000u) >> 14;\n"
+"  charaddr = (((charaddr>>8)&0xFFu) | ((charaddr << 8) & 0xFFFFFF00u)) & 0xFFFFu;\n"
+"  tmp1 = ((tmp1>>8)&0xFFu) | ((tmp1 << 8) & 0xFFFFFF00u);\n"
+"  flipfunction = (tmp1 & 0xC000u) >> 14;\n"
 "  if(colornumber==0) paladdr = tmp1 & 0x7Fu; else paladdr = tmp1 & 0x70u;\n" // not in 16 colors
 "  specialfunction_in = (tmp1 & 0x2000u) >> 13;\n"
 "  specialcolorfunction_in = (tmp1 & 0x1000u) >> 12;\n"
@@ -589,7 +590,8 @@ const char prg_rbg_getcolor_16bpp_palette[] =
 "  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
-"  dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
+"  dot = (((dot>>8)&0xFFu) | ((dot << 8) & 0xFFFFFF00u))&0xFFFFu;\n"
+"  //dot = (((dot) >> 8 & 0xFF) | ((dot) & 0xFF) << 8);\n"
 "  if ( dot == 0 && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
@@ -604,7 +606,8 @@ const char prg_rbg_getcolor_16bpp_rbg[] =
 "  uint dotaddr = charaddr + uint((y*cellw)+x) * 2u;\n"
 "  dot = vram[dotaddr>>2]; \n"
 "  if( (dotaddr & 0x02u) != 0u ) { dot >>= 16; } \n"
-"  dot = (((dot >> 8) & 0xFFu) | ((dot) & 0xFFu) << 8);\n"
+"  dot = (((dot>>8)&0xFFu) | ((dot << 8) & 0xFFFFFF00u))&0xFFFFu;\n"
+"  //dot = (((dot >> 8) & 0xFFu) | ((dot) & 0xFFu) << 8);\n"
 "  if ( (dot&0x8000u) == 0u && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
@@ -619,7 +622,7 @@ const char prg_rbg_getcolor_32bpp_rbg[] =
 "  float alpha = alpha_;\n"
 "  uint dotaddr = charaddr + uint((y*cellw)+x) * 4u;\n"
 "  dot = vram[dotaddr>>2]; \n"
-"  dot = ((dot&0xFF000000u) >> 24 | ((dot >> 8) & 0xFF00u) | ((dot) & 0xFF00u) << 8 | (dot&0x000000FFu) << 24);\n"
+"  dot = ((dot&0xFF000000u) >> 24 | ((dot >> 8) & 0xFFFFFF00u) | ((dot) & 0xFFFFFF00u) << 8 | (dot&0x000000FFu) << 24);\n"
 "  if ( (dot&0x80000000u) == 0u && transparencyenable != 0 ) { \n"
 "    cramindex = 0u; \n"
 "    alpha = 0.0;\n"
@@ -2677,13 +2680,13 @@ RBGGeneratorVulkan::~RBGGeneratorVulkan() {
 }
 
 
-void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
+int RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
 
   this->vulkan = vulkan;
   VkDevice device = vulkan->getDevice();
   vk::Device d(device);
   resize(width,height);
-  if (queue) return;
+  if (queue) return 0;
 
   int length = sizeof(prg_generate_rbg_base) + 64;
   snprintf(prg_generate_rbg,length,prg_generate_rbg_base,16,16);
@@ -2793,13 +2796,41 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   updateDescriptorSets(0);
 
   std::string target;
-
-  for (int i = 0; i < 6; i++) {
+/*
+  target ="#version 320 es \n"
+     "precision highp float;\n"
+     "precision highp int;\n"
+     "precision highp image2D;\n"
+     "layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;\n"
+     "layout(rgba8, binding = 0)  uniform writeonly image2D outSurface;\n"
+     "layout(std430, binding = 1) readonly buffer VDP2 { uint vram[]; };\n"
+     "layout(std430, binding = 2) readonly buffer VDP2C { uint cram[]; };\n"
+     "void main() {\n"
+     "  ivec2 texel = ivec2(gl_GlobalInvocationID.xy);\n"
+     "  uint kdata = cram[texel.x];\n"
+     "  float ky = 0.0;\n"
+     "  kdata = ((kdata>>8)&0xFFu) | ((kdata << 8) & 0xFFFFFF00u);\n"
+     "  if((kdata&0x4000u)!=0u) { ky=float( int(kdata&0x7FFFu)| int(0xFFFF8000u) )/1024.0; }else{ ky=float(kdata&0x7FFFu)/1024.0;}\n"
+     "  kdata = ((kdata&0xFFFF0000u)>>16|(kdata&0x0000FFFFu)<<16);\n"    
+     "	if((kdata&0x00800000u)!=0u) ky=float( int(kdata&0x00FFFFFFu)| int(0xFF800000u) )/65536.0; else ky=float(kdata&0x00FFFFFFu)/65536.0;\n"     
+//   "  kdata = (((kdata>>8)&0xFFu) | (kdata<<8) ) & 0xFFFFu ;\n"
+     "  if ((kdata&0x8000u)!=0x0u) { return; }\n"
+     "  imageStore(outSurface,texel,vec4(ky));\n"
+     "}";
+*/
+  for (int i = 0; i < sizeof(a_prg_rbg_0_2w_bitmap)/sizeof(char*); i++) {
     target += a_prg_rbg_0_2w_bitmap[i];
   }
+  //for (int i = 0; i < sizeof(a_prg_rbg_0_2w_p2_4bpp)/sizeof(char*); i++) {
+  //  target += a_prg_rbg_0_2w_p2_4bpp[i];
+  //}
+
   Compiler compiler;
   CompileOptions options;
   options.SetOptimizationLevel(shaderc_optimization_level_performance);
+  //options.SetTargetEnvironment(shaderc_target_env_vulkan,shaderc_env_version_vulkan_1_2);
+  //options.SetTargetSpirv(shaderc_spirv_version_1_5);
+  //options.SetGenerateDebugInfo();
   SpvCompilationResult result = compiler.CompileGlslToSpv(
     target,
     shaderc_compute_shader,
@@ -2808,10 +2839,19 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
 
   printf("%s%d\n", " erros: ", (int)result.GetNumErrors());
   if (result.GetNumErrors() != 0) {
-    printf("%s%s\n", "messages", result.GetErrorMessage().c_str());
-    throw std::runtime_error("failed to create shader module!");
+     char xerr[256];
+    sprintf(xerr,"%s%s\n", "messages", result.GetErrorMessage().c_str());
+    printf("%s",xerr);
+    LOGE("failed to create shader module!");
+    return -1;
   }
   std::vector<uint32_t> data = { result.cbegin(), result.cend() };
+
+  //std::ofstream file("/storage/emulated/0/Android/data/org.devmiyax.yabasanshioro2.debug/files/bad.spv", std::ios::binary);
+  //if (file.is_open()) {
+  //   file.write(reinterpret_cast<const char*>(data.data()), data.size() * sizeof(uint32_t));
+  //   file.close();
+  //}
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -2819,21 +2859,39 @@ void RBGGeneratorVulkan::init(VIDVulkan * vulkan, int width, int height) {
   createInfo.pCode = data.data();
   VkShaderModule shaderModule;
   if (vkCreateShaderModule(device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create shader module!");
+    //throw std::runtime_error("failed to create shader module!");
+    LOGE("failed to create shader module!");
+    return -1;
   }
 
   pipelineLayout = d.createPipelineLayout({ {}, 1, &descriptorSetLayout });
 
-  vk::ComputePipelineCreateInfo computePipelineCreateInfo;
-  computePipelineCreateInfo.layout = pipelineLayout;
-  computePipelineCreateInfo.stage.module = vk::ShaderModule(shaderModule);
-  computePipelineCreateInfo.stage.stage = vk::ShaderStageFlagBits::eCompute;
-  computePipelineCreateInfo.stage.pName = "main";
-  auto a = d.createComputePipelines(nullptr, computePipelineCreateInfo);
-  pipeline = a.value[0];
+  try {
+    vk::ComputePipelineCreateInfo computePipelineCreateInfo;
+      computePipelineCreateInfo.layout = pipelineLayout;
+      computePipelineCreateInfo.stage.module = vk::ShaderModule(shaderModule);
+      computePipelineCreateInfo.stage.stage = vk::ShaderStageFlagBits::eCompute;
+      computePipelineCreateInfo.stage.pName = "main";
+      auto a = d.createComputePipelines(nullptr, computePipelineCreateInfo);
+      pipeline = a.value[0];
 
-  d.destroyShaderModule(vk::ShaderModule(shaderModule));
-
+      d.destroyShaderModule(vk::ShaderModule(shaderModule));
+  }catch ( vk::SystemError & err )
+  {
+    LOGE("vk::SystemError: %s",err.what());
+    return -1;
+  }
+  catch ( std::exception & err )
+  {
+    LOGE("std::exception: %s",err.what());
+    return -1;
+  }
+  catch ( ... )
+  {
+    LOGE("unknown error\n");
+    return -1;
+  }
+  return 0;
 }
 
 void RBGGeneratorVulkan::updateDescriptorSets( int texindex ) {
@@ -3062,16 +3120,27 @@ vk::Pipeline RBGGeneratorVulkan::compile_color_dot(
 
   pipelineLayout = d.createPipelineLayout({ {}, 1, &descriptorSetLayout });
 
-  vk::ComputePipelineCreateInfo computePipelineCreateInfo;
-  computePipelineCreateInfo.layout = pipelineLayout;
-  computePipelineCreateInfo.stage.module = vk::ShaderModule(shaderModule);
-  computePipelineCreateInfo.stage.stage = vk::ShaderStageFlagBits::eCompute;
-  computePipelineCreateInfo.stage.pName = "main";
-  auto a = d.createComputePipelines(nullptr, computePipelineCreateInfo);
-  rtn = a.value[0];
-
-  d.destroyShaderModule(vk::ShaderModule(shaderModule));
-
+  try {
+      vk::ComputePipelineCreateInfo computePipelineCreateInfo;
+      computePipelineCreateInfo.layout = pipelineLayout;
+      computePipelineCreateInfo.stage.module = vk::ShaderModule(shaderModule);
+      computePipelineCreateInfo.stage.stage = vk::ShaderStageFlagBits::eCompute;
+      computePipelineCreateInfo.stage.pName = "main";
+      auto a = d.createComputePipelines(nullptr, computePipelineCreateInfo);
+      rtn = a.value[0];
+      d.destroyShaderModule(vk::ShaderModule(shaderModule));
+  }catch ( vk::SystemError & err )
+  {
+    LOGE("vk::SystemError: %s",err.what());
+  }
+  catch ( std::exception & err )
+  {
+    LOGE("std::exception: %s",err.what());
+  }
+  catch ( ... )
+  {
+    LOGE("unknown error\n");
+  }
   return rtn;
 }
 

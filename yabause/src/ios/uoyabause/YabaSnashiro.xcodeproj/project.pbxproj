@@ -13,7 +13,6 @@
 		640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
 		64204ADE1D84878E002EA3F5 /* GameRevealViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */; };
 		64204AE11D84A440002EA3F5 /* SidebarViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 64204AE01D84A440002EA3F5 /* SidebarViewController.m */; };
-		64228EF91D88900F00588323 /* apikey.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64228EF81D88900F00588323 /* apikey.plist */; };
 		64373A371D979E5F00B3C7BA /* settings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64373A361D979E5F00B3C7BA /* settings.plist */; };
 		644232A71C6580000050611E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
 		644232AA1C6580000050611E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
@@ -83,7 +82,6 @@
 		64204ADD1D84878E002EA3F5 /* GameRevealViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GameRevealViewController.m; sourceTree = "<group>"; };
 		64204ADF1D84A440002EA3F5 /* SidebarViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SidebarViewController.h; sourceTree = "<group>"; };
 		64204AE01D84A440002EA3F5 /* SidebarViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SidebarViewController.m; sourceTree = "<group>"; };
-		64228EF81D88900F00588323 /* apikey.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = apikey.plist; sourceTree = "<group>"; };
 		64373A361D979E5F00B3C7BA /* settings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = settings.plist; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* YabaSnashiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YabaSnashiro.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
@@ -227,7 +225,6 @@
 				644232BA1C6580000050611E /* Info.plist */,
 				644232A51C6580000050611E /* Supporting Files */,
 				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
-				64228EF81D88900F00588323 /* apikey.plist */,
 				64373A361D979E5F00B3C7BA /* settings.plist */,
 				921C9D6F1E109021009065E6 /* SaturnControllerKeys.h */,
 				6DB2092C2097DB5D00C9CC4B /* PadButton.h */,
@@ -435,7 +432,6 @@
 				64373A371D979E5F00B3C7BA /* settings.plist in Resources */,
 				941D603A2BCAA74500E39805 /* PrivacyInfo.xcprivacy in Resources */,
 				644232AE1C6580000050611E /* Shader.vsh in Resources */,
-				64228EF91D88900F00588323 /* apikey.plist in Resources */,
 				644232B61C6580000050611E /* Assets.xcassets in Resources */,
 				644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */,
 				644232AC1C6580000050611E /* Shader.fsh in Resources */,
@@ -738,7 +734,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -789,7 +785,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 14;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (

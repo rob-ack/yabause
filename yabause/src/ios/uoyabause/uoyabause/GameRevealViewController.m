@@ -10,12 +10,20 @@
 #import "GameRevealViewController.h"
 #import "GameViewController.h"
 
+@interface GameRevealViewController () {
+    BOOL _landscape;
+}
+@end
+
 @implementation  GameRevealViewController
 @synthesize selected_file;
+
 
 - (void)loadView
 {
     [super loadView];
+    NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
+    _landscape = [ud boolForKey:@"landscape"];
     
 }
 
@@ -30,6 +38,19 @@
 
 //unwind
 -(IBAction)unwindForSegue:(UIStoryboardSegue *)unwindSegue towardsViewController:(UIViewController *)subsequentVC{
+}
+
+- (BOOL)shouldAutorotate {
+    // _landscape が YES の場合には回転を禁止し、固定向きを保持
+    return !_landscape;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    return _landscape ? UIInterfaceOrientationMaskLandscape : UIInterfaceOrientationMaskAll;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+    return _landscape ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
 }
 
 @end

@@ -64,19 +64,9 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        let filePath = Bundle.main.path(forResource: "apikey", ofType: "plist")
-        let plist = NSDictionary(contentsOfFile:filePath!)
-        let value = plist?.value(forKey: "ADMOB_KEY") as! String
-       
-        
         val = 0
     }
     
-    internal func onClickMyButton(_ sender: UIButton){
-        let url = URL(string:UIApplication.openSettingsURLString)
-        UIApplication.shared.openURL(url!)
-    }
-    
+   
     
 }

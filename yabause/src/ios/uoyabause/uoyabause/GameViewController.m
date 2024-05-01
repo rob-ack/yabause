@@ -123,6 +123,9 @@ void UseOGLOnThisThread(){
 }
 
 const char * GetBiosPath(){
+#if 1
+    return NULL;
+#else
     if( _bios == YES ){
         return NULL;
     }
@@ -147,6 +150,7 @@ const char * GetBiosPath(){
     }
     
     return [filePath fileSystemRepresentation];
+#endif
 }
 
 const char * GetGamePath(){
@@ -1016,11 +1020,10 @@ int GetPlayer2Device(){
     [super viewDidLoad];
     [self loadSettings];
     
-    if( _landscape == YES ){
-        [[UIDevice currentDevice] setValue:[NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight] forKey:@"orientation"];
-//        [[UIDevice currentDevice] setValue:@(UIInterfaceOrientationLandscapeRight) forKey:@"orientation"];
-//        [UINavigationController attemptRotationToDeviceOrientation];
-    }
+    //if( _landscape == YES ){
+    //    NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
+    //    [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
+    //}
     
     sharedData_ = self;
     _objectForLock = [[NSObject alloc] init];
@@ -1198,6 +1201,19 @@ int GetPlayer2Device(){
     controller_edit_mode = 0;
     [self updateControllScale :_controller_scale];
     
+}
+
+- (BOOL)shouldAutorotate {
+    // _landscape が YES の場合には回転を禁止し、固定向きを保持
+    return !_landscape;
+}
+
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
+    return _landscape ? UIInterfaceOrientationMaskLandscape : UIInterfaceOrientationMaskAll;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation {
+    return _landscape ? UIInterfaceOrientationLandscapeRight : UIInterfaceOrientationPortrait;
 }
 
 - (void)updateControllScale:( float ) scale{

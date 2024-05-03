@@ -856,7 +856,11 @@ class YabausePad : View, OnTouchListener {
         mPaint.alpha = (255.0f * trans).toInt()
         if( bitmaps != null ){
             for (item in bitmaps!!.reversed()) {
-                canvas.drawBitmap(item!!.bitmap, item.matrix, mPaint)
+                if( item != null ) {
+                    canvas.drawBitmap(item!!.bitmap, item.matrix, mPaint)
+                }else{
+                    return
+                }
             }
         }
 
@@ -1234,6 +1238,11 @@ class YabausePad : View, OnTouchListener {
 
     fun updateButtonPos(){
         if( bitmaps == null ) return
+        if( bitmaps!!.get(PAD_LEFT) == null ) return
+        if( bitmaps!!.get(PAD_RIGHT) == null ) return
+        if( bitmaps!!.get(PAD_TOP_LEFT) == null ) return
+        if( bitmaps!!.get(PAD_TOP_RIGHT) == null ) return
+        if( _analog_pad == null ) return
 
         _analog_pad!!.updateRect(bitmaps!!.get(PAD_LEFT)!!.matrix,
             buttonCenterX-rectsize, buttonCenterY-rectsize,

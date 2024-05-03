@@ -229,5 +229,13 @@
     <string name="visual_feedback">视觉反馈</string>
     <string name="show_analog_dpad_switch_button">显示模拟/Dpad切换按钮</string>
 
+    <string name="file_not_found">文件未找到：%1$s</string>
+    <string name="i_o_error_occurred">输入/输出错误：%1$s</string>
+    <string name="read_permission_denied">读取权限被拒绝：%1$s</string>
+    <string name="other_file_error">其他文件错误：%1$s</string>
+    <string name="no_game_file_is_selected">未选择游戏文件</string>
+    <string name="fail_to_open_with">无法使用%2$s打开%1$s</string>
+    <string name="fail_to_open">无法打开%1$s</string>
+
 </resources>
 	

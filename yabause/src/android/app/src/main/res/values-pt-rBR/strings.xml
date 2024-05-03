@@ -169,5 +169,14 @@
     <string name="visual_feedback">Feedback visual</string>
     <string name="show_analog_dpad_switch_button">Mostrar botão de troca Analógico/Dpad</string>
 
+    <string name="file_not_found">Arquivo não encontrado: %1$s</string>
+    <string name="i_o_error_occurred">Erro de I/O: %1$s</string>
+    <string name="read_permission_denied">Permissão de leitura negada: %1$s</string>
+    <string name="other_file_error">Outro erro de arquivo: %1$s</string>
+    <string name="no_game_file_is_selected">Nenhum arquivo de jogo selecionado</string>
+    <string name="fail_to_open_with">Falha ao abrir %1$s com %2$s</string>
+    <string name="fail_to_open">Falha ao abrir %1$s</string>
+
+
 
 </resources>

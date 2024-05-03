@@ -262,4 +262,12 @@
     <string name="visual_feedback">Retour visuel</string>
     <string name="show_analog_dpad_switch_button">Afficher le bouton de basculement Analogique/Dpad</string>
 
+    <string name="file_not_found">Fichier introuvable : %1$s</string>
+    <string name="i_o_error_occurred">Erreur I/O : %1$s</string>
+    <string name="read_permission_denied">Permission de lecture refusée : %1$s</string>
+    <string name="other_file_error">Autre erreur de fichier : %1$s</string>
+    <string name="no_game_file_is_selected">Aucun fichier de jeu sélectionné</string>
+    <string name="fail_to_open_with">Échec de l\'ouverture de %1$s avec %2$s</string>
+    <string name="fail_to_open">Échec de l\'ouverture de %1$s</string>
+
 </resources>

@@ -411,5 +411,14 @@
     <string name="visual_feedback">Visual feedback</string>
     <string name="show_analog_dpad_switch_button">Show Analog/Dpad switch button</string>
 
+    <string name="file_not_found">File not found: %1$s</string>
+    <string name="i_o_error_occurred">I/O error occurred: %1$s</string>
+    <string name="read_permission_denied">Read permission denied: %1$s</string>
+    <string name="other_file_error">Other File Error: %1$s</string>
+    <string name="no_game_file_is_selected">No Game file is selected</string>
+    <string name="fail_to_open_with">Fail to open %1$s with %2$s</string>
+    <string name="fail_to_open">Fail to open %1$s</string>
+    <string name="failed_to_initialize">Failed to initialize</string>
+
 </resources>
 	

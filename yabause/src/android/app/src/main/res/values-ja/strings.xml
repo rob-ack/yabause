@@ -330,4 +330,12 @@
     <string name="visual_feedback">ビジュアル フィードバック</string>
     <string name="show_analog_dpad_switch_button">アナログ/Dpad切り替えボタンを表示</string>
 
+    <string name="file_not_found">ファイルが見つかりません：%1$s</string>
+    <string name="i_o_error_occurred">入出力エラーが発生しました：%1$s</string>
+    <string name="read_permission_denied">読み取り権限が拒否されました：%1$s</string>
+    <string name="other_file_error">その他のファイルエラー：%1$s</string>
+    <string name="no_game_file_is_selected">ゲームファイルが選択されていません</string>
+    <string name="fail_to_open_with">%1$sを%2$sで開けませんでした</string>
+    <string name="fail_to_open">%1$sを開けませんでした</string>
+
 </resources>

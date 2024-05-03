@@ -165,7 +165,7 @@ class Yabause : AppCompatActivity(),
     private var testCase: String? = null
 
     private lateinit var padManager: PadManager
-    private lateinit var yabauseThread: YabauseRunnable
+    private var yabauseThread: YabauseRunnable? = null
     private var audio: YabauseAudio? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
@@ -322,6 +322,22 @@ class Yabause : AppCompatActivity(),
         }
     }
 
+    private fun showInitFailedDialog( message: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.failed_to_initialize))
+        builder.setMessage(message)
+        Log.e(TAG,message)
+        builder.setPositiveButton(R.string.ok) { dialog, which ->
+            // OKを押したらActivityを終了
+            finish()
+        }
+        builder.setOnCancelListener {
+            // ダイアログがキャンセルされた場合もActivityを終了
+            finish()
+        }
+        builder.show()
+    }
+
     /**
      * Called when the activity is first created.
      */
@@ -352,7 +368,9 @@ class Yabause : AppCompatActivity(),
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
 
-
+        padManager = PadManager.padManager!!
+        padManager.loadSettings()
+        padManager.showMenulistener = this // setShowMenulistener(this)
 
         val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
 
@@ -476,6 +494,7 @@ class Yabause : AppCompatActivity(),
             gamePath = exgame
         }
 
+        var fileDesc = -1
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
             val fnameIndex = uriString.lastIndexOf("%2F", ignoreCase = true)
@@ -488,20 +507,21 @@ class Yabause : AppCompatActivity(),
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
                             apath = "/proc/self/fd/$fd;$fname"
+                            fileDesc = fd
                         }
                     }
             } catch (e: Exception) {
-                    Toast.makeText(this@Yabause,
-                        "Fail to open $uri with ${e.localizedMessage}",
-                        Toast.LENGTH_LONG).show()
-                    return
+                showInitFailedDialog(getString(R.string.fail_to_open_with, uri, e.localizedMessage))
+                return
             }
 
             if (apath == "") {
-                    Toast.makeText(this@Yabause, "Fail to open $apath", Toast.LENGTH_LONG).show()
-                    return
+                showInitFailedDialog(getString(R.string.fail_to_open, apath))
+                return
             }
             gamePath = apath
+        }else{
+
         }
 
         val dirString: String? = intent.getStringExtra("org.uoyabause.android.FileDir")
@@ -513,7 +533,31 @@ class Yabause : AppCompatActivity(),
 
         Log.d(TAG, "File is " + gamePath)
         if (gamePath == "") {
-            Toast.makeText(this, "No Game file is selected", Toast.LENGTH_LONG).show()
+            showInitFailedDialog(getString(R.string.no_game_file_is_selected))
+            return
+        }
+
+        var file = File(gamePath)
+        if( fileDesc != -1 ){
+            file = File("/proc/self/fd/$fileDesc")
+        }
+        try {
+            val filereader = FileReader(file)
+            val br = BufferedReader(filereader)
+            var c: CharArray = CharArray(4)
+            br.read(c, 0, 1)
+            br.close()
+        } catch (e: FileNotFoundException) {
+            showInitFailedDialog(getString(R.string.file_not_found, e.message))
+            return
+        } catch (e: IOException) {
+            showInitFailedDialog(getString(R.string.i_o_error_occurred, e.message))
+            return
+        } catch (e: SecurityException) {
+            showInitFailedDialog(getString(R.string.read_permission_denied, e.message))
+            return
+        } catch (e: Exception) {
+            showInitFailedDialog(getString(R.string.other_file_error, e.message))
             return
         }
 
@@ -584,9 +628,6 @@ class Yabause : AppCompatActivity(),
             navigationView.menu.removeItem(MENU_ID_LEADERBOARD)
         }
 
-        padManager = PadManager.padManager!!
-        padManager.loadSettings()
-        padManager.showMenulistener = this // setShowMenulistener(this)
         waitingResult = false
 /*
         val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
@@ -1352,7 +1393,7 @@ class Yabause : AppCompatActivity(),
         setResult(RESULT_OK, resultIntent)
 
         Log.v(TAG, "this is the end...")
-        yabauseThread.destroy()
+        yabauseThread?.destroy()
         super.onDestroy()
     }
 

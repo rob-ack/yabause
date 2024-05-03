@@ -462,6 +462,9 @@
     <string name="fail_to_open">Не удалось открыть %1$s</string>
 
 
+    <string name="failed_to_initialize">Не удалось инициализировать</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Не удалось получить код игры. Этот файл не является игрой SEGA Saturn.</string>
+    <string name="fail_to_initialize_emulator">Не удалось инициализировать эмулятор</string>
 
 </resources>
 	

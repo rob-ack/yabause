@@ -237,5 +237,9 @@
     <string name="fail_to_open_with">无法使用%2$s打开%1$s</string>
     <string name="fail_to_open">无法打开%1$s</string>
 
+    <string name="failed_to_initialize">初始化失败</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">获取游戏代码失败。该文件不是SEGA Saturn游戏。</string>
+    <string name="fail_to_initialize_emulator">模拟器初始化失败</string>
+
 </resources>
 	

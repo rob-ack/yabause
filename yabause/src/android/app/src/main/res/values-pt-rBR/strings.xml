@@ -177,6 +177,9 @@
     <string name="fail_to_open_with">Falha ao abrir %1$s com %2$s</string>
     <string name="fail_to_open">Falha ao abrir %1$s</string>
 
+    <string name="failed_to_initialize">Falha ao inicializar</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Falha ao obter o código do jogo. Este arquivo não é um jogo do SEGA Saturn.</string>
+    <string name="fail_to_initialize_emulator">Falha ao inicializar o emulador</string>
 
 
 </resources>

@@ -537,28 +537,28 @@ class Yabause : AppCompatActivity(),
             return
         }
 
-        var file = File(gamePath)
-        if( fileDesc != -1 ){
-            file = File("/proc/self/fd/$fileDesc")
-        }
-        try {
-            val filereader = FileReader(file)
-            val br = BufferedReader(filereader)
-            var c: CharArray = CharArray(4)
-            br.read(c, 0, 1)
-            br.close()
-        } catch (e: FileNotFoundException) {
-            showInitFailedDialog(getString(R.string.file_not_found, e.message))
-            return
-        } catch (e: IOException) {
-            showInitFailedDialog(getString(R.string.i_o_error_occurred, e.message))
-            return
-        } catch (e: SecurityException) {
-            showInitFailedDialog(getString(R.string.read_permission_denied, e.message))
-            return
-        } catch (e: Exception) {
-            showInitFailedDialog(getString(R.string.other_file_error, e.message))
-            return
+
+        if( fileDesc == -1 ) {
+            var file = File(gamePath)
+            try {
+                val filereader = FileReader(file)
+                val br = BufferedReader(filereader)
+                var c: CharArray = CharArray(4)
+                br.read(c, 0, 1)
+                br.close()
+            } catch (e: FileNotFoundException) {
+                showInitFailedDialog(getString(R.string.file_not_found, e.message))
+                return
+            } catch (e: IOException) {
+                showInitFailedDialog(getString(R.string.i_o_error_occurred, e.message))
+                return
+            } catch (e: SecurityException) {
+                showInitFailedDialog(getString(R.string.read_permission_denied, e.message))
+                return
+            } catch (e: Exception) {
+                showInitFailedDialog(getString(R.string.other_file_error, e.message))
+                return
+            }
         }
 
         val gameCode = intent.getStringExtra("org.uoyabause.android.gamecode")
@@ -585,41 +585,44 @@ class Yabause : AppCompatActivity(),
                 }
             }
         }
+
         testCase = intent.getStringExtra("TestCase")
-//        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
         audio = YabauseAudio(this)
         currentGame = null
-        if (this.gameCode != null) {
-            readPreferences(this.gameCode)
-            if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
-                val c = SonicR()
-                c.uievent = this
-                val lmenu = navigationView.menu
-                val submenu = lmenu.addSubMenu(Menu.NONE,
-                    MENU_ID_LEADERBOARD,
-                    Menu.NONE,
-                    "Leader Board")
-                c.leaderBoards?.forEach {
-                    val lbmenu = submenu.add(it.title)
-                    lbmenu.setIcon(R.drawable.baseline_list_24)
-                    lbmenu.setOnMenuItemClickListener { _ ->
-                        waitingResult = true
-                        val account = GoogleSignIn.getLastSignedInAccount(this)
-                        if (account != null) {
-                            Games.getLeaderboardsClient(this, account)
-                                .getLeaderboardIntent(it.id)
-                                .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
-                                    startActivityForResult(
-                                        intent,
-                                        MENU_ID_LEADERBOARD
-                                    )
-                                })
-                        }
-                        true
+        if (this.gameCode == null) {
+            showInitFailedDialog(getString(R.string.fail_to_get_game_code_this_file_is_not_sega_saturn_game))
+            return
+        }
+
+        readPreferences(this.gameCode)
+        if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
+            val c = SonicR()
+            c.uievent = this
+            val lmenu = navigationView.menu
+            val submenu = lmenu.addSubMenu(Menu.NONE,
+                MENU_ID_LEADERBOARD,
+                Menu.NONE,
+                "Leader Board")
+            c.leaderBoards?.forEach {
+                val lbmenu = submenu.add(it.title)
+                lbmenu.setIcon(R.drawable.baseline_list_24)
+                lbmenu.setOnMenuItemClickListener { _ ->
+                    waitingResult = true
+                    val account = GoogleSignIn.getLastSignedInAccount(this)
+                    if (account != null) {
+                        Games.getLeaderboardsClient(this, account)
+                            .getLeaderboardIntent(it.id)
+                            .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                                startActivityForResult(
+                                    intent,
+                                    MENU_ID_LEADERBOARD
+                                )
+                            })
                     }
+                    true
                 }
-                currentGame = c
             }
+            currentGame = c
         }
 
         if (currentGame != null) {
@@ -629,30 +632,11 @@ class Yabause : AppCompatActivity(),
         }
 
         waitingResult = false
-/*
-        val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-        if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION && BuildConfig.BUILD_TYPE != "pro") {
-            val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
-            val hasDonated = prefs.getBoolean("donated", false)
-            if (hasDonated) {
-                adView = null
-            } else {
-                adView = AdView(this)
-                adView!!.adUnitId = getString(R.string.banner_ad_unit_id2)
-                adView!!.adSize = AdSize.BANNER
-                val adRequest = AdRequest.Builder().build()
-                adView!!.loadAd(adRequest)
-                adView!!.adListener = object : AdListener() {
-                    override fun onAdOpened() {
-                        // Save app state before going to the ad overlay.
-                    }
-                }
-            }
-        } else {
-            adView = null
-        }
- */
         yabauseThread = YabauseRunnable(this)
+        if( yabauseThread?.inited == false ){
+            showInitFailedDialog(getString(R.string.fail_to_initialize_emulator))
+            return
+        }
 
         if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
             showAutoStateLoadDialog()

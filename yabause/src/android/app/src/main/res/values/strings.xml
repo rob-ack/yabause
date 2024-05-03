@@ -418,7 +418,9 @@
     <string name="no_game_file_is_selected">No Game file is selected</string>
     <string name="fail_to_open_with">Fail to open %1$s with %2$s</string>
     <string name="fail_to_open">Fail to open %1$s</string>
-    <string name="failed_to_initialize">Failed to initialize</string>
+    <string name="failed_to_initialize">Fail to initialize</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Fail to get game code. This file is not SEGA Saturn game.</string>
+    <string name="fail_to_initialize_emulator">Fail to initialize emulator</string>
 
 </resources>
 	

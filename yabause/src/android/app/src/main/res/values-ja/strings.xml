@@ -337,5 +337,8 @@
     <string name="no_game_file_is_selected">ゲームファイルが選択されていません</string>
     <string name="fail_to_open_with">%1$sを%2$sで開けませんでした</string>
     <string name="fail_to_open">%1$sを開けませんでした</string>
+    <string name="failed_to_initialize">初期化に失敗しました</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">ゲームコードの取得に失敗しました。このファイルはSEGA Saturnのゲームではありません。</string>
+    <string name="fail_to_initialize_emulator">エミュレータの初期化に失敗しました</string>
 
 </resources>

@@ -316,7 +316,9 @@ const char *GetBiosPath()
     yclass = env->GetObjectClass(yabause);
     getBiosPath = env->GetMethodID(yclass, "getBiosPath", "()Ljava/lang/String;");
     message = (jstring)env->CallObjectMethod(yabause, getBiosPath);
-    if (env->GetStringLength(message) == 0)
+    if( message == nullptr ){
+        rtn = NULL;
+    }else if (env->GetStringLength(message) == 0)
         rtn = NULL;
     else
         rtn = env->GetStringUTFChars(message, &dummy);
@@ -1211,10 +1213,7 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     if (initEGLFunc() == -1)
         return -1;
 
-    s_isRunning = 1;
-
     yabause = env->NewGlobalRef(yab);
-
     s_biospath = GetBiosPath();
     s_cdpath = GetGamePath();
     s_buppath = GetMemoryPath();
@@ -1224,25 +1223,13 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
     shaderCachePath = string(GetShaderPath());
-/*
-    std::size_t pos = shaderCachePath.rfind("/");
-    if (pos != std::string::npos) {
-        shaderCachePath = shaderCachePath.substr(0,pos+1);
-        YUI_LOG("shader path = %s", shaderCachePath.c_str() );
-    } else {
-        YUI_LOG("YabauseRunnable_init s_buppath is invalid");
-    }
-*/
-
-    GetFileDescriptorPath("test");
 
     YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
 
-    OSDInit(0);
 
     pthread_attr_t tattr;
     pthread_attr_init(&tattr);
-
+    s_isRunning = 1;
     pthread_create(&_threadId, &tattr, threadStartCallback, NULL);
 
     return res;

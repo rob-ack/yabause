@@ -34,6 +34,7 @@
         android:layout_height="match_parent">
 
         <com.google.android.material.appbar.AppBarLayout
+            android:id="@+id/main_appbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/colorPrimaryDark"
@@ -58,26 +59,32 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
-        <TextView
-            android:id="@+id/empty_message"
+        <ScrollView
+            android:id="@+id/empty_message_parent"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:gravity="center_vertical"
-            app:layout_anchorGravity="bottom"
-            android:layout_gravity="bottom"
-            app:layout_anchor="@+id/tab_game_index"
-            android:text="@string/welcome" />
+            android:layout_height="match_parent"
+            android:layout_above="@id/fab"
+            android:isScrollContainer="false"
+            android:padding="16dp"
+            android:layout_marginBottom="110dp"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <TextView
+                android:id="@+id/empty_message"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/welcome" />
+        </ScrollView>
 
         <androidx.viewpager.widget.ViewPager
             android:id="@+id/view_pager_game_index"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/default_background"
-            app:layout_behavior="@string/appbar_scrolling_view_behavior">
-
+            app:layout_behavior="@string/appbar_scrolling_view_behavior"
+            >
         </androidx.viewpager.widget.ViewPager>
+
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/fab"
@@ -86,7 +93,8 @@
             android:layout_gravity="end|bottom"
             android:src="@drawable/baseline_add_black_24"
             android:contentDescription="@string/add_a_game"
-            android:layout_margin="16dp" />
+            android:layout_margin="16dp"
+            />
 
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>

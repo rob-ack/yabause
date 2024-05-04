@@ -42,6 +42,7 @@ import android.view.View.VISIBLE
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.ScrollView
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
@@ -896,9 +897,10 @@ class GameSelectFragmentPhone : Fragment(),
     }
 
     private fun showRestartMessage() { // need_to_accept
+        val viewMessageParent = rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
         val viewMessage = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
         val viewPager = rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
-        viewMessage?.visibility = VISIBLE
+        viewMessageParent?.visibility = VISIBLE
         viewPager?.visibility = View.GONE
 
         val welcomeMessage = resources.getString(org.devmiyax.yabasanshiro.R.string.need_to_accept)
@@ -935,9 +937,10 @@ class GameSelectFragmentPhone : Fragment(),
                 .execute<GameInfo?>()
             if (checklist.size == 0) {
 
+                val viewMessageParent = rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
                 val viewMessage = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
                 val viewPager = rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
-                viewMessage!!.visibility = VISIBLE
+                viewMessageParent!!.visibility = VISIBLE
                 viewPager!!.visibility = View.GONE
 
                 val markwon = Markwon.create(this.activity as Context)
@@ -963,9 +966,10 @@ class GameSelectFragmentPhone : Fragment(),
             Log.d(TAG, e.localizedMessage!!)
         }
 
+        val viewMessageParent = rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
         val viewMessage = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.empty_message) as? View
         val viewPager = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
-        viewMessage?.visibility = View.GONE
+        viewMessageParent?.visibility = View.GONE
         viewPager?.visibility = VISIBLE
 
         // -----------------------------------------------------------------

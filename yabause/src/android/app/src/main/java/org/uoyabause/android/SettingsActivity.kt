@@ -473,7 +473,7 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
 
-        override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
+        override fun onSharedPreferenceChanged( sharedPreferences: SharedPreferences?, key: String?) {
 
             if (key == "pref_bios" || key == "scsp_time_sync_mode" || key == "pref_cart" || key == "pref_video" ||
                 key == "pref_cpu" || key == "pref_filter" || key == "pref_polygon_generation" ||
@@ -582,5 +582,6 @@ class SettingsActivity : AppCompatActivity() {
                 requireActivity().setResult(0, resultIntent)
             }
         }
+
     }
 }

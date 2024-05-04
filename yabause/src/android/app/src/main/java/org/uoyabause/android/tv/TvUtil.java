@@ -107,7 +107,9 @@ public class TvUtil {
         Log.d(TAG, "channel id " + channelId);
 
         Bitmap bitmap = convertToBitmap(context, subscription.getChannelLogo());
-        ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
+        if(bitmap!=null) {
+            ChannelLogoUtils.storeChannelLogo(context, channelId, bitmap);
+        }
         TvContractCompat.requestChannelBrowsable(context, channelId);
         return channelId;
     }

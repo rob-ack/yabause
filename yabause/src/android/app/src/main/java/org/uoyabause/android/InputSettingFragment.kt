@@ -308,7 +308,7 @@ OnGenericMotionListener, View.OnClickListener {
       event.source and InputDevice.SOURCE_KEYBOARD == InputDevice.SOURCE_KEYBOARD
             ) {
       val dev = InputDevice.getDevice(_selected_device_id)
-      if (dev.name.contains("HuiJia")) {
+      if (dev?.name!!.contains("HuiJia")) {
         if (event.scanCode == 0) {
           return false
         }
@@ -356,7 +356,7 @@ OnGenericMotionListener, View.OnClickListener {
           Log.d("Yabause", "onGenericMotion:" + motions!![i].id + " value:" + value)
         }
         val dev = InputDevice.getDevice(_selected_device_id)
-        if (dev.name.contains("Moga") && motions!![i].id == 32) {
+        if (dev?.name!!.contains("Moga") && motions!![i].id == 32) {
           continue
         }
         if (map!![index] == PadEvent.PERANALOG_AXIS_X ||

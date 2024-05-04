@@ -378,7 +378,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         val uiModeManager = requireActivity().getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
         if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION) {
             val rootView = titleView
-            val tv = rootView.findViewById<View>(R.id.title_text) as TextView?
+            val tv = rootView?.findViewById<View>(R.id.title_text) as TextView?
             if (tv != null) {
                 tv.textSize = 24f
             }
@@ -540,7 +540,9 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         var hit = false
         while (itx.hasNext()) {
             val game = itx.next()
-            listRowAdapter_recent.add(game)
+            if (game != null) {
+                listRowAdapter_recent.add(game)
+            }
             hit = true
         }
 
@@ -868,7 +870,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             return ViewHolder(view)
         }
 
-        override fun onBindViewHolder(viewHolder: ViewHolder, item: Any) {
+        override fun onBindViewHolder(viewHolder: ViewHolder, item: Any?) {
             (viewHolder.view as TextView).text = item as String
         }
 

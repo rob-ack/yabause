@@ -355,6 +355,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             mRowsAdapter!!.add(ListRow(gridHeader, gridRowAdapter))
             setSelectedPosition(0, false)
             adapter = mRowsAdapter
+
         }
         if (checkStoragePermission() == 0) {
             updateBackGraound()
@@ -443,6 +444,8 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             mTracker!!.setScreenName(TAG)
             mTracker!!.send(ScreenViewBuilder().build())
         }
+
+        updateSignInOutString();
     }
 
     override fun onPause() {
@@ -461,6 +464,39 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
             mBackgroundTimer.cancel();
         }
 */
+    }
+
+    override fun onSignOut(){
+        updateSignInOutString()
+    }
+
+    private fun updateSignInOutString(){
+        val auth = FirebaseAuth.getInstance()
+        for (i in 0 until mRowsAdapter!!.size()) {
+            var ls = mRowsAdapter!![i] as ListRow
+            if( ls.getHeaderItem().getName() == "PREFERENCES" ){
+                var adapter = ls!!.getAdapter() as ArrayObjectAdapter
+                for (j in 0 until adapter.size() ) {
+                    var item = adapter!!.get(j) as String
+
+                    if (auth.currentUser != null) {
+                        if (item == resources.getString(R.string.sign_in)) {
+                            adapter!!.replace(j,resources.getString(R.string.sign_out))
+                            adapter!!.notifyItemRangeChanged(j,1)
+                            mRowsAdapter!!.notifyItemRangeChanged(i,1)
+                            return
+                        }
+                    }else{
+                        if (item == resources.getString(R.string.sign_out)) {
+                            adapter!!.replace(j,resources.getString(R.string.sign_in))
+                            adapter!!.notifyItemRangeChanged(j,1)
+                            mRowsAdapter!!.notifyItemRangeChanged(i,1)
+                            return
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private fun loadRows() {
@@ -578,6 +614,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
         gridRowAdapter.add(resources.getString(R.string.sign_in_to_other_devices))
         mRowsAdapter!!.add(ListRow(gridHeader, gridRowAdapter))
         addindex++
+
 
         // -----------------------------------------------------------------
         //
@@ -760,6 +797,7 @@ class GameSelectFragment : BrowseSupportFragment(), FileSelectedListener,
 
     var signinActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         presenter_!!.onSignIn(result.resultCode, result.data)
+        updateSignInOutString()
     }
 
     private inner class ItemViewClickedListener : OnItemViewClickedListener {

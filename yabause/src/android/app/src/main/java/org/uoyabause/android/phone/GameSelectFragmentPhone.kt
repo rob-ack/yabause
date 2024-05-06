@@ -1171,6 +1171,10 @@ class GameSelectFragmentPhone : Fragment(),
 
     }
 
+    override fun onSignOut() {
+
+    }
+
     companion object {
         private const val TAG = "GameSelectFragmentPhone"
         private var instance: GameSelectFragmentPhone? = null

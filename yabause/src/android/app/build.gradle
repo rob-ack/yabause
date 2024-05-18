@@ -76,8 +76,8 @@ android {
         minSdkVersion 24
         targetSdkVersion 34
         multiDexEnabled true
-        versionCode 94
-        versionName '1.14.5'
+        versionCode 102
+        versionName '1.14.9'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         signingConfig signingConfigs.pro
@@ -301,8 +301,8 @@ dependencies {
 
     implementation 'androidx.cardview:cardview:1.0.0'
 
-    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1'
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.6.1"
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0'
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.7.0"
 }
 
 // ADD THIS AT THE BOTTOM

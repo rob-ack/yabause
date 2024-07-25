@@ -41,6 +41,8 @@ char * currentGamePath = NULL;
 const int MSG_SAVE_STATE = 1;
 const int MSG_LOAD_STATE = 2;
 const int MSG_RESET = 3;
+const int MSG_OPEN_TRAY = 4;
+const int MSG_CLOSE_TRAY = 5;
 
 
 GLuint _renderBuffer = 0;

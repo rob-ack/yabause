@@ -97,6 +97,7 @@ extension GameMainViewController: MenuViewControllerDelegate {
                 self?.gameVC?.reset()
                 break
             case .changeDisk:
+                self?.gameVC?.presentFileSelectViewController()
                 break
             case .saveState:
                 self?.gameVC?.saveState()

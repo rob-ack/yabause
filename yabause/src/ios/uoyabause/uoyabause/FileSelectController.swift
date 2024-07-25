@@ -78,6 +78,23 @@ class GameItemCell: UICollectionViewCell {
     }
 }
 
+/*
+class FileSelectController: UIViewController {
+    var collectionView: UICollectionView!
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let layout = UICollectionViewFlowLayout()
+        collectionView = UICollectionView(frame: self.view.bounds, collectionViewLayout: layout)
+        collectionView.dataSource = self
+        collectionView.delegate = self
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "cell")
+        collectionView.backgroundColor = .white
+        self.view.addSubview(collectionView)
+    }
+}
+*/
 
 
 class FileSelectController :UICollectionViewController,UICollectionViewDelegateFlowLayout {
@@ -85,11 +102,20 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
     var file_list: [GameInfo] = []
     var selected_file_path: String = ""
     var columns = 3.0
-    
    
-    //required init?(coder aDecoder: NSCoder) {
-    //    fatalError("init(coder:) has not been implemented")
-    //}
+    init() {
+        let layout = UICollectionViewFlowLayout()
+        super.init(collectionViewLayout: layout)
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+    }
+    
+
+    
+    var completionHandler: ((String?) -> Void)?
+    
     
     func setupCollectionViewLayout(columns: CGFloat) {
         self.columns = columns
@@ -123,8 +149,15 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
     
     override func viewDidLoad(){
         super.viewDidLoad()
+        
         collectionView.register(GameItemCell.self, forCellWithReuseIdentifier: "GameItemCell")
-        self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "files")
+        collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "files")
+        
+        // デリゲートとデータソースの設定
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        self.view.addSubview(collectionView)
+        
         // デバイスの向きに応じて列数を調整
         if UIDevice.current.orientation.isLandscape {
             // 横画面の時は4列
@@ -252,61 +285,27 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
         }
     }
     
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        if self.isBeingDismissed {
+            completionHandler?(nil)
+        }
+    }
+    
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
     
-/*
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
-
-        return file_list.count
-    }
-*/
-/*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
-        let cell = tableView.dequeueReusableCell(withIdentifier: "files")! as UITableViewCell
-        let gameInfo = file_list[(indexPath as NSIndexPath).row]
-        cell.textLabel!.text = gameInfo.gameTitle;
-        
-        if let imageUrl = gameInfo.imageUrl {
-            // Download image and display it in the cell
-            if let url = URL(string: imageUrl), let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
-                cell.imageView?.image = image
-            }
-        }
-        return cell
-    }
-*/
-/*
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "files", for: indexPath)
-        let gameInfo = file_list[indexPath.row]
-        cell.textLabel!.text = gameInfo.gameTitle
-        
-        // Kingfisherを使用して画像を非同期にダウンロードし、キャッシュする
-        if let imageUrl = gameInfo.imageUrl, let url = URL(string: imageUrl) {
-            cell.imageView?.kf.setImage(with: url, placeholder: UIImage(named: "missing"))
-        } else {
-            // 画像URLが無効な場合や存在しない場合は、プレースホルダー画像を設定
-            cell.imageView?.image = UIImage(named: "missing")
-        }
-        
-        return cell
-    }
-    
-    override func tableView(_ table: UITableView, didSelectRowAt indexPath:IndexPath) {
-        
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-        
-        selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row].filePath!
-        performSegue(withIdentifier: "toSubViewController",sender: nil)
-        
-    }
-*/
-    
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row].filePath!
+      
+        if( completionHandler != nil ){
+            completionHandler?(selected_file_path)
+            dismiss(animated: true, completion: nil)
+            return
+        }
         
         performSegue(withIdentifier: "toGameView",sender: self)
     }

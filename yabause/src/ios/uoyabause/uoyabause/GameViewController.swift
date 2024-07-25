@@ -909,5 +909,31 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         }
     }
     
+    func presentFileSelectViewController() {
+        
+        self.command = MSG_OPEN_TRAY
+        
+        let fsVC = FileSelectController()
+        fsVC.completionHandler = { data in
+            if let data = data {
+                self.selectedFile = data
+                if( scurrentGamePath != nil ){
+                    scurrentGamePath?.deallocate()
+                    scurrentGamePath = nil
+                }
+                let cString = (self.selectedFile! as NSString).utf8String!
+                let bufferSize = Int(strlen(cString)) + 1
+                scurrentGamePath = UnsafeMutablePointer<Int8>.allocate(capacity: bufferSize)
+                strncpy(scurrentGamePath, cString, bufferSize)
+                currentGamePath = UnsafePointer<CChar>(scurrentGamePath)
+                self.command = MSG_CLOSE_TRAY
+            }else{
+                self.command = MSG_CLOSE_TRAY
+            }
+        }
+        
+        
+        present(fsVC, animated: true, completion: nil)
+    }
     
 }

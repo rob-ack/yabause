@@ -24,6 +24,8 @@ extern "C"{
 const int MSG_SAVE_STATE = 1;
 const int MSG_LOAD_STATE = 2;
 const int MSG_RESET = 3;
+const int MSG_OPEN_TRAY = 4;
+const int MSG_CLOSE_TRAY = 5;
 
 //#include <OpenGLES/ES3/gl.h>
 //#include <OpenGLES/ES3/glext.h>
@@ -325,10 +327,18 @@ int start_emulation( int originx, int originy, int width, int height ){
                 }               
                 break;            
             case MSG_RESET:
-                YUI_LOG("MSG_RESET %s\n",s_savepath);
+                YUI_LOG("MSG_RESET\n");
                 YabauseReset();            
                 break;            
-
+            case MSG_OPEN_TRAY:
+                YUI_LOG("MSG_OPEN_TRAY %s\n");
+                Cs2ForceOpenTray();            
+                break;     
+            case MSG_CLOSE_TRAY:
+                s_cdpath = GetGamePath();
+                YUI_LOG("MSG_CLOSE_TRAY %s\n",s_cdpath);                
+                Cs2ForceCloseTray(CDCORE_ISO, s_cdpath); 
+                break;                     
         }
 
         YabauseExec();

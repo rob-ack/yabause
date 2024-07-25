@@ -29,6 +29,8 @@ extern NSObject* _objectForLock;
 extern const int MSG_SAVE_STATE;
 extern const int MSG_LOAD_STATE;
 extern const int MSG_RESET;
+extern const int MSG_OPEN_TRAY;
+extern const int MSG_CLOSE_TRAY;
 
 //    MSG_RESUME,
 //    MSG_OPEN_TRAY,

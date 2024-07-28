@@ -60,13 +60,9 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate {
         }
        
     }
-    var val: Int = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        val = 0
     }
-    
-   
     
 }

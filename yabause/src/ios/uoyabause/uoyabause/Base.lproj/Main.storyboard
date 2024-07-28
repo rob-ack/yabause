@@ -4,7 +4,6 @@
     <dependencies>
         <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="22685"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
-        <capability name="collection view cell content view" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <scenes>
@@ -20,39 +19,13 @@
         <scene sceneID="OyW-lz-kKL">
             <objects>
                 <collectionViewController id="7GE-jy-nfd" customClass="FileSelectController" customModule="YabaSnashiro" customModuleProvider="target" sceneMemberID="viewController">
-                    <collectionView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" dataMode="prototypes" id="Kt9-Dj-ftb">
-                        <rect key="frame" x="0.0" y="0.0" width="402" height="850"/>
-                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
-                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
-                        <collectionViewFlowLayout key="collectionViewLayout" automaticEstimatedItemSize="YES" minimumLineSpacing="10" minimumInteritemSpacing="10" id="xfz-XB-pEQ">
-                            <size key="itemSize" width="402" height="806"/>
-                            <size key="headerReferenceSize" width="0.0" height="0.0"/>
-                            <size key="footerReferenceSize" width="0.0" height="0.0"/>
-                            <inset key="sectionInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
-                        </collectionViewFlowLayout>
-                        <cells>
-                            <collectionViewCell opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" id="agJ-Ua-Buq">
-                                <rect key="frame" x="0.0" y="0.0" width="402" height="806"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <collectionViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" id="jbx-WD-CTU">
-                                    <rect key="frame" x="0.0" y="0.0" width="402" height="806"/>
-                                    <autoresizingMask key="autoresizingMask"/>
-                                </collectionViewCellContentView>
-                                <size key="customSize" width="402" height="806"/>
-                                <connections>
-                                    <segue destination="p9Z-S9-9Yz" kind="presentation" identifier="toGameView" modalPresentationStyle="overFullScreen" id="Xo0-vq-Ppz"/>
-                                </connections>
-                            </collectionViewCell>
-                        </cells>
-                        <connections>
-                            <outlet property="dataSource" destination="7GE-jy-nfd" id="kL2-MR-rRI"/>
-                            <outlet property="delegate" destination="7GE-jy-nfd" id="A2Z-Xm-Cos"/>
-                        </connections>
-                    </collectionView>
+                    <connections>
+                        <segue destination="p9Z-S9-9Yz" kind="presentation" identifier="toGameView" modalPresentationStyle="fullScreen" id="Gvh-n1-hjQ"/>
+                    </connections>
                 </collectionViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="MZW-2V-Xuq" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-1033.3333333333335" y="-1069.4196428571429"/>
+            <point key="canvasLocation" x="-1032" y="-1134"/>
         </scene>
         <!--Yaba Sanshiro 2-->
         <scene sceneID="CtD-pw-8uS">
@@ -67,7 +40,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <containerView opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qab-t5-be3">
-                                <rect key="frame" x="6" y="6" width="402" height="850"/>
+                                <rect key="frame" x="20" y="96" width="374" height="758"/>
                                 <connections>
                                     <segue destination="7GE-jy-nfd" kind="embed" id="Kv2-c0-InK"/>
                                 </connections>
@@ -75,10 +48,10 @@
                         </subviews>
                         <color key="backgroundColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
-                            <constraint firstAttribute="trailing" secondItem="qab-t5-be3" secondAttribute="trailing" constant="6" id="QIK-QB-d8V"/>
-                            <constraint firstItem="qab-t5-be3" firstAttribute="top" secondItem="Hc1-5g-glR" secondAttribute="top" constant="6" id="ez4-ii-HHU"/>
-                            <constraint firstItem="qab-t5-be3" firstAttribute="leading" secondItem="Hc1-5g-glR" secondAttribute="leading" constant="6" id="gWX-I0-dNT"/>
-                            <constraint firstItem="ugX-Cr-UGb" firstAttribute="top" secondItem="qab-t5-be3" secondAttribute="bottom" constant="6" id="zuY-lv-Gg9"/>
+                            <constraint firstItem="qab-t5-be3" firstAttribute="leading" secondItem="Hc1-5g-glR" secondAttribute="leading" constant="20" symbolic="YES" id="0Az-w2-qIl"/>
+                            <constraint firstItem="qab-t5-be3" firstAttribute="top" secondItem="S2I-6T-RUP" secondAttribute="bottom" constant="8" symbolic="YES" id="Cg9-kS-Khu"/>
+                            <constraint firstAttribute="trailing" secondItem="qab-t5-be3" secondAttribute="trailing" constant="20" symbolic="YES" id="WbI-67-rxd"/>
+                            <constraint firstItem="ugX-Cr-UGb" firstAttribute="top" secondItem="qab-t5-be3" secondAttribute="bottom" constant="8" symbolic="YES" id="eZo-W9-OSo"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Yaba Sanshiro 2" id="NHI-fu-wtb">
@@ -532,7 +505,7 @@
                 </tableViewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="DGO-gq-o1E" userLabel="First Responder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="-113.31521739130436" y="-1930.4347826086957"/>
+            <point key="canvasLocation" x="-417" y="-1923"/>
         </scene>
         <!--Game View Controller-->
         <scene sceneID="tXr-a1-R10">
@@ -543,11 +516,11 @@
                         <viewControllerLayoutGuide type="bottom" id="JfN-k8-Pkv"/>
                     </layoutGuides>
                     <view key="view" contentMode="scaleToFill" id="3se-qz-xqx" customClass="MGLKView">
-                        <rect key="frame" x="0.0" y="0.0" width="402" height="850"/>
+                        <rect key="frame" x="0.0" y="0.0" width="374" height="758"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <view contentMode="scaleToFill" restorationIdentifier="start view" translatesAutoresizingMaskIntoConstraints="NO" id="7Cf-tj-1HN">
-                                <rect key="frame" x="164" y="771" width="74" height="45"/>
+                                <rect key="frame" x="150" y="679" width="74" height="45"/>
                                 <subviews>
                                     <view alpha="0.65000000000000002" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="NnT-bI-EjB">
                                         <rect key="frame" x="0.0" y="0.0" width="74" height="45"/>
@@ -566,7 +539,7 @@
                                 </constraints>
                             </view>
                             <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" restorationIdentifier="Right" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="9ZL-pX-o9L">
-                                <rect key="frame" x="138" y="471" width="296" height="340"/>
+                                <rect key="frame" x="114" y="379" width="296" height="340"/>
                                 <subviews>
                                     <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="zJr-X4-ef5">
                                         <rect key="frame" x="185" y="185" width="68" height="66"/>
@@ -615,7 +588,7 @@
                                 </constraints>
                             </view>
                             <view contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="CPl-ov-b8z">
-                                <rect key="frame" x="-46" y="471" width="296" height="340"/>
+                                <rect key="frame" x="-50" y="379" width="296" height="340"/>
                                 <subviews>
                                     <view alpha="0.20000000000000001" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="9oE-0a-kNO">
                                         <rect key="frame" x="76" y="249" width="171" height="43"/>
@@ -654,11 +627,11 @@
                                 </constraints>
                             </view>
                             <slider opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" value="0.5" minValue="0.0" maxValue="1" translatesAutoresizingMaskIntoConstraints="NO" id="hRQ-cY-2Al">
-                                <rect key="frame" x="57" y="20" width="289" height="30"/>
+                                <rect key="frame" x="43" y="20" width="289" height="30"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </slider>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JNd-4C-o1c">
-                                <rect key="frame" x="22" y="52" width="24" height="24"/>
+                                <rect key="frame" x="18" y="52" width="24" height="24"/>
                                 <color key="tintColor" systemColor="systemGray2Color"/>
                                 <state key="normal" image="baseline_menu_white_24pt">
                                     <color key="titleColor" systemColor="systemGray6Color"/>
@@ -731,7 +704,7 @@
             <objects>
                 <viewController id="p9Z-S9-9Yz" customClass="GameMainViewController" customModule="YabaSnashiro" customModuleProvider="target" sceneMemberID="viewController">
                     <containerView key="view" opaque="NO" contentMode="scaleToFill" id="Pbc-ym-DPw">
-                        <rect key="frame" x="0.0" y="0.0" width="402" height="850"/>
+                        <rect key="frame" x="0.0" y="0.0" width="374" height="758"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMinY="YES"/>
                         <connections>
                             <segue destination="BV1-FR-VrT" kind="embed" id="dT3-1B-cGk"/>
@@ -754,9 +727,6 @@
         </systemColor>
         <systemColor name="groupTableViewBackgroundColor">
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-        </systemColor>
-        <systemColor name="systemBackgroundColor">
-            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
         </systemColor>
         <systemColor name="systemGray2Color">
             <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>

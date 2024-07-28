@@ -19,6 +19,7 @@ struct GameInfo {
     var inputDevice: String?
     var deviceInformation: String?
     var gameTitle: String?
+    var displayName: String?
     var imageUrl: String?
 }
 
@@ -71,6 +72,30 @@ func getGameInfoFromBuf(filePath: String?, header: Data) -> GameInfo? {
     if let gameTitleData = header.subdata(in: startIndex+0x60..<startIndex+0xD0).string(using: charset) {
         gameInfo.gameTitle = gameTitleData.trimmingCharacters(in: .whitespaces)
     }
+    
+    let gameTitle = gameInfo.gameTitle ?? ""
+    let titles = gameTitle.components(separatedBy: "U:")
+
+    if titles.count >= 2 {
+        let japaneseTitle = titles[0].replacingOccurrences(of: "J:", with: "").trimmingCharacters(in: .whitespaces)
+        let englishTitle = titles[1].trimmingCharacters(in: .whitespaces)
+        
+        if Locale.current.language.languageCode?.identifier == "ja" {
+            //cell.titleLabel.text = japaneseTitle
+            gameInfo.displayName = japaneseTitle
+        } else {
+            //cell.titleLabel.text = englishTitle
+            gameInfo.displayName = englishTitle
+        }
+    } else {
+        gameInfo.displayName = gameInfo.gameTitle
+    }
+
+    if( gameInfo.deviceInformation != "CD-1/1" ){
+        gameInfo.displayName = (gameInfo.displayName  ?? "") + " " + (gameInfo.deviceInformation ?? "")
+    }
+
+    
     
     return gameInfo
 }

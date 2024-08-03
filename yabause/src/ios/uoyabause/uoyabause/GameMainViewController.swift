@@ -40,6 +40,18 @@ class GameMainViewController : UIViewController {
         view.sendSubviewToBack(menuVC.view)
     }
     
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        // landscapeフラグに応じて画面の向きを設定
+        let ud = UserDefaults.standard
+        let landscape = ud.bool(forKey: "landscape")
+        
+        if landscape {
+            return .landscape
+        } else {
+            return .all
+        }
+    }
+    
 }
 
 extension GameMainViewController: GameViewControllerDelegate {

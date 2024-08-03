@@ -631,7 +631,7 @@
                                 <autoresizingMask key="autoresizingMask" flexibleMinX="YES" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </slider>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="JNd-4C-o1c">
-                                <rect key="frame" x="18" y="52" width="24" height="24"/>
+                                <rect key="frame" x="2" y="44" width="24" height="24"/>
                                 <color key="tintColor" systemColor="systemGray2Color"/>
                                 <state key="normal" image="baseline_menu_white_24pt">
                                     <color key="titleColor" systemColor="systemGray6Color"/>
@@ -646,10 +646,14 @@
                             <constraint firstItem="CPl-ov-b8z" firstAttribute="leading" secondItem="3se-qz-xqx" secondAttribute="leadingMargin" constant="-66" id="2Ni-kd-d9S"/>
                             <constraint firstItem="7Cf-tj-1HN" firstAttribute="centerX" secondItem="3se-qz-xqx" secondAttribute="centerX" id="GfQ-R6-kRi"/>
                             <constraint firstItem="JfN-k8-Pkv" firstAttribute="top" secondItem="9ZL-pX-o9L" secondAttribute="bottom" constant="5" id="Gxn-gZ-jmf"/>
+                            <constraint firstItem="JNd-4C-o1c" firstAttribute="leading" secondItem="3se-qz-xqx" secondAttribute="leading" constant="4" id="Nkm-j8-mk5"/>
                             <constraint firstItem="JNd-4C-o1c" firstAttribute="leading" secondItem="3se-qz-xqx" secondAttribute="leadingMargin" constant="2" id="QIc-Ih-KbH"/>
+                            <constraint firstItem="JNd-4C-o1c" firstAttribute="top" secondItem="9Xt-o9-7xd" secondAttribute="bottom" constant="2" id="aI3-XG-MfC"/>
                             <constraint firstAttribute="trailingMargin" secondItem="9ZL-pX-o9L" secondAttribute="trailing" constant="-52" id="bcU-3w-qsw"/>
+                            <constraint firstItem="JNd-4C-o1c" firstAttribute="leading" secondItem="3se-qz-xqx" secondAttribute="leading" constant="2" id="cA1-Jg-xgd"/>
                             <constraint firstItem="JNd-4C-o1c" firstAttribute="top" secondItem="3se-qz-xqx" secondAttribute="topMargin" constant="8" id="jGw-5o-xZ0" userLabel="Menu button.top = topMargin + 4"/>
                             <constraint firstItem="JfN-k8-Pkv" firstAttribute="top" secondItem="CPl-ov-b8z" secondAttribute="bottom" constant="5" id="oJw-CQ-lHS"/>
+                            <constraint firstItem="JNd-4C-o1c" firstAttribute="top" secondItem="9Xt-o9-7xd" secondAttribute="bottom" id="vHG-ko-Xw1"/>
                             <constraint firstItem="JfN-k8-Pkv" firstAttribute="top" secondItem="7Cf-tj-1HN" secondAttribute="bottom" id="wfz-Y8-EI9"/>
                         </constraints>
                     </view>
@@ -729,10 +733,10 @@
             <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray2Color">
-            <color red="0.68235294117647061" green="0.68235294117647061" blue="0.69803921568627447" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.68235294120000001" green="0.68235294120000001" blue="0.69803921570000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
         <systemColor name="systemGray6Color">
-            <color red="0.94901960784313721" green="0.94901960784313721" blue="0.96862745098039216" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.94901960780000005" green="0.94901960780000005" blue="0.96862745100000003" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
     </resources>
 </document>

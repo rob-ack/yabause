@@ -19,6 +19,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     weak var delegate: MenuViewControllerDelegate?
     
     enum MenuOptions: String, CaseIterable {
+        case exit = "Exit"
         case reset = "Reset"
         case changeDisk = "Change Disk"
         case saveState = "Save State"
@@ -28,6 +29,8 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         
         var imageName: String {
             switch self {
+            case .exit:
+                return "power"
             case .reset:
                 return "gobackward"
             case .changeDisk:
@@ -54,22 +57,9 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        //view.backgroundColor = .white
         view.addSubview(tableView)
         tableView.delegate = self
         tableView.dataSource = self
-        //view.backgroundColor = greyColor
-
-/*
-        // UITableViewの初期化と設定
-        tableView = UITableView(frame: self.view.bounds)
-        tableView.delegate = self
-        tableView.dataSource = self
-        view.addSubview(tableView)
-        
-        // セルを登録
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "menuCell")
- */
     }
     
     override func viewDidLayoutSubviews() {
@@ -86,10 +76,6 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         cell.textLabel?.text = MenuOptions.allCases[indexPath.row].rawValue
         cell.imageView?.image = UIImage(systemName: MenuOptions.allCases[indexPath.row].imageName)
-        //cell.textLabel?.textColor = .white
-        //cell.imageView?.tintColor = .white
-        //cell.backgroundColor = greyColor
-        //cell.contentView.backgroundColor = greyColor
         return cell
     }
     

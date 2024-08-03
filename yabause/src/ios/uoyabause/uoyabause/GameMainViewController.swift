@@ -52,6 +52,14 @@ class GameMainViewController : UIViewController {
         }
     }
     
+    override var prefersHomeIndicatorAutoHidden: Bool {
+        return true
+    }
+    
+    //@available(iOS 11, *)
+    override var childForHomeIndicatorAutoHidden: UIViewController? {
+        return nil
+    }
 }
 
 extension GameMainViewController: GameViewControllerDelegate {
@@ -105,6 +113,25 @@ extension GameMainViewController: MenuViewControllerDelegate {
     func didSelect(menuItem: MenuViewController.MenuOptions) {
         toggleMenu { [weak self] in
             switch menuItem {
+            case .exit:
+                // アラートコントローラの作成
+                let alertController = UIAlertController(title: "", message: "Are you sure you want to exit?", preferredStyle: .alert)
+
+                // "Yes"ボタンの追加
+                let yesAction = UIAlertAction(title: "Yes", style: .default) { action in
+                    exit(0)
+                }
+                alertController.addAction(yesAction)
+
+                // "No"ボタンの追加
+                let noAction = UIAlertAction(title: "No", style: .default) { action in
+
+                }
+                alertController.addAction(noAction)
+
+                // アラートを表示する（例として現在のViewControllerから表示）
+                self?.present(alertController, animated: true, completion: nil)
+                break
             case .reset:
                 self?.gameVC?.reset()
                 break

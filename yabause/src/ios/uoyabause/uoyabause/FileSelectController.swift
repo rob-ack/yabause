@@ -199,7 +199,7 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
 
     func calculateCellHeight(for indexPath: IndexPath) -> CGFloat {
         let gameInfo = filteredFiles[indexPath.row]
-        if let text = gameInfo.gameTitle{
+        if let text = gameInfo.displayName{
             let attributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)]
             
             let spacing: CGFloat = 10 // アイテム間のスペース

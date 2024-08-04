@@ -1,0 +1,36 @@
+{
+  "configurations" : [
+    {
+      "id" : "FF61EA45-7F8B-4316-A20C-134292B65125",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:YabaSnashiro.xcodeproj",
+      "identifier" : "644232A11C6580000050611E",
+      "name" : "YabaSnashiro"
+    }
+  },
+  "testTargets" : [
+    {
+      "enabled" : false,
+      "target" : {
+        "containerPath" : "container:YabaSnashiro.xcodeproj",
+        "identifier" : "644232BE1C6580010050611E",
+        "name" : "YabaSnashiroTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:YabaSnashiro.xcodeproj",
+        "identifier" : "644232C91C6580010050611E",
+        "name" : "YabaSnashiroUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

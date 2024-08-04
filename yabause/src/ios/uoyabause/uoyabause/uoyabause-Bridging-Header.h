@@ -3,8 +3,6 @@
 //
 
 //#import "GameViewController.h"
-#import "SWRevealViewController.h"
-#import "GameRevealViewController.h"
 #import "YabaInterface.h"
 #import <GameController/GCController.h>
 #import "iOSCoreAudio.h"

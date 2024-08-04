@@ -7,17 +7,28 @@ target 'YabaSnashiro' do
   pod 'Firebase/Core'
   pod 'FirebaseCrashlytics'
   pod 'Kingfisher', '~> 7.0'  
-  #pod 'Firebase/AdMob'
+
   # Pods for uoyabause
+
+  target 'YabaSnashiro-mini' do
+    inherit! :search_paths
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
+    end
 
   target 'YabaSnashiroTests' do
     inherit! :search_paths
-    # Pods for testing
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
   end
 
   target 'YabaSnashiroUITests' do
     inherit! :search_paths
-    # Pods for testing
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
   end
 
 end

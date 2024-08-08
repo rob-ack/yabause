@@ -141,21 +141,13 @@ static void M68KDummySetWriteB(UNUSED M68K_WRITE *Func) {
 static void M68KDummySetWriteW(UNUSED M68K_WRITE *Func) {
 }
 
-/*
+
 static void M68KDummySaveState(UNUSED FILE *fp) {
 }
 
 static void M68KDummyLoadState(UNUSED FILE *fp) {
 }
-*/
 
-static u32 M68KDummySaveState(void) {
-	return 0;
-}
-
-static u32 M68KDummyLoadState(void) {
-	return 0;
-}
 
 
 M68K_struct M68KDummy = {

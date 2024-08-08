@@ -216,8 +216,15 @@ int decompress_file(const char* input_path, const char* output_path) {
   return ret == Z_STREAM_END ? 0 : -1;
 }
 
+#if defined(IOS)
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
+#endif
+
+
 
 std::pair<std::string, std::string> getParentAndLeaf(const std::string& path) {
   fs::path fsPath(path);

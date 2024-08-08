@@ -839,10 +839,9 @@ int YabauseEmulate(void) {
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
       
 #if !defined(ASYNC_SCSP)
-      //if(!use_new_scsp)
+      if(!use_new_scsp)
       {
-         //int cycles;
-
+         int cycles;
          PROFILE_START("68K");
          cycles = m68kcycles;
          //yabsys.saved_centicycles += m68kcenticycles;

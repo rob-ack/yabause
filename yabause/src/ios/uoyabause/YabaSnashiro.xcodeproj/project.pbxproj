@@ -1057,7 +1057,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1078,7 +1078,7 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.9.6;
+				MARKETING_VERSION = 1.15.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1112,7 +1112,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 18;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1133,7 +1133,7 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.9.6;
+				MARKETING_VERSION = 1.15.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"$(OTHER_LDFLAGS)",

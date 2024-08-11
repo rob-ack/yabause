@@ -8,61 +8,139 @@
 
 import Foundation
 import UIKit
+import UniformTypeIdentifiers
 
-class MainScreenController :UIViewController, UIDocumentPickerDelegate {
-
-//    @IBOutlet weak var menu_setting: UIBarButtonItem!
+class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
     
+    var activityIndicator: UIActivityIndicatorView!
+    var blurEffectView: UIVisualEffectView!
+    var selected_file_path: String = ""
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        // Blur Effect Viewの設定
+        let blurEffect = UIBlurEffect(style: .dark)
+        blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.frame = self.view.bounds
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        blurEffectView.isHidden = true
+        self.view.addSubview(blurEffectView)
+        
+        // Activity Indicatorの設定
+        activityIndicator = UIActivityIndicatorView(style: .large)
+        activityIndicator.center = self.view.center
+        activityIndicator.hidesWhenStopped = true
+        self.view.addSubview(activityIndicator)
+        
+        // Activity Indicatorをビュー階層の一番上に持ってくる
+        self.view.bringSubviewToFront(activityIndicator)
+        
+    }
+
+   
     @IBAction func onAddFile(_ sender: Any) {
-        let dv = UIDocumentPickerViewController(documentTypes:  ["public.item"], in: .import)
-        dv.delegate = self
-        //dv.allowsDocumentCreation = false
-        //dv.allowsPickingMultipleItems = false
-        self.present(dv, animated:true, completion: nil)
+        
+        var documentPicker: UIDocumentPickerViewController!
+            // iOS 14 & later
+            let supportedTypes: [UTType] = [
+                UTType(filenameExtension: "bin")!,
+                UTType(filenameExtension: "cue")!,
+                UTType(filenameExtension: "chd")!,
+                UTType(filenameExtension: "ccd")!,
+                UTType(filenameExtension: "img")!,
+                UTType(filenameExtension: "mds")!,
+                UTType(filenameExtension: "mdf")!,
+            ]
+            
+        documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: supportedTypes)
+        documentPicker.delegate = self
+        documentPicker.allowsMultipleSelection = true
+        self.present(documentPicker, animated:true, completion: nil)
     }
     
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt documentURLs: [URL]){
-        print(documentURLs[0])
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]){
+        
+        self.view.bringSubviewToFront(activityIndicator)
+        blurEffectView.isHidden = false
+        activityIndicator.startAnimating()
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+                // 選択されたファイルのURLを処理
+            for url in urls {
+                // ここで各ファイルのURLを処理します
+                print("Selected file URL: \(url)")
+                // 例: ファイルを解凍して処理する
+                self.processFile(at: url)
+            }
+            
+            DispatchQueue.main.async {
+                self.children.forEach{
+                    let fc = $0 as? FileSelectController
+                    if fc != nil {
+                        fc?.updateDoc()
+                    }
+                }
+                self.blurEffectView.isHidden = true
+                self.activityIndicator.stopAnimating()
+            }
+        }
+        
+    }
+    
+    func processFile(at fileURL: URL) {
+        print(fileURL)
+
+        guard fileURL.startAccessingSecurityScopedResource() else {
+            // エラー処理
+            return
+        }
         
         var documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         
-        let theFileName = documentURLs[0].lastPathComponent
         
-        if !theFileName.lowercased().contains(".chd") {
-            let alert: UIAlertController = UIAlertController(title: "Fail to open", message: "You can open a CHD only", preferredStyle:  UIAlertController.Style.alert)
+        let theFileName = fileURL.lastPathComponent
             
+        if theFileName.lowercased().contains(".cue") ||
+            theFileName.lowercased().contains(".bin") ||
+            theFileName.lowercased().contains(".chd") ||
+            theFileName.lowercased().contains(".ccd") ||
+            theFileName.lowercased().contains(".img") ||
+            theFileName.lowercased().contains(".mdf") ||
+            theFileName.lowercased().contains(".mds")
+        {
+            documentsUrl.appendPathComponent(theFileName)
+            
+            if( documentsUrl != fileURL ){
+                
+                let fileManager = FileManager.default
+                do {
+                    if fileManager.fileExists(atPath: documentsUrl.path) {
+                        try fileManager.removeItem(at: documentsUrl)
+                    }
+                    try fileManager.copyItem(at: fileURL, to: documentsUrl)
+                } catch let error as NSError {
+                    print("Fail to copy \(error.localizedDescription)")
+                    return
+                }
+            }
+            
+        } else{
+            let alert: UIAlertController = UIAlertController(title: "Fail to open", message: "You can select chd or bin or cue", preferredStyle:  UIAlertController.Style.alert)
             let defaultAction: UIAlertAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler:{
                 (action: UIAlertAction!) -> Void in
                 print("OK")
             })
-            
             alert.addAction(defaultAction)
-            
             present(alert, animated: true, completion: nil)
             return
         }
-
-        documentsUrl.appendPathComponent(theFileName)
-        let fileManager = FileManager.default
-         do {
-            try fileManager.copyItem(at: documentURLs[0], to: documentsUrl)
-         } catch let error as NSError {
-            NSLog("Fail to copy \(error.localizedDescription)")
-         }
         
-        self.children.forEach{
-            //if ($0.isKind(of: FileSelectController)){
-            let fc = $0 as? FileSelectController
-            if fc != nil {
-                fc?.updateDoc()
-            }
-            //}
-        }
-       
+        fileURL.stopAccessingSecurityScopedResource()
+        
+                
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
+    
     
 }

@@ -10,7 +10,6 @@ import Foundation
 
 struct GameInfo {
     var filePath: String?
-    var isoFilePath: String?
     var makerId: String?
     var productNumber: String?
     var version: String?
@@ -23,6 +22,102 @@ struct GameInfo {
     var imageUrl: String?
 }
 
+enum GameInfoError: Error {
+    case isoFileNotFound(message: String)
+}
+
+func genGameInfoFromIso(_ filePath: String?) -> GameInfo? {
+    guard let filePath = filePath else { return nil }
+    
+    do {
+        let fileURL = URL(fileURLWithPath: filePath)
+        let data = try Data(contentsOf: fileURL)
+        let buff = data.prefix(0xFF)
+        
+        return getGameInfoFromBuf(filePath: filePath, header: buff)
+    } catch {
+        print(error)
+        return nil
+    }
+}
+
+func genGameInfoFromMDS(filePath: String?) throws -> GameInfo? {
+    guard let filePath = filePath else { return nil }
+    let isoFileName = filePath.replacingOccurrences(of: ".mds", with: ".mdf")
+    
+    let fileManager = FileManager.default
+    if !fileManager.fileExists(atPath: isoFileName) {
+        // ISOファイルが存在しない場合に例外を発行
+        throw GameInfoError.isoFileNotFound(message: "ISO file \(isoFileName) does not exist.")
+    }
+
+    
+    guard var tmp = genGameInfoFromIso(isoFileName) else { return nil }
+    tmp.filePath = filePath
+    return tmp
+}
+
+
+func genGameInfoFromCCD(filePath: String?) throws -> GameInfo? {
+    guard let filePath = filePath else { return nil }
+    let isoFileName = filePath.replacingOccurrences(of: ".ccd", with: ".img")
+    
+    let fileManager = FileManager.default
+    if !fileManager.fileExists(atPath: isoFileName) {
+        // ISOファイルが存在しない場合に例外を発行
+        throw GameInfoError.isoFileNotFound(message: "ISO file \(isoFileName) does not exist.")
+    }
+    
+    
+    guard var tmp = genGameInfoFromIso(isoFileName) else { return nil }
+    tmp.filePath = filePath
+    return tmp
+}
+
+
+func genGameInfoFromCUE(filePath: String?) throws -> GameInfo? {
+    guard let filePath = filePath else { return nil }
+    let file = URL(fileURLWithPath: filePath)
+    let dirName = file.deletingLastPathComponent().path
+    var isoFileName = ""
+    
+    do {
+        let fileContent = try String(contentsOf: file, encoding: .utf8)
+        let lines = fileContent.split(separator: "\n")
+        
+        for line in lines {
+            let pattern = "FILE \"(.*)\""
+            if let range = line.range(of: pattern, options: .regularExpression) {
+                isoFileName = String(line[range])
+                isoFileName = isoFileName.replacingOccurrences(of: "FILE \"", with: "").replacingOccurrences(of: "\"", with: "")
+                break
+            }
+        }
+        
+        if isoFileName.isEmpty {
+           throw GameInfoError.isoFileNotFound(message: "ISO file does not exist.")
+        }
+    } catch {
+        print(error)
+        return nil
+    }
+    
+    if !dirName.isEmpty {
+        isoFileName = (dirName as NSString).appendingPathComponent(isoFileName)
+        
+        let fileManager = FileManager.default
+        if !fileManager.fileExists(atPath: isoFileName) {
+            // ISOファイルが存在しない場合に例外を発行
+            throw GameInfoError.isoFileNotFound(message: "ISO file \(isoFileName) does not exist.")
+        }
+    }
+    
+    guard var tmp = genGameInfoFromIso(isoFileName) else { return nil }
+    tmp.filePath = filePath
+    return tmp
+}
+        
+        
 func getGameInfoFromBuf(filePath: String?, header: Data) -> GameInfo? {
     guard let filePath = filePath, !header.isEmpty else { return nil }
     
@@ -31,7 +126,6 @@ func getGameInfoFromBuf(filePath: String?, header: Data) -> GameInfo? {
     
     var gameInfo = GameInfo()
     gameInfo.filePath = filePath
-    gameInfo.isoFilePath = filePath.uppercased()
     
     let charset = String.Encoding.shiftJIS // MS932に相当
     

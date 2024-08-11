@@ -10,7 +10,6 @@ import Foundation
 import UIKit
 import Kingfisher
 
-
 class GameItemCell: UICollectionViewCell {
     let titleLabel = UILabel()
     let imageView = UIImageView()
@@ -77,6 +76,9 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
 
     var completionHandler: ((String?) -> Void)?
     
+    var activityIndicator: UIActivityIndicatorView!
+    var blurEffectView: UIVisualEffectView!
+    
     func setupCollectionViewLayout(columns: CGFloat) {
         self.columns = columns
         let layout = UICollectionViewFlowLayout()
@@ -108,6 +110,10 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
     }
     
     let searchBar = UISearchBar()
+    
+    override func viewDidAppear(_ animated: Bool) {
+        updateDoc()
+    }
     
     override func viewDidLoad(){
         super.viewDidLoad()
@@ -148,7 +154,23 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
             self.setupCollectionViewLayout(columns: 3)
         }
 
-        updateDoc()
+        // Blur Effect Viewの設定
+        let blurEffect = UIBlurEffect(style: .dark)
+        blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.frame = self.view.bounds
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        blurEffectView.isHidden = true
+        self.view.addSubview(blurEffectView)
+        
+        // Activity Indicatorの設定
+        activityIndicator = UIActivityIndicatorView(style: .large)
+        activityIndicator.center = self.view.center
+        activityIndicator.hidesWhenStopped = true
+        self.view.addSubview(activityIndicator)
+        
+        // Activity Indicatorをビュー階層の一番上に持ってくる
+        self.view.bringSubviewToFront(activityIndicator)
+
     }
     
     // UISearchBarDelegate methods
@@ -243,56 +265,124 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
         }
     }
     
+    func getAllFilesRecursively(atPath path: String, manager: FileManager) -> [String] {
+        var allFiles: [String] = []
+        do {
+            let contents = try manager.contentsOfDirectory(atPath: path)
+            for item in contents {
+                let fullPath = (path as NSString).appendingPathComponent(item)
+                var isDir: ObjCBool = false
+                if manager.fileExists(atPath: fullPath, isDirectory: &isDir) {
+                    if isDir.boolValue {
+                        // If it's a directory, recurse into it
+                        allFiles.append(contentsOf: getAllFilesRecursively(atPath: fullPath, manager: manager))
+                    } else {
+                        // If it's a file, add it to the list
+                        allFiles.append(fullPath)
+                    }
+                }
+            }
+        } catch {
+            print("Error reading contents of directory: \(error)")
+        }
+        return allFiles
+    }
+    
     func updateDoc(){
         
+        self.view.bringSubviewToFront(activityIndicator)
+        blurEffectView.isHidden = false
+        activityIndicator.startAnimating()
+
         // ドキュメントディレクトリをバックアップ対象外にする
         do {
             let documentsDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-            try excludeDirectoryFromBackup(directoryURL: documentsDirectory)
+            try self.excludeDirectoryFromBackup(directoryURL: documentsDirectory)
         } catch {
             print("Error excludiong directory")
         }
         
-        file_list.removeAll()
-        let manager = FileManager.default
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-        
-        var count=0
-        do {
-            let all_file_list = try manager.contentsOfDirectory(atPath: documentsPath)
+        DispatchQueue.global(qos: .userInitiated).async {
+            
+            self.file_list.removeAll()
+            let manager = FileManager.default
+            let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+            
+            var count=0
+            let all_file_list = self.getAllFilesRecursively(atPath: documentsPath, manager: manager)
             for path in all_file_list {
+                print(path)
                 var isDir: ObjCBool = false
-                if manager.fileExists(atPath: documentsPath + "/" + path, isDirectory: &isDir) && !isDir.boolValue {
-                
-                   
-                    #if FREE_VERSION // Fore free
-                    count += 1;
-                    if( count >= 3){
-                        break;
-                    }
-                    #endif
+                if manager.fileExists(atPath: path, isDirectory: &isDir) && !isDir.boolValue {
                     
-                    if let buf = getGameinfoFromChd(documentsPath + "/" + path){
-                        let data = Data(bytes: buf, count: 256)
-                        if let gi = getGameInfoFromBuf(filePath: path, header: data){
-                            file_list.append(gi);
+#if FREE_VERSION // For free
+                    count += 1
+                    if count >= 3 {
+                        break
+                    }
+#endif
+                    
+                    // 拡張子がCHDの場合は、CHDからゲーム情報を取得
+                    if path.hasSuffix(".chd") {
+                        if let buf = getGameinfoFromChd(path) {
+                            let data = Data(bytes: buf, count: 256)
+                            if let gi = getGameInfoFromBuf(filePath: path, header: data) {
+                                self.file_list.append(gi)
+                            }
                         }
                     }
                     
-                } else {
+                    do {
+                        // in the case of cue file
+                        if path.hasSuffix(".cue") {
+                            if let gi = try genGameInfoFromCUE(filePath: path) {
+                                self.file_list.append(gi)
+                            }
+                        }
+                        
+                        // in the case of ccd file
+                        if path.hasSuffix(".ccd") {
+                            if let gi = try genGameInfoFromCCD(filePath: path) {
+                                self.file_list.append(gi)
+                            }
+                        }
+                        
+                        // in the case of ccd file
+                        if path.hasSuffix(".mds") {
+                            if let gi = try genGameInfoFromMDS(filePath: path) {
+                                self.file_list.append(gi)
+                            }
+                        }
+                    }catch GameInfoError.isoFileNotFound(let message) {
+                        
+                        print(message)
+                        
+                        DispatchQueue.main.async {
+                            // アラートを表示
+                            let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
+                            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                            self.present(alert, animated: true, completion: nil)
+                        }
+                        
+                    } catch {
+                        print("An unexpected error occurred: \(error).")
+                    }
+                    
                     
                 }
             }
-            file_list.sort { $0.displayName ?? "" < $1.displayName ?? "" }
-        }catch{
-        }
+            self.file_list.sort { $0.displayName ?? "" < $1.displayName ?? "" }
+            self.filteredFiles = self.file_list
+            
+            // UIの更新をメインスレッドで実行
+            DispatchQueue.main.async { [weak self] in
+                self?.collectionView.reloadData() // collectionViewのデータをリロード
+                self?.blurEffectView.isHidden = true
+                self?.activityIndicator.stopAnimating()
+            }
 
-        filteredFiles = file_list
-        
-        // UIの更新をメインスレッドで実行
-        DispatchQueue.main.async { [weak self] in
-            self?.collectionView.reloadData() // collectionViewのデータをリロード
         }
+       
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -308,8 +398,8 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
     }
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
-        selected_file_path = documentsPath + "/" + filteredFiles[(indexPath as NSIndexPath).row].filePath!
+
+        selected_file_path = filteredFiles[(indexPath as NSIndexPath).row].filePath!
       
         if( completionHandler != nil ){
             completionHandler?(selected_file_path)
@@ -319,6 +409,7 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
         
         performSegue(withIdentifier: "toGameView",sender: self)
     }
+   
     
     func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
         let cell = collectionView.cellForItem(at: indexPath)

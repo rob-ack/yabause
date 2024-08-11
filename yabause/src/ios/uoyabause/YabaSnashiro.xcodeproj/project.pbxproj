@@ -11,8 +11,6 @@
 		6290C255003441A8128FE03D /* Pods_YabaSnashiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */; };
 		640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
 		64373A371D979E5F00B3C7BA /* settings.plist in Resources */ = {isa = PBXBuildFile; fileRef = 64373A361D979E5F00B3C7BA /* settings.plist */; };
-		644232A71C6580000050611E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
-		644232AA1C6580000050611E /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
 		644232B41C6580000050611E /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 644232B21C6580000050611E /* Main.storyboard */; };
 		644232B61C6580000050611E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 644232B51C6580000050611E /* Assets.xcassets */; };
 		644232B91C6580000050611E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 644232B71C6580000050611E /* LaunchScreen.storyboard */; };
@@ -23,10 +21,8 @@
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		6DB209272097037300C9CC4B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6DB209262097037200C9CC4B /* GoogleService-Info.plist */; };
 		90F4496F1D3A39CA65243F46 /* Pods_YabaSnashiro_mini.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B382773649AF17C02288945 /* Pods_YabaSnashiro_mini.framework */; };
-		941B72E62BE733D70078C190 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A91C6580000050611E /* AppDelegate.m */; };
 		941B72E82BE733D70078C190 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		941B72E92BE733D70078C190 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */; };
-		941B72EC2BE733D70078C190 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 644232A61C6580000050611E /* main.m */; };
 		941B72ED2BE733D70078C190 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		941B72EF2BE733D70078C190 /* iOSCoreAudio.m in Sources */ = {isa = PBXBuildFile; fileRef = 94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */; };
 		941B72F32BE733D70078C190 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B9257B1573005D4814 /* GameController.framework */; };
@@ -73,6 +69,7 @@
 		D990B59E2C5F504E001E2D6C /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
 		D990B59F2C5F504E001E2D6C /* MetalANGLE.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D990B5A02C5F5600001E2D6C /* Pods_YabaSnashiroUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */; };
+		D9D0098B2C68B03500B93C58 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D0098A2C68B03500B93C58 /* AppDelegate.swift */; };
 		D9EE8ED82C5F436100E47A22 /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
 		D9EE8ED92C5F436100E47A22 /* MetalANGLE.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D9EE8EDD2C5F43F100E47A22 /* MainScreenTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EE8EDC2C5F43F100E47A22 /* MainScreenTest.swift */; };
@@ -149,9 +146,6 @@
 		640323861C673BE200DA91D8 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		64373A361D979E5F00B3C7BA /* settings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = settings.plist; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* YabaSnashiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YabaSnashiro.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		644232A61C6580000050611E /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
-		644232A81C6580000050611E /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
-		644232A91C6580000050611E /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		644232B31C6580000050611E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		644232B51C6580000050611E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		644232B81C6580000050611E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -203,6 +197,7 @@
 		C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiro.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCB1CB6709D254B83DC2B910 /* Pods-uoyabause.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabause.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause.debug.xcconfig"; sourceTree = "<group>"; };
 		CD439AACD73A3F0ECAC8B612 /* Pods-YabaSnashiroUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		D9D0098A2C68B03500B93C58 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		D9EE8EDB2C5F43F000E47A22 /* YabaSnashiroUITests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YabaSnashiroUITests-Bridging-Header.h"; sourceTree = "<group>"; };
 		D9EE8EDC2C5F43F100E47A22 /* MainScreenTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreenTest.swift; sourceTree = "<group>"; };
 		D9EE8EE02C5F464E00E47A22 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
@@ -296,40 +291,30 @@
 		644232A41C6580000050611E /* uoyabause */ = {
 			isa = PBXGroup;
 			children = (
-				94F2153E2C4BEE1100C213F8 /* YabaInterface.h */,
-				94F2153B2C4BE9FF00C213F8 /* YabaInterface.m */,
-				6DB209262097037200C9CC4B /* GoogleService-Info.plist */,
-				644232A81C6580000050611E /* AppDelegate.h */,
-				644232A91C6580000050611E /* AppDelegate.m */,
 				644232B21C6580000050611E /* Main.storyboard */,
+				644232B71C6580000050611E /* LaunchScreen.storyboard */,
+				949086292C439ECD0061671A /* GameInfo.swift */,
 				64D450081D7C0E6C004E2615 /* MainScreenController.swift */,
 				648926681D719E9500D92D58 /* FileSelectController.swift */,
 				645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */,
-				644232B51C6580000050611E /* Assets.xcassets */,
-				644232B71C6580000050611E /* LaunchScreen.storyboard */,
-				644232BA1C6580000050611E /* Info.plist */,
-				644232A51C6580000050611E /* Supporting Files */,
-				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
-				64373A361D979E5F00B3C7BA /* settings.plist */,
-				94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */,
-				94CB9D932581C71900C8E3EC /* iOSCoreAudio.h */,
-				949086292C439ECD0061671A /* GameInfo.swift */,
 				94F2152E2C4BA89B00C213F8 /* KeyMapper.swift */,
 				94F215312C4BA91600C213F8 /* SaturnKey.swift */,
 				94F215382C4BCE0500C213F8 /* PadButton.swift */,
 				94F2152B2C4BA6FF00C213F8 /* MenuViewController.swift */,
 				94F2153F2C4BF07400C213F8 /* GameViewController.swift */,
 				94F215422C4CC9BC00C213F8 /* GameMainViewController.swift */,
+				644232B51C6580000050611E /* Assets.xcassets */,
+				64373A361D979E5F00B3C7BA /* settings.plist */,
+				6DB209262097037200C9CC4B /* GoogleService-Info.plist */,
+				644232BA1C6580000050611E /* Info.plist */,
+				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
+				94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */,
+				94CB9D932581C71900C8E3EC /* iOSCoreAudio.h */,
+				94F2153E2C4BEE1100C213F8 /* YabaInterface.h */,
+				94F2153B2C4BE9FF00C213F8 /* YabaInterface.m */,
+				D9D0098A2C68B03500B93C58 /* AppDelegate.swift */,
 			);
 			path = uoyabause;
-			sourceTree = "<group>";
-		};
-		644232A51C6580000050611E /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				644232A61C6580000050611E /* main.m */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		644232C21C6580010050611E /* uoyabauseTests */ = {
@@ -866,14 +851,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				94F215322C4BA91600C213F8 /* SaturnKey.swift in Sources */,
-				644232AA1C6580000050611E /* AppDelegate.m in Sources */,
 				94F2152C2C4BA6FF00C213F8 /* MenuViewController.swift in Sources */,
+				D9D0098B2C68B03500B93C58 /* AppDelegate.swift in Sources */,
 				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
 				645EA6C61D975B3D00A7A5D8 /* SettingsViewController.swift in Sources */,
 				94F215402C4BF07400C213F8 /* GameViewController.swift in Sources */,
 				94F215432C4CC9BC00C213F8 /* GameMainViewController.swift in Sources */,
 				94F2153C2C4BE9FF00C213F8 /* YabaInterface.m in Sources */,
-				644232A71C6580000050611E /* main.m in Sources */,
 				64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */,
 				94F215392C4BCE0500C213F8 /* PadButton.swift in Sources */,
 				94CB9D8F2581C6BE00C8E3EC /* iOSCoreAudio.m in Sources */,
@@ -904,14 +888,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				94F215332C4BA91600C213F8 /* SaturnKey.swift in Sources */,
-				941B72E62BE733D70078C190 /* AppDelegate.m in Sources */,
 				94F2152D2C4BA6FF00C213F8 /* MenuViewController.swift in Sources */,
 				941B72E82BE733D70078C190 /* FileSelectController.swift in Sources */,
 				941B72E92BE733D70078C190 /* SettingsViewController.swift in Sources */,
 				94F215412C4BF07400C213F8 /* GameViewController.swift in Sources */,
 				94F215442C4CC9BC00C213F8 /* GameMainViewController.swift in Sources */,
 				94F2153D2C4BE9FF00C213F8 /* YabaInterface.m in Sources */,
-				941B72EC2BE733D70078C190 /* main.m in Sources */,
 				941B72ED2BE733D70078C190 /* MainScreenController.swift in Sources */,
 				94F2153A2C4BCE0500C213F8 /* PadButton.swift in Sources */,
 				941B72EF2BE733D70078C190 /* iOSCoreAudio.m in Sources */,

@@ -74,7 +74,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         _landscape.isOn = userDefaults.bool(forKey: "landscape")
         
         //
-        let plist = getSettingPlist()
+        let plist = SettingsViewController.getSettingPlist()
         
         //_BultinBiosswitch.isOn = plist.value(forKey: "builtin bios") as! Bool
         _showFpsSwitch.isOn = plist.value(forKey: "show fps") as! Bool
@@ -108,15 +108,14 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         }
     }
     
-    func getSettingFilname() -> String {
-        let libraryPath = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)[0] 
+    static func getSettingFilname() -> String {
+        let libraryPath = NSSearchPathForDirectoriesInDomains(.libraryDirectory, .userDomainMask, true)[0]
         let filename = "settings.plist"
         let filePath = libraryPath + "/" + filename
-        
         return filePath
     }
     
-    func getSettingPlist() -> NSMutableDictionary {
+    static func getSettingPlist() -> NSMutableDictionary {
         let filePath = getSettingFilname()
         let manager = FileManager()
         if( !manager.fileExists(atPath: filePath) ){
@@ -183,9 +182,9 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         
         if( pickerView == _picker ){
         
-            let plist = getSettingPlist();
+            let plist = SettingsViewController.getSettingPlist();
             plist.setObject(cartValues[row], forKey: "cartridge" as NSCopying)
-            plist.write(toFile: getSettingFilname(), atomically: true)
+            plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
             
             _cart_sel_label.text = cartArray[row] as? String
        
@@ -198,9 +197,9 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         
         else if( pickerView == _resolution_picker ){
             
-            let plist = getSettingPlist();
+            let plist = SettingsViewController.getSettingPlist();
             plist.setObject(resolutionValues[row], forKey: "rendering resolution" as NSCopying)
-            plist.write(toFile: getSettingFilname(), atomically: true)
+            plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
             
             
             _resolution_sel_label.text = resolutionArray[row] as? String
@@ -214,32 +213,32 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     }
     
     @IBAction func RotateScreenChanged(_ sender: Any) {
-        let plist = getSettingPlist();
+        let plist = SettingsViewController.getSettingPlist();
         plist.setObject(_rotate_screen.isOn, forKey: "rotate screen" as NSCopying)
-        plist.write(toFile: getSettingFilname(), atomically: true)
+        plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
 
     }
     
 
     @IBAction func ShowFPSChanged(_ sender: AnyObject) {
        
-        let plist = getSettingPlist();
+        let plist = SettingsViewController.getSettingPlist();
         plist.setObject(_showFpsSwitch.isOn, forKey: "show fps" as NSCopying)
-        plist.write(toFile: getSettingFilname(), atomically: true)
+        plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
     }
     
     @IBAction func FrameSkipChanged(_ sender: AnyObject) {
         
-        let plist = getSettingPlist();
+        let plist = SettingsViewController.getSettingPlist();
         plist.setObject(_showFrameSkip.isOn, forKey: "frame skip" as NSCopying)
-        plist.write(toFile: getSettingFilname(), atomically: true)
+        plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
         
 
     }
     @IBAction func AspectrateChnaged(_ sender: AnyObject) {
-        let plist = getSettingPlist();
+        let plist = SettingsViewController.getSettingPlist();
         plist.setObject(_keepAspectRate.isOn, forKey: "keep aspect rate" as NSCopying)
-        plist.write(toFile: getSettingFilname(), atomically: true)
+        plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
         
     }
     

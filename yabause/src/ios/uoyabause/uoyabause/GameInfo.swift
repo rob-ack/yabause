@@ -137,8 +137,9 @@ func getGameInfoFromBuf(filePath: String?, header: Data) -> GameInfo? {
         gameInfo.productNumber = productNumberData.trimmingCharacters(in: .whitespaces)
         if( gameInfo.productNumber != nil ){
             if let path = Bundle.main.path(forResource: "secrets", ofType: "plist"),
-               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject] {
-                gameInfo.imageUrl = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+gameInfo.productNumber!+".PNG?" + ((dict["cloudfront"] as? String)!)
+               let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject],
+               let cloudfront = dict["cloudfront"] as? String {
+                    gameInfo.imageUrl = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+gameInfo.productNumber!+".PNG?" + cloudfront
             }
         }
     }

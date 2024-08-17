@@ -20,7 +20,7 @@
 		648926691D719E9500D92D58 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		64D450091D7C0E6C004E2615 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		6DB209272097037300C9CC4B /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 6DB209262097037200C9CC4B /* GoogleService-Info.plist */; };
-		90F4496F1D3A39CA65243F46 /* Pods_YabaSnashiro_mini.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5B382773649AF17C02288945 /* Pods_YabaSnashiro_mini.framework */; };
+		8991F68256687B7469F10AD1 /* Pods_YabaSnashiro_Lite.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 098977F096BD86869379DB6A /* Pods_YabaSnashiro_Lite.framework */; };
 		941B72E82BE733D70078C190 /* FileSelectController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 648926681D719E9500D92D58 /* FileSelectController.swift */; };
 		941B72E92BE733D70078C190 /* SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 645EA6C51D975B3D00A7A5D8 /* SettingsViewController.swift */; };
 		941B72ED2BE733D70078C190 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
@@ -66,10 +66,16 @@
 		94F215442C4CC9BC00C213F8 /* GameMainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94F215422C4CC9BC00C213F8 /* GameMainViewController.swift */; };
 		94FAD18A2C5F015800E31F1F /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
 		CBF917C3CCABDBB63DCB43DF /* Pods_YabaSnashiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */; };
+		D98F41D72C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
+		D98F41D82C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
+		D98F41DA2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */; };
+		D98F41DB2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */; };
 		D990B59E2C5F504E001E2D6C /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
 		D990B59F2C5F504E001E2D6C /* MetalANGLE.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D990B5A02C5F5600001E2D6C /* Pods_YabaSnashiroUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */; };
 		D9D0098B2C68B03500B93C58 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D0098A2C68B03500B93C58 /* AppDelegate.swift */; };
+		D9D009902C693ECB00B93C58 /* Info-lite.plist in Resources */ = {isa = PBXBuildFile; fileRef = D9D0098F2C693ECB00B93C58 /* Info-lite.plist */; };
+		D9D009912C693F0300B93C58 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D0098A2C68B03500B93C58 /* AppDelegate.swift */; };
 		D9EE8ED82C5F436100E47A22 /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
 		D9EE8ED92C5F436100E47A22 /* MetalANGLE.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		D9EE8EDD2C5F43F100E47A22 /* MainScreenTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9EE8EDC2C5F43F100E47A22 /* MainScreenTest.swift */; };
@@ -137,12 +143,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		098977F096BD86869379DB6A /* Pods_YabaSnashiro_Lite.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiro_Lite.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		20115D1C6B2FC0F24C85EE33 /* Pods-YabaSnashiroUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.release.xcconfig"; sourceTree = "<group>"; };
 		20E7D52E72ED9D7E5E75B492 /* Pods-YabaSnashiro.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro/Pods-YabaSnashiro.release.xcconfig"; sourceTree = "<group>"; };
+		3292FC5D526D1BE121C199E6 /* Pods-YabaSnashiro-Lite.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro-Lite.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite.release.xcconfig"; sourceTree = "<group>"; };
 		3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiroTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3CE09E5047FB606A37FDCB1C /* Pods-uoyabauseTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseTests/Pods-uoyabauseTests.release.xcconfig"; sourceTree = "<group>"; };
 		4398B2C94F71079AE5A71824 /* Pods-YabaSnashiro-mini.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro-mini.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro-mini/Pods-YabaSnashiro-mini.debug.xcconfig"; sourceTree = "<group>"; };
-		5B382773649AF17C02288945 /* Pods_YabaSnashiro_mini.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiro_mini.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		640323861C673BE200DA91D8 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
 		64373A361D979E5F00B3C7BA /* settings.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = settings.plist; sourceTree = "<group>"; };
 		644232A21C6580000050611E /* YabaSnashiro.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = YabaSnashiro.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -166,9 +173,10 @@
 		6DB2092A2097088D00C9CC4B /* nanopb.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = nanopb.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7248E5EAC500018B32B8151B /* Pods-uoyabauseUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabauseUITests.release.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabauseUITests/Pods-uoyabauseUITests.release.xcconfig"; sourceTree = "<group>"; };
 		782A38C51C8F726D479DADEF /* Pods-YabaSnashiroTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroTests.release.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroTests/Pods-YabaSnashiroTests.release.xcconfig"; sourceTree = "<group>"; };
+		78E31312977D8BC3E74E97CC /* Pods-YabaSnashiro-Lite.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiro-Lite.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite.debug.xcconfig"; sourceTree = "<group>"; };
 		8118FC0A4919DED802B09AEF /* Pods_uoyabause.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_uoyabause.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		921C9D711E1628B4009065E6 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		941B730A2BE733D70078C190 /* YabaSnashiro-mini.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YabaSnashiro-mini.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		941B730A2BE733D70078C190 /* YabaSnashiro-Lite.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "YabaSnashiro-Lite.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		941B730B2BE733D70078C190 /* YabaSnashiro copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "YabaSnashiro copy-Info.plist"; path = "/Users/shinyamiyamoto/yabasanshiro/yabause/src/ios/uoyabause/YabaSnashiro copy-Info.plist"; sourceTree = "<absolute>"; };
 		941D60392BCAA74500E39805 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		944F55AA257B0F33005D4814 /* libchdr-static.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = "libchdr-static.a"; sourceTree = "<group>"; };
@@ -197,7 +205,10 @@
 		C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_YabaSnashiro.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCB1CB6709D254B83DC2B910 /* Pods-uoyabause.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-uoyabause.debug.xcconfig"; path = "Pods/Target Support Files/Pods-uoyabause/Pods-uoyabause.debug.xcconfig"; sourceTree = "<group>"; };
 		CD439AACD73A3F0ECAC8B612 /* Pods-YabaSnashiroUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-YabaSnashiroUITests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-YabaSnashiroUITests/Pods-YabaSnashiroUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		D98F41D62C6B92C40003E4C8 /* UIDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIDevice.swift; sourceTree = "<group>"; };
+		D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableCircleView.swift; sourceTree = "<group>"; };
 		D9D0098A2C68B03500B93C58 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		D9D0098F2C693ECB00B93C58 /* Info-lite.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "Info-lite.plist"; sourceTree = "<group>"; };
 		D9EE8EDB2C5F43F000E47A22 /* YabaSnashiroUITests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "YabaSnashiroUITests-Bridging-Header.h"; sourceTree = "<group>"; };
 		D9EE8EDC2C5F43F100E47A22 /* MainScreenTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainScreenTest.swift; sourceTree = "<group>"; };
 		D9EE8EE02C5F464E00E47A22 /* SnapshotHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SnapshotHelper.swift; path = fastlane/SnapshotHelper.swift; sourceTree = SOURCE_ROOT; };
@@ -252,7 +263,7 @@
 				941B72F72BE733D70078C190 /* OpenAL.framework in Frameworks */,
 				941B72F82BE733D70078C190 /* libyabause_ios.a in Frameworks */,
 				D990B59E2C5F504E001E2D6C /* MetalANGLE.xcframework in Frameworks */,
-				90F4496F1D3A39CA65243F46 /* Pods_YabaSnashiro_mini.framework in Frameworks */,
+				8991F68256687B7469F10AD1 /* Pods_YabaSnashiro_Lite.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -283,7 +294,7 @@
 				644232A21C6580000050611E /* YabaSnashiro.app */,
 				644232BF1C6580010050611E /* YabaSnashiroTests.xctest */,
 				644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */,
-				941B730A2BE733D70078C190 /* YabaSnashiro-mini.app */,
+				941B730A2BE733D70078C190 /* YabaSnashiro-Lite.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -301,11 +312,13 @@
 				94F215312C4BA91600C213F8 /* SaturnKey.swift */,
 				94F215382C4BCE0500C213F8 /* PadButton.swift */,
 				94F2152B2C4BA6FF00C213F8 /* MenuViewController.swift */,
+				D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */,
 				94F2153F2C4BF07400C213F8 /* GameViewController.swift */,
 				94F215422C4CC9BC00C213F8 /* GameMainViewController.swift */,
 				644232B51C6580000050611E /* Assets.xcassets */,
 				64373A361D979E5F00B3C7BA /* settings.plist */,
 				6DB209262097037200C9CC4B /* GoogleService-Info.plist */,
+				D9D0098F2C693ECB00B93C58 /* Info-lite.plist */,
 				644232BA1C6580000050611E /* Info.plist */,
 				648926671D719E9500D92D58 /* uoyabause-Bridging-Header.h */,
 				94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */,
@@ -313,6 +326,7 @@
 				94F2153E2C4BEE1100C213F8 /* YabaInterface.h */,
 				94F2153B2C4BE9FF00C213F8 /* YabaInterface.m */,
 				D9D0098A2C68B03500B93C58 /* AppDelegate.swift */,
+				D98F41D62C6B92C40003E4C8 /* UIDevice.swift */,
 			);
 			path = uoyabause;
 			sourceTree = "<group>";
@@ -353,7 +367,7 @@
 				C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */,
 				3AFB002D17E54BEC336A1DFE /* Pods_YabaSnashiroTests.framework */,
 				C6A3953C38AF483C1F1F5E89 /* Pods_YabaSnashiroUITests.framework */,
-				5B382773649AF17C02288945 /* Pods_YabaSnashiro_mini.framework */,
+				098977F096BD86869379DB6A /* Pods_YabaSnashiro_Lite.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -375,6 +389,8 @@
 				20E7D52E72ED9D7E5E75B492 /* Pods-YabaSnashiro.release.xcconfig */,
 				4398B2C94F71079AE5A71824 /* Pods-YabaSnashiro-mini.debug.xcconfig */,
 				6BF548377D2D1E81425E059C /* Pods-YabaSnashiro-mini.release.xcconfig */,
+				78E31312977D8BC3E74E97CC /* Pods-YabaSnashiro-Lite.debug.xcconfig */,
+				3292FC5D526D1BE121C199E6 /* Pods-YabaSnashiro-Lite.release.xcconfig */,
 			);
 			name = Pods;
 			sourceTree = "<group>";
@@ -445,9 +461,9 @@
 			productReference = 644232CA1C6580010050611E /* YabaSnashiroUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		941B72E22BE733D70078C190 /* YabaSnashiro-mini */ = {
+		941B72E22BE733D70078C190 /* YabaSnashiro-Lite */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 941B73072BE733D70078C190 /* Build configuration list for PBXNativeTarget "YabaSnashiro-mini" */;
+			buildConfigurationList = 941B73072BE733D70078C190 /* Build configuration list for PBXNativeTarget "YabaSnashiro-Lite" */;
 			buildPhases = (
 				4625D6971882D886503EEB37 /* [CP] Check Pods Manifest.lock */,
 				941B72E42BE733D70078C190 /* Sources */,
@@ -456,14 +472,15 @@
 				941B73042BE733D70078C190 /* ShellScript */,
 				941B73052BE733D70078C190 /* Embed Frameworks */,
 				ED4AB7ED8CB9AE38385E97FC /* [CP] Embed Pods Frameworks */,
+				D594596B6376C4C1F5B7D45B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = "YabaSnashiro-mini";
+			name = "YabaSnashiro-Lite";
 			productName = uoyabause;
-			productReference = 941B730A2BE733D70078C190 /* YabaSnashiro-mini.app */;
+			productReference = 941B730A2BE733D70078C190 /* YabaSnashiro-Lite.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -514,7 +531,7 @@
 				644232A11C6580000050611E /* YabaSnashiro */,
 				644232BE1C6580010050611E /* YabaSnashiroTests */,
 				644232C91C6580010050611E /* YabaSnashiroUITests */,
-				941B72E22BE733D70078C190 /* YabaSnashiro-mini */,
+				941B72E22BE733D70078C190 /* YabaSnashiro-Lite */,
 			);
 		};
 /* End PBXProject section */
@@ -552,6 +569,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9D009902C693ECB00B93C58 /* Info-lite.plist in Resources */,
 				941B72FB2BE733D70078C190 /* Main.storyboard in Resources */,
 				941B72FC2BE733D70078C190 /* GoogleService-Info.plist in Resources */,
 				941B72FD2BE733D70078C190 /* settings.plist in Resources */,
@@ -622,7 +640,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-YabaSnashiro-mini-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-YabaSnashiro-Lite-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -741,6 +759,26 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
+		D594596B6376C4C1F5B7D45B /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite-resources.sh",
+				"${PODS_CONFIGURATION_BUILD_DIR}/Google-Mobile-Ads-SDK/GoogleMobileAdsResources.bundle",
+				"${PODS_CONFIGURATION_BUILD_DIR}/GoogleUserMessagingPlatform/UserMessagingPlatformResources.bundle",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/GoogleMobileAdsResources.bundle",
+				"${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}/UserMessagingPlatformResources.bundle",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		D9F081D478E8019D24F35E3F /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -807,7 +845,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-mini/Pods-YabaSnashiro-mini-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite-frameworks.sh",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCore/FirebaseCore.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreExtension/FirebaseCoreExtension.framework",
 				"${BUILT_PRODUCTS_DIR}/FirebaseCoreInternal/FirebaseCoreInternal.framework",
@@ -840,7 +878,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-mini/Pods-YabaSnashiro-mini-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-YabaSnashiro-Lite/Pods-YabaSnashiro-Lite-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -852,6 +890,7 @@
 			files = (
 				94F215322C4BA91600C213F8 /* SaturnKey.swift in Sources */,
 				94F2152C2C4BA6FF00C213F8 /* MenuViewController.swift in Sources */,
+				D98F41DA2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */,
 				D9D0098B2C68B03500B93C58 /* AppDelegate.swift in Sources */,
 				648926691D719E9500D92D58 /* FileSelectController.swift in Sources */,
 				645EA6C61D975B3D00A7A5D8 /* SettingsViewController.swift in Sources */,
@@ -863,6 +902,7 @@
 				94CB9D8F2581C6BE00C8E3EC /* iOSCoreAudio.m in Sources */,
 				94F2152F2C4BA89B00C213F8 /* KeyMapper.swift in Sources */,
 				9490862A2C439ECD0061671A /* GameInfo.swift in Sources */,
+				D98F41D72C6B92C40003E4C8 /* UIDevice.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -887,7 +927,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D9D009912C693F0300B93C58 /* AppDelegate.swift in Sources */,
 				94F215332C4BA91600C213F8 /* SaturnKey.swift in Sources */,
+				D98F41DB2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */,
 				94F2152D2C4BA6FF00C213F8 /* MenuViewController.swift in Sources */,
 				941B72E82BE733D70078C190 /* FileSelectController.swift in Sources */,
 				941B72E92BE733D70078C190 /* SettingsViewController.swift in Sources */,
@@ -899,6 +941,7 @@
 				941B72EF2BE733D70078C190 /* iOSCoreAudio.m in Sources */,
 				94F215302C4BA89B00C213F8 /* KeyMapper.swift in Sources */,
 				9490862B2C439ECD0061671A /* GameInfo.swift in Sources */,
+				D98F41D82C6B92C40003E4C8 /* UIDevice.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -917,7 +960,7 @@
 		};
 		D990B59B2C5F4CFA001E2D6C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 941B72E22BE733D70078C190 /* YabaSnashiro-mini */;
+			target = 941B72E22BE733D70078C190 /* YabaSnashiro-Lite */;
 			targetProxy = D990B59A2C5F4CFA001E2D6C /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1039,7 +1082,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 21;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1060,7 +1103,7 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.15.0;
+				MARKETING_VERSION = 1.15.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1094,7 +1137,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 21;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1115,7 +1158,7 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.15.0;
+				MARKETING_VERSION = 1.15.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"$(OTHER_LDFLAGS)",
@@ -1221,17 +1264,17 @@
 		};
 		941B73082BE733D70078C190 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 4398B2C94F71079AE5A71824 /* Pods-YabaSnashiro-mini.debug.xcconfig */;
+			baseConfigurationReference = 78E31312977D8BC3E74E97CC /* Pods-YabaSnashiro-Lite.debug.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon lite";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YabaSnashiro.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 25;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1248,10 +1291,10 @@
 					"PB_ENABLE_MALLOC=1",
 					FREE_VERSION,
 				);
-				INFOPLIST_FILE = "YabaSnashiro copy-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Yaba Sanshiro 2 Free";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				INFOPLIST_FILE = "uoyabause/Info-lite.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Yaba Sanshiro 2 Lite";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1261,11 +1304,16 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.9.5;
-				OTHER_LDFLAGS = "";
+				MARKETING_VERSION = 1.15.2;
+				OTHER_LDFLAGS = (
+					"-l\"c++\"",
+					"-l\"z\"",
+					"$(inherited)",
+					"$(OTHER_LDFLAGS)",
+				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D FREE_VERSION";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.devMiyax.yabasanshiro2-free";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = maccatalyst.org.devMiyax.yabasanshiro2;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.devMiyax.yabasanshiro2-lite";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = "maccatalyst.org.devMiyax.yabasanshiro2-lite";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1283,17 +1331,17 @@
 		};
 		941B73092BE733D70078C190 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 6BF548377D2D1E81425E059C /* Pods-YabaSnashiro-mini.release.xcconfig */;
+			baseConfigurationReference = 3292FC5D526D1BE121C199E6 /* Pods-YabaSnashiro-Lite.release.xcconfig */;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD)";
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon lite";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = YabaSnashiro.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 25;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_BITCODE = NO;
@@ -1310,10 +1358,10 @@
 					"PB_ENABLE_MALLOC=1",
 					FREE_VERSION,
 				);
-				INFOPLIST_FILE = "YabaSnashiro copy-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Yaba Sanshiro 2 Free";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.games";
-				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				INFOPLIST_FILE = "uoyabause/Info-lite.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Yaba Sanshiro 2 Lite";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -1323,15 +1371,20 @@
 					"$(PROJECT_DIR)/Debug",
 					"$(PROJECT_DIR)",
 				);
-				MARKETING_VERSION = 1.9.5;
-				OTHER_LDFLAGS = "";
+				MARKETING_VERSION = 1.15.2;
+				OTHER_LDFLAGS = (
+					"-l\"c++\"",
+					"-l\"z\"",
+					"$(inherited)",
+					"$(OTHER_LDFLAGS)",
+				);
 				"OTHER_LDFLAGS[arch=*]" = (
 					"-ObjC",
 					"$(OTHER_LDFLAGS)",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D FREE_VERSION";
-				PRODUCT_BUNDLE_IDENTIFIER = "org.devMiyax.yabasanshiro2-free";
-				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = maccatalyst.org.devMiyax.yabasanshiro2;
+				PRODUCT_BUNDLE_IDENTIFIER = "org.devMiyax.yabasanshiro2-lite";
+				"PRODUCT_BUNDLE_IDENTIFIER[sdk=macosx*]" = "maccatalyst.org.devMiyax.yabasanshiro2-llite";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -1385,7 +1438,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		941B73072BE733D70078C190 /* Build configuration list for PBXNativeTarget "YabaSnashiro-mini" */ = {
+		941B73072BE733D70078C190 /* Build configuration list for PBXNativeTarget "YabaSnashiro-Lite" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				941B73082BE733D70078C190 /* Debug */,

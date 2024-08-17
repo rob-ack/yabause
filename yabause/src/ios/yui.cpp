@@ -134,10 +134,113 @@ extern "C" {
     int GetVideFilterType();
     int GetResolutionType();
     int GetIsRotateScreen();
+    int SetAnalogMode(int mode);
 
     char * getGameinfoFromChd( const char * path );
     
 int swapAglBuffer ();
+
+int g_pad_mode = 0;
+int g_pad2_mode = 0;
+void update_pad_mode();
+
+int SetAnalogMode(int mode){
+    g_pad_mode = mode;
+    update_pad_mode();
+    return 0;
+}
+
+void update_pad_mode()
+{
+    void *padbits;
+
+    PerPortReset();
+
+    if (g_pad_mode == 0)
+    {
+        padbits = PerPadAdd(&PORTDATA1);
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+    }
+    else if (g_pad_mode == 1)
+    {
+
+        padbits = Per3DPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+    }
+
+    if (s_player2Enable != -1)
+    {
+        if (g_pad2_mode == 0)
+        {
+            padbits = PerPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+        }
+        else
+        {
+            padbits = Per3DPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+        }
+    }
+}
+
     
 int start_emulation( int originx, int originy, int width, int height ){
 	int i;
@@ -215,38 +318,7 @@ int start_emulation( int originx, int originy, int width, int height ){
       return -1;
     }
 
-    PerPortReset();
-    padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	
-	if( s_player2Enable != -1 ) {
-		padbits = PerPadAdd(&PORTDATA2);
-		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	}
+    update_pad_mode();
 
     //ScspSetFrameAccurate(1);
     ScspUnMuteAudio(SCSP_MUTE_SYSTEM);

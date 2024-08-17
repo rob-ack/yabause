@@ -37,8 +37,15 @@ extern const int MSG_CLOSE_TRAY;
 //    MSG_CLOSE_TRAY,
 //    MSG_RESET,
 
+const unsigned int PERANALOG_AXIS_X = 18; // left to right
+const unsigned int PERANALOG_AXIS_Y = 19; // up to down
+const unsigned int PERANALOG_AXIS_RTRIGGER = 20; // right trigger
+const unsigned int PERANALOG_AXIS_LTRIGGER = 21; // left trigger
+
 void PerKeyDown(unsigned int key);
 void PerKeyUp(unsigned int key);
+int SetAnalogMode(int mode);
+void PerAxisValue(unsigned int, unsigned char val);
 int start_emulation( int originx, int originy, int width, int height );
 void resize_screen( int x, int y, int width, int height );
 int emulation_step( int command );

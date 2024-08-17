@@ -4,6 +4,7 @@ import GameController
 import AVFoundation
 import AudioToolbox
 
+
 var scurrentGamePath: UnsafeMutablePointer<Int8>? = nil
 
 protocol GameViewControllerDelegate : AnyObject {
@@ -11,9 +12,12 @@ protocol GameViewControllerDelegate : AnyObject {
 }
 
 @objcMembers
-class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
+class GameViewController: MGLKViewController,MGLKViewControllerDelegate,DraggableCircleViewDelegate {
+
+    
     
     weak var gdelegate: GameViewControllerDelegate?
+    private let feedbackGenerator = UIImpactFeedbackGenerator(style: .medium)
     
     // MARK: - Properties
     var iPodIsPlaying: UInt32 = 0
@@ -34,6 +38,8 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     private var controller_edit_mode: Int = 0
     private var canRotateToAllOrientations: Bool = false
     private var _landscape: Bool = false
+    private var isAnalogMode: Bool = false
+    private var isOnScreenControlHidden: Bool = false
     
     // MARK: - IBOutlets
     @IBOutlet weak var leftPanel: UIImageView!
@@ -57,6 +63,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     @IBOutlet weak var yButton: UIView!
     @IBOutlet weak var zButton: UIView!
     @IBOutlet weak var menuButton: UIButton!
+    @IBOutlet weak var analogPad: DraggableCircleView!
     
     static let saturnKeyDescriptions: [SaturnKey: String] = [
         .a: "A",
@@ -69,6 +76,21 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         .rightTrigger: "RT",
         .start: "Start"
     ]
+    
+    func setAnalogMode( to: Bool ){
+        isAnalogMode = to
+        if(isAnalogMode){
+            SetAnalogMode(1)
+        }else{
+            SetAnalogMode(0)
+        }
+        
+        if( isOnScreenControlHidden ){
+            analogPad.isHidden = true
+        }else{
+            analogPad.isHidden = !isAnalogMode
+        }
+    }
 
     lazy var saturnKeyToViewMappings: [SaturnKey: UIView] = {
         [
@@ -88,6 +110,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     // MARK: - Lifecycle Methods
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         self.delegate = self
         loadSettings()
 
@@ -191,6 +214,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
 
         NotificationCenter.default.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(didBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        analogPad.delegate = self
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -238,7 +262,11 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
 
     // MARK: - Controller Methods
     func hasControllerConnected() -> Bool {
+#if targetEnvironment(simulator)
+        return false
+#else
         return GCController.controllers().count > 0
+#endif
     }
     
     func patientlyDiscoverController() {
@@ -247,12 +275,16 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     }
     
     @objc func foundController() {
-        print("Found Controller")
-        NotificationCenter.default.addObserver(self, selector: #selector(controllerDidDisconnect), name: .GCControllerDidDisconnect, object: nil)
-        refreshViewsWithKeyRemaps()
-        setControllerOverlayHidden(true)
-        completionWirelessControllerDiscovery()
-        updateSideMenu()
+        #if targetEnvironment(simulator)
+        
+        #else
+            print("Found Controller")
+            NotificationCenter.default.addObserver(self, selector: #selector(controllerDidDisconnect), name: .GCControllerDidDisconnect, object: nil)
+            refreshViewsWithKeyRemaps()
+            setControllerOverlayHidden(true)
+            completionWirelessControllerDiscovery()
+            updateSideMenu()
+        #endif
     }
    
     
@@ -407,9 +439,17 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         rightTrigger.isHidden = hidden
         startButton.isHidden = hidden
         startView.isHidden = hidden
+
         
         remapLabelViews.forEach { label in
             label.isHidden = hasControllerConnected() && !hidden ? false : hidden
+        }
+        
+        isOnScreenControlHidden = hidden
+        if( hidden ){
+            analogPad.isHidden = true
+        }else{
+            analogPad.isHidden = !isAnalogMode
         }
     }
     
@@ -519,6 +559,37 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
                     }
                 }
                 
+                
+                gamepad.leftThumbstick.valueChangedHandler = { _, xValue, yValue in
+                    if( self.isAnalogMode ){
+                        PerAxisValue(PERANALOG_AXIS_X, convertDoubleToUInt8((Double(xValue) * 128.0) + 128)); // from 0 to 255
+                        PerAxisValue(PERANALOG_AXIS_Y, convertDoubleToUInt8((Double(-yValue) * 128.0) + 128)); // from 0 to 255
+                    }
+                }
+
+                gamepad.leftTrigger.valueChangedHandler = { _, Value, yValue in
+                    if( self.isAnalogMode ){
+                        PerAxisValue(PERANALOG_AXIS_LTRIGGER, convertDoubleToUInt8(( (Double(Value)) * 255.0))); // from 0 to 255
+                    }
+                    if Value > 0.5 {
+                        mfiButtonHandler(.MFI_BUTTON_LT, true)
+                    }else{
+                        mfiButtonHandler(.MFI_BUTTON_LT, false)
+                    }
+                }
+
+                gamepad.rightTrigger.valueChangedHandler = { _, Value, yValue in
+                    if( self.isAnalogMode ){
+                        PerAxisValue(PERANALOG_AXIS_RTRIGGER, convertDoubleToUInt8(( (Double(Value)) * 255.0))); // from 0 to 255
+                    }
+                    if Value > 0.5 {
+                        mfiButtonHandler(.MFI_BUTTON_RT, true)
+                    }else{
+                        mfiButtonHandler(.MFI_BUTTON_RT, false)
+                    }
+                }
+
+                
                 // Commented out in the original code
                 /*
                 gamepad.rightThumbstick.valueChangedHandler = { _, xValue, yValue in
@@ -558,7 +629,15 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     }
     
     @objc func controllerDidDisconnect() {
-        // Implement the logic for when a controller disconnects
+        if GCController.controllers().count <= 0 {
+            setControllerOverlayHidden(false)
+            isKeyRemappingMode = false
+            if !remapLabelViews.isEmpty {
+                remapLabelViews.forEach { $0.removeFromSuperview() }
+            }
+            remapLabelViews.removeAll()
+        }
+
     }
     
     // MARK: settings
@@ -575,6 +654,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
             _sound_engine = Int32((dic["sound engine"] as? Int) ?? 0)
             _rendering_resolution = Int32((dic["rendering resolution"] as? Int) ?? 0)
             _rotate_screen = ObjCBool((dic["rotate screen"] as? Bool) ?? false)
+            setAnalogMode(to: (dic["analog mode"] as? Bool) ?? false )
         }
         
         let ud = UserDefaults.standard
@@ -586,6 +666,8 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         
         _controller_scale = ud.float(forKey: "controller scale")
          self._landscape = ud.bool(forKey: "landscape")
+        
+
     }
 
     func getSettingFilePath() -> String {
@@ -615,6 +697,13 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         return filePath
     }
     
+    func onChangeTouchPos(x: UInt8, y: UInt8) {
+        if( isAnalogMode ){
+            PerAxisValue(PERANALOG_AXIS_X, x); // from 0 to 255
+            PerAxisValue(PERANALOG_AXIS_Y, y); // from 0 to 255
+        }
+    }
+    
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
 //        super.touchesBegan(touches, with: event)
         for touch in touches {
@@ -633,13 +722,31 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         
         if hasControllerConnected() { return }
         
-        for btnindex in 0..<PadButtons.last.rawValue {
+        var eventCount = 0
+        var startIndex = 0
+        if isAnalogMode {
+            startIndex = 4
+        }
+        for btnindex in startIndex..<PadButtons.last.rawValue {
             if padButtons[Int(btnindex)].isOn() {
                 PerKeyDown(UInt32(btnindex))
+                eventCount += 1
             } else {
                 PerKeyUp(UInt32(btnindex))
             }
         }
+        
+        if( eventCount > 0 ) {
+            switch UIDevice.current.feedbackSupportLevel
+            {
+            case .feedbackGenerator:
+                self.feedbackGenerator.impactOccurred()
+            case .basic, .unsupported:
+                UIDevice.current.vibrate()
+            }
+        }
+
+        
     }
     
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
@@ -755,6 +862,9 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     }
     
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+        
+        var eventCount = 0
+        
         for touch in touches {
             if padButtons[Int(PadButtons.down.rawValue)].isOn() && padButtons[Int(PadButtons.down.rawValue)].getPointId() == touch {
                 if let target = padButtons[Int(PadButtons.down.rawValue)].target {
@@ -777,6 +887,11 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
             if let target = padButtons[PadButtons.down.rawValue].target {
                 let point = touch.location(in: target)
                 if target.bounds.contains(point) {
+                    
+                    if( !isAnalogMode && padButtons[Int(PadButtons.down.rawValue)].isOn() == false ){
+                        eventCount += 1
+                    }
+
                     padButtons[PadButtons.down.rawValue].on(touch)
                 }
             }
@@ -784,6 +899,11 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
             if let target = padButtons[PadButtons.up.rawValue].target {
                 let point = touch.location(in: target)
                 if target.bounds.contains(point) {
+                    
+                    if( !isAnalogMode && padButtons[Int(PadButtons.up.rawValue)].isOn() == false ){
+                        eventCount += 1
+                    }
+                    
                     padButtons[PadButtons.up.rawValue].on(touch)
                 }
             }
@@ -809,6 +929,12 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
             if let target = padButtons[PadButtons.left.rawValue].target {
                 let point = touch.location(in: target)
                 if target.bounds.contains(point) {
+                    
+                    if( !isAnalogMode && padButtons[Int(PadButtons.left.rawValue)].isOn() == false ){
+                        eventCount += 1
+                    }
+
+                    
                     padButtons[PadButtons.left.rawValue].on(touch)
                 }
             }
@@ -816,6 +942,12 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
             if let target = padButtons[PadButtons.right.rawValue].target {
                 let point = touch.location(in: target)
                 if target.bounds.contains(point) {
+                    
+                    if( !isAnalogMode && padButtons[Int(PadButtons.right.rawValue)].isOn() == false ){
+                        eventCount += 1
+                    }
+
+                    
                     padButtons[PadButtons.right.rawValue].on(touch)
                 }
             }
@@ -839,11 +971,40 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         
         if hasControllerConnected() { return }
         
-        for btnindex in 0..<PadButtons.last.rawValue {
+        var startIndex = 0
+        if isAnalogMode {
+            startIndex = 4
+        }
+        for btnindex in startIndex..<PadButtons.last.rawValue {
             if padButtons[btnindex].isOn() {
                 PerKeyDown(UInt32(btnindex))
             } else {
                 PerKeyUp(UInt32(btnindex))
+            }
+        }
+        
+        
+        if( self.isAnalogMode ){
+            if( padButtons[PadButtons.leftTrigger.rawValue].isOn() ){
+                PerAxisValue(PERANALOG_AXIS_LTRIGGER, 255);
+            }else{
+                PerAxisValue(PERANALOG_AXIS_LTRIGGER, 0);
+            }
+            if( padButtons[PadButtons.rightTrigger.rawValue].isOn() ){
+                PerAxisValue(PERANALOG_AXIS_RTRIGGER, 255);
+            }else{
+                PerAxisValue(PERANALOG_AXIS_RTRIGGER, 0);
+            }
+        }
+
+        
+        if( eventCount > 0 ) {
+            switch UIDevice.current.feedbackSupportLevel
+            {
+            case .feedbackGenerator:
+                self.feedbackGenerator.impactOccurred()
+            case .basic, .unsupported:
+                UIDevice.current.vibrate()
             }
         }
     }
@@ -862,8 +1023,12 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
         }
         
         if hasControllerConnected() { return }
-        
-        for btnindex in 0..<PadButtons.last.rawValue {
+
+        var startIndex = 0
+        if isAnalogMode {
+            startIndex = 4
+        }
+        for btnindex in startIndex..<PadButtons.last.rawValue {
             if padButtons[btnindex].isOn() {
                 PerKeyDown(UInt32(btnindex))
             } else {
@@ -911,24 +1076,30 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate {
     
     func presentFileSelectViewController() {
         
-        self.command = MSG_OPEN_TRAY
-        
         let fsVC = FileSelectController()
         fsVC.completionHandler = { data in
             if let data = data {
-                self.selectedFile = data
-                if( scurrentGamePath != nil ){
-                    scurrentGamePath?.deallocate()
-                    scurrentGamePath = nil
+                
+                self.command = MSG_OPEN_TRAY
+                self.isPaused = false
+                
+                // OPENの処理が終わってしばらくしてから実行する
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    self.selectedFile = data
+                    if( scurrentGamePath != nil ){
+                        scurrentGamePath?.deallocate()
+                        scurrentGamePath = nil
+                    }
+                    let cString = (self.selectedFile! as NSString).utf8String!
+                    let bufferSize = Int(strlen(cString)) + 1
+                    scurrentGamePath = UnsafeMutablePointer<Int8>.allocate(capacity: bufferSize)
+                    strncpy(scurrentGamePath, cString, bufferSize)
+                    currentGamePath = UnsafePointer<CChar>(scurrentGamePath)
+                    self.command = MSG_CLOSE_TRAY
                 }
-                let cString = (self.selectedFile! as NSString).utf8String!
-                let bufferSize = Int(strlen(cString)) + 1
-                scurrentGamePath = UnsafeMutablePointer<Int8>.allocate(capacity: bufferSize)
-                strncpy(scurrentGamePath, cString, bufferSize)
-                currentGamePath = UnsafePointer<CChar>(scurrentGamePath)
-                self.command = MSG_CLOSE_TRAY
+                
             }else{
-                self.command = MSG_CLOSE_TRAY
+                self.isPaused = false
             }
         }
         

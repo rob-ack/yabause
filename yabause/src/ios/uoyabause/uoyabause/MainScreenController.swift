@@ -41,6 +41,14 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
    
     @IBAction func onAddFile(_ sender: Any) {
         
+        for child in self.children {
+            if let fc = child as? FileSelectController {
+                if fc.checkLimitation() == false {
+                    return
+                }
+            }
+        }
+        
         var documentPicker: UIDocumentPickerViewController!
             // iOS 14 & later
             let supportedTypes: [UTType] = [

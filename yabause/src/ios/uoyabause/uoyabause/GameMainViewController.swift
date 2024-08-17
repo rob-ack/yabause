@@ -9,8 +9,10 @@
 import Foundation
 import UIKit
 
-class GameMainViewController : UIViewController {
-    
+
+
+class GameMainViewController: UIViewController
+{
     enum MenuState {
         case opened
         case closed
@@ -29,7 +31,8 @@ class GameMainViewController : UIViewController {
              self.gameVC?.gdelegate = self
          }
      }
-
+    
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         menuVC.delegate = self
@@ -39,7 +42,7 @@ class GameMainViewController : UIViewController {
         menuVC.didMove(toParent: self)
         view.sendSubviewToBack(menuVC.view)
     }
-    
+
     override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
         // landscapeフラグに応じて画面の向きを設定
         let ud = UserDefaults.standard
@@ -63,9 +66,14 @@ class GameMainViewController : UIViewController {
 }
 
 extension GameMainViewController: GameViewControllerDelegate {
+   
     func didTapMenuButton() {
         // Animate the menu
-        print("tap the menu")
+        // print("tap the menu")
+        
+        if( menuState == .opened ){
+            self.gameVC?.isPaused = false
+        }
         toggleMenu( completion: nil )
     }
     
@@ -89,7 +97,6 @@ extension GameMainViewController: GameViewControllerDelegate {
             
         case .opened:
             
-            self.gameVC?.isPaused = false
             
             // close it
             UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: .curveEaseInOut) {
@@ -112,6 +119,8 @@ extension GameMainViewController: GameViewControllerDelegate {
 extension GameMainViewController: MenuViewControllerDelegate {
     func didSelect(menuItem: MenuViewController.MenuOptions) {
         toggleMenu { [weak self] in
+
+            var doNotPause = false
             switch menuItem {
             case .exit:
                 // アラートコントローラの作成
@@ -125,18 +134,19 @@ extension GameMainViewController: MenuViewControllerDelegate {
 
                 // "No"ボタンの追加
                 let noAction = UIAlertAction(title: "No", style: .default) { action in
-
+                    self?.gameVC?.isPaused = false
                 }
                 alertController.addAction(noAction)
 
-                // アラートを表示する（例として現在のViewControllerから表示）
                 self?.present(alertController, animated: true, completion: nil)
+                doNotPause = true
                 break
             case .reset:
                 self?.gameVC?.reset()
                 break
             case .changeDisk:
                 self?.gameVC?.presentFileSelectViewController()
+                doNotPause = true
                 break
             case .saveState:
                 self?.gameVC?.saveState()
@@ -144,12 +154,27 @@ extension GameMainViewController: MenuViewControllerDelegate {
             case .loadState:
                 self?.gameVC?.loadState()
                 break
-            //case .analogMode:
-            //    break
+            case .analogMode:
+                break
             case .controllerSetting:
                 self?.gameVC?.toggleControllSetting()
                 break
             }
+
+            if doNotPause == false{
+                self?.gameVC?.isPaused = false
+            }
+        }
+    }
+    
+    func didChangeAnalogMode(to: Bool){
+        
+        toggleMenu { [weak self] in
+            let plist = SettingsViewController.getSettingPlist();
+            plist.setObject(to, forKey: "analog mode" as NSCopying)
+            plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
+            self?.gameVC?.setAnalogMode(to: to)
+            self?.gameVC?.isPaused = false
         }
     }
     

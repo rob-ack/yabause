@@ -1,6 +1,8 @@
 import UIKit
-import Firebase
-
+import FirebaseCore
+#if FREE_VERSION
+import GoogleMobileAds
+#endif
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
@@ -11,7 +13,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         
         // Initialize the Google Mobile Ads SDK.FirebaseCoreDiagnostics
-        
+#if FREE_VERSION
+        GADMobileAds.sharedInstance().start(completionHandler: nil)
+#endif
         return true
     }
 

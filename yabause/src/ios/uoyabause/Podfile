@@ -10,11 +10,12 @@ target 'YabaSnashiro' do
 
   # Pods for uoyabause
 
-  target 'YabaSnashiro-mini' do
+  target 'YabaSnashiro-Lite' do
     inherit! :search_paths
     pod 'Firebase/Core'
     pod 'FirebaseCrashlytics'
     pod 'Kingfisher', '~> 7.0'  
+    pod 'Google-Mobile-Ads-SDK'
     end
 
   target 'YabaSnashiroTests' do

@@ -9,6 +9,9 @@
 import Foundation
 import UIKit
 import Kingfisher
+#if FREE_VERSION
+import GoogleMobileAds
+#endif
 
 class GameItemCell: UICollectionViewCell {
     let titleLabel = UILabel()
@@ -67,6 +70,11 @@ class GameItemCell: UICollectionViewCell {
 
 
 class FileSelectController : UIViewController, UICollectionViewDataSource, UICollectionViewDelegate,UICollectionViewDelegateFlowLayout, UISearchBarDelegate, UISearchResultsUpdating {
+    
+#if FREE_VERSION
+    var bannerView: GADBannerView!
+#endif
+    
     var file_list: [GameInfo] = []
     var filteredFiles: [GameInfo] = []
     var selected_file_path: String = ""
@@ -78,6 +86,31 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
     
     var activityIndicator: UIActivityIndicatorView!
     var blurEffectView: UIVisualEffectView!
+    
+#if FREE_VERSION
+    func addBannerViewToView(_ bannerView: GADBannerView) {
+        bannerView.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(bannerView)
+        view.addConstraints(
+          [NSLayoutConstraint(item: bannerView,
+                              attribute: .bottom,
+                              relatedBy: .equal,
+                              toItem: view.safeAreaLayoutGuide,
+                              attribute: .bottom,
+                              multiplier: 1,
+                              constant: 0),
+           NSLayoutConstraint(item: bannerView,
+                              attribute: .centerX,
+                              relatedBy: .equal,
+                              toItem: view,
+                              attribute: .centerX,
+                              multiplier: 1,
+                              constant: 0)
+          ])
+       }
+
+#endif
+
     
     func setupCollectionViewLayout(columns: CGFloat) {
         self.columns = columns
@@ -167,10 +200,46 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
         activityIndicator.center = self.view.center
         activityIndicator.hidesWhenStopped = true
         self.view.addSubview(activityIndicator)
+
+#if FREE_VERSION
+        let viewWidth = view.frame.inset(by: view.safeAreaInsets).width
+
+        // Here the current interface orientation is used. Use
+        // GADLandscapeAnchoredAdaptiveBannerAdSizeWithWidth or
+        // GADPortraitAnchoredAdaptiveBannerAdSizeWithWidth if you prefer to load an ad of a
+        // particular orientation,
+        let adaptiveSize = GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(viewWidth)
+        bannerView = GADBannerView(adSize: adaptiveSize)
         
+       
+        addBannerViewToView(bannerView)
+
+        bannerView.adUnitID = "ca-app-pub-3940256099942544/2435281174"
+        
+        if let path = Bundle.main.path(forResource: "secrets", ofType: "plist"),
+           let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject],
+           let bunnerid = dict["bunnerid"] as? String {
+            bannerView.adUnitID = bunnerid
+        }
+        
+      
+        let bannerHeight = bannerView.frame.height
+        let safeAreaHeight = view.safeAreaLayoutGuide.layoutFrame.height
+        let newGameVCHeight = safeAreaHeight - bannerHeight
+
+        // Adjust the height of gameVC
+        collectionView?.frame.size.height = newGameVCHeight
+        
+        bannerView.rootViewController = self
+        bannerView.delegate = self
+        
+        bannerView.load(GADRequest())
+#endif
+
         // Activity Indicatorをビュー階層の一番上に持ってくる
         self.view.bringSubviewToFront(activityIndicator)
 
+        
     }
     
     // UISearchBarDelegate methods
@@ -288,6 +357,35 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
         return allFiles
     }
     
+    func checkLimitation() -> Bool {
+#if FREE_VERSION // For free
+        
+        var check = true
+        
+        if self.file_list.count >= 3 {
+           check = false
+        }
+        
+        if check == false {
+            // アラートを表示して有料版に誘導する
+            DispatchQueue.main.async {
+                let alert = UIAlertController(title: "Upgrade Required", message: "You have reached the maximum number of files for the free version. Please upgrade to the paid version to add more files.", preferredStyle: .alert)
+                alert.addAction(UIAlertAction(title: "Upgrade", style: .default, handler: { _ in
+                    if let url = URL(string: "https://apps.apple.com/app/id1549144351") {
+                        UIApplication.shared.open(url)
+                    }
+                }))
+                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                self.present(alert, animated: true, completion: nil)
+            }
+        }
+        
+        return check
+#else
+        return true
+#endif
+    }
+    
     func updateDoc(){
         
         self.view.bringSubviewToFront(activityIndicator)
@@ -315,24 +413,18 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
                 var isDir: ObjCBool = false
                 if manager.fileExists(atPath: path, isDirectory: &isDir) && !isDir.boolValue {
                     
-#if FREE_VERSION // For free
-                    count += 1
-                    if count >= 3 {
-                        break
-                    }
-#endif
-                    
-                    // 拡張子がCHDの場合は、CHDからゲーム情報を取得
-                    if path.hasSuffix(".chd") {
-                        if let buf = getGameinfoFromChd(path) {
-                            let data = Data(bytes: buf, count: 256)
-                            if let gi = getGameInfoFromBuf(filePath: path, header: data) {
-                                self.file_list.append(gi)
+                    do {
+                        
+                        // 拡張子がCHDの場合は、CHDからゲーム情報を取得
+                        if path.hasSuffix(".chd") {
+                            if let buf = getGameinfoFromChd(path) {
+                                let data = Data(bytes: buf, count: 256)
+                                if let gi = getGameInfoFromBuf(filePath: path, header: data) {
+                                    self.file_list.append(gi)
+                                }
                             }
                         }
-                    }
-                    
-                    do {
+                        
                         // in the case of cue file
                         if path.hasSuffix(".cue") {
                             if let gi = try genGameInfoFromCUE(filePath: path) {
@@ -353,6 +445,11 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
                                 self.file_list.append(gi)
                             }
                         }
+                        
+                        if self.checkLimitation() == false {
+                            break
+                        }
+
                     }catch GameInfoError.isoFileNotFound(let message) {
                         
                         print(message)
@@ -444,3 +541,23 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
 }
 
 
+#if FREE_VERSION
+extension FileSelectController: GADBannerViewDelegate {
+    
+    func adjustGameVCHeightForBanner() {
+        guard let bannerView = bannerView else { return }
+        let bannerHeight = bannerView.frame.height
+        let safeAreaHeight = view.safeAreaLayoutGuide.layoutFrame.height
+        let newGameVCHeight = safeAreaHeight - bannerHeight
+
+        // Adjust the height of gameVC
+        collectionView?.frame.size.height = newGameVCHeight
+    }
+
+    // GADBannerViewDelegate method
+    func bannerViewDidReceiveAd(_ bannerView: GADBannerView) {
+        adjustGameVCHeightForBanner()
+    }
+
+}
+#endif

@@ -1,0 +1,61 @@
+/* Class = "UILabel";; text  "Force Landscape Mode"; ObjectID = "05T-W3-45O"; */
+"05T-W3-45O.text" = "常に横画面モード";
+
+/* Class = "UILabel"; te"UILa"Show FPS"; ObjectID = "0uv-hR-62t"; */
+"0uv-hR-62t.text" = "FPSを表示する";
+
+/* Class = "UILabel";ass = = "Load State"; ObjectID = "2kC-86-hOR"; */
+"2kC-86-hOR.text" = "状態読み込み";
+
+/* Class = "UILabel";Labe/ = "Label"; ObjectID = "5kh-BO-spI"; */
+"5kh-BO-spI.text" = "Label";
+
+/* Class = "UILabel";縦横比を固/* "Keep original aspect rate"; ObjectID = "7a9-1I-qMs"; */
+"7a9-1I-qMs.text" = "縦横比を固定する";
+
+/* Class = "UITableViewSectiグラフィック設定derTitle = "Graphics"; ObjectID = "Adw-oe-5dn"; */
+"Adw-oe-5dn.headerTitle" = "グラフィック設定";
+
+/* Class = "UILabel";描画解像度 = "Rendering Resolution"; ObjectID = "DjX-3S-nbY"; */
+"DjX-3S-nbY.text" = "描画解像度";
+
+/* Class = "UILabel";フレームをスキップするame Skip"; ObjectID = "HEk-JT-gUF"; */
+"HEk-JT-gUF.text" = "フレームをスキップする";
+
+/* Class = "UILabel";Show Remaphow Remas Controls"; ObjectID = "Iwo-k1-gyt"; */
+"Iwo-k1-gyt.text" = "Show Remap Controls";
+
+/* Class = "UITableViewSecti一般"; headerTitle = "General"; ObjectID = "KND-t5-hSX"; */
+"KND-t5-hSX.headerTitle" = "一般";
+
+/* Class = "UIButton"; norma設定itle = "Settings"; ObjectID = "N8h-Be-Hod"; */
+"N8h-Be-Hod.normalTitle" = "設定";
+
+/* Class = "UINavigationItem"; title = "Yaba Sanshiro 2"; ObjectID = "NHI-fu-wtb"; */
+
+/* Class = "UILabel"; text = "Resolution Picker label"; ObjectID = "NIg-ct-7sX"; */
+"NIg-ct-7sX.text" = "Resolution Picker label";
+
+/* Class = "UILabel"; text = "Cartridge"; ObjectID = "Tsw-hZ-S89"; */
+"Tsw-hZ-S89.text" = "カードリッジ";
+
+/* Class = "UILabel"; text = "Exit"; ObjectID = "X1O-pp-oDF"; */
+"X1O-pp-oDF.text" = "終了";
+
+/* Class = "UITableViewSection"; headerTitle = "Emulation menu"; ObjectID = "XY2-Ni-Gbc"; */
+"XY2-Ni-Gbc.headerTitle" = "Emulation menu";
+
+/* Class = "UILabel"; text = "Rotate 90 degree"; ObjectID = "a6W-wy-CZs"; */
+"a6W-wy-CZs.text" = "画面を90度回転させる";
+
+/* Class = "UILabel"; text = "Adjust Controller"; ObjectID = "a8b-Pg-2IA"; */
+"a8b-Pg-2IA.text" = "コントローラーの調整";
+
+/* Class = "UINavigationItem"; title = "Setting"; ObjectID = "dP5-m9-P5R"; */
+"dP5-m9-P5R.title" = "設定";
+
+/* Class = "UILabel"; text = "Change Disk"; ObjectID = "oik-51-mjH"; */
+"oik-51-mjH.text" = "ディスク交換";
+
+/* Class = "UILabel"; text = "Save State"; ObjectID = "wEc-St-PPd"; */
+"wEc-St-PPd.text" = "状態保存";

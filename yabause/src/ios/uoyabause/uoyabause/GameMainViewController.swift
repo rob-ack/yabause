@@ -123,20 +123,32 @@ extension GameMainViewController: MenuViewControllerDelegate {
             var doNotPause = false
             switch menuItem {
             case .exit:
+                
                 // アラートコントローラの作成
-                let alertController = UIAlertController(title: "", message: "Are you sure you want to exit?", preferredStyle: .alert)
+                let alertController = UIAlertController(
+                    title: NSLocalizedString("Exit Confirmation", comment: "Title for exit confirmation alert"),
+                    message: NSLocalizedString("Are you sure you want to exit?", comment: "Message asking if the user is sure about exiting"),
+                    preferredStyle: .alert
+                )
 
                 // "Yes"ボタンの追加
-                let yesAction = UIAlertAction(title: "Yes", style: .default) { action in
+                let yesAction = UIAlertAction(
+                    title: NSLocalizedString("Yes", comment: "Confirm action to exit the application"),
+                    style: .default
+                ) { action in
                     exit(0)
                 }
                 alertController.addAction(yesAction)
 
                 // "No"ボタンの追加
-                let noAction = UIAlertAction(title: "No", style: .default) { action in
+                let noAction = UIAlertAction(
+                    title: NSLocalizedString("No", comment: "Cancel the exit action"),
+                    style: .default
+                ) { action in
                     self?.gameVC?.isPaused = false
                 }
                 alertController.addAction(noAction)
+                
 
                 self?.present(alertController, animated: true, completion: nil)
                 doNotPause = true

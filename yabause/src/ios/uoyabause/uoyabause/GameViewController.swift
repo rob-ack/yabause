@@ -125,7 +125,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
             scurrentGamePath?.deallocate()
             scurrentGamePath = nil
         }
-        let cString = (selectedFile as! NSString).utf8String!
+        let cString = (selectedFile! as NSString).utf8String!
         let bufferSize = Int(strlen(cString)) + 1
         scurrentGamePath = UnsafeMutablePointer<Int8>.allocate(capacity: bufferSize)
         strncpy(scurrentGamePath, cString, bufferSize)
@@ -1040,19 +1040,26 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
     func showRemapControlAlert(withSaturnKey saturnKey: SaturnKey) {
         let keyDescription = GameViewController.saturnKeyDescriptions[saturnKey] ?? ""
         remapAlertController = UIAlertController(
-            title: "Remap Key",
-            message: "Press a button to map the [\(keyDescription)] key",
+            title: NSLocalizedString("Remap Key", comment: "Title for remapping a key"),
+            message: String(format: NSLocalizedString("Press a button to map the [%@] key", comment: "Message prompting user to press a button to map a key"), keyDescription),
             preferredStyle: .alert
         )
+
         
-        let cancel = UIAlertAction(title: "Cancel", style: .cancel) { [weak self] _ in
+        let cancel = UIAlertAction(
+            title: NSLocalizedString("Cancel", comment: "Action to cancel the key remapping"),
+            style: .cancel
+        ) { [weak self] _ in
             self?.isKeyRemappingMode = false
             self?.setControllerOverlayHidden(true)
             self?.remapAlertController?.dismiss(animated: true, completion: nil)
             self?.currentlyMappingKey = .none
         }
-        
-        let unbind = UIAlertAction(title: "Unbind", style: .default) { [weak self] _ in
+
+        let unbind = UIAlertAction(
+            title: NSLocalizedString("Unbind", comment: "Action to unbind the current key"),
+            style: .default
+        ) { [weak self] _ in
             self?.keyMapper.unmapKey(saturnKey)
             self?.currentlyMappingKey = .none
             self?.refreshViewsWithKeyRemaps()
@@ -1102,8 +1109,6 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
                 self.isPaused = false
             }
         }
-        
-        
         present(fsVC, animated: true, completion: nil)
     }
     

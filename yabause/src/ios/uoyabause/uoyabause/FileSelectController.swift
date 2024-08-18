@@ -369,13 +369,25 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
         if check == false {
             // アラートを表示して有料版に誘導する
             DispatchQueue.main.async {
-                let alert = UIAlertController(title: "Upgrade Required", message: "You have reached the maximum number of files for the free version. Please upgrade to the paid version to add more files.", preferredStyle: .alert)
-                alert.addAction(UIAlertAction(title: "Upgrade", style: .default, handler: { _ in
-                    if let url = URL(string: "https://apps.apple.com/app/id1549144351") {
-                        UIApplication.shared.open(url)
+                let alert = UIAlertController(
+                    title: NSLocalizedString("Upgrade Required", comment: "Title for the upgrade alert"),
+                    message: NSLocalizedString("You have reached the maximum number of files for the free version. Please upgrade to the paid version to add more files.", comment: "Message indicating that the user needs to upgrade to the paid version to add more files."),
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(
+                    title: NSLocalizedString("Upgrade", comment: "Button title to upgrade to the paid version"),
+                    style: .default,
+                    handler: { _ in
+                        if let url = URL(string: "https://apps.apple.com/app/id1549144351") {
+                            UIApplication.shared.open(url)
+                        }
                     }
-                }))
-                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: nil))
+                ))
+                alert.addAction(UIAlertAction(
+                    title: NSLocalizedString("Cancel", comment: "Button title to cancel the upgrade action"),
+                    style: .cancel,
+                    handler: nil
+                ))
                 self.present(alert, animated: true, completion: nil)
             }
         }
@@ -456,8 +468,18 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
                         
                         DispatchQueue.main.async {
                             // アラートを表示
-                            let alert = UIAlertController(title: "Error", message: message, preferredStyle: .alert)
-                            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                            let alert = UIAlertController(
+                                title: NSLocalizedString("Error", comment: "Title for the error alert"),
+                                message: message, 
+                                preferredStyle: .alert
+                            )
+
+                            alert.addAction(UIAlertAction(
+                                title: NSLocalizedString("OK", comment: "Default action button title"),
+                                style: .default,
+                                handler: nil
+                            ))
+
                             self.present(alert, animated: true, completion: nil)
                         }
                         

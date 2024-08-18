@@ -1,0 +1,1039 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "2x" : {
+      "comment" : "Resolution option for 2 times the native resolution",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "２倍"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "2倍"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "2 vezes"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "2 раза"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "2 veces"
+        }
+      }
+      }
+    },
+    "4Mbit BackupRam" : {
+      "comment" : "4 megabit backup RAM"
+    },
+    "4x" : {
+      "comment" : "Resolution option for 4 times the native resolution",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "４倍"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "4倍"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "4 vezes"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "4 раза"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "4 veces"
+        }
+      }
+      }
+    },
+    "8Mbit BackupRam" : {
+      "comment" : "8 megabit backup RAM"
+    },
+    "8Mbit DRAM" : {
+      "comment" : "8 megabit DRAM"
+    },
+    "16Mbit BackupRam" : {
+      "comment" : "16 megabit backup RAM"
+    },
+    "32Mbit BackupRam" : {
+      "comment" : "32 megabit backup RAM"
+    },
+    "32Mbit DRAM" : {
+      "comment" : "32 megabit DRAM"
+    },
+    "Analog Mode" : {
+      "comment" : "Switch to analog mode",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "アナログモード"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "模拟模式"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Modo analógico"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Аналоговый режим"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Modo analógico"
+        }
+      }
+      }
+    },
+    "Are you sure you want to exit?" : {
+      "comment" : "Message asking if the user is sure about exiting",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "アプリを終了してよろしいですか？"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "确定要退出吗？"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Tem certeza de que deseja sair?"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Вы уверены, что хотите выйти?"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "¿Estás seguro de que quieres salir?"
+        }
+      }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Action to cancel the key remapping\nButton title to cancel the upgrade action",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "キャンセル"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "取消"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Cancelar"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Отмена"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Cancelar"
+        }
+      }
+      }
+    },
+    "Change Disk" : {
+      "comment" : "Change the game disk",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "ディスク交換"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "更换游戏光盘"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Trocar disco"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Сменить диск"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Cambiar disco"
+        }
+      }
+      }
+    },
+   "Error" : {
+      "comment" : "Title for the error alert",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "エラー"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "错误"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Erro"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Ошибка"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Error"
+        }
+      }
+      }
+    },
+    "Exit" : {
+      "comment" : "Exit the application",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "終了"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "退出"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sair"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Выход"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Salir"
+        }
+      }
+      }
+    },
+    "Exit Confirmation" : {
+      "comment" : "Title for exit confirmation alert",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "終了確認"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "退出确认"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Confirmação de saída"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Подтверждение выхода"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Confirmación de salida"
+        }
+      }
+      }
+    },
+    "Fail to open" : {
+      "comment" : "Title for the alert when a file fails to open",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "ファイル読み込み失敗"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "打开失败"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Falha ao abrir"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Не удалось открыть"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Error al abrir"
+        }
+      }
+      }
+    },
+    "Game Controller" : {
+      "comment" : "Game controller settings",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "コントローラ設定"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "游戏控制器设置"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Configurações do controle de jogo"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Настройки геймпада"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Configuración del controlador de juego"
+        }
+      }
+      }
+    },
+    "High Quality but slow" : {
+      "comment" : "Sound option for high quality but slower performance",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "高品質（遅い）"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "高质量但速度较慢"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Alta qualidade, mas lento"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Высокое качество, но медленно"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Alta calidad pero lento"
+        }
+      }
+      }
+    },
+    "Load State" : {
+      "comment" : "Load a previously saved game state",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "状態復帰"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "加载先前保存的游戏状态"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Carregar estado de jogo salvo anteriormente"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Загрузить ранее сохраненное состояние игры"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Cargar estado de juego guardado previamente"
+        }
+      }
+      }
+    },
+    "Low Quality but fast" : {
+      "comment" : "Sound option for lower quality but faster performance",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "低品質（早い)"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "低质量但速度较快"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Baixa qualidade, mas rápido"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Низкое качество, но быстро"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Baja calidad pero rápido"
+        }
+      }
+      }
+    },
+    "Native" : {
+      "comment" : "Resolution option for native resolution",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "デバイスの解像度"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "设备的分辨率"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Resolução nativa"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Разрешение устройства"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Resolución nativa"
+        }
+      }
+      }
+    },
+    "No" : {
+      "comment" : "Cancel the exit action",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "いいえ"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "不"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Não"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Нет"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "No"
+        }
+      }
+      }
+    },
+    "None" : {
+      "comment" : "No backup RAM",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "なし"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "无"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Nenhum"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Нет"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Ninguno"
+        }
+      }
+      }
+    },
+    "OK" : {
+      "comment" : "Default action button title",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "はい"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "确定"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "OK"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "OK"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Aceptar"
+        }
+      }
+      }
+    },
+    "Original" : {
+      "comment" : "Resolution option for original resolution",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "セガサターンの解像度"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "原始分辨率"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Resolução original"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Оригинальное разрешение"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Resolución original"
+        }
+      }
+      }
+    },
+    "Press a button to map the [%@] key" : {
+      "comment" : "Message prompting user to press a button to map a key",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "[%@] に該当するボタンを教えてください"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "按下一个按钮来映射 [%@] 键"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Pressione um botão para mapear a tecla [%@]"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Нажмите кнопку, чтобы сопоставить клавишу [%@]"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Presiona un botón para asignar la tecla [%@]"
+        }
+      }
+      }
+    },
+    "Remap Key" : {
+      "comment" : "Title for remapping a key",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "ボタンの割り当て"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "重新映射按键"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Remapear tecla"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Переназначить клавишу"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Reasignar tecla"
+        }
+      }
+      }
+    },
+    "Reset" : {
+      "comment" : "Reset the game",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "リセット"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "重置游戏"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Redefinir"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Сбросить"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Reiniciar"
+        }
+      }
+      }
+    },
+    "Save State" : {
+      "comment" : "Save the current state of the game",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "状態保存"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "保存游戏状态"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Salvar estado"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Сохранить состояние"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Guardar estado"
+        }
+      }
+      }
+    },
+    "Unbind" : {
+      "comment" : "Action to unbind the current key",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "設定しない"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "取消绑定"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Desvincular"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Отменить привязку"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Desvincular"
+        }
+      }
+      }
+    },
+    "Upgrade" : {
+      "comment" : "Button title to upgrade to the paid version",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "アップグレード"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "升级"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Atualizar"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Обновить"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Actualizar"
+        }
+      }
+      }
+    },
+    "Upgrade Required" : {
+      "comment" : "Title for the upgrade alert",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "アップグレードが必要です"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "需要升级"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Atualização necessária"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Требуется обновление"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Actualización requerida"
+        }
+      }
+      }
+    },
+    "Yes" : {
+      "comment" : "Confirm action to exit the application",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "はい"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "是"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sim"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Да"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Sí"
+        }
+      }
+      }
+    },
+    "You can select chd or bin or cue" : {
+      "comment" : "Message indicating the supported file formats",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "CHD, CUE, BIN を選択することができます"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "您可以选择 chd、bin 或 cue"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Você pode selecionar chd, bin ou cue"
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Вы можете выбрать chd, bin или cue"
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Puedes seleccionar chd, bin o cue"
+        }
+      }
+      }
+    },
+    "You have reached the maximum number of files for the free version. Please upgrade to the paid version to add more files." : {
+      "comment" : "Message indicating that the user needs to upgrade to the paid version to add more files.",
+      "localizations" : {
+      "ja" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "無料バージョンの最大インストール数に到達しました。これ以上追加したい場合は有料バージョンを入手してください"
+        }
+      },
+      "zh-Hans" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "您已达到免费版本的最大文件数。请升级到付费版本以添加更多文件。"
+        }
+      },
+      "pt-BR" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Você atingiu o número máximo de arquivos para a versão gratuita. Por favor, faça upgrade para a versão paga para adicionar mais arquivos."
+        }
+      },
+      "ru" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Вы достигли максимального количества файлов для бесплатной версии. Пожалуйста, обновитесь до платной версии, чтобы добавить больше файлов."
+        }
+      },
+      "es" : {
+        "stringUnit" : {
+        "state" : "translated",
+        "value" : "Has alcanzado el número máximo de archivos para la versión gratuita. Por favor, actualiza a la versión de pago para agregar más archivos."
+        }
+      }
+      }
+    },
+  },
+  "version": 1.0
+}

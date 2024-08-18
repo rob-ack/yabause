@@ -19,7 +19,15 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     let _cart_group = 0
     let _cart_index = 0
     var _CartPickerIsShowing = false
-    fileprivate let cartArray: NSArray = ["None","4 Mbit BackupRam","8 Mbit BackupRam","16 Mbit BackupRam","32 Mbit BackupRam","8 Mbit DRAM","32 Mbit DRAM"]
+    fileprivate let cartArray: [String] = [
+        NSLocalizedString("None", comment: "No backup RAM"),
+        NSLocalizedString("4Mbit BackupRam", comment: "4 megabit backup RAM"),
+        NSLocalizedString("8Mbit BackupRam", comment: "8 megabit backup RAM"),
+        NSLocalizedString("16Mbit BackupRam", comment: "16 megabit backup RAM"),
+        NSLocalizedString("32Mbit BackupRam", comment: "32 megabit backup RAM"),
+        NSLocalizedString("8Mbit DRAM", comment: "8 megabit DRAM"),
+        NSLocalizedString("32Mbit DRAM", comment: "32 megabit DRAM")
+    ]
     fileprivate let cartValues: NSArray = [ 0,2,3,4,5,6,7]
     @IBOutlet weak var _cart_sel_label: UILabel!
     @IBOutlet weak var _picker: UIPickerView!
@@ -28,7 +36,10 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     let _sound_group = 2
     let _sound_index = 0
     var _SoundPickerIsShowing = false
-    fileprivate let soundArray: NSArray = ["High Quality but heavy","Low Quality but light"]
+    fileprivate let soundArray: [String] = [
+        NSLocalizedString("High Quality but slow", comment: "Sound option for high quality but slower performance"),
+        NSLocalizedString("Low Quality but fast", comment: "Sound option for lower quality but faster performance")
+    ]
     fileprivate let soundValues: NSArray = [ 1,0 ]
     //@IBOutlet weak var _sound_picker_label: UILabel!
     //@IBOutlet weak var _soundPicker: UIPickerView!
@@ -36,7 +47,12 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     let _resolution_group = 1
     let _resolution_index = 3
     var _ResolutionPickerIsShowing = false
-    fileprivate let resolutionArray: NSArray = ["Native","4x","2x","Original"]
+    fileprivate let resolutionArray: [String] = [
+        NSLocalizedString("Native", comment: "Resolution option for native resolution"),
+        NSLocalizedString("4x", comment: "Resolution option for 4 times the native resolution"),
+        NSLocalizedString("2x", comment: "Resolution option for 2 times the native resolution"),
+        NSLocalizedString("Original", comment: "Resolution option for original resolution")
+    ]
     fileprivate let resolutionValues: NSArray = [ 0,1,2,3]
     @IBOutlet weak var _resolution_sel_label: UILabel!
     @IBOutlet weak var _resolution_picker: UIPickerView!
@@ -87,7 +103,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         var index : Int = 0
         for  i in cartValues {
             if( cart_index == i as! Int){
-                _cart_sel_label.text = cartArray[index] as? String
+                _cart_sel_label.text = cartArray[index]
             }
             index += 1;
         }
@@ -102,7 +118,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         index = 0
         for  i in resolutionValues {
             if( resolution_index == i as? Int){
-                _resolution_sel_label.text = resolutionArray[index] as? String
+                _resolution_sel_label.text = resolutionArray[index]
             }
             index += 1;
         }
@@ -167,12 +183,12 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
         
         if( pickerView == _picker){
-            return cartArray[row] as? String
+            return cartArray[row]
         }
         else if( pickerView == _resolution_picker){
-            return resolutionArray[row] as? String
+            return resolutionArray[row]
         }
-        return soundArray[row] as? String
+        return soundArray[row]
     }
     
     /*
@@ -186,7 +202,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             plist.setObject(cartValues[row], forKey: "cartridge" as NSCopying)
             plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
             
-            _cart_sel_label.text = cartArray[row] as? String
+            _cart_sel_label.text = cartArray[row]
        
             _CartPickerIsShowing = false;
             _picker.isHidden = !_CartPickerIsShowing;
@@ -202,7 +218,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
             plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
             
             
-            _resolution_sel_label.text = resolutionArray[row] as? String
+            _resolution_sel_label.text = resolutionArray[row]
             
             _ResolutionPickerIsShowing = false;
             _resolution_picker.isHidden = !_ResolutionPickerIsShowing;

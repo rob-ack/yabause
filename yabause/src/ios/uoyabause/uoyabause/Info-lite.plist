@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>en</string>
+	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Yaba Sanshiro 2 Lite</string>
 	<key>CFBundleExecutable</key>
@@ -22,6 +22,8 @@
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-2526043010907640~1516750003</string>
 	<key>GCSupportedGameControllers</key>
 	<array>
 		<dict>
@@ -82,7 +84,5 @@
 	</array>
 	<key>UIUserInterfaceStyle</key>
 	<string>Light</string>
-	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-2526043010907640~1516750003</string>	
 </dict>
 </plist>

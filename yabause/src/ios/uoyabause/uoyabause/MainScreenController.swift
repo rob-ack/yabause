@@ -35,6 +35,9 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
         
         // Activity Indicatorをビュー階層の一番上に持ってくる
         self.view.bringSubviewToFront(activityIndicator)
+        #if FREE_VERSION
+        self.navigationItem.title = "Yaba Sanshiro 2 Lite"
+        #endif
         
     }
 
@@ -134,11 +137,20 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
             }
             
         } else{
-            let alert: UIAlertController = UIAlertController(title: "Fail to open", message: "You can select chd or bin or cue", preferredStyle:  UIAlertController.Style.alert)
-            let defaultAction: UIAlertAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler:{
-                (action: UIAlertAction!) -> Void in
-                print("OK")
-            })
+            let alert: UIAlertController = UIAlertController(
+                title: NSLocalizedString("Fail to open", comment: "Title for the alert when a file fails to open"),
+                message: NSLocalizedString("You can select chd or bin or cue", comment: "Message indicating the supported file formats"),
+                preferredStyle: UIAlertController.Style.alert
+            )
+
+            let defaultAction: UIAlertAction = UIAlertAction(
+                title: NSLocalizedString("OK", comment: "Default action button title"),
+                style: UIAlertAction.Style.default,
+                handler: { (action: UIAlertAction!) -> Void in
+                    print("OK")
+                }
+            )
+
             alert.addAction(defaultAction)
             present(alert, animated: true, completion: nil)
             return

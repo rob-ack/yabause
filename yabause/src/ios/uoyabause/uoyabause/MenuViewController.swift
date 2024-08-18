@@ -74,6 +74,25 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
                 return "gamecontroller"
             }
         }
+
+        var localizedTitle: String {
+            switch self {
+            case .exit:
+                return NSLocalizedString("Exit", comment: "Exit the application")
+            case .reset:
+                return NSLocalizedString("Reset", comment: "Reset the game")
+            case .changeDisk:
+                return NSLocalizedString("Change Disk", comment: "Change the game disk")
+            case .saveState:
+                return NSLocalizedString("Save State", comment: "Save the current state of the game")
+            case .loadState:
+                return NSLocalizedString("Load State", comment: "Load a previously saved game state")
+            case .analogMode:
+                return NSLocalizedString("Analog Mode", comment: "Switch to analog mode")
+            case .controllerSetting:
+                return NSLocalizedString("Game Controller", comment: "Game controller settings")
+            }
+        }
     }
 
     private let tableView: UITableView = {
@@ -105,7 +124,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
 
         if option == .analogMode {
             let cell = tableView.dequeueReusableCell(withIdentifier: "switchCell", for: indexPath)
-            cell.textLabel?.text = option.rawValue
+            cell.textLabel?.text = option.localizedTitle
             let toggleSwitch = UISwitch()
             cell.accessoryView = toggleSwitch
             let path = SettingsViewController.getSettingFilname()
@@ -116,7 +135,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-            cell.textLabel?.text = option.rawValue
+            cell.textLabel?.text = option.localizedTitle
             cell.imageView?.image = UIImage(systemName: option.imageName)
             return cell
         }

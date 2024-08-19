@@ -3,8 +3,14 @@
   "strings" : {
     "0uv-hR-62t.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Show FPS\"; ObjectID = \"0uv-hR-62t\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Show FPS"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -39,7 +45,7 @@
     },
     "2kC-86-hOR.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Load State\"; ObjectID = \"2kC-86-hOR\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -75,8 +81,14 @@
     },
     "5kh-BO-spI.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Label\"; ObjectID = \"5kh-BO-spI\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Label"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -111,8 +123,14 @@
     },
     "05T-W3-45O.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Force Landscape Mode\"; ObjectID = \"05T-W3-45O\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Force Landscape Mode"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -147,8 +165,14 @@
     },
     "7a9-1I-qMs.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Keep original aspect rate\"; ObjectID = \"7a9-1I-qMs\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Keep original aspect rate"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -183,8 +207,14 @@
     },
     "a6W-wy-CZs.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Rotate 90 degree\"; ObjectID = \"a6W-wy-CZs\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rotate 90 degree"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -219,7 +249,7 @@
     },
     "a8b-Pg-2IA.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Adjust Controller\"; ObjectID = \"a8b-Pg-2IA\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -255,8 +285,14 @@
     },
     "Adw-oe-5dn.headerTitle" : {
       "comment" : "Class = \"UITableViewSection\"; headerTitle = \"Graphics\"; ObjectID = \"Adw-oe-5dn\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Graphics"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -291,8 +327,14 @@
     },
     "DjX-3S-nbY.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Rendering Resolution\"; ObjectID = \"DjX-3S-nbY\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rendering Resolution"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -327,8 +369,14 @@
     },
     "dP5-m9-P5R.title" : {
       "comment" : "Class = \"UINavigationItem\"; title = \"Setting\"; ObjectID = \"dP5-m9-P5R\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Setting"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -361,10 +409,58 @@
         }
       }
     },
+    "GDt-1B-FZj.headerTitle" : {
+      "comment" : "Class = \"UITableViewSection\"; headerTitle = \"Controller\"; ObjectID = \"GDt-1B-FZj\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Controller"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "コントローラー設定"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlador"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Controlador"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Контроллер"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "控制器"
+          }
+        }
+      }
+    },
     "HEk-JT-gUF.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Frame Skip\"; ObjectID = \"HEk-JT-gUF\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Frame Skip"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -399,7 +495,7 @@
     },
     "Iwo-k1-gyt.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Show Remap Controls\"; ObjectID = \"Iwo-k1-gyt\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -433,10 +529,100 @@
         }
       }
     },
+    "KCH-Zr-n0O.text" : {
+      "comment" : "Class = \"UILabel\"; text = \"Use Analog Pad as D-pad\"; ObjectID = \"KCH-Zr-n0O\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use Analog Pad as D-pad"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アナログパッドをDPadとして使用する"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar el pad analógico como D-pad"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar o pad analógico como D-pad"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать аналоговый пад как D-pad"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将模拟方向盘用作D-pad"
+          }
+        }
+      }
+    },
+    "kHL-Tt-8Bi.title" : {
+      "comment" : "Class = \"UISwitch\"; title = \"Use Analog pad as D-Pad\"; ObjectID = \"kHL-Tt-8Bi\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Use Analog pad as D-Pad"
+          }
+        },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "アナログパッドをDPadとして使用する"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar el pad analógico como D-pad"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Usar o pad analógico como D-pad"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Использовать аналоговый пад как D-pad"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将模拟方向盘用作D-pad"
+          }
+        }
+      }
+    },
     "KND-t5-hSX.headerTitle" : {
       "comment" : "Class = \"UITableViewSection\"; headerTitle = \"General\"; ObjectID = \"KND-t5-hSX\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "General"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -471,8 +657,14 @@
     },
     "N8h-Be-Hod.normalTitle" : {
       "comment" : "Class = \"UIButton\"; normalTitle = \"Settings\"; ObjectID = \"N8h-Be-Hod\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Settings"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -507,8 +699,14 @@
     },
     "NHI-fu-wtb.title" : {
       "comment" : "Class = \"UINavigationItem\"; title = \"Yaba Sanshiro 2\"; ObjectID = \"NHI-fu-wtb\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Yaba Sanshiro 2"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -543,8 +741,14 @@
     },
     "NIg-ct-7sX.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Resolution Picker label\"; ObjectID = \"NIg-ct-7sX\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Resolution Picker label"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -579,7 +783,7 @@
     },
     "oik-51-mjH.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Change Disk\"; ObjectID = \"oik-51-mjH\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -615,8 +819,14 @@
     },
     "Tsw-hZ-S89.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Cartridge\"; ObjectID = \"Tsw-hZ-S89\";",
-      "extractionState" : "migrated",
+      "extractionState" : "extracted_with_value",
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Cartridge"
+          }
+        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -651,7 +861,7 @@
     },
     "wEc-St-PPd.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Save State\"; ObjectID = \"wEc-St-PPd\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -687,7 +897,7 @@
     },
     "X1O-pp-oDF.text" : {
       "comment" : "Class = \"UILabel\"; text = \"Exit\"; ObjectID = \"X1O-pp-oDF\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {
@@ -723,7 +933,7 @@
     },
     "XY2-Ni-Gbc.headerTitle" : {
       "comment" : "Class = \"UITableViewSection\"; headerTitle = \"Emulation menu\"; ObjectID = \"XY2-Ni-Gbc\";",
-      "extractionState" : "migrated",
+      "extractionState" : "manual",
       "localizations" : {
         "es" : {
           "stringUnit" : {

@@ -50,7 +50,7 @@ NSObject* _objectForLock;
 MGLLayer *glLayer = nil;
 
 
-int swapAglBuffer ()
+int swapAglBuffer (void)
 {
     if( glLayer == nil ) return 0;
     
@@ -62,15 +62,15 @@ int swapAglBuffer ()
     return 0;
 }
 
-void RevokeOGLOnThisThread(){
+void RevokeOGLOnThisThread(void){
     [MGLContext setCurrentContext:g_share_context forLayer:glLayer];
 }
 
-void UseOGLOnThisThread(){
+void UseOGLOnThisThread(void){
     [MGLContext setCurrentContext:g_context forLayer:glLayer];
 }
 
-const char * GetBiosPath(){
+const char * GetBiosPath(void){
 #if 1
     return NULL;
 #else
@@ -101,7 +101,7 @@ const char * GetBiosPath(){
 #endif
 }
 
-const char * GetGamePath(){
+const char * GetGamePath(void){
     
     //if( sharedData_ == nil ){
     //    return nil;
@@ -111,7 +111,7 @@ const char * GetGamePath(){
     return currentGamePath;;
 }
 
-const char * GetStateSavePath(){
+const char * GetStateSavePath(void){
     BOOL isDir;
     NSFileManager *filemgr;
     filemgr = [NSFileManager defaultManager];
@@ -142,7 +142,7 @@ const char * GetStateSavePath(){
     return [filePath fileSystemRepresentation];
 }
 
-const char * GetMemoryPath(){
+const char * GetMemoryPath(void){
     BOOL isDir;
     NSFileManager *filemgr;
     filemgr = [NSFileManager defaultManager];
@@ -181,49 +181,49 @@ const char * GetMemoryPath(){
     return [filePath fileSystemRepresentation];
 }
 
-int GetCartridgeType(){
+int GetCartridgeType(void){
     return _cart;
 }
 
-int GetVideoInterface(){
+int GetVideoInterface(void){
     return 0;
 }
 
-int GetEnableFPS(){
+int GetEnableFPS(void){
     if( _fps == YES )
         return 1;
     
     return 0;
 }
 
-int GetIsRotateScreen() {
+int GetIsRotateScreen(void) {
     if( _rotate_screen == YES )
         return 1;
     
     return 0;
 }
 
-int GetEnableFrameSkip(){
+int GetEnableFrameSkip(void){
     if( _frame_skip == YES ){
         return 1;
     }
     return 0;
 }
 
-int GetUseNewScsp(){
+int GetUseNewScsp(void){
     return _sound_engine;
 }
 
-int GetVideFilterType(){
+int GetVideFilterType(void){
     return _filter;
 }
 
-int GetResolutionType(){
+int GetResolutionType(void){
     NSLog (@"GetResolutionType %d",_rendering_resolution);
     return _rendering_resolution;
 }
 
-const char * GetCartridgePath(){
+const char * GetCartridgePath(void){
     BOOL isDir;
     NSFileManager *filemgr;
     filemgr = [NSFileManager defaultManager];
@@ -286,7 +286,7 @@ const char * GetCartridgePath(){
     return [filePath fileSystemRepresentation];
 }
 
-int GetPlayer2Device(){
+int GetPlayer2Device(void){
     return -1;
 }
 

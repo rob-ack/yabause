@@ -40,6 +40,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
     private var _landscape: Bool = false
     private var isAnalogMode: Bool = false
     private var isOnScreenControlHidden: Bool = false
+    private var isAnalogAsDpad: Bool = false
     
     // MARK: - IBOutlets
     @IBOutlet weak var leftPanel: UIImageView!
@@ -304,10 +305,12 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
         let newFrame = self.view.frame
         let safeArea = self.view.safeAreaInsets
         
+        /*
         objc_sync_enter(_objectForLock)
         defer {
             objc_sync_exit(_objectForLock)
         }
+        */
         
         resize_screen(
             Int32(Float(safeArea.left * scale)),
@@ -484,7 +487,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
                     mfiButtonHandler(.MFI_BUTTON_HOME, pressed)
                 }
                 
-                gamepad.buttonMenu.valueChangedHandler = { [weak self] _, _, pressed in
+                gamepad.buttonMenu.valueChangedHandler = { _, _, pressed in
                     mfiButtonHandler(.MFI_BUTTON_MENU, pressed)
 //                    if let revealViewController = self?.revealViewController as? GameRevealViewController, pressed {
 //                        revealViewController.revealToggle(0)
@@ -562,8 +565,34 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
                 
                 gamepad.leftThumbstick.valueChangedHandler = { _, xValue, yValue in
                     if( self.isAnalogMode ){
+                        
                         PerAxisValue(PERANALOG_AXIS_X, convertDoubleToUInt8((Double(xValue) * 128.0) + 128)); // from 0 to 255
                         PerAxisValue(PERANALOG_AXIS_Y, convertDoubleToUInt8((Double(-yValue) * 128.0) + 128)); // from 0 to 255
+                        
+                    }else if( self.isAnalogAsDpad ){
+                        
+                        if( xValue < 0.1 && xValue > -0.1  ){
+                            PerKeyUp(UInt32(SaturnKey.left.rawValue))
+                            PerKeyUp(UInt32(SaturnKey.right.rawValue))
+                        }else if( xValue > 0.5 ){
+                            PerKeyUp(UInt32(SaturnKey.left.rawValue))
+                            PerKeyDown(UInt32(SaturnKey.right.rawValue))
+                        }else if( xValue < -0.5 ){
+                            PerKeyDown(UInt32(SaturnKey.left.rawValue))
+                            PerKeyUp(UInt32(SaturnKey.right.rawValue))
+                        }
+
+                        if( yValue < 0.1 && yValue > -0.1  ){
+                            PerKeyUp(UInt32(SaturnKey.up.rawValue))
+                            PerKeyUp(UInt32(SaturnKey.down.rawValue))
+                        }else if( yValue > 0.5 ){
+                            PerKeyDown(UInt32(SaturnKey.up.rawValue))
+                            PerKeyUp(UInt32(SaturnKey.down.rawValue))
+                        }else if( yValue < -0.5 ){
+                            PerKeyUp(UInt32(SaturnKey.up.rawValue))
+                            PerKeyDown(UInt32(SaturnKey.down.rawValue))
+                        }
+
                     }
                 }
 
@@ -642,7 +671,6 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
     
     // MARK: settings
     func loadSettings() {
-        let bundle = Bundle.main
         let path = getSettingFilePath()
         if let dic = NSDictionary(contentsOfFile: path) {
             _bios = ObjCBool((dic["builtin bios"] as? Bool) ?? false)
@@ -654,6 +682,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
             _sound_engine = Int32((dic["sound engine"] as? Int) ?? 0)
             _rendering_resolution = Int32((dic["rendering resolution"] as? Int) ?? 0)
             _rotate_screen = ObjCBool((dic["rotate screen"] as? Bool) ?? false)
+            isAnalogAsDpad = (dic["analog as dpad"] as? Bool) ?? false
             setAnalogMode(to: (dic["analog mode"] as? Bool) ?? false )
         }
         

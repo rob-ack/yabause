@@ -66,6 +66,7 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
     @IBOutlet weak var _keepAspectRate: UISwitch!
     @IBOutlet weak var _rotate_screen: UISwitch!
     @IBOutlet weak var _landscape: UISwitch!
+    @IBOutlet weak var _analog_as_dpad: UISwitch!
     
     @IBAction func onChangeLandscapeMode(_ sender: Any) {
         let userDefaults = UserDefaults.standard
@@ -97,6 +98,9 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         _showFrameSkip.isOn = plist.value(forKey: "frame skip") as! Bool
         _keepAspectRate.isOn = plist.value(forKey: "keep aspect rate") as! Bool
         _rotate_screen.isOn = plist.value(forKey: "rotate screen") as! Bool
+
+        _analog_as_dpad.isOn = plist.value(forKey: "analog as dpad") as? Bool ?? false
+        
         
         let cart_index = plist.value(forKey: "cartridge") as! Int
         
@@ -251,13 +255,19 @@ class SettingsViewController :UITableViewController,UIPickerViewDelegate, UIPick
         
 
     }
+    
     @IBAction func AspectrateChnaged(_ sender: AnyObject) {
         let plist = SettingsViewController.getSettingPlist();
         plist.setObject(_keepAspectRate.isOn, forKey: "keep aspect rate" as NSCopying)
         plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
-        
     }
-    
+
+    @IBAction func AasDChanged(_ sender: AnyObject) {
+        let plist = SettingsViewController.getSettingPlist();
+        plist.setObject(_analog_as_dpad.isOn, forKey: "analog as dpad" as NSCopying)
+        plist.write(toFile: SettingsViewController.getSettingFilname(), atomically: true)
+    }
+
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath){
         
         if( (indexPath as NSIndexPath).section == _cart_group && (indexPath as NSIndexPath).row == _cart_index){

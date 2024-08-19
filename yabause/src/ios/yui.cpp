@@ -19,6 +19,7 @@ extern "C"{
 #include "chd.h"
 }
 
+#include <cstdio>
 #include <stdarg.h>
 
 const int MSG_SAVE_STATE = 1;
@@ -501,7 +502,12 @@ char * getGameinfoFromChd( const char * path ){
   
   memcpy(buf,&hunk_buffer[16],len); 
   buf[len-1] = 0;
+  //putc(buf[0], stdout);
+  //putc(buf[1], stdout);
+  //putc(buf[2], stdout);
+  //putc(buf[3], stdout);
   free(hunk_buffer);
+  chd_close(chd);
   return buf;
 }
 

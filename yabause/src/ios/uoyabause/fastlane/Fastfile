@@ -15,10 +15,97 @@
 
 default_platform(:ios)
 
+
+
 platform :ios do
-  desc "Generate new localized screenshots"
-  lane :screenshots do
-    capture_screenshots(workspace: "YabaSnashiro.xcworkspace", scheme: "YabaSnashiro")
-    upload_to_app_store(skip_binary_upload: true, skip_metadata: true)
+
+  
+  desc "Generate new localized screenshots for all targets"
+  lane :screenshots_all do
+    [
+      { 
+        scheme: "YabaSnashiro-Lite",
+        devices: [
+            "iPhone 15",
+            "iPhone 8 Plus",    
+            "iPad Pro 13-inch (M4)",
+            "iPad Pro (12.9-inch) (6th generation)"
+          ],
+          languages:[ 
+            "en-US",
+            "ja-JP",
+            ["pt", "pt_BR"], 
+            "ru",
+            "es",
+            "zh-Hans"  
+          ],
+          launch_arguments: ["-UIPreferredContentSizeCategoryName UICTContentSizeCategoryL"]
+      }
+=begin      
+        ,
+        { 
+          scheme: "YabaSnashiro",
+          devices: [
+            "iPhone 15",
+            "iPhone 8 Plus",    
+            "iPad Pro 13-inch (M4)",
+            "iPad Pro (12.9-inch) (6th generation)"
+          ],
+          languages:[ 
+            "en-US",
+            "ja-JP",
+           ["pt", "pt_BR"], 
+            "ru",
+            "es",
+         "zh-Hans"  
+          ],
+
+     
+        launch_arguments: ["-UIPreferredContentSizeCategoryName UICTContentSizeCategoryL"]
+      }
+=end        
+      ].each do |target|
+        capture_screenshots(
+          scheme: target[:scheme],
+          devices: target[:devices],
+        languages: target[:languages],
+        launch_arguments: target[:launch_arguments],
+        output_directory: "./screenshots/#{target[:scheme]}"
+      )
+    end
+  end  
+
+
+  lane :release_all_targets do
+
+    precheck(
+      include_in_app_purchases: false
+    )
+
+    api_key = app_store_connect_api_key(
+      key_id: "S23T7J37L6",
+      issuer_id: "436d7484-472f-472d-99af-1b1067147c60",
+      key_filepath: "~/.ssh/AuthKey_S23T7J37L6.p8",
+      in_house: false
+    )
+
+    # Build and release TargetA
+    build_app(scheme: "YabaSnashiro")
+    upload_to_app_store(
+      api_key: api_key,  
+      skip_metadata: true,
+      skip_screenshots: true,
+      precheck_include_in_app_purchases: false
+    )
+
+    # Build and release TargetB
+    build_app(scheme: "YabaSnashiro-Lite")
+    upload_to_app_store(
+      api_key: api_key,  
+      skip_metadata: true,
+      skip_screenshots: true,
+      precheck_include_in_app_purchases: false
+    )
   end
+    
 end

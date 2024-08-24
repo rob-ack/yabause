@@ -23,8 +23,27 @@ final class uoyabauseUITests: XCTestCase {
     
     @MainActor
     func testScreenShot1() {
+/*
+        // Wait 5 seconds
+        let expectation = self.expectation(description: "Waiting for 5 seconds")
+
+        // 5秒後に期待を満たす
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            expectation.fulfill()
+        }
+
+        // 期待が満たされるまで5秒待機
+        wait(for: [expectation], timeout: 5.1)
+*/
         snapshot("01MainScreen")
-        self.app!.buttons["Settings"].tap()
+        
+        // Wait for the "Settings" button to appear (timeout after 10 seconds)
+        let settingsButton = app!.buttons["settingButton"]
+        XCTAssertTrue(settingsButton.waitForExistence(timeout: 10), "Settings button did not appear")
+        
+        // Tap the button
+        settingsButton.tap()
+        
         snapshot("02NextScreen")
   }
 }

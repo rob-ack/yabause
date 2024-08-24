@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "96883161-0263-49EA-A46F-16B2C1BB2432",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "testTimeoutsEnabled" : true
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:YabaSnashiro.xcodeproj",
+        "identifier" : "D9C85C332C77654F00B98290",
+        "name" : "YabaSnashiroUITests-Lite"
+      }
+    }
+  ],
+  "version" : 1
+}

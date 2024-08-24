@@ -15,6 +15,8 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
     var activityIndicator: UIActivityIndicatorView!
     var blurEffectView: UIVisualEffectView!
     var selected_file_path: String = ""
+    @IBOutlet weak var settingButton: UIButton!
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,6 +40,8 @@ class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
         #if FREE_VERSION
         self.navigationItem.title = "Yaba Sanshiro 2 Lite"
         #endif
+        
+       settingButton.accessibilityIdentifier = "settingButton"
         
     }
 

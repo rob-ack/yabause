@@ -15,6 +15,38 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios build
+
+```sh
+[bundle exec] fastlane ios build
+```
+
+Build and sign the application for development
+
+### ios build_lite
+
+```sh
+[bundle exec] fastlane ios build_lite
+```
+
+Build Lite version and sign the application for development
+
+### ios beta
+
+```sh
+[bundle exec] fastlane ios beta
+```
+
+Build and sign the application for distribution, upload to TestFlight
+
+### ios beta_lite
+
+```sh
+[bundle exec] fastlane ios beta_lite
+```
+
+Build and sign the application for distribution, upload to TestFlight
+
 ### ios screenshots_all
 
 ```sh
@@ -22,14 +54,6 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 ```
 
 Generate new localized screenshots for all targets
-
-### ios release_all_targets
-
-```sh
-[bundle exec] fastlane ios release_all_targets
-```
-
-
 
 ----
 

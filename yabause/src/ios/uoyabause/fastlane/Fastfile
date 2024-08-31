@@ -18,6 +18,115 @@ default_platform(:ios)
 
 
 platform :ios do
+  desc "Build and sign the application for development"
+  lane :build do
+    # Detect if we are running in CI, and create a temporary keychain
+    # and switch match to readonly mode
+    # https://docs.fastlane.tools/actions/setup_ci/
+    setup_ci
+
+    cocoapods
+
+    # Download and install the correct signing certificates for the 
+    # given build environment, in this case development
+    # https://docs.fastlane.tools/actions/match/
+    match(type: 'development', app_identifier: ["org.devMiyax.yabasanshiro2"])
+
+    # Build the app with the supplied configuration settings
+    # Export method is the same as the match step above
+    # https://docs.fastlane.tools/actions/build_app/
+    build_app(
+      workspace: "./YabaSnashiro.xcworkspace",      
+      scheme: "YabaSnashiro",
+      configuration: "Debug",
+      export_method: "development"
+    )
+
+  end
+
+  desc "Build Lite version and sign the application for development"
+  lane :build_lite do
+    setup_ci
+    cocoapods
+    match(type: 'development', app_identifier: ["org.devMiyax.yabasanshiro2-lite"])
+    build_app(
+      workspace: "./YabaSnashiro.xcworkspace",
+      scheme: "YabaSnashiro-Lite",
+      configuration: "Debug",
+      export_method: "development"
+    )
+  end
+
+
+  desc "Build and sign the application for distribution, upload to TestFlight"
+  lane :beta do
+    # Detect if we are running in CI, and create a temporary keychain
+    # and switch match to readonly mode
+    # https://docs.fastlane.tools/actions/setup_ci/
+    setup_ci
+
+    cocoapods
+
+    # Download and install the correct signing certificates for the 
+    # given build environment, in this case appstore
+    # https://docs.fastlane.tools/actions/match/
+    match(type: 'appstore',  app_identifier: ["org.devMiyax.yabasanshiro2"], readonly: is_ci)
+
+    # Login to App Store Connect in order to perform actions later
+    # in this process. Configuration provided by environment variables added
+    # by the GitLab Apple Apps Store integration 
+    # https://docs.gitlab.com/ee/user/project/integrations/apple_app_store.html
+    # https://docs.fastlane.tools/actions/app_store_connect_api_key/
+    app_store_connect_api_key
+
+    # Auto increment the build number for Test Flight
+    # https://docs.fastlane.tools/actions/increment_build_number/
+    # https://docs.fastlane.tools/actions/latest_testflight_build_number/
+    increment_build_number(
+      build_number: latest_testflight_build_number(initial_build_number: 1) + 1,
+      xcodeproj: "YabaSnashiro.xcodeproj"
+    )
+
+    # Build the app with the supplied configuration settings
+    # Export method is the same as the match step above
+    # Note: the difference between `appstore` and `app-store` is intentional
+    # https://docs.fastlane.tools/actions/build_app/
+    build_app(
+      workspace: "./YabaSnashiro.xcworkspace",
+      scheme: "YabaSnashiro",
+      configuration: "Release",
+      export_method: "app-store"
+    )
+
+    # Upload the newly created build to Test Flight using the App Store Connect
+    # API key above, and the app configuration in the Appfile
+    # https://docs.fastlane.tools/actions/upload_to_testflight/
+    upload_to_testflight(
+      app_identifier: "org.devMiyax.yabasanshiro2"
+    )
+
+  end
+
+  desc "Build and sign the application for distribution, upload to TestFlight"
+  lane :beta_lite do
+    setup_ci
+    cocoapods
+    match(type: 'appstore',  app_identifier: ["org.devMiyax.yabasanshiro2-lite"])
+    app_store_connect_api_key
+    increment_build_number(
+      build_number: latest_testflight_build_number(initial_build_number: 1) + 1,
+      xcodeproj: "YabaSnashiro.xcodeproj"
+    )
+    build_app(
+      workspace: "./YabaSnashiro.xcworkspace",
+      scheme: "YabaSnashiro-Lite",
+      configuration: "Release",
+      export_method: "app-store"
+    )
+    upload_to_testflight(
+      app_identifier: "org.devMiyax.yabasanshiro2-lite"
+    )
+  end
 
   
   desc "Generate new localized screenshots for all targets"
@@ -40,10 +149,8 @@ platform :ios do
             "zh-Hans"  
           ],
           launch_arguments: ["-UIPreferredContentSizeCategoryName UICTContentSizeCategoryL"]
-      }
-=begin      
-        ,
-        { 
+      },
+      { 
           scheme: "YabaSnashiro",
           devices: [
             "iPhone 15",
@@ -54,17 +161,14 @@ platform :ios do
           languages:[ 
             "en-US",
             "ja-JP",
-           ["pt", "pt_BR"], 
+            ["pt", "pt_BR"], 
             "ru",
             "es",
-         "zh-Hans"  
+            "zh-Hans"  
           ],
-
-     
-        launch_arguments: ["-UIPreferredContentSizeCategoryName UICTContentSizeCategoryL"]
-      }
-=end        
-      ].each do |target|
+          launch_arguments: ["-UIPreferredContentSizeCategoryName UICTContentSizeCategoryL"]
+      }      
+    ].each do |target|
         capture_screenshots(
           scheme: target[:scheme],
           devices: target[:devices],
@@ -74,38 +178,4 @@ platform :ios do
       )
     end
   end  
-
-
-  lane :release_all_targets do
-
-    precheck(
-      include_in_app_purchases: false
-    )
-
-    api_key = app_store_connect_api_key(
-      key_id: "S23T7J37L6",
-      issuer_id: "436d7484-472f-472d-99af-1b1067147c60",
-      key_filepath: "~/.ssh/AuthKey_S23T7J37L6.p8",
-      in_house: false
-    )
-
-    # Build and release TargetA
-    build_app(scheme: "YabaSnashiro")
-    upload_to_app_store(
-      api_key: api_key,  
-      skip_metadata: true,
-      skip_screenshots: true,
-      precheck_include_in_app_purchases: false
-    )
-
-    # Build and release TargetB
-    build_app(scheme: "YabaSnashiro-Lite")
-    upload_to_app_store(
-      api_key: api_key,  
-      skip_metadata: true,
-      skip_screenshots: true,
-      precheck_include_in_app_purchases: false
-    )
-  end
-    
 end

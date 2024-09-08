@@ -51,6 +51,7 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
         case exit = "Exit"
         case reset = "Reset"
         case changeDisk = "Change Disk"
+        case backupManager = "Backup Manager"
         case saveState = "Save State"
         case loadState = "Load State"
         case analogMode = "Analog Mode"
@@ -72,6 +73,9 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
                 return "switch.2"
             case .controllerSetting:
                 return "gamecontroller"
+            case .backupManager:
+                return "lock.square"
+
             }
         }
 
@@ -91,6 +95,9 @@ class MenuViewController: UIViewController, UITableViewDelegate, UITableViewData
                 return NSLocalizedString("Analog Mode", comment: "Switch to analog mode")
             case .controllerSetting:
                 return NSLocalizedString("Game Controller", comment: "Game controller settings")
+            case .backupManager:
+                return NSLocalizedString("Backup Manager", comment: "Backup Manager settings")
+
             }
         }
     }

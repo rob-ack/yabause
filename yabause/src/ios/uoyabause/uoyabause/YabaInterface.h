@@ -56,3 +56,12 @@ int UnMuteSound();
 
 char * getGameinfoFromChd( const char * path );
 
+
+NSString* YSGetBackupDevicelist();
+NSString* YSGetBackupFilelist( int deviceid );
+int YSDeleteBackupFile( int index );
+NSString* YSGetBackupFile( int index );
+int YSPutFile( NSString* jsonstr  );
+int YSCopy( int target, int file  );
+
+

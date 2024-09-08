@@ -86,6 +86,7 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
     
     var activityIndicator: UIActivityIndicatorView!
     var blurEffectView: UIVisualEffectView!
+    var isStandalone: Bool = false
     
 #if FREE_VERSION
     func addBannerViewToView(_ bannerView: GADBannerView) {
@@ -238,8 +239,22 @@ class FileSelectController : UIViewController, UICollectionViewDataSource, UICol
 
         // Activity Indicatorをビュー階層の一番上に持ってくる
         self.view.bringSubviewToFront(activityIndicator)
+        if( isStandalone ){
+            setupNavigationBar()
+        }
+    }
+    
+    private func setupNavigationBar() {
+        let closeButton = UIBarButtonItem(title: NSLocalizedString("Close", comment: "Close Dialoig"), style: .plain, target: self, action: #selector(closeButtonTapped))
+        self.view.backgroundColor = .systemBackground
+        navigationItem.leftBarButtonItem = closeButton
+        title = NSLocalizedString("Change Disk", comment: "Chnge the game disk")
+    }
 
-        
+    @objc private func closeButtonTapped() {
+        dismiss(animated: true) {
+            self.completionHandler?(nil)
+        }
     }
     
     // UISearchBarDelegate methods

@@ -136,6 +136,8 @@ extension GameMainViewController: MenuViewControllerDelegate {
                     title: NSLocalizedString("Yes", comment: "Confirm action to exit the application"),
                     style: .default
                 ) { action in
+                    
+                    enterBackGround()
                     exit(0)
                 }
                 alertController.addAction(yesAction)
@@ -170,6 +172,10 @@ extension GameMainViewController: MenuViewControllerDelegate {
                 break
             case .controllerSetting:
                 self?.gameVC?.toggleControllSetting()
+                break
+            case .backupManager:
+                self?.gameVC?.presentBackupFileListViewController()
+                doNotPause = true
                 break
             }
 

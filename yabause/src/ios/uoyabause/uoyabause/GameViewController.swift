@@ -1113,6 +1113,7 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
     func presentFileSelectViewController() {
         
         let fsVC = FileSelectController()
+        fsVC.isStandalone = true
         fsVC.completionHandler = { data in
             if let data = data {
                 
@@ -1138,7 +1139,23 @@ class GameViewController: MGLKViewController,MGLKViewControllerDelegate,Draggabl
                 self.isPaused = false
             }
         }
-        present(fsVC, animated: true, completion: nil)
+        
+        let navController = UINavigationController(rootViewController: fsVC)
+        navController.modalPresentationStyle = .pageSheet
+        present(navController, animated: true, completion: nil)
+
+    }
+    
+    func presentBackupFileListViewController() {
+        let bfVC = BackupFileListViewController()
+        bfVC.completionHandler = {  data in
+            self.isPaused = false
+        }
+        
+        let navController = UINavigationController(rootViewController: bfVC)
+        navController.modalPresentationStyle = .pageSheet
+        present(navController, animated: true, completion: nil)
+
     }
     
 }

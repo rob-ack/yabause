@@ -19,8 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
 #include "BackupManager.h"
-#include "bios.h"
 
+#include "yabause.h"
+#include "bios.h"
 
 #include "json/json.h"
 #include <memory>
@@ -276,6 +277,7 @@ int BackupManager::putFile( const string & rootstr ) {
     return rtn;
   }
 
+  YabFlushBackups();
   return 0;
 }
 
@@ -291,7 +293,8 @@ int BackupManager::copy( int target_device, int file_index ) {
   current_device_ = target_device;
 
   int rtn = putFile(tmpjson);
-  
+  YabFlushBackups();
+    
   current_device_ = current_device_back;
 
   return rtn;

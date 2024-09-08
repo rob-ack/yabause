@@ -21,6 +21,7 @@ extern "C"{
 
 #include <cstdio>
 #include <stdarg.h>
+#include <string>
 
 const int MSG_SAVE_STATE = 1;
 const int MSG_LOAD_STATE = 2;
@@ -431,9 +432,43 @@ int start_emulation( int originx, int originy, int width, int height ){
         YabFlushBackups();
         return 0;
     }
+
+ 
     
+
+
+char * getGameinfoFromChd( const char * path ){
+
+  chd_file *chd;
+  char * hunk_buffer;
+  int current_hunk_id;
+  const int len = 256;
+  char * buf = (char*)malloc( sizeof(char)*len);
+
+  chd_error error = chd_open(path, CHD_OPEN_READ, NULL, &chd);
+  if (error != CHDERR_NONE) {
+    return NULL;
+  }
+  const chd_header * header = chd_get_header(chd);
+  if( header == NULL ){
+    return NULL;
+  }
+
+  hunk_buffer = (char*)malloc(header->hunkbytes);
+  chd_read(chd, 0, hunk_buffer);
+  
+  memcpy(buf,&hunk_buffer[16],len); 
+  buf[len-1] = 0;
+  //putc(buf[0], stdout);
+  //putc(buf[1], stdout);
+  //putc(buf[2], stdout);
+  //putc(buf[3], stdout);
+  free(hunk_buffer);
+  chd_close(chd);
+  return buf;
 }
 
+} // extern "C"
 
 extern "C" {
 
@@ -478,38 +513,6 @@ extern "C" {
   }
   void RBGGenerator_onFinish() {
   }
-
-
-char * getGameinfoFromChd( const char * path ){
-
-  chd_file *chd;
-  char * hunk_buffer;
-  int current_hunk_id;
-  const int len = 256;
-  char * buf = (char*)malloc( sizeof(char)*len);
-
-  chd_error error = chd_open(path, CHD_OPEN_READ, NULL, &chd);
-  if (error != CHDERR_NONE) {
-    return NULL;
-  }
-  const chd_header * header = chd_get_header(chd);
-  if( header == NULL ){
-    return NULL;
-  }
-
-  hunk_buffer = (char*)malloc(header->hunkbytes);
-  chd_read(chd, 0, hunk_buffer);
-  
-  memcpy(buf,&hunk_buffer[16],len); 
-  buf[len-1] = 0;
-  //putc(buf[0], stdout);
-  //putc(buf[1], stdout);
-  //putc(buf[2], stdout);
-  //putc(buf[3], stdout);
-  free(hunk_buffer);
-  chd_close(chd);
-  return buf;
-}
 
 }
 

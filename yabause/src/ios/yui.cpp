@@ -405,7 +405,7 @@ int start_emulation( int originx, int originy, int width, int height ){
                 YabauseReset();            
                 break;            
             case MSG_OPEN_TRAY:
-                YUI_LOG("MSG_OPEN_TRAY %s\n");
+                YUI_LOG("MSG_OPEN_TRAY\n");
                 Cs2ForceOpenTray();            
                 break;     
             case MSG_CLOSE_TRAY:

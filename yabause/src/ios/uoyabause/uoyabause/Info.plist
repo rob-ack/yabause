@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>AVGameBypassSystemSpatialAudio</key>
+	<false/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -21,7 +23,7 @@
 	<key>CFBundleSignature</key>
 	<string>APPL</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<string>48</string>
 	<key>GCSupportedGameControllers</key>
 	<array>
 		<dict>
@@ -34,6 +36,8 @@
 		</dict>
 	</array>
 	<key>GCSupportsControllerUserInteraction</key>
+	<true/>
+	<key>GCSupportsGameMode</key>
 	<true/>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>

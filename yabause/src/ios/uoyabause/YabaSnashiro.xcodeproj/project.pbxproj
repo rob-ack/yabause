@@ -28,8 +28,6 @@
 		941B72ED2BE733D70078C190 /* MainScreenController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D450081D7C0E6C004E2615 /* MainScreenController.swift */; };
 		941B72EF2BE733D70078C190 /* iOSCoreAudio.m in Sources */ = {isa = PBXBuildFile; fileRef = 94CB9D8E2581C6BE00C8E3EC /* iOSCoreAudio.m */; };
 		941B72F32BE733D70078C190 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B9257B1573005D4814 /* GameController.framework */; };
-		941B72F42BE733D70078C190 /* libflac-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AF257B1206005D4814 /* libflac-static.a */; };
-		941B72F52BE733D70078C190 /* liblzma-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B4257B122E005D4814 /* liblzma-static.a */; };
 		941B72F62BE733D70078C190 /* libchdr-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AA257B0F33005D4814 /* libchdr-static.a */; };
 		941B72F72BE733D70078C190 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 640323861C673BE200DA91D8 /* OpenAL.framework */; };
 		941B72F82BE733D70078C190 /* libyabause_ios.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 646C87B41C66DDD20091B3B6 /* libyabause_ios.a */; };
@@ -72,6 +70,8 @@
 		D97B41602C8D07E40070A81D /* BackupFileListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97B415E2C8D07E40070A81D /* BackupFileListViewController.swift */; };
 		D98515972CD1F7E400055C16 /* libzstd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515962CD1F7CD00055C16 /* libzstd.a */; };
 		D98515982CD1F7F300055C16 /* liblzma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515952CD1F7BE00055C16 /* liblzma.a */; };
+		D98515992CD23F0F00055C16 /* liblzma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515952CD1F7BE00055C16 /* liblzma.a */; };
+		D985159A2CD23F1A00055C16 /* libzstd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515962CD1F7CD00055C16 /* libzstd.a */; };
 		D98F41D72C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
 		D98F41D82C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
 		D98F41DA2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */; };
@@ -301,10 +301,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				941B72F32BE733D70078C190 /* GameController.framework in Frameworks */,
-				941B72F42BE733D70078C190 /* libflac-static.a in Frameworks */,
-				941B72F52BE733D70078C190 /* liblzma-static.a in Frameworks */,
 				941B72F62BE733D70078C190 /* libchdr-static.a in Frameworks */,
+				D985159A2CD23F1A00055C16 /* libzstd.a in Frameworks */,
 				941B72F72BE733D70078C190 /* OpenAL.framework in Frameworks */,
+				D98515992CD23F0F00055C16 /* liblzma.a in Frameworks */,
 				941B72F82BE733D70078C190 /* libyabause_ios.a in Frameworks */,
 				D990B59E2C5F504E001E2D6C /* MetalANGLE.xcframework in Frameworks */,
 				8991F68256687B7469F10AD1 /* Pods_YabaSnashiro_Lite.framework in Frameworks */,
@@ -1606,7 +1606,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 49;
+				CURRENT_PROJECT_VERSION = 50;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1643,7 +1643,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 49;
+				CURRENT_PROJECT_VERSION = 50;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;

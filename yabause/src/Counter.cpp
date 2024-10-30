@@ -49,9 +49,7 @@ extern "C" {
   extern u64 g_m68K_dec_cycle;
 
   void setM68kCounter(u64 counter) {
-    std::lock_guard<std::mutex> lk(m68k_mtx_);
     m68k_counter = counter;
-    m68k_cond_.notify_all();
   }
 
   void setM68kDoneCounter(u64 counter) {
@@ -59,8 +57,6 @@ extern "C" {
   }
 
   u64 getM68KCounter() {
-     std::unique_lock<std::mutex> lk(m68k_mtx_);
-     m68k_cond_.wait(lk);
      return m68k_counter;
   }
 

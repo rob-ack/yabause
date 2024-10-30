@@ -24,6 +24,7 @@ import io.reactivex.observers.DisposableSingleObserver
 import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -118,7 +119,7 @@ class ShowPinInFragment : DialogFragment() {
                 emitter.onError(Throwable("NO!"))
             } else {
                 val client = OkHttpClient()
-                val mime = MediaType.parse("application/json; charset=utf-8")
+                val mime = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val requestBody = RequestBody.create(mime, "{ \"key\":\"${pinNumber}\" }")
                 val request: Request = Request.Builder()
                     .url(url)
@@ -130,7 +131,7 @@ class ShowPinInFragment : DialogFragment() {
                 if (response.isSuccessful) {
                     emitter.onComplete()
                 } else {
-                    emitter.onError(Throwable(response.message()))
+                    emitter.onError(Throwable(response.message))
                 }
             }
         }.observeOn(AndroidSchedulers.mainThread())
@@ -154,7 +155,7 @@ class ShowPinInFragment : DialogFragment() {
             } else {
                 progress_emitter = emitter
                 val client = OkHttpClient()
-                val mime = MediaType.parse("application/json; charset=utf-8")
+                val mime = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val requestBody = RequestBody.create(mime, "{ \"token\":\"" + token + "\" }")
                 val request: Request = Request.Builder()
                     .url(url)
@@ -166,7 +167,7 @@ class ShowPinInFragment : DialogFragment() {
                 if (response.isSuccessful) {
 
                     try {
-                        val jsonData: String = response.body()!!.string()
+                        val jsonData: String = response.body!!.string()
                         Log.d(javaClass.name, jsonData)
                         val Jobject = JSONObject(jsonData)
                         val pinin = Jobject.getString("pinin")
@@ -175,8 +176,8 @@ class ShowPinInFragment : DialogFragment() {
                         emitter.onError(e)
                     }
                 } else {
-                    Log.d(javaClass.name, response.message())
-                    emitter.onError(Throwable(response.message()))
+                    Log.d(javaClass.name, response.message)
+                    emitter.onError(Throwable(response.message))
                 }
                 progress_emitter = null
                 emitter.onComplete()

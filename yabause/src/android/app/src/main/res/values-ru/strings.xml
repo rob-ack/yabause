@@ -414,7 +414,7 @@
     </string>
     <string name="attachment_summary_off">Скачивать вложения только вручную</string>
     <string name="do_you_want_to_install">Установить?</string>
-    <string name="only_chd_is_supported_for_load_game">Вы можетеYou can choose chd,zip,7z file.</string>
+    <string name="only_chd_is_supported_for_load_game">Вы можетеYou can choose chd,zip file.</string>
     <string name="install_game_message">После установки вы сможете загружать игру из плейлиста. Это потребует  </string>
     <string name="install_game_message_after">Мб внутренней памяти.</string>
 
@@ -465,6 +465,7 @@
     <string name="failed_to_initialize">Не удалось инициализировать</string>
     <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Не удалось получить код игры. Этот файл не является игрой SEGA Saturn.</string>
     <string name="fail_to_initialize_emulator">Не удалось инициализировать эмулятор</string>
-
+    <string name="notification_permission_title">Запрос на разрешение уведомлений</string>
+    <string name="notification_permission_message">Разрешив уведомления, вы будете получать новости от разработчика.</string>
 </resources>
 	

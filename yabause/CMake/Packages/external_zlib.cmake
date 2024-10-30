@@ -18,8 +18,7 @@ set(zlib_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/zlib/install/include)
 set(ZLIB_URL https://github.com/madler/zlib)
 set(ZLIB_BUILD ${CMAKE_CURRENT_BINARY_DIR}/zlib/src/zlib)
 set(ZLIB_INSTALL ${CMAKE_CURRENT_BINARY_DIR}/zlib/install)
-#set(ZLIB_TAG 50893291621658f355bc5b4d450a8d06a563053d)
-set(ZLIB_TAG 51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf)
+set(ZLIB_TAG 9f0f2d4f9f1f28be7e16d8bf3b4e9d4ada70aa9f)
 
 if(WIN32)
   set(zlib_STATIC_LIBRARIES

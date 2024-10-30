@@ -55,11 +55,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentStatePagerAdapter
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.ViewModelProvider.NewInstanceFactory.Companion.instance
 import androidx.lifecycle.lifecycleScope
 import androidx.multidex.MultiDexApplication
 import androidx.preference.PreferenceManager
 import androidx.viewpager.widget.ViewPager
-import com.activeandroid.query.Select
 import com.bumptech.glide.Glide
 import com.google.android.gms.analytics.HitBuilders.ScreenViewBuilder
 import com.google.android.gms.analytics.Tracker
@@ -76,7 +76,10 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import io.noties.markwon.Markwon
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.invoke
 import kotlinx.coroutines.launch
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
@@ -85,6 +88,7 @@ import org.uoyabause.android.*
 import org.uoyabause.android.FileDialog.FileSelectedListener
 import org.uoyabause.android.GameSelectPresenter.GameSelectPresenterListener
 import org.uoyabause.android.AutoBackupManager
+import org.uoyabause.android.YabauseStorage.Companion.dao
 import org.uoyabause.android.tv.GameSelectFragment
 import java.io.File
 import java.util.*
@@ -339,8 +343,7 @@ class GameSelectFragmentPhone : Fragment(),
         drawerLayout!!.closeDrawers()
         when (item.itemId) {
             org.devmiyax.yabasanshiro.R.id.menu_auto_backupsync -> {
-
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_auto_backupsync")
                 }
 
@@ -369,7 +372,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_setting -> {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_item_setting")
                 }
 
@@ -378,7 +381,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_load_game -> {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_item_load_game")
                 }
 
@@ -397,7 +400,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_update_game_db -> {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_item_update_game_db")
                 }
 
@@ -407,7 +410,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_login -> if (item.title == getString(org.devmiyax.yabasanshiro.R.string.sign_out)) {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_item_login")
                 }
 
@@ -418,7 +421,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_privacy_policy -> {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_privacy_policy")
                 }
 
@@ -429,7 +432,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
             org.devmiyax.yabasanshiro.R.id.menu_item_login_to_other -> {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "menu_item_login_to_other")
                 }
 
@@ -482,23 +485,26 @@ class GameSelectFragmentPhone : Fragment(),
     private fun updateRecent() {
         gameListPages?.forEach { it ->
             if (it.pageTitle == "recent") {
-                var resentList: MutableList<GameInfo?>? = null
-                try {
-                    resentList = Select()
-                        .from(GameInfo::class.java)
-                        .orderBy("lastplay_date DESC")
-                        .limit(5)
-                        .execute<GameInfo?>()
-                } catch (e: Exception) {
-                    Log.d(TAG, e.localizedMessage!!)
+
+                GlobalScope.launch(Dispatchers.IO) {
+                    var resentList: List<GameInfo> = emptyList()
+                    try {
+                        resentList = YabauseStorage.dao.getRecentGames()
+                    } catch (e: Exception) {
+                        Log.d(TAG, e.localizedMessage!!)
+                    }
+                    GlobalScope.launch(Dispatchers.Main) {
+                        val mutableResentList: MutableList<GameInfo?> = resentList.toMutableList()
+                        val nullableMutableResentList: MutableList<GameInfo?>? = mutableResentList
+                        val resentAdapter = GameItemAdapter(nullableMutableResentList)
+                        resentAdapter.setOnItemClickListener(this@GameSelectFragmentPhone)
+                        it.gameList = resentAdapter
+                        tabPageAdapter.setGameList(gameListPages)
+                        tabPageAdapter.notifyDataSetChanged()
+                    }
                 }
-                val resentAdapter = GameItemAdapter(resentList)
-                resentAdapter.setOnItemClickListener(this)
-                it.gameList = resentAdapter
             }
         }
-        tabPageAdapter.setGameList(gameListPages)
-        tabPageAdapter.notifyDataSetChanged()
     }
 
     private var adActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -509,7 +515,7 @@ class GameSelectFragmentPhone : Fragment(),
         if (result.resultCode == GameSelectFragment.GAMELIST_NEED_TO_UPDATED) {
             if (checkStoragePermission() == 0) {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "GAMELIST_NEED_TO_UPDATED")
                 }
 
@@ -517,7 +523,7 @@ class GameSelectFragmentPhone : Fragment(),
             }
         }else if (result.resultCode == GameSelectFragment.GAMELIST_NEED_TO_RESTART) {
 
-            firebaseAnalytics?.logEvent("Game Select Fragment"){
+            firebaseAnalytics?.logEvent("game_select_fragment"){
                 param("event", "GAMELIST_NEED_TO_RESTART")
             }
 
@@ -530,7 +536,7 @@ class GameSelectFragmentPhone : Fragment(),
 
     private var signInActivityLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
 
-        firebaseAnalytics?.logEvent("Game Select Fragment"){
+        firebaseAnalytics?.logEvent("game_select_fragment"){
             param("event", "onSignIn")
         }
 
@@ -548,7 +554,7 @@ class GameSelectFragmentPhone : Fragment(),
 
         Log.d(TAG, "Play time is ${playtime}")
 
-        firebaseAnalytics?.logEvent("Game Select Fragment"){
+        firebaseAnalytics?.logEvent("game_select_fragment"){
             param("event", "On Game Finished")
             param("playTime",playtime)
         }
@@ -668,7 +674,7 @@ class GameSelectFragmentPhone : Fragment(),
 
     override fun fileSelected(file: File?) {
 
-        firebaseAnalytics?.logEvent("Game Select Fragment"){
+        firebaseAnalytics?.logEvent("game_select_fragment"){
             param("event", "fileSelected")
         }
 
@@ -843,7 +849,7 @@ class GameSelectFragmentPhone : Fragment(),
 
             override fun onError(e: Throwable) {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "updateGameList onError")
                 }
 
@@ -854,7 +860,7 @@ class GameSelectFragmentPhone : Fragment(),
 
             override fun onComplete() {
 
-                firebaseAnalytics?.logEvent("Game Select Fragment"){
+                firebaseAnalytics?.logEvent("game_select_fragment"){
                     param("event", "updateGameList onComplete")
                 }
 
@@ -866,10 +872,6 @@ class GameSelectFragmentPhone : Fragment(),
                 }
 
                 loadRows()
-                val viewPager = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
-                tabPageAdapter.setGameList(gameListPages)
-                viewPager!!.adapter = tabPageAdapter
-                tabLayout.setupWithViewPager(viewPager)
 
                 dismissDialog()
                 if (isFirstUpdate) {
@@ -887,9 +889,11 @@ class GameSelectFragmentPhone : Fragment(),
                         presenter.checkSignIn(signInActivityLauncher)
                     }
                 }
-                viewPager.adapter!!.notifyDataSetChanged()
+
                 observer = null
                 presenter.syncBackup()
+
+
             }
         }
         presenter.updateGameList(refreshLevel, tmpObserver)
@@ -928,122 +932,160 @@ class GameSelectFragmentPhone : Fragment(),
     @SuppressLint("StringFormatInvalid")
     private fun loadRows() {
 
-        // -----------------------------------------------------------------
-        // Recent Play Game
-        try {
-            val checklist = Select()
-                .from(GameInfo::class.java)
-                .limit(1)
-                .execute<GameInfo?>()
-            if (checklist.size == 0) {
+        Log.d("GameSelect", "loadRows"  )
 
-                val viewMessageParent = rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
-                val viewMessage = rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
-                val viewPager = rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
-                viewMessageParent!!.visibility = VISIBLE
-                viewPager!!.visibility = View.GONE
+        GlobalScope.launch(Dispatchers.IO) {
 
-                val markwon = Markwon.create(this.activity as Context)
-
-                if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
-                    val packageName = requireActivity().packageName
-                    val welcomeMessage = resources.getString(
-                        org.devmiyax.yabasanshiro.R.string.welcome_11,
-                        "Android/data/$packageName/files/yabause/games",
-                        "Android/data/$packageName/files",
-                    )
-                    markwon.setMarkdown(viewMessage, welcomeMessage)
-                }else {
-                    val welcomeMessage = resources.getString(
-                        org.devmiyax.yabasanshiro.R.string.welcome,
-                        YabauseStorage.storage.gamePath
-                    )
-                    markwon.setMarkdown(viewMessage, welcomeMessage)
+            // Recent Play Game
+            var dataCount = 0
+            try {
+                val glist: List<GameInfo> = YabauseStorage.dao.getAll()
+                dataCount = YabauseStorage.dao.getRowCount()
+                if (glist.size != dataCount) {
+                    Log.d(TAG, "dataCount is not match")
                 }
-                return
+            } catch (e: Exception) {
+                Log.d(TAG, e.localizedMessage!!)
             }
-        } catch (e: Exception) {
-            Log.d(TAG, e.localizedMessage!!)
-        }
 
-        val viewMessageParent = rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
-        val viewMessage = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.empty_message) as? View
-        val viewPager = rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
-        viewMessageParent?.visibility = View.GONE
-        viewPager?.visibility = VISIBLE
+            if (dataCount == 0) {
+                launch(Dispatchers.Main) {
+                    val viewMessageParent =
+                        rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
+                    val viewMessage =
+                        rootView.findViewById<TextView?>(org.devmiyax.yabasanshiro.R.id.empty_message)
+                    val viewPager =
+                        rootView.findViewById<ViewPager?>(org.devmiyax.yabasanshiro.R.id.view_pager_game_index)
+                    viewMessageParent!!.visibility = VISIBLE
+                    viewPager!!.visibility = View.GONE
 
-        // -----------------------------------------------------------------
-        // Recent Play Game
-        var recentList: MutableList<GameInfo?>? = null
-        try {
-            recentList = Select()
-                .from(GameInfo::class.java)
-                .orderBy("lastplay_date DESC")
-                .limit(5)
-                .execute<GameInfo?>()
-        } catch (e: Exception) {
-            Log.d(TAG, e.localizedMessage!!)
-        }
-        val resentAdapter = GameItemAdapter(recentList)
+                    val markwon = Markwon.create(this@GameSelectFragmentPhone.activity as Context)
 
-        gameListPages = mutableListOf()
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                        val welcomeMessage = resources.getString(
+                            org.devmiyax.yabasanshiro.R.string.welcome_11,
+                            YabauseStorage.storage.gamePath,
+                            "",
+                        )
+                        markwon.setMarkdown(viewMessage, welcomeMessage)
 
-        val resentPage = GameListPage("recent", resentAdapter)
-        resentAdapter.setOnItemClickListener(this)
-        gameListPages!!.add(resentPage)
+                    }
+                    else if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+                        val packageName = requireActivity().packageName
+                        val welcomeMessage = resources.getString(
+                            org.devmiyax.yabasanshiro.R.string.welcome_11,
+                            "Android/data/$packageName/files/yabause/games",
+                            "Android/data/$packageName/files",
+                        )
+                        markwon.setMarkdown(viewMessage, welcomeMessage)
+                    } else {
+                        val welcomeMessage = resources.getString(
+                            org.devmiyax.yabasanshiro.R.string.welcome,
+                            YabauseStorage.storage.gamePath
+                        )
+                        markwon.setMarkdown(viewMessage, welcomeMessage)
+                    }
+                }
+                return@launch
+            }
 
-        // -----------------------------------------------------------------
-        //
-        var list: MutableList<GameInfo>? = null
-        try {
-            list = Select()
-                .from(GameInfo::class.java)
-                .orderBy("game_title ASC")
-                .execute()
-        } catch (e: Exception) {
-//            Log.d(TAG, "${e.localizedMessage}")
-        }
+            launch(Dispatchers.Main) {
 
-        var i = 0
-        while (i < alphabet.size) {
-            var hit = false
-            val alphabetedList: MutableList<GameInfo?> =
-                ArrayList()
-            val it = list!!.iterator()
-            while (it.hasNext()) {
-                val game = it.next()
-                if (game.game_title.uppercase(Locale.ROOT).indexOf(alphabet[i]) == 0) {
-                    alphabetedList.add(game)
-                    Log.d(
-                        "GameSelect",
-                        alphabet[i] + ":" + game.game_title
-                    )
-                    it.remove()
-                    hit = true
-                    it.remove()
+
+                val viewMessageParent =
+                    rootView.findViewById<ScrollView?>(org.devmiyax.yabasanshiro.R.id.empty_message_parent)
+                val viewMessage =
+                    rootView.findViewById(org.devmiyax.yabasanshiro.R.id.empty_message) as? View
+                val viewPager =
+                    rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
+                viewMessageParent?.visibility = View.GONE
+                viewPager?.visibility = VISIBLE
+
+                // -----------------------------------------------------------------
+                // Recent Play Game
+                GlobalScope.launch(Dispatchers.IO) {
+                    var recentList: List<GameInfo> = emptyList()
+                    try {
+                        recentList = YabauseStorage.dao.getRecentGames()
+                    } catch (e: Exception) {
+                        Log.d(TAG, e.localizedMessage!!)
+                        return@launch
+                    }
+
+                    launch(Dispatchers.Main) {
+                        val mutableResentList: MutableList<GameInfo?> = recentList.toMutableList()
+                        val nullableMutableResentList: MutableList<GameInfo?>? = mutableResentList
+                        val resentAdapter = GameItemAdapter(nullableMutableResentList)
+                        gameListPages = mutableListOf()
+                        val resentPage = GameListPage("recent", resentAdapter)
+                        resentAdapter.setOnItemClickListener(this@GameSelectFragmentPhone)
+                        gameListPages!!.add(resentPage)
+
+                        GlobalScope.launch(Dispatchers.IO) {
+                            var list: MutableList<GameInfo>? = null
+                            try {
+                                list = YabauseStorage.dao.getAllSortedByTitle().toMutableList()
+                            } catch (e: Exception) {
+                                Log.d(TAG, "${e.localizedMessage}")
+                                return@launch
+                            }
+
+                            launch(Dispatchers.Main) {
+                                var i = 0
+                                while (i < alphabet.size) {
+                                    var hit = false
+                                    val alphabetedList: MutableList<GameInfo?> =
+                                        ArrayList()
+                                    val it = list!!.iterator()
+                                    while (it.hasNext()) {
+                                        val game = it.next()
+                                        if (game.game_title.uppercase(Locale.ROOT)
+                                                .indexOf(alphabet[i]) == 0
+                                        ) {
+                                            alphabetedList.add(game)
+                                            Log.d(
+                                                "GameSelect",
+                                                alphabet[i] + ":" + game.game_title
+                                            )
+                                            hit = true
+                                            it.remove()
+                                        }
+                                    }
+                                    if (hit) {
+                                        val pageAdapter = GameItemAdapter(alphabetedList)
+                                        pageAdapter.setOnItemClickListener(this@GameSelectFragmentPhone)
+                                        val aPage = GameListPage(alphabet[i], pageAdapter)
+                                        gameListPages!!.add(aPage)
+                                    }
+                                    i++
+                                }
+                                val othersList: MutableList<GameInfo?> = ArrayList()
+                                val it: Iterator<GameInfo> = list!!.iterator()
+                                while (it.hasNext()) {
+                                    val game = it.next()
+                                    Log.d("GameSelect", "Others:" + game.game_title)
+                                    othersList.add(game)
+                                }
+
+                                if (othersList.size > 0) {
+                                    val otherAdapter = GameItemAdapter(othersList)
+                                    otherAdapter.setOnItemClickListener(this@GameSelectFragmentPhone)
+                                    val otherPage = GameListPage("OTHERS", otherAdapter)
+                                    gameListPages!!.add(otherPage)
+                                }
+
+                                val viewPager =
+                                    rootView.findViewById(org.devmiyax.yabasanshiro.R.id.view_pager_game_index) as? ViewPager
+                                tabPageAdapter.setGameList(gameListPages)
+                                viewPager!!.adapter = tabPageAdapter
+                                tabLayout.setupWithViewPager(viewPager)
+                                viewPager.adapter!!.notifyDataSetChanged()
+
+                            }
+                        }
+                    }
                 }
             }
-            if (hit) {
-                val pageAdapter = GameItemAdapter(alphabetedList)
-                pageAdapter.setOnItemClickListener(this)
-                val aPage = GameListPage(alphabet[i], pageAdapter)
-                gameListPages!!.add(aPage)
-            }
-            i++
-        }
-        val othersList: MutableList<GameInfo?> = ArrayList()
-        val it: Iterator<GameInfo> = list!!.iterator()
-        while (it.hasNext()) {
-            val game = it.next()
-            Log.d("GameSelect", "Others:" + game.game_title)
-            othersList.add(game)
-        }
-
-        if (othersList.size > 0) {
-            val otherAdapter = GameItemAdapter(othersList)
-            otherAdapter.setOnItemClickListener(this)
-            val otherPage = GameListPage("OTHERS", otherAdapter)
-            gameListPages!!.add(otherPage)
         }
     }
 
@@ -1056,7 +1098,7 @@ class GameSelectFragmentPhone : Fragment(),
     @SuppressLint("DefaultLocale")
     override fun onGameRemoved(item: GameInfo?) {
 
-        firebaseAnalytics?.logEvent("Game Select Fragment"){
+        firebaseAnalytics?.logEvent("game_select_fragment"){
             param("event", "onGameRemoved")
         }
 

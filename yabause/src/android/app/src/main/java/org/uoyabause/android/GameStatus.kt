@@ -18,41 +18,62 @@
 */
 package org.uoyabause.android
 
-import com.activeandroid.Model
-import com.activeandroid.annotation.Column
-import com.activeandroid.annotation.Table
-import com.activeandroid.query.Select
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
+import androidx.room.Update
 import java.util.Date
 
 /**
  * Created by shinya on 2016/01/04.
  */
-@Table(name = "GameStatus")
-class GameStatus : Model {
-    @Column(name = "product_number", index = true)
-    var product_number = ""
 
-    @Column(name = "update_at")
-    var update_at: Date? = null
+@Dao
+interface GameStatusDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(gameStatus: GameStatus)
 
-    @Column(name = "image_url")
-    var image_url = ""
+    @Update
+    fun update(gameStatus: GameStatus)
 
-    @Column(name = "rating")
-    var rating = 0
+    @androidx.room.Delete
+    fun delete(gameStatus: GameStatus)
 
-    constructor() : super() {
-        product_number = ""
-        image_url = ""
-        rating = -1
-    }
+    @Query("SELECT * FROM GameStatus ORDER BY update_at DESC LIMIT 1")
+    fun getLatestGameStatus(): GameStatus?
 
-    constructor(
-        product_number: String,
-        update_at: Date?,
-        image_url: String,
-        rating: Int
-    ) : super() {
+    @Query("SELECT * FROM GameStatus WHERE product_number = :product_number")
+    fun select(product_number: String): GameStatus?
+
+/*
+    fun selectAll(): List<GameStatus>
+    fun select(product_number: String): GameStatus?
+    fun selectByRating(rating: Int): List<GameStatus>
+    fun selectByUpdateAt(update_at: Date): List<GameStatus>
+    fun selectByUpdateAt(update_at: Date, rating: Int): List<GameStatus>
+    fun selectByUpdateAt(update_at: Date, rating: Int, product_number: String): List<GameStatus>
+    fun selectByUpdateAt(update_at: Date, product_number: String): List<GameStatus>
+    fun selectByRating(rating: Int, product_number: String): List<GameStatus>
+
+ */
+}
+
+@Entity
+data class GameStatus(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "product_number", index = true) var product_number: String = "",
+    @ColumnInfo(name = "update_at") var update_at: Date? = null,
+    @ColumnInfo(name = "image_url") var image_url:String = "",
+    @ColumnInfo(name = "rating") var rating: Int = -1
+) {
+    constructor(product_number: String, update_at: Date, image_url: String, rating: Int) : this() {
         this.product_number = product_number
         this.update_at = update_at
         this.image_url = image_url
@@ -62,11 +83,8 @@ class GameStatus : Model {
     companion object {
         val lastUpdate: Date?
             get() {
-                val tmp = Select()
-                    .from(GameStatus::class.java)
-                    .orderBy("update_at DESC")
-                    .executeSingle<GameStatus>() ?: return null
-                return tmp.update_at
+                val tmp = YabauseStorage.gameStatusDao.getLatestGameStatus()
+                return tmp?.update_at
             }
     }
 }

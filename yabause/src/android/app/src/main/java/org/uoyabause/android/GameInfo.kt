@@ -19,16 +19,27 @@
 package org.uoyabause.android
 
 import android.os.Bundle
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
-import com.activeandroid.Model
-import com.activeandroid.annotation.Column
-import com.activeandroid.annotation.Table
-import com.activeandroid.query.Delete
-import com.activeandroid.query.Select
+import androidx.room.ColumnInfo
+import androidx.room.Dao
+import androidx.room.Database
+import androidx.room.Entity
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.PrimaryKey
+import androidx.room.Query
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
+import androidx.room.Update
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.type.DateTime
 import okhttp3.Credentials
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
@@ -38,6 +49,9 @@ import org.uoyabause.android.YabauseApplication.Companion.appContext
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
 import org.json.JSONException
+import org.uoyabause.android.YabauseStorage.Companion.dao
+import org.uoyabause.android.cheat.Cheat
+import org.uoyabause.android.cheat.CheatDao
 import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.ByteArrayOutputStream
@@ -62,12 +76,88 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 import java.util.regex.Pattern
 
+
+class Converters {
+    @TypeConverter
+    fun fromTimestamp(value: Long?): Date? {
+        return value?.let { Date(it) }
+    }
+
+    @TypeConverter
+    fun dateToTimestamp(date: Date?): Long? {
+        return date?.time
+    }
+}
+
+@Database(entities = [GameInfo::class,GameStatus::class, Cheat::class], version = 1)
+@TypeConverters(Converters::class)
+abstract class GameInfoDatabase : RoomDatabase() {
+    abstract fun gameInfoDao(): GameInfoDao
+    abstract fun gameStatusDao(): GameStatusDao
+    abstract fun cheatDao(): CheatDao
+}
+
+@Dao
+interface GameInfoDao{
+    @Query("SELECT * FROM GameInfo")
+    fun getAll(): List<GameInfo>
+
+    @Query("SELECT * FROM GameInfo WHERE file_path = :file_path")
+    fun findByFilePath(file_path: String): GameInfo?
+
+    @Query("SELECT * FROM GameInfo WHERE product_number = :product_number AND device_infomation = :device_infomation")
+    fun findByProductId(product_number: String, device_infomation:String ): GameInfo
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(vararg gameInfo: GameInfo)
+
+    @androidx.room.Delete
+    fun delete(gameInfo: GameInfo)
+
+    @Query("SELECT * FROM GameInfo WHERE iso_file_path = :file_path")
+    fun findByInDirectFilePath(file_path: String): GameInfo
+
+    @Query("DELETE FROM GameInfo")
+    fun deleteAll()
+
+    @Update
+    fun update(gameInfo: GameInfo)
+
+    @Query("SELECT * FROM GameInfo ORDER BY lastplay_date DESC LIMIT 5")
+    fun getRecentGames(): List<GameInfo>
+
+    @Query("SELECT COUNT(*) FROM GameInfo")
+    fun getRowCount(): Int
+
+    @Query("SELECT * FROM GameInfo ORDER BY game_title ASC")
+    fun getAllSortedByTitle(): List<GameInfo>
+}
+
 /**
  * Created by shinya on 2015/12/30.
  */
-@Table(name = "GameInfo")
-class GameInfo : Model() {
+@Entity
+data class GameInfo(
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @ColumnInfo(name = "file_path", index = true) var file_path: String = "",
+    @ColumnInfo(name = "iso_file_path", index = true) var iso_file_path: String = "",
+    @ColumnInfo(name = "game_title") var game_title: String = "",
+    @ColumnInfo(name = "maker_id") var maker_id: String = "",
+    @ColumnInfo(name = "product_number", index = true) var product_number: String = "",
+    @ColumnInfo(name = "version") var version: String = "",
+    @ColumnInfo(name = "release_date") var release_date:String  = "",
+    @ColumnInfo(name = "device_infomation") var device_infomation:String = "",
+    @ColumnInfo(name = "area") var area:String = "",
+    @ColumnInfo(name = "input_device") var input_device:String = "",
+    @ColumnInfo(name = "last_playdate") var last_playdate:Date? = null,
+    @ColumnInfo(name = "update_at") var update_at: Date? = Date(),
+    @ColumnInfo(name = "image_url") var image_url: String? = "",
+    @ColumnInfo(name = "rating") var rating: Int  = 0,
+    @ColumnInfo(name = "lastplay_date") var lastplay_date: Date? = null
+)  {
+
     companion object {
+        /*
         fun getFromFileName(file_path: String?): GameInfo? {
             Log.d("GameInfo :", file_path!!)
             return Select()
@@ -75,7 +165,8 @@ class GameInfo : Model() {
                 .where("file_path = ?", file_path)
                 .executeSingle()
         }
-
+        */
+/*
         fun getFromInDirectFileName(file_path: String): GameInfo? {
             var lfile_path = file_path
             Log.d("GameInfo direct:", lfile_path)
@@ -85,10 +176,12 @@ class GameInfo : Model() {
                 .where("iso_file_path = ?", lfile_path)
                 .executeSingle()
         }
-
+*/
+        /*
         fun deleteAll() {
             Delete().from(GameInfo::class.java).execute<Model>()
         }
+        */
 
         fun genGameInfoFromCUE(file_path: String?): GameInfo? {
             if( file_path == null ) return null
@@ -228,65 +321,15 @@ class GameInfo : Model() {
         }
     }
 
-    @JvmField
-    @Column(name = "file_path", index = true)
-    var file_path = ""
+    fun removeInstance( ) {
 
-    @Column(name = "iso_file_path", index = true)
-    var iso_file_path = ""
-
-    @JvmField
-    @Column(name = "game_title")
-    var game_title = ""
-
-    @JvmField
-    @Column(name = "maker_id")
-    var maker_id = ""
-
-    @Column(name = "product_number", index = true)
-    var product_number = ""
-
-    @Column(name = "version")
-    var version = ""
-
-    @Column(name = "release_date")
-    var release_date = ""
-
-    @JvmField
-    @Column(name = "device_infomation")
-    var device_infomation = ""
-
-    @Column(name = "area")
-    var area = ""
-
-    @Column(name = "input_device")
-    var input_device = ""
-
-    @Column(name = "last_playdate")
-    var last_playdate: Date? = null
-
-    @Column(name = "update_at")
-    var update_at: Date? = Date()
-
-    @JvmField
-    @Column(name = "image_url")
-    var image_url: String? = ""
-
-    @JvmField
-    @Column(name = "rating")
-    var rating = 0
-
-    @JvmField
-    @Column(name = "lastplay_date")
-    var lastplay_date: Date? = null
-    fun removeInstance() {
         val fname = file_path.uppercase(Locale.getDefault())
         if (fname.endsWith("CHD")) {
             val file = File(file_path)
             if (file.exists()) {
                 file.delete()
             }
-            this.delete()
+            YabauseStorage.dao.delete(this)
         } else if (fname.endsWith("CCD") || fname.endsWith("MDS")) {
             val file = File(file_path)
             val dir = file.parentFile
@@ -302,7 +345,7 @@ class GameInfo : Model() {
                     }
                 }
             }
-            this.delete()
+            YabauseStorage.dao.delete(this)
         } else if (fname.endsWith("CUE")) {
             val delete_files: MutableList<String> = ArrayList()
             try {
@@ -328,7 +371,7 @@ class GameInfo : Model() {
                     }
                 }
                 file.delete()
-                this.delete()
+                YabauseStorage.dao.delete(this)
             } catch (e: FileNotFoundException) {
             } catch (e: IOException) {
             }
@@ -348,14 +391,7 @@ class GameInfo : Model() {
         val ctx = appContext
         var status: GameStatus? = null
         if (product_number != "") {
-            status = try {
-                Select()
-                    .from(GameStatus::class.java)
-                    .where("product_number = ?", product_number)
-                    .executeSingle()
-            } catch (e: Exception) {
-                null
-            }
+            YabauseStorage.gameStatusDao.select(product_number)?.let { status = it }
         }
         if (status == null) {
 
@@ -383,8 +419,6 @@ class GameInfo : Model() {
                     product_number + "( " + game_title + " ) is not found "
                 )
 
-
-
                 // automatic update
                 if (BuildConfig.DEBUG /*&& responseCode == 500*/) {
                     //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
@@ -403,7 +437,7 @@ class GameInfo : Model() {
                             .put("input_device", input_device)
                     )
                     val urlstr = "https://www.uoyabause.org/api/games/"
-                    val MIMEType = MediaType.parse("application/json; charset=utf-8")
+                    val MIMEType = "application/json; charset=utf-8".toMediaTypeOrNull()
                     val requestBody = RequestBody.create(MIMEType, job.toString())
                     val request = Request.Builder().url(urlstr).post(requestBody).build()
                     var client = OkHttpClient.Builder()
@@ -416,13 +450,13 @@ class GameInfo : Model() {
                                     appContext.getString(R.string.basic_user),
                                     ctx.getString(R.string.basic_password)
                                 )
-                            response.request().newBuilder().header("Authorization", credential)
+                            response.request.newBuilder().header("Authorization", credential)
                                 .build()
                         }
                         .build()
                     val response = client.newCall(request).execute()
                     if (response.isSuccessful) {
-                        val rootObject = JSONObject(response.body()!!.string())
+                        val rootObject = JSONObject(response.body!!.string())
                         if (rootObject.getBoolean("result") != true) {
                             Log.i(
                                 "GameInfo",
@@ -432,7 +466,7 @@ class GameInfo : Model() {
                     } else {
                         Log.i(
                             "GameInfo",
-                            product_number + "( " + game_title + " ) can not be added by " + response.message()
+                            product_number + "( " + game_title + " ) can not be added by " + response.message
                         )
                     }
                 }
@@ -440,145 +474,62 @@ class GameInfo : Model() {
                 e.printStackTrace()
                 Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
             }
-
-
         } else {
             image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
-            rating = status.rating
-            update_at = status.update_at
+            rating = status!!.rating
+            update_at = status!!.update_at
         }
 
-
-        //val save_path = storage.screenshotPath
-        //val screen_shot_save_path = "$save_path$product_number.png"
-        //val fp: File? = File(screen_shot_save_path)
-        //if (fp != null && fp.exists()) {
-        //    image_url = screen_shot_save_path
-        //}
         if (product_number == "") return -1
+        return 0
 
+    }
 
 /*
-        try {
-            var encoded_product_id = product_number
-            encoded_product_id = encoded_product_id.replace(".", "%2E")
-            encoded_product_id = encoded_product_id.replace("-", "%2D")
-            encoded_product_id = encoded_product_id.replace(" ", "%20")
-            var urlstr = "https://www.uoyabause.org/api/games/$encoded_product_id/getstatus"
-            val ctx = appContext
-            val user = ctx.getString(R.string.basic_user)
-            val password = ctx.getString(R.string.basic_password)
-            val url = URL(urlstr)
-            var con = url.openConnection() as HttpURLConnection
-            val authenticator: Authenticator = BasicAuthenticator(user, password)
-            Authenticator.setDefault(authenticator)
-            con.requestMethod = "GET"
-            con.instanceFollowRedirects = false
-            con.connect()
-            val responseCode = con.responseCode
-            val inputStream = BufferedInputStream(con.inputStream)
-            val responseArray = ByteArrayOutputStream()
-            val buff = ByteArray(1024)
-            var length: Int
-            while (inputStream.read(buff).also { length = it } != -1) {
-                if (length > 0) {
-                    responseArray.write(buff, 0, length)
-                }
-            }
-            val jsonObj = JSONObject(String(responseArray.toByteArray()))
-            try {
-                if (jsonObj.getBoolean("result") == false) {
-                    Log.i("GameInfo",
-                        product_number + "( " + game_title + " ) is not found " + responseCode)
+    constructor(parcel: Parcel) : this() {
+        file_path = parcel.readString()
+        iso_file_path = parcel.readString()
+        game_title = parcel.readString()
+        maker_id = parcel.readString()
+        product_number = parcel.readString()
+        version = parcel.readString()
+        release_date = parcel.readString()
+        device_infomation = parcel.readString()
+        area = parcel.readString()
+        input_device = parcel.readString()
+        image_url = parcel.readString()
+        rating = parcel.readInt()
+    }
 
-                    // automatic update
-                    if (BuildConfig.DEBUG /*&& responseCode == 500*/) {
-                        //String.format( "{game:{maker_id:\"%s\",product_number:\"%s\",version:\"%s\","release_date:\"%s\",\"device_infomation\":\"%s\","
-                        //        "area:\"%s\",game_title:\"%s\",input_device:\"%s\"}}",
-                        //        cdip->company,cdip->itemnum,cdip->version,cdip->date,cdip->cdinfo,cdip->region, cdip->gamename, cdip->peripheral);
-                        val job = JSONObject()
-                        job.put("game", JSONObject()
-                            .put("maker_id", maker_id)
-                            .put("product_number", product_number)
-                            .put("version", version)
-                            .put("release_date", release_date)
-                            .put("device_infomation", device_infomation)
-                            .put("area", area)
-                            .put("game_title", game_title)
-                            .put("input_device", input_device)
-                        )
-                        urlstr = "https://www.uoyabause.org/api/games/"
-                        val MIMEType = MediaType.parse("application/json; charset=utf-8")
-                        val requestBody = RequestBody.create(MIMEType, job.toString())
-                        val request = Request.Builder().url(urlstr).post(requestBody).build()
-                        var client = OkHttpClient.Builder()
-                            .connectTimeout(10, TimeUnit.SECONDS)
-                            .writeTimeout(10, TimeUnit.SECONDS)
-                            .readTimeout(30, TimeUnit.SECONDS)
-                            .authenticator { _, response ->
-                                val credential =
-                                    Credentials.basic(appContext.getString(R.string.basic_user),
-                                        ctx.getString(R.string.basic_password))
-                                response.request().newBuilder().header("Authorization", credential)
-                                    .build()
-                            }
-                            .build()
-                        val response = client.newCall(request).execute()
-                        if (response.isSuccessful) {
-                            val rootObject = JSONObject(response.body()!!.string())
-                            if (rootObject.getBoolean("result") != true) {
-                                Log.i("GameInfo",
-                                    product_number + "( " + game_title + " ) can not be added")
-                            }
-                        } else {
-                            Log.i("GameInfo",
-                                product_number + "( " + game_title + " ) can not be added by " + response.message())
-                        }
-                    }
-                    return -1
-                }
-            } catch (e: JSONException) {
-            }
-            if (game_title == "FINALIST") {
-                Log.d("debugg", "FINALIST")
-            }
-/*
-            // JSONをパース
-            image_url = try {
-                jsonObj.getString("image_url")
-            } catch (e: JSONException) {
-                null
-            }
- */
-            image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
 
-            rating = try {
-                jsonObj.getInt("rating")
-            } catch (e: JSONException) {
-                1
-            }
-            update_at = try {
-                val dateStr = jsonObj.getString("updated_at")
-                val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss")
-                sdf.parse(dateStr)
-            } catch (e: Exception) {
-                val sdf = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                sdf.parse("2001-01-01 00:00:00")
-            }
-        } catch (e: MalformedURLException) {
-            e.printStackTrace()
-        } catch (e: IOException) {
-            e.printStackTrace()
-            Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-            Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.e("GameInfo", product_number + "( " + game_title + " ) " + e.localizedMessage)
-        } finally {
-        }
- */
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(file_path)
+        parcel.writeString(iso_file_path)
+        parcel.writeString(game_title)
+        parcel.writeString(maker_id)
+        parcel.writeString(product_number)
+        parcel.writeString(version)
+        parcel.writeString(release_date)
+        parcel.writeString(device_infomation)
+        parcel.writeString(area)
+        parcel.writeString(input_device)
+        parcel.writeString(image_url)
+        parcel.writeInt(rating)
+    }
+
+    override fun describeContents(): Int {
         return 0
     }
+
+    companion object CREATOR : Parcelable.Creator<GameInfo> {
+        override fun createFromParcel(parcel: Parcel): GameInfo {
+            return GameInfo(parcel)
+        }
+
+        override fun newArray(size: Int): Array<GameInfo?> {
+            return arrayOfNulls(size)
+        }
+    }
+ */
+
 }

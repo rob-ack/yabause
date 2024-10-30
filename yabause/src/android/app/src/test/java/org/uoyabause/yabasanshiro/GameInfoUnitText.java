@@ -21,7 +21,6 @@ package org.uoyabause.yabasanshiro;
 
 import android.app.Application;
 
-import com.activeandroid.Configuration;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,8 +57,8 @@ public class GameInfoUnitText {
     public void onCreate() {
       super.onCreate();
       // Create configurations for a temporary mock database
-      Configuration.Builder configuration = new Configuration.Builder(this).setDatabaseName(null);
-      configuration.addModelClasses(GameInfo.class);
+      //Configuration.Builder configuration = new Configuration.Builder(this).setDatabaseName(null);
+      //configuration.addModelClasses(GameInfo.class);
       // Initialize ActiveAndroid DB
       //ActiveAndroid.initialize(configuration.create());
     }

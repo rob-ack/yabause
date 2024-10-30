@@ -71,8 +71,8 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.drawerlayout.widget.DrawerLayout.DrawerListener
 import androidx.preference.PreferenceManager
+import androidx.room.Room
 import androidx.transition.Fade
-import com.activeandroid.util.IOUtils
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.auth.AuthUI.IdpConfig.GoogleBuilder
 import com.firebase.ui.auth.IdpResponse
@@ -104,6 +104,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.launch
+import org.apache.commons.compress.utils.IOUtils
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import org.json.JSONObject
@@ -161,7 +162,7 @@ class Yabause : AppCompatActivity(),
     private var firebaseAnalytics: FirebaseAnalytics? = null
     private var inputManager: InputManager? = null
     private val returnCodeSignIn = 0x8010
-    private var gameCode: String? = null
+    //private var gameCode: String? = null
     private var testCase: String? = null
 
     private lateinit var padManager: PadManager
@@ -225,7 +226,11 @@ class Yabause : AppCompatActivity(),
 
     fun showAutoStateLoadDialog(){
 
-        val directory = Paths.get(YabauseStorage.storage.stateSavePath + "/" + gameCode ).toFile()
+        val gameCode = YabauseRunnable.getCurrentGameCode()
+        if( gameCode == null ) {
+            return
+        }
+        val directory = Paths.get(YabauseStorage.storage.stateSavePath + "/" + gameCode!! ).toFile()
 
         // ディレクトリ内の指定した拡張子を持つファイルリストを取得
         val files = directory.listFiles { _, name -> name.endsWith(".yss") }
@@ -561,27 +566,25 @@ class Yabause : AppCompatActivity(),
             }
         }
 
-        val gameCode = intent.getStringExtra("org.uoyabause.android.gamecode")
-        if (gameCode != null) {
-            this.gameCode = gameCode
-        } else {
-            var gameinfo: GameInfo? = GameInfo.getFromFileName(gamePath)
-            if (gameinfo != null) {
-                this.gameCode = gameinfo.product_number
-            } else {
-                gameinfo = if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CUE")) {
-                    GameInfo.genGameInfoFromCUE(gamePath)
-                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("MDS")) {
-                    GameInfo.genGameInfoFromMDS(gamePath)
-                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CCD")) {
-                    GameInfo.genGameInfoFromMDS(gamePath)
-                } else if (gamePath!!.uppercase(Locale.getDefault()).endsWith("CHD")) {
-                    GameInfo.genGameInfoFromCHD(gamePath)
-                } else {
-                    GameInfo.genGameInfoFromIso(gamePath)
-                }
+        var gameCode = intent.getStringExtra("org.uoyabause.android.gamecode")
+        if (gameCode == null) {
+            val db = Room.databaseBuilder(
+                YabauseApplication.appContext,
+                GameInfoDatabase::class.java, "main-database"
+            ).allowMainThreadQueries()
+                .build()
+            val dao = db.gameInfoDao()
+
+            var gameinfo: GameInfo? = null
+            val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
+            if( uriString != null ){
+                gameinfo = dao.findByFilePath(uriString)
                 if (gameinfo != null) {
-                    this.gameCode = gameinfo.product_number
+                    gameCode = gameinfo.product_number
+                    currentDocumentUri = Uri.parse(gameinfo.iso_file_path)
+                }else{
+                    gameCode = null
+                    showInitFailedDialog("You need add this game to game list before launch it.")
                 }
             }
         }
@@ -589,40 +592,39 @@ class Yabause : AppCompatActivity(),
         testCase = intent.getStringExtra("TestCase")
         audio = YabauseAudio(this)
         currentGame = null
-        if (this.gameCode == null) {
-            showInitFailedDialog(getString(R.string.fail_to_get_game_code_this_file_is_not_sega_saturn_game))
-            return
-        }
-
-        readPreferences(this.gameCode)
-        if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
-            val c = SonicR()
-            c.uievent = this
-            val lmenu = navigationView.menu
-            val submenu = lmenu.addSubMenu(Menu.NONE,
-                MENU_ID_LEADERBOARD,
-                Menu.NONE,
-                "Leader Board")
-            c.leaderBoards?.forEach {
-                val lbmenu = submenu.add(it.title)
-                lbmenu.setIcon(R.drawable.baseline_list_24)
-                lbmenu.setOnMenuItemClickListener { _ ->
-                    waitingResult = true
-                    val account = GoogleSignIn.getLastSignedInAccount(this)
-                    if (account != null) {
-                        Games.getLeaderboardsClient(this, account)
-                            .getLeaderboardIntent(it.id)
-                            .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
-                                startActivityForResult(
-                                    intent,
-                                    MENU_ID_LEADERBOARD
-                                )
-                            })
+        if (gameCode != null) {
+            readPreferences(gameCode)
+            if (gameCode == "GS-9170" || gameCode == "MK-81800") {
+                val c = SonicR()
+                c.uievent = this
+                val lmenu = navigationView.menu
+                val submenu = lmenu.addSubMenu(
+                    Menu.NONE,
+                    MENU_ID_LEADERBOARD,
+                    Menu.NONE,
+                    "Leader Board"
+                )
+                c.leaderBoards?.forEach {
+                    val lbmenu = submenu.add(it.title)
+                    lbmenu.setIcon(R.drawable.baseline_list_24)
+                    lbmenu.setOnMenuItemClickListener { _ ->
+                        waitingResult = true
+                        val account = GoogleSignIn.getLastSignedInAccount(this)
+                        if (account != null) {
+                            Games.getLeaderboardsClient(this, account)
+                                .getLeaderboardIntent(it.id)
+                                .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                                    startActivityForResult(
+                                        intent,
+                                        MENU_ID_LEADERBOARD
+                                    )
+                                })
+                        }
+                        true
                     }
-                    true
                 }
+                currentGame = c
             }
-            currentGame = c
         }
 
         if (currentGame != null) {
@@ -1259,8 +1261,8 @@ class Yabause : AppCompatActivity(),
                         YabauseRunnable.lockGL()
 
                         updateViewLayout(resources.configuration.orientation)
-
-                        val gamePreference = getSharedPreferences(gameCode, Context.MODE_PRIVATE)
+                        val currentGameCode = YabauseRunnable.getCurrentGameCode()
+                        val gamePreference = getSharedPreferences(currentGameCode, Context.MODE_PRIVATE)
                         YabauseRunnable.enableRotateScreen(
                             if (gamePreference.getBoolean(
                                     "pref_rotate_screen",
@@ -1507,19 +1509,19 @@ class Yabause : AppCompatActivity(),
     @Throws(IOException::class)
     private fun createZip(zos: ZipOutputStream, files: Array<File?>) {
         val buf = ByteArray(1024)
-        var `is`: InputStream? = null
-        try {
-            for (file in files) {
-                val entry = ZipEntry(file!!.name)
-                zos.putNextEntry(entry)
-                `is` = BufferedInputStream(FileInputStream(file))
-                var len: Int
-                while (`is`.read(buf).also { len = it } != -1) {
-                    zos.write(buf, 0, len)
+
+        for (file in files) {
+            val entry = ZipEntry(file!!.name)
+            zos.putNextEntry(entry)
+
+            FileInputStream(file).use { fis ->
+                BufferedInputStream(fis).use { bis ->
+                    var len: Int
+                    while (bis.read(buf).also { len = it } != -1) {
+                        zos.write(buf, 0, len)
+                    }
                 }
             }
-        } finally {
-            IOUtils.closeQuietly(`is`)
         }
     }
 

@@ -1088,7 +1088,33 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
                else
                   strcpy(filename, img_filename);
 
+#if defined(ANDROID)
+                if (strstr(mds_filename, "/proc/self/fd/") == mds_filename) {
+                  char *ext;
+                  char * p  = strstr(mds_filename, ";");
+                  if( p != NULL){
+                    strcpy(img_filename, p + 1);
+                    ext = strrchr(img_filename, '.');
+                    strcpy(ext, ".mdf");
+                    const char * fdname = GetFileDescriptorPath(img_filename);
+                    if( fdname != NULL ){
+                      fp = fopen(fdname, "rb");
+                    }else{
+                        YabSetError(YAB_ERR_FILENOTFOUND, img_filename);
+                        return -1;
+                    }
+                  }else{
+                      YabSetError(YAB_ERR_FILENOTFOUND, img_filename);
+                      return -1;
+                  }
+                }else{
+                   fp = fopen(filename, "rb");
+                }  
+#else
+
                fp = fopen(filename, "rb");
+#endif
+
             }
 
             if (fp == NULL)

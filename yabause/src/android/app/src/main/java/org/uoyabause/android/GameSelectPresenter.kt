@@ -80,6 +80,10 @@ import java.util.zip.ZipFile
 import androidx.appcompat.view.ContextThemeWrapper as ContextThemeWrapper1
 import android.os.Handler
 import android.os.Looper
+import androidx.room.Room
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.invoke
+import org.uoyabause.android.YabauseStorage.Companion.dao
 
 
 class GameSelectPresenter(
@@ -384,9 +388,7 @@ class GameSelectPresenter(
                 }
                 .setCancelable(true)
                 .show()
-        } else if (path.lowercase(Locale.getDefault()).endsWith("zip") || path.lowercase(Locale.getDefault())
-                .endsWith("7z")) {
-
+        } else if (path.lowercase(Locale.getDefault()).endsWith("zip") /*|| path.lowercase(Locale.getDefault()).endsWith("7z")*/) {
             selectStorage {
                 installZipGameFile(uri, path)
             }
@@ -516,7 +518,7 @@ class GameSelectPresenter(
     }
 
     fun installZipGameFile(uri: Uri, path: String) {
-        scope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             withContext(Dispatchers.Main) {
                 listener_.onShowDialog("Installing ...")
             }
@@ -583,6 +585,9 @@ class GameSelectPresenter(
                 } else if (zipFileName.lowercase(Locale.getDefault()).endsWith("7z")) {
                     SevenZFile(File(zipFileName)).use { sz ->
                         sz.entries.asSequence().forEach { entry ->
+
+                            Log.i(TAG, "Extracting ${entry.name}")
+
                             if (entry.name.lowercase(Locale.ROOT).endsWith("ccd") ||
                                 entry.name.lowercase(Locale.ROOT).endsWith("cue") ||
                                 entry.name.lowercase(Locale.ROOT).endsWith("mds")
@@ -603,7 +608,9 @@ class GameSelectPresenter(
                                 sz.getInputStream(entry).use { input ->
                                     File(storage.getInstallDir().absolutePath + "/" + entry.name).outputStream()
                                         .use { output ->
-                                            input.copyTo(output)
+                                            Log.i(TAG, "Starting to copy ${storage.getInstallDir().absolutePath + "/" + entry.name}")
+                                            input.copyTo(output, bufferSize = 32 * 1024)
+                                            Log.i(TAG, "Finished copying ${storage.getInstallDir().absolutePath + "/" + entry.name}")
                                         }
                                 }
                             }
@@ -622,6 +629,7 @@ class GameSelectPresenter(
                         Toast.makeText(target_.requireContext(),
                             "ISO image is not found!!",
                             Toast.LENGTH_LONG).show()
+                        Log.e(TAG, "ISO image is not found!!")
                     }
                 }
             } catch (e: Exception) {
@@ -630,6 +638,7 @@ class GameSelectPresenter(
                     Toast.makeText(target_.requireContext(),
                         "Fail to copy " + e.localizedMessage,
                         Toast.LENGTH_LONG).show()
+                    Log.e(TAG, "Fail to copy " + e.localizedMessage)
                 }
             } catch (e: IOException) {
 
@@ -638,6 +647,7 @@ class GameSelectPresenter(
                         "Fail to copy " + e.localizedMessage,
                         Toast.LENGTH_LONG).show()
                 }
+                Log.e(TAG, "Fail to copy " + e.localizedMessage)
             } finally {
 
                 val fd = File(zipFileName)
@@ -762,9 +772,11 @@ class GameSelectPresenter(
             return;
         }
 
-        val c = Calendar.getInstance()
-        item.lastplay_date = c.time
-        item.save()
+        GlobalScope.launch(Dispatchers.IO) {
+            val c = Calendar.getInstance()
+            item.lastplay_date = c.time
+            YabauseStorage.dao.update(item)
+        }
 
         val application = target_.requireActivity().application as YabauseApplication
         tracker = application.defaultTracker
@@ -901,26 +913,34 @@ class GameSelectPresenter(
         val editor = sharedPref.edit()
         editor.putString("pref_last_dir", file.parent)
         editor.apply()
-        var gameinfo: GameInfo? = GameInfo.getFromFileName(apath)
-        if (gameinfo == null) {
-            gameinfo = if (apath.endsWith("CUE") || apath.endsWith("cue")) {
-                GameInfo.genGameInfoFromCUE(apath)
-            } else if (apath.endsWith("MDS") || apath.endsWith("mds")) {
-                GameInfo.genGameInfoFromMDS(apath)
-            } else if (apath.endsWith("CHD") || apath.endsWith("chd")) {
-                GameInfo.genGameInfoFromCHD(apath)
-            } else if (apath.endsWith("CCD") || apath.endsWith("ccd")) {
-                GameInfo.genGameInfoFromMDS(apath)
-            } else {
-                GameInfo.genGameInfoFromIso(apath)
-            }
-        }
-        if (gameinfo != null) {
-            scope.launch {
-                gameinfo.updateState()
+
+        GlobalScope.launch(Dispatchers.IO) {
+
+            var gameinfo: GameInfo? = YabauseStorage.dao.findByFilePath(apath)
+            if (gameinfo == null) {
+                gameinfo = when {
+                    apath.endsWith("CUE", ignoreCase = true) -> GameInfo.genGameInfoFromCUE(apath)
+                    apath.endsWith("MDS", ignoreCase = true) -> GameInfo.genGameInfoFromMDS(apath)
+                    apath.endsWith("CCD", ignoreCase = true) -> GameInfo.genGameInfoFromCCD(apath)
+                    apath.endsWith("CHD", ignoreCase = true) -> GameInfo.genGameInfoFromCHD(apath)
+                    else -> GameInfo.genGameInfoFromIso(apath)
+                }
+
+                if( gameinfo != null ) {
+                    gameinfo.updateState()
+                    val c = Calendar.getInstance()
+                    gameinfo.lastplay_date = c.time
+                    YabauseStorage.dao.insertAll(gameinfo)
+                }
+
+            }else{
                 val c = Calendar.getInstance()
                 gameinfo.lastplay_date = c.time
-                gameinfo.save()
+                YabauseStorage.dao.update(gameinfo)
+            }
+
+            if (gameinfo != null) {
+
                 withContext(Dispatchers.Main) {
                     listener_.onLoadRows()
                     val bundle = Bundle()
@@ -930,19 +950,27 @@ class GameSelectPresenter(
                         "yab_start_game", bundle
                     )
 
-                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
-                    sharedPref.edit().putString("last_play_Game",gameinfo.game_title).commit()
+                    val sharedPref =
+                        PreferenceManager.getDefaultSharedPreferences(target_.requireActivity())
+                    sharedPref.edit().putString("last_play_Game", gameinfo.game_title).commit()
 
                     val intent = Intent(target_.requireActivity(), Yabause::class.java)
                     intent.putExtra("org.uoyabause.android.FileNameEx", apath)
                     intent.putExtra("org.uoyabause.android.gamecode", gameinfo.product_number)
                     this@GameSelectPresenter.yabauseActivityLauncher.launch(intent)
                 }
+            }else{
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(target_.requireContext(),
+                        "Failed to decrypt $apath",
+                        Toast.LENGTH_LONG).show()
+                    Log.e(TAG, "Failed to decrypt $apath")
+                }
+
             }
-        } else {
-            return
         }
     }
+
 
     companion object {
 //        const val RC_SIGN_IN = 123

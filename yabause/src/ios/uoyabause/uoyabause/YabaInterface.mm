@@ -217,7 +217,7 @@ int GetEnableFrameSkip(void){
 }
 
 int GetUseNewScsp(void){
-    return _sound_engine;
+    return 1; //_sound_engine;
 }
 
 int GetVideFilterType(void){

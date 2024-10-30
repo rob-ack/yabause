@@ -41,8 +41,6 @@
 		941B73012BE733D70078C190 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 644232B71C6580000050611E /* LaunchScreen.storyboard */; };
 		941D603A2BCAA74500E39805 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 941D60392BCAA74500E39805 /* PrivacyInfo.xcprivacy */; };
 		944F55AB257B0F47005D4814 /* libchdr-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AA257B0F33005D4814 /* libchdr-static.a */; };
-		944F55B0257B1216005D4814 /* libflac-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55AF257B1206005D4814 /* libflac-static.a */; };
-		944F55B5257B1238005D4814 /* liblzma-static.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B4257B122E005D4814 /* liblzma-static.a */; };
 		944F55BA257B1573005D4814 /* GameController.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 944F55B9257B1573005D4814 /* GameController.framework */; };
 		945652003A069BA0F624DE6B /* Pods_YabaSnashiro.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C8BA1D770E151F00A6BA938B /* Pods_YabaSnashiro.framework */; };
 		948822252C5F07B000E1580F /* MetalANGLE.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */; };
@@ -72,6 +70,8 @@
 		D97B415C2C8CFC2E0070A81D /* YabaInterface.mm in Sources */ = {isa = PBXBuildFile; fileRef = D97B415A2C8CFC2E0070A81D /* YabaInterface.mm */; };
 		D97B415F2C8D07E40070A81D /* BackupFileListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97B415E2C8D07E40070A81D /* BackupFileListViewController.swift */; };
 		D97B41602C8D07E40070A81D /* BackupFileListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D97B415E2C8D07E40070A81D /* BackupFileListViewController.swift */; };
+		D98515972CD1F7E400055C16 /* libzstd.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515962CD1F7CD00055C16 /* libzstd.a */; };
+		D98515982CD1F7F300055C16 /* liblzma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D98515952CD1F7BE00055C16 /* liblzma.a */; };
 		D98F41D72C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
 		D98F41D82C6B92C40003E4C8 /* UIDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D62C6B92C40003E4C8 /* UIDevice.swift */; };
 		D98F41DA2C6DA7620003E4C8 /* DraggableCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */; };
@@ -242,6 +242,8 @@
 		D930AD492C738D92000A7E4D /* mul */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; name = mul; path = mul.lproj/LaunchScreen.xcstrings; sourceTree = "<group>"; };
 		D97B415A2C8CFC2E0070A81D /* YabaInterface.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = YabaInterface.mm; sourceTree = "<group>"; };
 		D97B415E2C8D07E40070A81D /* BackupFileListViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupFileListViewController.swift; sourceTree = "<group>"; };
+		D98515952CD1F7BE00055C16 /* liblzma.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = liblzma.a; sourceTree = "<group>"; };
+		D98515962CD1F7CD00055C16 /* libzstd.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; path = libzstd.a; sourceTree = "<group>"; };
 		D98F41D62C6B92C40003E4C8 /* UIDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UIDevice.swift; sourceTree = "<group>"; };
 		D98F41D92C6DA7620003E4C8 /* DraggableCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableCircleView.swift; sourceTree = "<group>"; };
 		D9C85C342C77654F00B98290 /* YabaSnashiroUITests-Lite.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "YabaSnashiroUITests-Lite.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -264,9 +266,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				944F55BA257B1573005D4814 /* GameController.framework in Frameworks */,
-				944F55B0257B1216005D4814 /* libflac-static.a in Frameworks */,
-				944F55B5257B1238005D4814 /* liblzma-static.a in Frameworks */,
 				944F55AB257B0F47005D4814 /* libchdr-static.a in Frameworks */,
+				D98515972CD1F7E400055C16 /* libzstd.a in Frameworks */,
+				D98515982CD1F7F300055C16 /* liblzma.a in Frameworks */,
 				640323881C67575B00DA91D8 /* OpenAL.framework in Frameworks */,
 				646C87B51C66DDD20091B3B6 /* libyabause_ios.a in Frameworks */,
 				948822252C5F07B000E1580F /* MetalANGLE.xcframework in Frameworks */,
@@ -410,6 +412,8 @@
 		921C9D701E1628B4009065E6 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				D98515962CD1F7CD00055C16 /* libzstd.a */,
+				D98515952CD1F7BE00055C16 /* liblzma.a */,
 				D9C85C422C77661500B98290 /* Pods_YabaSnashiro_Lite.framework */,
 				94FAD1882C5F015800E31F1F /* MetalANGLE.xcframework */,
 				945A4D482BC9798500BABC32 /* Products */,
@@ -1242,7 +1246,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y5GFLYKZWK;
@@ -1305,7 +1309,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y5GFLYKZWK;
@@ -1451,7 +1455,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y5GFLYKZWK;
@@ -1526,7 +1530,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = "";
 				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = Y5GFLYKZWK;
@@ -1602,7 +1606,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -1639,7 +1643,7 @@
 				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 48;
+				CURRENT_PROJECT_VERSION = 49;
 				DEVELOPMENT_TEAM = Y5GFLYKZWK;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;

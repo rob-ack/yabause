@@ -21,6 +21,8 @@
 #include "UIHexInput.h"
 #include "../CommonDialogs.h"
 #include <QPushButton>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 UIMemorySearch::UIMemorySearch( QWidget* p )
 	: QDialog( p )
@@ -93,13 +95,13 @@ void UIMemorySearch::adjustSearchValueQValidator()
          leValue->setText("");
          break;
       case SEARCHREL8BIT:
-         leValue->setValidator(new QRegExpValidator(QRegExp("([0-9a-fA-F]{1,2})(,\\s*[0-9a-fA-F]{1,2})*"), leValue));
-         leValue->setText("");
-         break;
+        leValue->setValidator(new QRegularExpressionValidator(QRegularExpression("([0-9a-fA-F]{1,2})(,\\s*[0-9a-fA-F]{1,2})*"), leValue));
+        leValue->setText("");
+        break;
       case SEARCHREL16BIT:
-         leValue->setValidator(new QRegExpValidator(QRegExp("([0-9a-fA-F]{1,4})(,\\s*[0-9a-fA-F]{1,4})*"), leValue));
-         leValue->setText("");
-         break;
+        leValue->setValidator(new QRegularExpressionValidator(QRegularExpression("([0-9a-fA-F]{1,4})(,\\s*[0-9a-fA-F]{1,4})*"), leValue));
+        leValue->setText("");
+        break;
       default: 
       {
          bool isSigned = data & SEARCHSIGNED;
@@ -122,10 +124,10 @@ void UIMemorySearch::adjustSearchValueQValidator()
 
          if (data == SEARCHLONG)
          {
-            if (isSigned)
-               leValue->setValidator(new QRegExpValidator(QRegExp("-?\\d{1,10}"), leValue));
-            else
-               leValue->setValidator(new QRegExpValidator(QRegExp("\\d{1,10}"), leValue));
+           if (isSigned)
+             leValue->setValidator(new QRegularExpressionValidator(QRegularExpression("-?\\d{1,10}"), leValue));
+           else
+             leValue->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{1,10}"), leValue));
          }
          else
             leValue->setValidator(new QIntValidator(min, max, leValue));

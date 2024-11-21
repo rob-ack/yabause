@@ -336,6 +336,8 @@ extern "C" {
 char* strdup_ (const char* s);
 #define strdup strdup_
 
+FILE* fopen_utf8(const char* utf8_filename, const char* mode);
+
 #ifdef __cplusplus
 }
 #endif

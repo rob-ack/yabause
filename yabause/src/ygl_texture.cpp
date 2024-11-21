@@ -1146,7 +1146,7 @@ public:
       glGetShaderInfoLog(result, length, NULL, info);
       YGLDEBUG("[COMPILE] %s\n", info);
       YuiErrorMsg(info);
-      FILE * fp = fopen("tmp.cpp", "w");
+      FILE * fp = fopen_utf8("tmp.cpp", "w");
       if (fp) {
         for (int i = 0; i < count; i++) {
           fprintf(fp, "%s", prg_strs[i]);
@@ -1170,7 +1170,7 @@ public:
       glGetProgramInfoLog(program, length, NULL, info);
       YGLDEBUG("[LINK] %s\n", info);
       YuiErrorMsg(info);
-      FILE * fp = fopen("tmp.cpp", "w");
+      FILE * fp = fopen_utf8("tmp.cpp", "w");
       if (fp) {
         for (int i = 0; i < count; i++) {
           fprintf(fp, "%s", prg_strs[i]);

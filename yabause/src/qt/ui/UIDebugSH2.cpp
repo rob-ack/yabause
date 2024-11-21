@@ -1,4 +1,4 @@
-/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
+﻿/*	Copyright 2012-2013 Theo Berkau <cwx@cyberwarriorx.com>
 
 	This file is part of Yabause.
 
@@ -66,13 +66,13 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
          QString text;
          if (cbp[i].addr != 0xFFFFFFFF)
          {
-            text.sprintf("%08X", (int)cbp[i].addr);
+            text = QString("%1").arg(static_cast<uint32_t>(cbp[i].addr), 8, 16, QChar('0')).toUpper();
             lwCodeBreakpoints->addItem(text);
          }
 
          if (mbp[i].addr != 0xFFFFFFFF)
          {
-            text.sprintf("%08X", (int)mbp[i].addr);
+            text = QString("%1").arg(static_cast<uint32_t>(mbp[i].addr), 8, 16, QChar('0')).toUpper();
             lwMemoryBreakpoints->addItem(text);
          }
       }
@@ -103,50 +103,52 @@ UIDebugSH2::UIDebugSH2(bool master, YabauseThread *mYabauseThread, QWidget* p )
 
 void UIDebugSH2::updateRegList()
 {
-   int i;
-   sh2regs_struct sh2regs;
-   QString str;
+  int i;
+  sh2regs_struct sh2regs;
+  QString str;
 
-   if (debugSH2 == NULL)
-      return;
+  if (debugSH2 == NULL)
+    return;
 
-   SH2GetRegisters(debugSH2, &sh2regs);
-   lwRegisters->clear();
+  SH2GetRegisters(debugSH2, &sh2regs);
+  lwRegisters->clear();
 
-   for (i = 0; i < 16; i++)
-   {
-      str.sprintf("R%02d =  %08X", i, (int)sh2regs.R[i]);
-      lwRegisters->addItem(str);
-   }
+  // R0〜R15のレジスタを表示
+  for (i = 0; i < 16; i++)
+  {
+    str = QString("R%1 =  %2").arg(i, 2, 10, QChar('0')).arg((uint32_t)sh2regs.R[i], 8, 16, QChar('0')).toUpper();
+    lwRegisters->addItem(str);
+  }
 
-   // SR
-   str.sprintf("SR =   %08X", (int)sh2regs.SR.all);
-   lwRegisters->addItem(str);
+  // SR
+  str = QString("SR =   %1").arg((uint32_t)sh2regs.SR.all, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // GBR
-   str.sprintf("GBR =  %08X", (int)sh2regs.GBR);
-   lwRegisters->addItem(str);
+  // GBR
+  str = QString("GBR =  %1").arg((uint32_t)sh2regs.GBR, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // VBR
-   str.sprintf("VBR =  %08X", (int)sh2regs.VBR);
-   lwRegisters->addItem(str);
+  // VBR
+  str = QString("VBR =  %1").arg((uint32_t)sh2regs.VBR, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // MACH
-   str.sprintf("MACH = %08X", (int)sh2regs.MACH);
-   lwRegisters->addItem(str);
+  // MACH
+  str = QString("MACH = %1").arg((uint32_t)sh2regs.MACH, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // MACL
-   str.sprintf("MACL = %08X", (int)sh2regs.MACL);
-   lwRegisters->addItem(str);
+  // MACL
+  str = QString("MACL = %1").arg((uint32_t)sh2regs.MACL, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // PR
-   str.sprintf("PR =   %08X", (int)sh2regs.PR);
-   lwRegisters->addItem(str);
+  // PR
+  str = QString("PR =   %1").arg((uint32_t)sh2regs.PR, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   // PC
-   str.sprintf("PC =   %08X", (int)sh2regs.PC);
-   lwRegisters->addItem(str);
+  // PC
+  str = QString("PC =   %1").arg((uint32_t)sh2regs.PC, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 }
+
 
 void UIDebugSH2::updateCodeList(u32 addr)
 {

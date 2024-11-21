@@ -1539,7 +1539,7 @@ int YabSaveState(const char *filename)
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "wb")) == NULL)
+   if ((fp = fopen_utf8(filename, "wb")) == NULL)
       return -1;
    ScspLockThread();
    status = YabSaveStateStream(fp);
@@ -1710,7 +1710,7 @@ int YabLoadState(const char *filename)
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "rb")) == NULL)
+   if ((fp = fopen_utf8(filename, "rb")) == NULL)
       return -1;
 
    ScspLockThread();

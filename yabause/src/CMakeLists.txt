@@ -545,6 +545,8 @@ if (WIN32)
 	option(YAB_WANT_DIRECTSOUND "use DirectX sound core if available")
 	option(YAB_WANT_DIRECTINPUT "use DirectX input core if available")
 
+	set(DXERRH_IS_BROKEN 1 CACHE INTERNAL "dxerr is broken")
+	
 	# Direct X
 	if (YAB_WANT_DIRECTSOUND OR YAB_WANT_DIRECTINPUT)
 		find_path(DirectX_INCLUDE_DIR dxerr9.h "$ENV{DXSDK_DIR}/Include")

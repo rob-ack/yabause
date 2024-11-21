@@ -305,7 +305,7 @@ void PerPadZReleased(PerPad_struct * pad) {
 
 void PerPadRTriggerPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0x7F;
-   SMPCLOG("Right Trigger\n");
+   //SMPCLOG("Right Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -318,7 +318,7 @@ void PerPadRTriggerReleased(PerPad_struct * pad) {
 
 void PerPadLTriggerPressed(PerPad_struct * pad) {
    *(pad->padbits + 1) &= 0xF7;
-   SMPCLOG("Left Trigger\n");
+   //SMPCLOG("Left Trigger\n");
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -460,7 +460,7 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
    analog->analogbits[2] = (u8)val;
 
    //handle wheel left/right standard pad presses depending on wheel position
-   if (analog->perid == PERWHEEL)
+   if (analog->perid == PERWHEEL )
    {
       int left_is_pressed = (analog->analogbits[0] & (1 << 6)) == 0;
       int right_is_pressed = (analog->analogbits[0] & (1 << 7)) == 0;
@@ -469,7 +469,6 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
          analog->analogbits[0] &= 0xBF;//press left
       else if (left_is_pressed && val >= 0x6f)
          analog->analogbits[0] |= ~0xBF;//release left
-
       
       if (val >= 0x97)
          analog->analogbits[0] &= 0x7F;//press right
@@ -493,6 +492,7 @@ void PerAxis1Value(PerAnalog_struct * analog, u32 val)
       else if (right_is_pressed && val <= 0x95)
          analog->analogbits[0] |= ~0x7F;//release right
    }
+
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -522,16 +522,19 @@ void PerAxis2Value(PerAnalog_struct * analog, u32 val)
 
 //////////////////////////////////////////////////////////////////////////////
 
+// L Trigger
 void PerAxis3Value(PerAnalog_struct * analog, u32 val)
 {
-   if (analog->perid != PERMISSIONSTICK)
-      analog->analogbits[4] = (u8)val;
-   else
+  if (analog->perid != PERMISSIONSTICK) {
+    analog->analogbits[4] = (u8)val;
+  }
+  else
       analog->analogbits[4] = (u8)(-(s8)val);//axis inverted on mission stick
 }
 
 //////////////////////////////////////////////////////////////////////////////
 
+// R Trigger
 void PerAxis4Value(PerAnalog_struct * analog, u32 val)
 {
    analog->analogbits[5] = (u8)val;
@@ -861,8 +864,28 @@ void PerAxisValue(u32 key, u8 val)
    {
       if (key == perkeyconfig[i].key)
       {
-         if (perkeyconfig[i].base->SetAxisValue)
-            perkeyconfig[i].base->SetAxisValue(perkeyconfig[i].controller, val);
+        if (perkeyconfig[i].base->SetAxisValue) {
+          perkeyconfig[i].base->SetAxisValue(perkeyconfig[i].controller, val);
+        }
+
+        PerAnalog_struct* p = (PerAnalog_struct*)perkeyconfig[i].controller;
+        if (PER3DPAD == p->perid || PERPAD == p->perid) {
+
+          if (perkeyconfig[i].base->name == PERANALOG_AXIS3 || perkeyconfig[i].base->name == PERPAD_LEFT_TRIGGER) {
+            if (val >= 0xF0)
+              perkeyconfig[PERPAD_LEFT_TRIGGER].base->Press(perkeyconfig[PERPAD_LEFT_TRIGGER].controller);
+            else
+              perkeyconfig[PERPAD_LEFT_TRIGGER].base->Release(perkeyconfig[PERPAD_LEFT_TRIGGER].controller);
+          }
+
+          if (perkeyconfig[i].base->name == PERANALOG_AXIS4 || perkeyconfig[i].base->name == PERPAD_RIGHT_TRIGGER) {
+            if (val >= 0xF0)
+              perkeyconfig[PERPAD_RIGHT_TRIGGER].base->Press(perkeyconfig[PERPAD_RIGHT_TRIGGER].controller);
+            else
+              perkeyconfig[PERPAD_RIGHT_TRIGGER].base->Release(perkeyconfig[PERPAD_RIGHT_TRIGGER].controller);
+          }
+        }
+
       }
       i++;
    }

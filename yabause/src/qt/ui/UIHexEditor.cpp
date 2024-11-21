@@ -251,7 +251,7 @@ void UIHexEditorWnd::adjustSettings()
    int fontSize = fontMetrics().height();
 
    fontAscent = fontMetrics().ascent();
-   fontWidth = fontMetrics().width(QLatin1Char('9'));
+   fontWidth = fontMetrics().horizontalAdvance(QLatin1Char('9'));
    fontHeight = fontMetrics().height();
 
    verticalScrollBar()->setRange(startAddress / bytesPerLine, (endAddress / bytesPerLine) - (areaSize.height() / fontHeight) + 1);
@@ -784,7 +784,7 @@ void UIHexEditorWnd::drawTextArea(QPainter *painter, int firstLineIdx, u32 lastL
 
             QString text=QString((char)readByte(addr + lineIdx + colIdx));
 
-            if (fontMetrics().width(text) == 0)
+            if (fontMetrics().horizontalAdvance(text) == 0)
                text = QString('.');
 
             painter->drawText(xPosAscii, yPos, text);
@@ -1008,7 +1008,7 @@ bool UIHexEditorWnd::saveTab(QString filename)
 
 bool UIHexEditorWnd::saveMemory(QString filename, u32 startAddress, u32 endAddress)
 {
-	FILE *fp = fopen(filename.toLatin1(), "wb");
+	FILE *fp = fopen_utf8(filename.toLatin1(), "wb");
 	u32 size = (u32)(endAddress - startAddress);
 
 	if (fp == NULL)

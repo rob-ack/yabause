@@ -76,7 +76,7 @@ public:
   SDL_Window *             window;  
 #else
   void setNativeWindow(void *nativeWindow) {}
-  GLFWwindow *getWindowHandle() { return _glfw_window; }
+  //GLFWwindow *getWindowHandle() { return _glfw_window; }
 #endif
 
   void resize(int width, int height);

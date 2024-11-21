@@ -201,7 +201,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       static FILE * dfp = NULL;
       YabThreadLock(dbugMutex);
       if (dfp == NULL){
-        dfp = fopen("debug.txt", "w");
+        dfp = fopen_utf8("debug.txt", "w");
       }
 #else
 //      static FILE * dfp = NULL;

@@ -61,6 +61,46 @@ static int LoadBinCueMultiFile(const char *cuefilename, FILE *iso_file);
 static int LoadBinCue(const char *cuefilename, FILE *iso_file);
 int checkCHD(const char *filename );
 
+// プラットフォームに応じて条件分岐
+#if defined(_WIN32) || defined(_WIN64)
+#include <wchar.h>
+#include <windows.h>
+
+// Windows用 fopen_utf8: UTF-8 -> UTF-16 に変換して _wfopen を使用
+FILE* fopen_utf8(const char* utf8_filename, const char* mode) {
+  // UTF-8モードをUTF-16に変換
+  int len = MultiByteToWideChar(CP_UTF8, 0, utf8_filename, -1, NULL, 0);
+  if (len == 0) return NULL;
+
+  wchar_t* wfilename = (wchar_t*)malloc(len * sizeof(wchar_t));
+  MultiByteToWideChar(CP_UTF8, 0, utf8_filename, -1, wfilename, len);
+
+  // モード文字列もUTF-16に変換
+  len = MultiByteToWideChar(CP_UTF8, 0, mode, -1, NULL, 0);
+  wchar_t* wmode = (wchar_t*)malloc(len * sizeof(wchar_t));
+  MultiByteToWideChar(CP_UTF8, 0, mode, -1, wmode, len);
+
+  // _wfopenを使用
+  FILE* file = _wfopen(wfilename, wmode);
+
+  // メモリ解放
+  free(wfilename);
+  free(wmode);
+
+  return file;
+}
+
+#else
+
+// Mac/Linux用 fopen_utf8: UTF-8文字列をそのまま使用
+FILE* fopen_utf8(const char* utf8_filename, const char* mode) {
+  return fopen(utf8_filename, mode);
+}
+
+#endif
+
+
+
 // Remove this for now, execution on windows fails because of it
 // #include "streams/file_stream_transforms.h"
 #ifndef HAVE_STRICMP
@@ -509,11 +549,11 @@ static FILE* fopenInPath(char* filename, char* path){
     *tmp++ = filename[k];
   }
   *tmp++ = '\0';
-  return fopen(filepath,"rb");
+  return fopen_utf8(filepath,"rb");
 }
 #endif
 
-static FILE* OpenFile(char* buffer, const char* cue) {
+static FILE* YOpenFile(char* buffer, const char* cue) {
    char *filename, *endofpath;
    char *path;
    int tmp;
@@ -530,7 +570,7 @@ static FILE* OpenFile(char* buffer, const char* cue) {
   }else{
 #endif
    // Now go and open up the image file, figure out its size, etc.
-   if ((ret_file = fopen(buffer, "rb")) == NULL)
+   if ((ret_file = fopen_utf8(buffer, "rb")) == NULL)
    {
       // Ok, exact path didn't work. Let's trim the path and try opening the
       // file from the same directory as the cue.
@@ -703,7 +743,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
   }else{
 #endif
   // Now go and open up the image file, figure out its size, etc.
-  if ((bin_file = fopen(temp_buffer, "rb")) == NULL)
+  if ((bin_file = fopen_utf8(temp_buffer, "rb")) == NULL)
   {
     // Ok, exact path didn't work. Let's trim the path and try opening the
     // file from the same directory as the cue.
@@ -749,7 +789,7 @@ static int LoadBinCue(const char *cuefilename, FILE *iso_file)
     strcat(temp_buffer2, p);
 
     // Let's give it another try
-    bin_file = fopen(temp_buffer2, "rb");
+    bin_file = fopen_utf8(temp_buffer2, "rb");
     free(temp_buffer2);
 
     if (bin_file == NULL)
@@ -848,7 +888,7 @@ static int LoadBinCueMultiFile(const char *cuefilename, FILE *iso_file)
       if (strncmp(temp_buffer, "FILE", 4) == 0)
       {
          matched = fscanf(iso_file, " \"%[^\"]\"", temp_buffer);
-         trackfp = OpenFile(temp_buffer, cuefilename);
+         trackfp = YOpenFile(temp_buffer, cuefilename);
          if (trackfp == NULL) {
            printf("Can not open file %s\n", temp_buffer);
            free(temp_buffer);
@@ -1112,7 +1152,7 @@ int LoadMDSTracks(const char *mds_filename, FILE *iso_file, mds_session_struct *
                 }  
 #else
 
-               fp = fopen(filename, "rb");
+               fp = fopen_utf8(filename, "rb");
 #endif
 
             }
@@ -1442,12 +1482,12 @@ static int LoadCCD(const char *ccd_filename, FILE *iso_file)
 	strcpy(img_filename, ccd_filename);
 	ext = strrchr(img_filename, '.');
 	strcpy(ext, ".img");
-	fp = fopen(img_filename, "rb");
+	fp = fopen_utf8(img_filename, "rb");
 	if (fp == NULL)
 	{
 		ext = strrchr(img_filename, '.');
 		strcpy(ext, ".iso");
-		fp = fopen(img_filename, "rb");
+		fp = fopen_utf8(img_filename, "rb");
 		if (fp == NULL){
 			YabSetError(YAB_ERR_FILEREAD, img_filename);
 			return -1;
@@ -1607,7 +1647,7 @@ static int ISOCDInit(const char * iso) {
    if (!iso)
       return -1;
 
-   if (!(iso_file = fopen(iso, "rb")))
+   if (!(iso_file = fopen_utf8(iso, "rb")))
    {
       YabSetError(YAB_ERR_FILENOTFOUND, (char *)iso);
       return -1;

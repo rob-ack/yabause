@@ -22,6 +22,8 @@
 #include "ui_UIHexInput.h"
 #include "../QtYabause.h"
 #include <QValidator>
+#include <QRegularExpression>
+#include <QRegularExpressionValidator>
 
 class HexValidator : public QValidator
 {
@@ -29,7 +31,7 @@ class HexValidator : public QValidator
 private:
    unsigned int t, b;
 public:
-   explicit HexValidator(QObject *parent = 0);
+   //explicit HexValidator(QObject *parent = 0);
    HexValidator(unsigned int top, unsigned int bottom, QObject *parent = 0)
    {
       //QValidator(parent);
@@ -39,25 +41,27 @@ public:
    virtual void fixup(QString &input) const {
       input = input.toUpper();
    }
-   virtual State validate ( QString & input, int & pos ) const
+   virtual State validate(QString& input, int& pos) const override
    {
-      QRegExp rxHex("[0-9A-Fa-f]{1,8}");
+     QRegularExpression rxHex("[0-9A-Fa-f]{1,8}");
 
-      fixup(input);
+     fixup(input);
 
-      if (input.isEmpty())
-         return Acceptable;
+     if (input.isEmpty())
+       return Acceptable;
 
-      if (!rxHex.exactMatch(input))
-         return Invalid;
+     QRegularExpressionMatch match = rxHex.match(input);
+     if (!match.hasMatch())
+       return Invalid;
 
-      // Make sure it's in range
-      bool *result = new bool;
-      unsigned int val = input.toUInt(result, 16);
+     // ”ÍˆÍ“à‚Å‚ ‚é‚±‚Æ‚ðŠm”F
+     bool ok;
+     unsigned int val = input.toUInt(&ok, 16);
 
-      if ((*result == true) && (val >= t) && (val <= b))
-         return Acceptable;
-      return Invalid;
+     if (ok && (val >= t) && (val <= b))
+       return Acceptable;
+
+     return Invalid;
    }
 
    void setBottom(unsigned int bottom)

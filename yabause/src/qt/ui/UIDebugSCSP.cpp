@@ -47,7 +47,7 @@ UIDebugSCSP::UIDebugSCSP( QWidget* p )
 
 #ifdef HAVE_QT_MULTIMEDIA
 	audioBufferTimer = new QTimer(this);
-	audioDeviceInfo = QAudioDeviceInfo::defaultOutputDevice();
+	//audioDeviceInfo = QMediaDevices::defaultAudioOutput();
 	audioOutput = 0;
 	slot_workbuf = 0;
 	slot_buf = 0;
@@ -83,37 +83,45 @@ void UIDebugSCSP::initAudio()
 	audioFormat.setSampleRate(44100);
 	audioFormat.setChannelCount(2);
 #endif
-	audioFormat.setSampleSize(16);
-	audioFormat.setCodec("audio/pcm");
-	audioFormat.setByteOrder(QAudioFormat::LittleEndian);
-	audioFormat.setSampleType(QAudioFormat::SignedInt);
+	//audioFormat.setSampleSize(16);
+	//audioFormat.setCodec("audio/pcm");
+	//audioFormat.setByteOrder(QAudioFormat::LittleEndian);
+	//audioFormat.setSampleType(QAudioFormat::SignedInt);
 
-	QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
-	if (!info.isFormatSupported(audioFormat)) 
-	{
-		qWarning() << "Normal format not available, trying alternative";
-		audioFormat = info.nearestFormat(audioFormat);
-	}
+	//QAudioDeviceInfo info(QAudioDeviceInfo::defaultOutputDevice());
+	//if (!info.isFormatSupported(audioFormat)) 
+	//{
+	//	qWarning() << "Normal format not available, trying alternative";
+	//	audioFormat = info.nearestFormat(audioFormat);
+	//}
 
-	delete audioOutput;
-	audioOutput = 0;
-	audioOutput = new QAudioOutput(audioDeviceInfo, audioFormat, this);
-	connect(audioOutput, SIGNAL(notify()), SLOT(notified()));
-	connect(audioOutput, SIGNAL(stateChanged(QAudio::State)), SLOT(stateChanged(QAudio::State)));
+	//delete audioOutput;
+	//audioOutput = 0;
+	//audioOutput = new QAudioOutput(audioDeviceInfo, audioFormat, this);
+	//connect(audioOutput, SIGNAL(notify()), SLOT(notified()));
+	//connect(audioOutput, SIGNAL(stateChanged(QAudio::State)), SLOT(stateChanged(QAudio::State)));
 
 	ScspSlotResetDebug(sbSlotNumber->value());
 }
 
 void UIDebugSCSP::notified()
 {
-	qWarning() << "bytesFree = " << audioOutput->bytesFree()
-		<< ", " << "elapsedUSecs = " << audioOutput->elapsedUSecs()
-		<< ", " << "processedUSecs = " << audioOutput->processedUSecs()
-		<< ", " << "periodSize = " << audioOutput->periodSize();
+	if (audioOutput) {
+		qint64 bytesFree = audioOutput->bytesFree(); // バッファの空き容量を取得
+		qint64 elapsedUSecs = audioOutput->elapsedUSecs(); // 再生開始からの経過時間（マイクロ秒）
+		qint64 processedUSecs = audioOutput->processedUSecs(); // 処理済みのマイクロ秒
+		int periodSize = audioOutput->bufferSize(); // バッファサイズとして periodSize を取得
+
+		qWarning() << "bytesFree =" << bytesFree
+			<< ", elapsedUSecs =" << elapsedUSecs
+			<< ", processedUSecs =" << processedUSecs
+			<< ", periodSize =" << periodSize;
+	}
 }
 
 void UIDebugSCSP::audioBufferRefill()
 {
+/*
 	if (audioOutput && audioOutput->state() != QAudio::StoppedState) 
 	{
 		int chunks = audioOutput->bytesFree()/audioOutput->periodSize();
@@ -127,10 +135,12 @@ void UIDebugSCSP::audioBufferRefill()
 			--chunks;
 		}
 	}
+*/
 }
 
 void UIDebugSCSP::stateChanged(QAudio::State state)
 {
+/*
 	if (state == QAudio::IdleState)
 	{
 		delete slot_workbuf;
@@ -141,6 +151,7 @@ void UIDebugSCSP::stateChanged(QAudio::State state)
 		slot_workbuf = new u32[audioOutput->periodSize()*4];
 		slot_buf = new s16[audioOutput->periodSize()];
 	}
+*/
 }
 #endif
 
@@ -168,13 +179,13 @@ void UIDebugSCSP::on_sbSlotNumber_valueChanged ( int i )
 void UIDebugSCSP::on_pbPlaySlot_clicked ()
 {
 	audioBufferTimer->stop();
-	audioOutput->stop();
+	//audioOutput->stop();
 
 	if (isPlaying) 
 	{
 		ScspSlotResetDebug(sbSlotNumber->value());
 		pbPlaySlot->setText(QtYabause::translate("Stop Slot"));
-		outputDevice = audioOutput->start();
+		//outputDevice = audioOutput->start();
 		isPlaying = false;
 		audioBufferTimer->start(20);
 	} 
@@ -189,9 +200,9 @@ void UIDebugSCSP::on_pbPlaySlot_clicked ()
 void UIDebugSCSP::on_pbSaveAsWav_clicked ()
 {
 	// request a file to save to to user
-   QString text;
+  QString text;
    
-   text.sprintf("channel%02d.wav", sbSlotNumber->value());
+	text = QString("channel%1.wav").arg(sbSlotNumber->value(), 2, 10, QChar('0'));
 	const QString s = CommonDialogs::getSaveFileName(text, QtYabause::translate( "Choose a location for your wav file" ), QtYabause::translate( "WAV Files (*.wav)" ) );
 	
 	// write image if ok

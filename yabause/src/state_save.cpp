@@ -35,10 +35,10 @@ extern "C" int YabSaveCompressedState(const char *filename)
     return -1;
   }
   
-  FILE * source = fopen(tmptilename.c_str(), "rb");
+  FILE * source = fopen_utf8(tmptilename.c_str(), "rb");
   if (source == NULL) return -1;
 
-  FILE * dest = fopen(filename, "wb");
+  FILE * dest = fopen_utf8(filename, "wb");
   if (dest == NULL) return -1;
   
   /* allocate deflate state */
@@ -94,10 +94,10 @@ extern "C" int YabLoadCompressedState(const char *filename)
   string tmptilename;
   tmptilename = string(filename) + ".tmp";
 
-  FILE * source = fopen(filename, "rb");
+  FILE * source = fopen_utf8(filename, "rb");
   if (source == NULL) return -1;
 
-  FILE * dest = fopen(tmptilename.c_str(), "wb");
+  FILE * dest = fopen_utf8(tmptilename.c_str(), "wb");
   if (dest == NULL) return -1;
 
   /* allocate inflate state */

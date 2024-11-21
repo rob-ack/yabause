@@ -330,7 +330,7 @@ int SaveMovie(const char *filename) {
 	if(Movie.Status == Playback)
 		StopMovie();
 
-	if ((Movie.fp = fopen(filename, "w+b")) == NULL)
+	if ((Movie.fp = fopen_utf8(filename, "w+b")) == NULL)
 	{
 		free(str);
 		return -1;
@@ -358,7 +358,7 @@ int PlayMovie(const char *filename) {
 		StopMovie();
 
 
-	if ((Movie.fp = fopen(filename, "r+b")) == NULL)
+	if ((Movie.fp = fopen_utf8(filename, "r+b")) == NULL)
 	{
 		free(str);
 		return -1;
@@ -487,7 +487,7 @@ void TestWrite(struct MovieBufferStruct tempbuffer) {
 
 	FILE* tempbuffertest;
 
-	tempbuffertest=fopen("rmiab.txt", "wb");
+	tempbuffertest= fopen_utf8("rmiab.txt", "wb");
 
    if (!tempbuffertest)
       return;

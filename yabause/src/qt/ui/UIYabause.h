@@ -25,6 +25,9 @@
 #include "../YabauseThread.h"
 #include "UICheatSearch.h"
 #include <QTimer>
+#include "filesearchwidget.h"
+#include <QStackedWidget>
+
 
 extern "C" {
 #include "../screen.h"
@@ -33,6 +36,7 @@ extern "C" {
 class YabauseGL;
 class QTextEdit;
 class QDockWidget;
+class QYabVulkanWidget;
 
 enum BARDISPLAY
 {
@@ -73,6 +77,7 @@ protected:
 };
 
 #if defined Q_OS_WIN
+#include <windows.h>
 struct SavedWinInfo {
   int style;
   int ex_style;
@@ -96,6 +101,9 @@ public:
 		return app;
 	}
 
+	DEVMODE originalMode;
+
+
   void takeScreenshot(const char * fname);
 
 signals: // [1]
@@ -104,6 +112,9 @@ signals: // [1]
 protected:
 	static firebase::App* app;
 	YabauseGL* mYabauseGL;
+	QYabVulkanWidget* mYabVulkanWidget;
+	QStackedWidget* mStackedWidget;
+	FileSearchWidget* mFileSearch;
 	YabauseThread* mYabauseThread;
 	QDockWidget* mLogDock;
 	QTextEdit* teLog;
@@ -132,11 +143,14 @@ protected:
 	virtual void mouseMoveEvent( QMouseEvent* event );
 	virtual void resizeEvent( QResizeEvent* event );
 
+	
 	bool mIsCdIn;
 
   void *state_buffer = nullptr;
   size_t state_size = 0;
   QString default_title;
+	bool isAltPressed;
+
   
 
 #if defined Q_OS_WIN
@@ -159,6 +173,10 @@ public slots:
 	void breakpointHandlerSCSPDSP();
 
   void onStateFileLoaded();
+	void toggleMenuAndToolBar();
+	void saveCurrentResolution();
+	void restoreResolution();
+	void setResolution(int width, int height);
 
 protected slots:
 	void errorReceived( const QString& error, bool internal = true );
@@ -175,7 +193,10 @@ protected slots:
 	// file menu
 	void on_aFileSettings_triggered();
 	void on_aFileOpenISO_triggered();
+	void on_actionGame_Browser_triggered();
 	void on_aFileOpenCDRom_triggered();
+	void on_aFileAndroid_triggered();
+	void on_aFileiOS_triggered();
   void on_aFileOpenSSF_triggered();
   void on_actionOpen_Tray_triggered();
 	void on_mFileSaveState_triggered( QAction* );
@@ -224,13 +245,19 @@ protected slots:
 	void on_aHelpReport_triggered();
 	void on_aHelpCompatibilityList_triggered();
 	void on_aHelpAbout_triggered();
-  void on_actionDonate_triggered();
+  void on_actionAndroid_triggered();
+	void on_actioniOS_triggered();
 	// toolbar
 	void on_aSound_triggered();
 	void on_aVideoDriver_triggered();
 	void on_cbSound_toggled( bool toggled );
 	void on_sVolume_valueChanged( int value );
 	void on_cbVideoDriver_currentIndexChanged( int id );
+
+	void handleFileSelected(const QString& filePath);
+
+
+
 };
 
 #endif // UIYABAUSE_H

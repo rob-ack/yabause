@@ -441,7 +441,7 @@ void ScspDspAssembleFromFile(char * filename, u64* output)
    int i;
    char line[1024] = { 0 };
 
-   FILE * fp = fopen(filename, "r");
+   FILE * fp = fopen_utf8(filename, "r");
 
    if (!fp)
    {
@@ -644,7 +644,7 @@ void ScspDspDisasm(u8 addr, char *outstring)
 void ScspDspDisassembleToFile(char * filename)
 {
    int i;
-   FILE * fp = fopen(filename, "w");
+   FILE * fp = fopen_utf8(filename, "w");
 
    if (!fp)
    {

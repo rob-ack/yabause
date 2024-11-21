@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>513</width>
-    <height>555</height>
+    <height>650</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,7 +48,6 @@
         <widget class="QLabel" name="lSaveStates">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -56,7 +55,7 @@
           <string>Save States</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -64,7 +63,6 @@
         <widget class="QLabel" name="lCdRom">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -72,14 +70,14 @@
           <string>CD-ROM</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
        <item row="14" column="0" colspan="2">
         <widget class="Line" name="line">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -107,7 +105,6 @@
         <widget class="QLabel" name="lTranslation">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -115,7 +112,7 @@
           <string>Translation</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -137,7 +134,6 @@
         <widget class="QLabel" name="lBios">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -145,7 +141,7 @@
           <string>Bios</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -172,7 +168,7 @@
        <item row="25" column="0">
         <spacer>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -220,114 +216,30 @@
        <string>Video</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout2">
-       <item row="19" column="0">
+       <item row="27" column="0">
         <widget class="QLabel" name="label_6">
          <property name="text">
           <string>Polygon Generation</string>
          </property>
         </widget>
        </item>
-       <item row="18" column="0">
-        <widget class="QLabel" name="label_5">
+       <item row="25" column="0">
+        <widget class="QPushButton" name="btnLow">
          <property name="text">
-          <string>Filter</string>
+          <string>Low</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="3">
-        <widget class="QComboBox" name="cbAspectRatio"/>
-       </item>
-       <item row="8" column="0">
-        <widget class="QLabel" name="lWinHeight">
-         <property name="text">
-          <string>Height</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0" colspan="3">
-        <widget class="QLabel" name="lOSDCore">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>OSD Core</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="16" column="0" colspan="3">
-        <widget class="QLabel" name="lVideoFormat">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Video Format</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QCheckBox" name="cbBilinear">
-         <property name="text">
-          <string>Bilinear Filtering (Restart required)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="0" colspan="3">
-        <widget class="QComboBox" name="cbFullscreenResolution"/>
+       <item row="28" column="1" colspan="2">
+        <widget class="QComboBox" name="cbResolution"/>
        </item>
        <item row="1" column="0" colspan="3">
         <widget class="QComboBox" name="cbVideoCore"/>
        </item>
-       <item row="17" column="0" colspan="3">
-        <widget class="QComboBox" name="cbVideoFormat"/>
-       </item>
-       <item row="5" column="0" colspan="3">
-        <widget class="QLabel" name="lWinResolution">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Window Resolution</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="lFullScreenResolution">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Fullscreen Resolution</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="27" column="0" colspan="3">
+       <item row="34" column="0" colspan="3">
         <spacer>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -337,10 +249,86 @@
          </property>
         </spacer>
        </item>
-       <item row="7" column="0">
-        <widget class="QLabel" name="lWinWidth">
+       <item row="25" column="1" colspan="2">
+        <widget class="QPushButton" name="btnHigh">
          <property name="text">
-          <string>Width</string>
+          <string>High</string>
+         </property>
+        </widget>
+       </item>
+       <item row="26" column="1" colspan="2">
+        <widget class="QComboBox" name="cbFilterMode"/>
+       </item>
+       <item row="27" column="1" colspan="2">
+        <widget class="QComboBox" name="cbPolygonGeneration"/>
+       </item>
+       <item row="26" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Filter</string>
+         </property>
+        </widget>
+       </item>
+       <item row="30" column="0">
+        <widget class="QLabel" name="label_8">
+         <property name="text">
+          <string>RBG Resolution</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="3">
+        <widget class="QLabel" name="lVideoCore">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Video Core</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::TextFormat::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="lFullScreenResolution">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Fullscreen Resolution</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::TextFormat::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="28" column="0">
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Internal Resolution</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="0">
+        <widget class="QCheckBox" name="cbRotateScreen">
+         <property name="text">
+          <string>Rotate 90 degree</string>
+         </property>
+        </widget>
+       </item>
+       <item row="24" column="0">
+        <widget class="QLabel" name="label">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Render Quality</string>
          </property>
         </widget>
        </item>
@@ -351,70 +339,66 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
-        <widget class="QLineEdit" name="leWinWidth"/>
-       </item>
-       <item row="8" column="1">
-        <widget class="QLineEdit" name="leWinHeight"/>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QComboBox" name="cbOSDCore"/>
-       </item>
-       <item row="0" column="0" colspan="3">
-        <widget class="QLabel" name="lVideoCore">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Video Core</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="18" column="1">
-        <widget class="QComboBox" name="cbFilterMode"/>
-       </item>
-       <item row="19" column="1">
-        <widget class="QComboBox" name="cbPolygonGeneration"/>
-       </item>
-       <item row="28" column="0">
-        <widget class="QCheckBox" name="cbRotateScreen">
-         <property name="text">
-          <string>Rotate 90 degree</string>
-         </property>
-        </widget>
-       </item>
-       <item row="20" column="1">
-        <widget class="QComboBox" name="cbResolution"/>
-       </item>
-       <item row="22" column="1">
-        <widget class="QComboBox" name="cbRBGREsolution"/>
-       </item>
-       <item row="20" column="0">
-        <widget class="QLabel" name="label_7">
-         <property name="text">
-          <string>Internal Resolution</string>
-         </property>
-        </widget>
-       </item>
-       <item row="22" column="0">
-        <widget class="QLabel" name="label_8">
-         <property name="text">
-          <string>RBG Resolution</string>
-         </property>
-        </widget>
-       </item>
-       <item row="23" column="0">
+       <item row="31" column="0">
         <widget class="QCheckBox" name="cbUseComputeShader">
          <property name="text">
           <string>Use compute shader for RBG generation</string>
          </property>
         </widget>
+       </item>
+       <item row="30" column="1" colspan="2">
+        <widget class="QComboBox" name="cbRBGREsolution"/>
+       </item>
+       <item row="3" column="0" colspan="3">
+        <widget class="QComboBox" name="cbAspectRatio"/>
+       </item>
+       <item row="8" column="0">
+        <widget class="QLabel" name="lVideoFormat">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Video Format</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::TextFormat::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="0">
+        <widget class="QLabel" name="label_2">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Rendering Option</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0" colspan="3">
+        <widget class="QLabel" name="lWinResolution">
+         <property name="font">
+          <font>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Aspect Ratio</string>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::TextFormat::PlainText</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0" colspan="3">
+        <widget class="QComboBox" name="cbFullscreenResolution"/>
+       </item>
+       <item row="9" column="0" colspan="3">
+        <widget class="QComboBox" name="cbVideoFormat"/>
        </item>
       </layout>
      </widget>
@@ -427,7 +411,6 @@
         <widget class="QLabel" name="lSoundCore">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -435,19 +418,12 @@
           <string>Sound Core</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QComboBox" name="cbSoundCore"/>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="cbNewScsp">
-         <property name="text">
-          <string>Use new scsp</string>
-         </property>
-        </widget>
        </item>
        <item>
         <widget class="QLabel" name="label_3">
@@ -490,7 +466,7 @@
        <item>
         <spacer>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -525,7 +501,6 @@
         <widget class="QLabel" name="lMemory">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -533,7 +508,7 @@
           <string>Memory</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -541,7 +516,6 @@
         <widget class="QLabel" name="lMpegROM">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -549,7 +523,7 @@
           <string>Mpeg ROM</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -559,7 +533,7 @@
        <item row="11" column="1">
         <spacer>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -590,7 +564,6 @@
         <widget class="QLabel" name="lCartridge">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -598,7 +571,7 @@
           <string>Cartridge</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -669,7 +642,6 @@
          </property>
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -677,7 +649,7 @@
           <string>Input</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -714,7 +686,6 @@
         <widget class="QLabel" name="lGunMouseSensitivity">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -732,7 +703,7 @@
           <number>400</number>
          </property>
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
+          <enum>Qt::Orientation::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -747,7 +718,6 @@
         <widget class="QLabel" name="lRegion">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -755,7 +725,7 @@
           <string>Region</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -766,7 +736,6 @@
         <widget class="QLabel" name="lSH2Interpreter">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -774,7 +743,7 @@
           <string>SH2 Interpreter</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::PlainText</enum>
+          <enum>Qt::TextFormat::PlainText</enum>
          </property>
         </widget>
        </item>
@@ -785,7 +754,6 @@
         <widget class="QLabel" name="l68kCore">
          <property name="font">
           <font>
-           <weight>75</weight>
            <bold>true</bold>
           </font>
          </property>
@@ -800,7 +768,7 @@
        <item>
         <spacer>
          <property name="orientation">
-          <enum>Qt::Vertical</enum>
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
@@ -809,155 +777,6 @@
           </size>
          </property>
         </spacer>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="wView">
-      <attribute name="title">
-       <string>View</string>
-      </attribute>
-      <layout class="QGridLayout">
-       <item row="6" column="0">
-        <spacer>
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>2</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="0" column="0" colspan="3">
-        <widget class="QLabel" name="lHideMenubar">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Hide Menubar</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QRadioButton" name="rbMenubarNever">
-         <property name="text">
-          <string>Never</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowMenubar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QRadioButton" name="rbMenubarFullscreen">
-         <property name="text">
-          <string>On fullscreen</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowMenubar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QRadioButton" name="rbMenubarAlways">
-         <property name="text">
-          <string>Always</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowMenubar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="2" column="0" colspan="3">
-        <widget class="QLabel" name="lHideToolbar">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Hide Toolbar</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QRadioButton" name="rbToolbarNever">
-         <property name="text">
-          <string>Never</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowToolbar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QRadioButton" name="rbToolbarFullscreen">
-         <property name="text">
-          <string>On fullscreen</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowToolbar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="3" column="2">
-        <widget class="QRadioButton" name="rbToolbarAlways">
-         <property name="text">
-          <string>Always</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowToolbar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QLabel" name="label">
-         <property name="font">
-          <font>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Show Log Window</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QRadioButton" name="rbLogWindowMessage">
-         <property name="text">
-          <string>On message</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowLogWindow</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="1" column="3">
-        <widget class="QRadioButton" name="rbMenubarFullscreenHover">
-         <property name="text">
-          <string>Display on Hover</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowMenubar</string>
-         </attribute>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QRadioButton" name="rbLogWindowNever">
-         <property name="text">
-          <string>Never</string>
-         </property>
-         <attribute name="buttonGroup">
-          <string notr="true">bgShowLogWindow</string>
-         </attribute>
-        </widget>
        </item>
       </layout>
      </widget>
@@ -975,7 +794,7 @@
           <bool>false</bool>
          </property>
          <property name="selectionBehavior">
-          <enum>QAbstractItemView::SelectRows</enum>
+          <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
          </property>
          <attribute name="horizontalHeaderCascadingSectionResizes">
           <bool>false</bool>
@@ -1008,10 +827,10 @@
    <item>
     <widget class="QDialogButtonBox" name="dbbButtons">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>
@@ -1065,9 +884,4 @@
    </hints>
   </connection>
  </connections>
- <buttongroups>
-  <buttongroup name="bgShowToolbar"/>
-  <buttongroup name="bgShowMenubar"/>
-  <buttongroup name="bgShowLogWindow"/>
- </buttongroups>
 </ui>

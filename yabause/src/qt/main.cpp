@@ -27,12 +27,25 @@
 #include "Arguments.h"
 #endif
 
+#include <QSurfaceFormat>
+
 int main( int argc, char** argv )
 {
+
+	// プロファイル設定
+	QSurfaceFormat fmt;
+	fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+	fmt.setSwapInterval(0);
+	fmt.setDepthBufferSize(24);
+	fmt.setStencilBufferSize(8);
+	fmt.setVersion(3, 2);
+	fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
+	QSurfaceFormat::setDefaultFormat(fmt);
+
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Yaba Sanshiro 2 v%1" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Yaba Sanshiro 2 v%1 30th Anniversary Edition" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N

@@ -165,7 +165,7 @@ public:
   }
 
 
-  typedef struct {
+  struct RBGDrawInfo {
     int useb = 0;
     vdp2draw_struct info = {};
     CharTexture texture;
@@ -184,7 +184,7 @@ public:
     float rotate_mval_h = 0;
     float rotate_mval_v = 0;
 
-  } RBGDrawInfo;
+  };
 
   int vdp2width; // virtual VDP2 resolution X
   int vdp2height; // virtual VDP2 resolution Y

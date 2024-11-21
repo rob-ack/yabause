@@ -721,7 +721,7 @@ extern "C" void Vdp1FakeDrawCommands(u8 * ram, Vdp1 * regs)
 
 int Vdp1GenerateCCode() {
 
-  FILE * regfp = fopen("v1reg.c", "w");
+  FILE * regfp = fopen_utf8("v1reg.c", "w");
   fprintf(regfp, "short v1reg[] = { \n");
     fprintf(regfp, "0x%04X,\n", Vdp1Regs->TVMR);
     fprintf(regfp, "0x%04X,\n", Vdp1Regs->FBCR);
@@ -732,7 +732,7 @@ int Vdp1GenerateCCode() {
   fprintf(regfp, "};\n");
   fclose(regfp);
 
-  FILE * ramfp = fopen("v1ram.c", "w");
+  FILE * ramfp = fopen_utf8("v1ram.c", "w");
   fprintf(ramfp, "short v1ram[] = { \n");
   for (int i = 0; i < 0x80000; i+=2) {
     u16 data = Vdp1RamReadWord(i);

@@ -80,13 +80,13 @@ void UIDisasm::setMinimumInstructionSize(int instructionSize)
 
 void UIDisasm::adjustSettings()
 {
-   verticalScrollBar()->setRange(0, endAddress);
-   verticalScrollBar()->setSingleStep(instructionSize);
+  verticalScrollBar()->setRange(0, endAddress);
+  verticalScrollBar()->setSingleStep(instructionSize);
 
-   fontWidth = fontMetrics().width(QLatin1Char('9'));
-   fontHeight = fontMetrics().height();
+  fontWidth = fontMetrics().horizontalAdvance(QLatin1Char('9'));
+  fontHeight = fontMetrics().height();
 
-   viewport()->update();
+  viewport()->update();
 }
 
 void UIDisasm::mouseDoubleClickEvent( QMouseEvent * event )

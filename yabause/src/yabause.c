@@ -230,7 +230,7 @@ int YabauseInit(yabauseinit_struct *init)
    if (yabsys.extend_backup) {
      FILE * pbackup;
      bupfilename = init->buppath;
-     pbackup = fopen(bupfilename, "a+b");
+     pbackup = fopen_utf8(bupfilename, "a+b");
      if (pbackup == NULL) {
        YabSetError(YAB_ERR_CANNOTINIT, _("InternalBackup"));
        return -1;
@@ -894,7 +894,7 @@ int YabauseEmulate(void) {
 #ifdef ANDROID
        pfm = fopen("/mnt/sdcard/cpu.txt", "w");
 #else
-       pfm = fopen("cpu.txt", "w");
+       pfm = fopen_utf8("cpu.txt", "w");
 #endif
      }
      if (pfm) {

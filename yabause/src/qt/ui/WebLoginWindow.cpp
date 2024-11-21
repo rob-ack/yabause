@@ -22,17 +22,14 @@ using firebase::database::DataSnapshot;
 
 #define API_KEY "pass"
 
-class YabaAuthStateListenerx : public firebase::auth::AuthStateListener
-{
-public:
-  WebLoginWindow *program_context;
-  void OnAuthStateChanged(firebase::auth::Auth *auth) override
-  {
-    firebase::auth::User *user = auth->current_user();
-    if (user != nullptr)
-    {
+class YabaAuthStateListenerx : public firebase::auth::AuthStateListener {
+ public:
+ WebLoginWindow* program_context;
+  void OnAuthStateChanged(firebase::auth::Auth* auth) override {
+    firebase::auth::User user = auth->current_user();
+    if (!user.is_valid()) {
       // User is signed in
-      printf("OnAuthStateChanged: signed_in as %s\n", user->display_name().c_str());
+      printf("OnAuthStateChanged: signed_in as %s\n", user.display_name().c_str());
       firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
       firebase::database::DatabaseReference dbref = database->GetReference();
       // QMetaObject::invokeMethod(program_context,"close",Qt::QueuedConnection);
@@ -53,25 +50,21 @@ WebLoginWindow::WebLoginWindow(QWidget *parent) : QDialog(parent)
   setupUi(this);
   tx = nullptr;
 
-  firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-  firebase::auth::User *user = auth->current_user();
-  if (user != nullptr)
-  {
-    QMessageBox msgBox(parent);
-    msgBox.setText(tr("Are you sure to sigin out?"));
-    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    msgBox.setDefaultButton(QMessageBox::No);
-    int res = msgBox.exec();
-    if (res == QMessageBox::Yes)
-    {
-      auth->SignOut();
+    firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+    firebase::auth::User user = auth->current_user();
+    if (user.is_valid()) {
+        QMessageBox msgBox(parent);
+        msgBox.setText(tr("Are you sure to sigin out?"));
+        msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        msgBox.setDefaultButton(QMessageBox::No);
+        int res = msgBox.exec();
+        if (res == QMessageBox::Yes){
+            auth->SignOut();
+        }
+        QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
+        return;
+    }else{
     }
-    QMetaObject::invokeMethod(this, "close", Qt::QueuedConnection);
-    return;
-  }
-  else
-  {
-  }
 
   //    connect(this, SIGNAL(setResult(QString,QString)), this, SLOT(getResult(QString,QString)));
   connect(this, SIGNAL(failToLogin()), this, SLOT(onFailedToLogin()));
@@ -118,24 +111,30 @@ public:
   }
 };
 
-void WebLoginWindow::done(int r)
-{
 
-  if (isSignInOK)
-  {
+void WebLoginWindow::done(int r) {
+  if (isSignInOK) {
+    firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+    firebase::auth::User user = auth->current_user();
+    if (user.is_valid()) {
+      // ���������郁�b�Z�[�W�E�B���h�E��\��
+      QDialog* msgDialog = new QDialog(this);
+      msgDialog->setWindowTitle("Sign-in Successful");
 
-    firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-    firebase::auth::User *user = auth->current_user();
-    if (user != nullptr)
-    {
-      YMessageBox msgBox(this);
-      QString msg;
-      msg = "Signin is successful. \n  Hello! " + QString(user->display_name().c_str());
-      msgBox.setText(msg);
-      msgBox.setStandardButtons(0); // QMessageBox::Ok);
-      msgBox.setAutoClose(true);
-      msgBox.setTimeout(3); // Closes after three seconds
-      int res = msgBox.exec();
+      QString msg = "Signin is successful. \nHello! " + QString::fromStdString(user.display_name());
+
+      QLabel* label = new QLabel(msg, msgDialog);
+      label->setAlignment(Qt::AlignCenter);
+
+      QVBoxLayout* layout = new QVBoxLayout(msgDialog);
+      layout->addWidget(label);
+      msgDialog->setLayout(layout);
+      msgDialog->resize(300, 150);
+
+      // �^�C�}�[�Ŏ����I�ɕ���
+      QTimer::singleShot(3000, msgDialog, &QDialog::accept);  // 3�b��ɕ���
+
+      msgDialog->exec();
     }
   }
   QDialog::done(r);
@@ -160,35 +159,30 @@ void WebLoginWindow::getResult(QString id, QString error)
 
   // printf("id:%s\n",this->id.toStdString().c_str());
 
-  firebase::auth::Credential credential =
-      firebase::auth::GoogleAuthProvider::GetCredential(this->id.toStdString().c_str(), nullptr);
-  firebase::Future<firebase::auth::User *> result = auth->SignInWithCredential(credential);
+    firebase::auth::Credential credential =
+    firebase::auth::GoogleAuthProvider::GetCredential(this->id.toStdString().c_str(),nullptr);
+    firebase::Future<firebase::auth::User> result = auth->SignInWithCredential(credential);
 
-  result.OnCompletion(
-      [](const firebase::Future<firebase::auth::User *> &result,
-         void *user_data)
-      {
-        WebLoginWindow *program_context = (WebLoginWindow *)user_data;
+    result.OnCompletion(
+      [](const firebase::Future<firebase::auth::User>& result,
+         void* user_data) {
+        WebLoginWindow* program_context = (WebLoginWindow*)user_data;
 
         QMetaObject::invokeMethod(program_context, "enableButtons", Qt::QueuedConnection);
 
-        if (result.status() == firebase::kFutureStatusComplete)
-        {
-          if (result.error() == firebase::auth::kAuthErrorNone)
-          {
-            firebase::auth::User *user = *result.result();
-            std::string name = user->display_name();
-            std::string email = user->email();
-            std::string photo_url = user->photo_url();
-            std::string uid = user->uid();
-            program_context->isSignInOK = true;
-            QMetaObject::invokeMethod(program_context, "close", Qt::QueuedConnection);
-          }
-          else
-          {
-            printf("Failed: %s\n", result.error_message());
-            program_context->failToLogin();
-          }
+        if (result.status() == firebase::kFutureStatusComplete) {
+            if (result.error() == firebase::auth::kAuthErrorNone) {
+                firebase::auth::User user = *result.result();
+                std::string name = user.display_name();
+                std::string email = user.email();
+                std::string photo_url = user.photo_url();
+                std::string uid = user.uid();
+                program_context->isSignInOK = true;
+                QMetaObject::invokeMethod(program_context, "close", Qt::QueuedConnection);
+            }else{
+                printf("Failed: %s\n",result.error_message());
+                program_context->failToLogin();
+            }
         }
       },
       (void *)self);

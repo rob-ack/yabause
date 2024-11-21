@@ -20,5 +20,5 @@ Contributors:
 // GLFW version 3.2 or newer is required.
 #if defined(ANDROID)
 #else
-#define BUILD_USE_GLFW											1
+//#define BUILD_USE_GLFW											1
 #endif

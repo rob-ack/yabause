@@ -2069,7 +2069,7 @@ int BupImportSave(UNUSED u32 device, const char *filename)
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "rb")) == NULL)
+   if ((fp = fopen_utf8(filename, "rb")) == NULL)
       return -1;
 
    // Calculate file size

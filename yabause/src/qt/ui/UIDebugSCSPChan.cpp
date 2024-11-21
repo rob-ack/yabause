@@ -104,23 +104,23 @@ void UIDebugSCSPChan::paintEvent(QPaintEvent *event)
 
 void UIDebugSCSPChan::update_window()
 {
-   QString address;
+  QString address;
 
-   for (int i = 0; i < 24; i++)
-   {
-      u32 sa = 0;
-      int muted = 0;
-      scsp_debug_instrument_get_data(i, &sa, &muted);
-      
-      address.sprintf("%05X", sa);
+  for (int i = 0; i < 24; i++)
+  {
+    u32 sa = 0;
+    int muted = 0;
+    scsp_debug_instrument_get_data(i, &sa, &muted);
 
-      checkbox[i]->setText(address);
+    address = QString("%1").arg(sa, 5, 16, QChar('0')).toUpper();
 
-      if (checkbox[i]->isChecked())
-         scsp_debug_instrument_set_mute(sa, 1);//mute this instrument
-      else
-         scsp_debug_instrument_set_mute(sa, 0);
-   }
+    checkbox[i]->setText(address);
 
-   repaint();
+    if (checkbox[i]->isChecked())
+      scsp_debug_instrument_set_mute(sa, 1); // mute this instrument
+    else
+      scsp_debug_instrument_set_mute(sa, 0);
+  }
+
+  repaint();
 }

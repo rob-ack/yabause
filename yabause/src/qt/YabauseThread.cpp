@@ -34,6 +34,7 @@
 #include <QDateTime>
 #include <QStringList>
 #include <QDebug>
+#include <cwchar>
 
 extern "C" {
 
@@ -114,8 +115,19 @@ yabauseinit_struct* YabauseThread::yabauseConf()
 	return &mYabauseConf;
 }
 
+
+void YabauseThread::resize(int w, int h) {
+
+	VolatileSettings* vs = QtYabause::volatileSettings();
+	VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, vs->value("Video/RotateScreen", false).toBool());
+	int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 0).toInt();
+
+  VIDCore->Resize(0, 0, w, h, 0, aspectRatio);
+}
+
 #ifdef HAVE_VULKAN
 
+#if 0
 void framebufferResizeCallback(GLFWwindow* window, int width, int height) {
   VIDCore->Resize(0, 0, width, height, 0, 0);
 }
@@ -174,6 +186,8 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 }
 #endif
 
+#endif
+
 
 void YabauseThread::initEmulation()
 {
@@ -184,15 +198,15 @@ void YabauseThread::initEmulation()
 
 #ifdef HAVE_VULKAN	
   if (vidcoretype == VIDCORE_VULKAN) {
-    int width = vs->value("Video/WinWidth", 800).toInt();
-    int height = vs->value("Video/WinHeight", 600).toInt();
+    //int width = vs->value("Video/WinWidth", 800).toInt();
+    //int height = vs->value("Video/WinHeight", 600).toInt();
 
-    vulkanRenderer = new Renderer();
-    auto w = vulkanRenderer->OpenWindow(width, height, "[Yaba Sanshiro Vulkan] F4: Toggle full screen mode ", nullptr);
-    VIDVulkan::getInstance()->setRenderer(vulkanRenderer);
-    glfwSetFramebufferSizeCallback(w->getWindowHandle(), framebufferResizeCallback);
-    glfwSetKeyCallback(w->getWindowHandle(), key_callback);
-    _monitor = glfwGetPrimaryMonitor();
+    //vulkanRenderer = new Renderer();
+    //auto w = vulkanRenderer->OpenWindow(width, height, "[Yaba Sanshiro Vulkan] F4: Toggle full screen mode ", nullptr);
+    //VIDVulkan::getInstance()->setRenderer(vulkanRenderer);
+    //glfwSetFramebufferSizeCallback(w->getWindowHandle(), framebufferResizeCallback);
+    //glfwSetKeyCallback(w->getWindowHandle(), key_callback);
+    //_monitor = glfwGetPrimaryMonitor();
   }
 #endif	
 	mInit = YabauseInit( &mYabauseConf );
@@ -205,26 +219,19 @@ void YabauseThread::deInitEmulation()
   VolatileSettings* vs = QtYabause::volatileSettings();
   int vidcoretype = vs->value("Video/VideoCore", mYabauseConf.vidcoretype).toInt();
 
-#ifdef HAVE_VULKAN		
-  if (vidcoretype == VIDCORE_VULKAN) {
-    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
-    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
-  }
-#endif	
-	YabauseDeInit();
+//#ifdef HAVE_VULKAN		
+//  if (vidcoretype == VIDCORE_VULKAN) {
+//   vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
+//    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
+//  }
+//#endif	
 
-#ifdef HAVE_VULKAN	
-  if (vidcoretype == VIDCORE_VULKAN) {
-    vkQueueWaitIdle(vulkanRenderer->GetVulkanQueue());
-    vkDeviceWaitIdle(vulkanRenderer->GetVulkanDevice());
-    delete vulkanRenderer;
-  }
-#endif
+	YabauseDeInit();
 
 	mInit = -1;
 }
 
-bool YabauseThread::pauseEmulation( bool pause, bool reset )
+bool YabauseThread::pauseEmulation( bool pause, bool reset, std::function<void()> preInitcallback )
 {
 	if ( mPause == pause && !reset ) {
 		return true;
@@ -233,6 +240,10 @@ bool YabauseThread::pauseEmulation( bool pause, bool reset )
 	if ( mInit == 0 && reset ) {
 		deInitEmulation();
 	}
+
+  if (preInitcallback != nullptr) {
+    preInitcallback();
+  }
 	
 	if ( mInit < 0 ) {
 		initEmulation();
@@ -501,17 +512,18 @@ void YabauseThread::reloadClock()
 	if (mYabauseConf.basetime == 0)
 		tmp = "";
 	else
-		tmp = QDateTime::fromTime_t(mYabauseConf.basetime).toString();
+		tmp = QDateTime::fromSecsSinceEpoch(mYabauseConf.basetime).toString();
 
 	// Clock sync
-	mYabauseConf.clocksync = (int)s->value( "General/ClockSync", mYabauseConf.clocksync ).toBool();
-	tmp = s->value( "General/FixedBaseTime", tmp ).toString();
-	if (!tmp.isEmpty() && mYabauseConf.clocksync) 
+	mYabauseConf.clocksync = (int)s->value("General/ClockSync", mYabauseConf.clocksync).toBool();
+	tmp = s->value("General/FixedBaseTime", tmp).toString();
+	if (!tmp.isEmpty() && mYabauseConf.clocksync)
 	{
 		QDateTime date = QDateTime::fromString(tmp, Qt::ISODate);
-		mYabauseConf.basetime = (long)date.toTime_t();	
+		mYabauseConf.basetime = static_cast<long>(date.toSecsSinceEpoch());
 	}
-	else {
+	else
+	{
 		mYabauseConf.basetime = 0;
 	}
 }
@@ -530,7 +542,25 @@ void YabauseThread::reloadSettings()
 	mYabauseConf.percoretype = vs->value( "Input/PerCore", mYabauseConf.percoretype ).toInt();
 	mYabauseConf.sh2coretype = vs->value( "Advanced/SH2Interpreter", mYabauseConf.sh2coretype ).toInt();
 	mYabauseConf.vidcoretype = vs->value( "Video/VideoCore", mYabauseConf.vidcoretype ).toInt();
-	mYabauseConf.osdcoretype = vs->value( "Video/OSDCore", mYabauseConf.osdcoretype ).toInt();
+
+  // Automatically set OSDCore based on VideoCore
+	switch (mYabauseConf.vidcoretype) {
+  case VIDCORE_SOFT:
+		mYabauseConf.osdcoretype = OSDCORE_SOFT;
+    break;
+  case VIDCORE_OGL:
+		mYabauseConf.osdcoretype = OSDCORE_NANOVG;
+    break;
+#ifdef HAVE_VULKAN
+  case VIDCORE_VULKAN:
+		mYabauseConf.osdcoretype = OSDCORE_NANOVG_VULKAN;
+    break;
+#endif
+  default:
+		mYabauseConf.osdcoretype = OSDCORE_DUMMY;
+    break;
+
+	}
 	mYabauseConf.sndcoretype = vs->value( "Sound/SoundCore", mYabauseConf.sndcoretype ).toInt();
 	mYabauseConf.cdcoretype = vs->value( "General/CdRom", mYabauseConf.cdcoretype ).toInt();
 	mYabauseConf.carttype = vs->value( "Cartridge/Type", mYabauseConf.carttype ).toInt();
@@ -554,25 +584,25 @@ void YabauseThread::reloadSettings()
 	if (vs->value("General/EnableEmulatedBios", false).toBool())
 		mYabauseConf.biospath = strdup( "" );
 	else
-		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toLatin1().constData() );
+		mYabauseConf.biospath = strdup( vs->value( "General/Bios", mYabauseConf.biospath ).toString().toUtf8().constData() );
 
   mYabauseConf.framelimit = vs->value("General/EmulationSpeed", mYabauseConf.framelimit).toInt();
-	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toLatin1().constData() );
-   mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toLatin1().constData());
+	mYabauseConf.cdpath = strdup( vs->value( "General/CdRomISO", mYabauseConf.cdpath ).toString().toUtf8().constData() );
+   mYabauseConf.ssfpath = strdup(vs->value("General/SSFPath", mYabauseConf.ssfpath).toString().toUtf8().constData());
    mYabauseConf.play_ssf = vs->value("General/PlaySSF", false).toBool();
    showFPS = vs->value( "General/ShowFPS", false ).toBool();
 	mYabauseConf.usethreads = (int)vs->value( "General/EnableMultiThreading", mYabauseConf.usethreads ).toBool();
 	mYabauseConf.numthreads = vs->value( "General/NumThreads", mYabauseConf.numthreads ).toInt();
-	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toLatin1().constData() );
-	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toLatin1().constData() );
+	mYabauseConf.buppath = strdup( vs->value( "Memory/Path", mYabauseConf.buppath ).toString().toUtf8().constData() );
+	mYabauseConf.mpegpath = strdup( vs->value( "MpegROM/Path", mYabauseConf.mpegpath ).toString().toUtf8().constData() );
   if (vs->value("Memory/ExtendMemory", true).toBool()) {
     mYabauseConf.extend_backup = 1;
   }else {
     mYabauseConf.extend_backup = 0;
   }
-	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toLatin1().constData() );
-	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toLatin1().constData() );
-	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toLatin1().constData() );
+	mYabauseConf.cartpath = strdup( vs->value( "Cartridge/Path", mYabauseConf.cartpath ).toString().toUtf8().constData() );
+	mYabauseConf.modemip = strdup( vs->value( "Cartridge/ModemIP", mYabauseConf.modemip ).toString().toUtf8().constData() );
+	mYabauseConf.modemport = strdup( vs->value( "Cartridge/ModemPort", mYabauseConf.modemport ).toString().toUtf8().constData() );
 	mYabauseConf.videoformattype = vs->value( "Video/VideoFormat", mYabauseConf.videoformattype ).toInt();
    mYabauseConf.use_new_scsp = (int)vs->value("Sound/NewScsp", mYabauseConf.use_new_scsp).toBool();
 
@@ -620,7 +650,7 @@ void YabauseThread::CloseTray(){
 
 	VolatileSettings* vs = QtYabause::volatileSettings();
 	mYabauseConf.cdcoretype = vs->value("General/CdRom", mYabauseConf.cdcoretype).toInt();
-	mYabauseConf.cdpath = strdup(vs->value("General/CdRomISO", mYabauseConf.cdpath).toString().toLatin1().constData());
+	mYabauseConf.cdpath = strdup(vs->value("General/CdRomISO", mYabauseConf.cdpath).toString().toUtf8().constData());
 
 	Cs2ForceCloseTray(mYabauseConf.cdcoretype, mYabauseConf.cdpath);
 }
@@ -667,10 +697,16 @@ void YabauseThread::timerEvent( QTimerEvent* )
 	//mRunning = true;
 	//while ( mRunning )
 	{
-		if ( !mPause )
-			PERCore->HandleEvents();
+		//if ( !mPause )
+		//	PERCore->HandleEvents();
 		//else
 			//msleep( 25 );
 		//sleep( 0 );
 	}
+}
+
+
+void YabauseThread::execEmulation() {
+	if (!mPause)
+		PERCore->HandleEvents();
 }

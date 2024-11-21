@@ -813,16 +813,16 @@ void Vdp1Renderer::drawEnd(void) {
     barrier_from_readonly_to_attachment.subresourceRange.layerCount = 1;
     barrier_from_readonly_to_attachment.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
     barrier_from_readonly_to_attachment.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-    // レンダリングコマンドの開始前にバリアを発行
+    
     vkCmdPipelineBarrier(cb,
       VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
       VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
       0,
       0, nullptr,
       0, nullptr,
-      1, &barrier_from_readonly_to_attachment);
-
+      1, &barrier_from_readonly_to_attachment
+    );
+      
     offscreenPass.color[drawframe].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   }
 

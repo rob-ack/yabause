@@ -744,7 +744,7 @@ void YglTMAllocate(YglTextureManager * tm, YglTexture * output, unsigned int w, 
 //////////////////////////////////////////////////////////////////////////////
 int YglDumpFrameBuffer(const char * filename, int width, int height, char * buf ){
 
-  FILE * fp = fopen(filename, "wb");
+  FILE * fp = fopen_utf8(filename, "wb");
   int bsize = width*height * 3;
   char * pBitmap = malloc(bsize);
   int i, j;

@@ -109,7 +109,7 @@ int ScuInit(void) {
    }
 #ifdef ENABLE_DSPLOG
    if (slogp == NULL){
-     slogp = fopen("slog.txt", "w");
+     slogp = fopen_utf8("slog.txt", "w");
    }   
 #endif   
    return 0;
@@ -2507,7 +2507,7 @@ int ScuDspSaveProgram(const char *filename) {
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "wb")) == NULL)
+   if ((fp = fopen_utf8(filename, "wb")) == NULL)
       return -1;
 
    if ((buffer = (u8 *)malloc(sizeof(ScuDsp->ProgramRam))) == NULL)
@@ -2541,7 +2541,7 @@ int ScuDspSaveMD(const char *filename, int num) {
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "wb")) == NULL)
+   if ((fp = fopen_utf8(filename, "wb")) == NULL)
       return -1;
 
    if ((buffer = (u8 *)malloc(sizeof(ScuDsp->MD[num]))) == NULL)

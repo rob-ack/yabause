@@ -73,7 +73,7 @@ UIDebugSCUDSP::UIDebugSCUDSP( YabauseThread *mYabauseThread, QWidget* p )
 			QString text;
 			if (cbp[i].addr != 0xFFFFFFFF)
 			{
-				text.sprintf("%08X", (int)cbp[i].addr);
+        text = QString("%1").arg(static_cast<uint32_t>(cbp[i].addr), 8, 16, QChar('0')).toUpper();
 				lwCodeBreakpoints->addItem(text);
 			}
 		}
@@ -89,71 +89,75 @@ UIDebugSCUDSP::UIDebugSCUDSP( YabauseThread *mYabauseThread, QWidget* p )
 
 void UIDebugSCUDSP::updateRegList()
 {
-   scudspregs_struct regs;
-   QString str;
+  scudspregs_struct regs;
+  QString str;
 
-   if (ScuRegs == NULL)
-      return;
+  if (ScuRegs == NULL)
+    return;
 
-   memset(&regs, 0, sizeof(regs));
-   ScuDspGetRegisters(&regs);
-   lwRegisters->clear();
+  memset(&regs, 0, sizeof(regs));
+  ScuDspGetRegisters(&regs);
+  lwRegisters->clear();
 
-   str.sprintf("PR = %d   EP = %d", regs.ProgControlPort.part.PR, regs.ProgControlPort.part.EP);
-   lwRegisters->addItem(str);
+  str = QString("PR = %1   EP = %2").arg(regs.ProgControlPort.part.PR).arg(regs.ProgControlPort.part.EP);
+  lwRegisters->addItem(str);
 
-   str.sprintf("T0 = %d   S =  %d", regs.ProgControlPort.part.T0, regs.ProgControlPort.part.S);
-   lwRegisters->addItem(str);
+  str = QString("T0 = %1   S =  %2").arg(regs.ProgControlPort.part.T0).arg(regs.ProgControlPort.part.S);
+  lwRegisters->addItem(str);
 
-   str.sprintf("Z =  %d   C =  %d", regs.ProgControlPort.part.Z, regs.ProgControlPort.part.C);
-   lwRegisters->addItem(str);
+  str = QString("Z =  %1   C =  %2").arg(regs.ProgControlPort.part.Z).arg(regs.ProgControlPort.part.C);
+  lwRegisters->addItem(str);
 
-   str.sprintf("V =  %d   E =  %d", regs.ProgControlPort.part.V, regs.ProgControlPort.part.E);
-   lwRegisters->addItem(str);
+  str = QString("V =  %1   E =  %2").arg(regs.ProgControlPort.part.V).arg(regs.ProgControlPort.part.E);
+  lwRegisters->addItem(str);
 
-   str.sprintf("ES = %d   EX = %d", regs.ProgControlPort.part.ES, regs.ProgControlPort.part.EX);
-   lwRegisters->addItem(str);
+  str = QString("ES = %1   EX = %2").arg(regs.ProgControlPort.part.ES).arg(regs.ProgControlPort.part.EX);
+  lwRegisters->addItem(str);
 
-   str.sprintf("LE =          %d", regs.ProgControlPort.part.LE);
-   lwRegisters->addItem(str);
+  str = QString("LE =          %1").arg(regs.ProgControlPort.part.LE);
+  lwRegisters->addItem(str);
 
-   str.sprintf("P =          %02X", regs.ProgControlPort.part.P);
-   lwRegisters->addItem(str);
+  str = QString("P =          %1").arg(regs.ProgControlPort.part.P, 2, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("TOP =        %02X", regs.TOP);
-   lwRegisters->addItem(str);
+  str = QString("TOP =        %1").arg(regs.TOP, 2, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("LOP =        %02X", regs.LOP);
-   lwRegisters->addItem(str);
+  str = QString("LOP =        %1").arg(regs.LOP, 2, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("CT = %02X:%02X:%02X:%02X", regs.CT[0], regs.CT[1], regs.CT[2], regs.CT[3]);
-   lwRegisters->addItem(str);
+  str = QString("CT = %1:%2:%3:%4")
+    .arg(regs.CT[0], 2, 16, QChar('0'))
+    .arg(regs.CT[1], 2, 16, QChar('0'))
+    .arg(regs.CT[2], 2, 16, QChar('0'))
+    .arg(regs.CT[3], 2, 16, QChar('0'))
+    .toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("RA =   %08X", regs.RA0);
-   lwRegisters->addItem(str);
+  str = QString("RA =   %1").arg(regs.RA0, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("WA =   %08X", regs.WA0);
-   lwRegisters->addItem(str);
+  str = QString("WA =   %1").arg(regs.WA0, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("RX =   %08X", regs.RX);
-   lwRegisters->addItem(str);
+  str = QString("RX =   %1").arg(regs.RX, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("RY =   %08X", regs.RX);
-   lwRegisters->addItem(str);
+  str = QString("RY =   %1").arg(regs.RY, 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("PH =       %04X", regs.P.part.H & 0xFFFF);
-   lwRegisters->addItem(str);
+  str = QString("PH =       %1").arg(regs.P.part.H & 0xFFFF, 4, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("PL =   %08X", (int)(regs.P.part.L & 0xFFFFFFFF));
-   lwRegisters->addItem(str);
+  str = QString("PL =   %1").arg(static_cast<uint32_t>(regs.P.part.L), 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("ACH =      %04X", regs.AC.part.H & 0xFFFF);
-   lwRegisters->addItem(str);
+  str = QString("ACH =      %1").arg(regs.AC.part.H & 0xFFFF, 4, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 
-   str.sprintf("ACL =  %08X", (int)(regs.AC.part.L & 0xFFFFFFFF));
-   lwRegisters->addItem(str);
+  str = QString("ACL =  %1").arg(static_cast<uint32_t>(regs.AC.part.L), 8, 16, QChar('0')).toUpper();
+  lwRegisters->addItem(str);
 }
-
 void UIDebugSCUDSP::updateCodeList(u32 addr)
 {
    lwDisassembledCode->goToAddress(addr);

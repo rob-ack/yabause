@@ -51,13 +51,19 @@ protected:
 	void loadSettings();
 	void saveSettings();
 
+	void checkRestart(std::function<void()> cancelCallBack );
+
 protected slots:
 	void on_leBios_textChanged(const QString & text);
 	void tbBrowse_clicked();
+	void on_btnLow_clicked();
+	void on_btnHigh_clicked();
 	void on_cbInput_currentIndexChanged( int id );
 	void on_cbCdRom_currentIndexChanged( int id );
 	void on_cbClockSync_stateChanged( int state );
 	void on_cbCartridge_currentIndexChanged( int id );
+	void on_cbVideoCore_currentIndexChanged(int id);
+	void on_cbPolygonGeneration_currentIndexChanged(int id);
 	void accept();
 };
 

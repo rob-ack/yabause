@@ -38,6 +38,7 @@
 // cores
 
 #ifdef Q_OS_WIN
+#include <Windows.h>
 extern CDInterface SPTICD;
 #endif
 
@@ -116,7 +117,7 @@ VideoInterface_struct *VIDCoreList[] = {
 #ifdef HAVE_LIBGL
 &VIDOGL,
 #endif
-&VIDSoft,
+//&VIDSoft,
 #ifdef HAVE_VULKAN
 &CVIDVulkan,
 #endif
@@ -158,8 +159,17 @@ QMap<uint, PerMouse_struct*> mPort2MouseBits;
 QMap<uint, PerAnalog_struct*> mPort1AnalogBits;
 QMap<uint, PerAnalog_struct*> mPort2AnalogBits;
 
+#include <QStandardPaths>
+
 const char * YuiGetShaderCachePath() {
-	return "./";
+
+	QString cacheDir = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+	cacheDir += "/";
+	QDir dir(cacheDir);
+	if (!dir.exists()) {
+		dir.mkpath(cacheDir);  // ディレクトリを作成
+	}
+	return qstrdup(cacheDir.toLocal8Bit().constData());
 }
 
 extern "C" 
@@ -513,7 +523,11 @@ M68K_struct QtYabause::default68kCore()
 
 SH2Interface_struct QtYabause::defaultSH2Core()
 {
-   return SH2Interpreter;
+#if DYNAREC_DEVMIYAX
+	return SH2Dyn;
+#else
+	return SH2Interpreter;
+#endif
 }
 
 QMap<uint, PerPad_struct*>* QtYabause::portPadsBits( uint portNumber )

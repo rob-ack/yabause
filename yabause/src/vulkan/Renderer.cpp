@@ -45,7 +45,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <inttypes.h>
 #include "object_type_string_helper.h"
 
-#define _DEBUG_ (0)
+#define _DEBUG_ (1)
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   VkDebugUtilsMessageTypeFlagsEXT messageType,
@@ -133,6 +133,8 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
 
 
   std::cout << stream.str();
+  std::string debugMessage = stream.str();
+  OutputDebugStringA(debugMessage.c_str());
 
 #if defined(ANDROID)
   LOGE("%s", stream.str().c_str());
@@ -261,6 +263,8 @@ void Renderer::_SetupLayersAndExtensions()
   AddRequiredPlatformInstanceExtensions(&_instance_extensions);
 
   _device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+  _device_extensions.push_back(VK_KHR_MAINTENANCE_4_EXTENSION_NAME);
+  AddRequiredPlatformDeviceExtensions(&_device_extensions);
 }
 
 void Renderer::_InitInstance()
@@ -268,10 +272,10 @@ void Renderer::_InitInstance()
   VkApplicationInfo application_info{};
   application_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
   application_info.pApplicationName = "YABASANSHIRO";
-  application_info.applicationVersion = VK_MAKE_VERSION(0, 1, 0);
+  application_info.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
   application_info.pEngineName = "YABASANSHIRO";
-  application_info.engineVersion = 1;
-  application_info.apiVersion = VK_API_VERSION_1_0;
+  application_info.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+  application_info.apiVersion = VK_API_VERSION_1_1;
 
  
   VkInstanceCreateInfo instance_create_info{};
@@ -316,8 +320,20 @@ void Renderer::_InitDevice()
     vkGetPhysicalDeviceProperties(_gpu, &_gpu_properties);
     vkGetPhysicalDeviceMemoryProperties(_gpu, &_gpu_memory_properties);
 
+
     VkPhysicalDeviceFeatures deviceFeatures;
+
     vkGetPhysicalDeviceFeatures(_gpu, &deviceFeatures);
+
+    VkPhysicalDeviceFeatures2 deviceFeatures2 = {};
+    VkPhysicalDeviceMaintenance4FeaturesKHR maintenance4Features = {};
+    maintenance4Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES_KHR;
+    maintenance4Features.maintenance4 = VK_TRUE;
+
+    deviceFeatures2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    deviceFeatures2.pNext = &maintenance4Features;
+
+    vkGetPhysicalDeviceFeatures2(_gpu, &deviceFeatures2);
 
     if (deviceFeatures.tessellationShader ==  VK_TRUE && deviceFeatures.geometryShader == VK_TRUE ) {
       canUseTess = true;

@@ -53,6 +53,7 @@ VulkanScene::VulkanScene()
 {
   _command_buffers.clear();
   _command_pool = VK_NULL_HANDLE;
+  _renderer = nullptr;
 }
 
 

@@ -36,6 +36,10 @@
 #include <QDebug>
 #include <cwchar>
 
+#include "../vulkan/Renderer.h"
+Renderer* _vulkanRenderer;
+
+
 extern "C" {
 
   int YabauseThread_IsUseBios() {
@@ -94,8 +98,7 @@ extern "C" {
 
 YabauseThread * YabauseThread::instance = nullptr;
 
-YabauseThread::YabauseThread( QObject* o )
-	: QObject( o )
+YabauseThread::YabauseThread( QObject* o ) : QObject(o)
 {
 	mPause = true;
 	mTimerId = -1;
@@ -103,11 +106,15 @@ YabauseThread::YabauseThread( QObject* o )
 	memset(&mYabauseConf, 0, sizeof(mYabauseConf));
 	showFPS = false;
   instance = this;
+	_vulkanRenderer = new Renderer();
 }
 
 YabauseThread::~YabauseThread()
 {
 	deInitEmulation();
+	vkQueueWaitIdle(_vulkanRenderer->GetVulkanQueue());
+	vkDeviceWaitIdle(_vulkanRenderer->GetVulkanDevice());
+	delete _vulkanRenderer;
 }
 
 yabauseinit_struct* YabauseThread::yabauseConf()

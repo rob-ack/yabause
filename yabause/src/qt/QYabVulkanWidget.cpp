@@ -11,7 +11,8 @@
 #include <YabauseThread.h>
 #include <QResizeEvent>
 
-QYabVulkanWidget * QYabVulkanWidget::_instance = nullptr;
+extern Renderer* _vulkanRenderer;
+QYabVulkanWidget* QYabVulkanWidget::_instance = nullptr;
 
 QYabVulkanWidget::QYabVulkanWidget(QWidget *parent) : QWidget(parent) {
   _instance = this;
@@ -24,21 +25,13 @@ QYabVulkanWidget::QYabVulkanWidget(QWidget *parent) : QWidget(parent) {
 }
 
 QYabVulkanWidget::~QYabVulkanWidget() {
-  //vkQueueWaitIdle(_vulkanRenderer->GetVulkanQueue());
-  //vkDeviceWaitIdle(_vulkanRenderer->GetVulkanDevice());
-  //delete _vulkanRenderer;
 }
 
 void QYabVulkanWidget::ready() {
-  if (_vulkanRenderer != nullptr) {
-    VIDVulkan::getInstance()->setRenderer(_vulkanRenderer);
-    return;
-  }
-  _vulkanRenderer = new Renderer();
   VolatileSettings* vs = QtYabause::volatileSettings();
   int width = vs->value("Video/WinWidth", 800).toInt();
   int height = vs->value("Video/WinHeight", 600).toInt();
-  auto w = _vulkanRenderer->OpenWindow(width, height, "[Yaba Sanshiro Vulkan] F4: Toggle full screen mode ", nullptr);
+  auto w = _vulkanRenderer->OpenWindow(width, height, "", nullptr);
   VIDVulkan::getInstance()->setRenderer(_vulkanRenderer);
 }
 
@@ -74,15 +67,14 @@ void DeInitPlatform()
 
 void AddRequiredPlatformInstanceExtensions(std::vector<const char*>* instance_extensions) {
   instance_extensions->push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-  instance_extensions->push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-  instance_extensions->push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+  //instance_extensions->push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+  //instance_extensions->push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
 
   //instance_extensions->push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 }
 
 void AddRequiredPlatformDeviceExtensions(std::vector<const char*>* device_extensions) {
-  device_extensions->push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
-  
+  //device_extensions->push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 }
 
 void Window::_InitOSWindow() {
@@ -99,8 +91,6 @@ void Window::_UpdateOSWindow() {
 
 void Window::_InitOSSurface() {
 
-  Renderer * vulkanRenderer = QYabVulkanWidget::getInstance()->getRenderer();
-
   HWND hwnd = reinterpret_cast<HWND>(QYabVulkanWidget::getInstance()->winId());
   VkWin32SurfaceCreateInfoKHR surfaceCreateInfo = {};
   surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
@@ -108,7 +98,7 @@ void Window::_InitOSSurface() {
   surfaceCreateInfo.hwnd = hwnd;
 
   VkSurfaceKHR surface;
-  VkResult result = vkCreateWin32SurfaceKHR(vulkanRenderer->GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
+  VkResult result = vkCreateWin32SurfaceKHR(_vulkanRenderer->GetVulkanInstance(), &surfaceCreateInfo, nullptr, &surface);
   if (result != VK_SUCCESS) {
     qFatal("Failed to create Vulkan surface: %d", result);
   }

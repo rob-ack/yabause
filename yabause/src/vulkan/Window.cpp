@@ -371,7 +371,7 @@ void Window::_InitDepthStencilImage() {
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   ErrorCheck(vkCreateImage(_renderer->GetVulkanDevice(), &image_create_info, nullptr, &_depth_stencil_image));
-  printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
+  //printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
   vkDebugNameObject(_renderer->GetVulkanDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)_depth_stencil_image, "Window _depth_stencil_image");
 
   VkMemoryRequirements image_memory_requirements{};

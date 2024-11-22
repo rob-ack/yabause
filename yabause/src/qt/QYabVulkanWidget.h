@@ -2,7 +2,7 @@
 #include <QWidget>
 
 
-class Renderer;
+//class Renderer;
 class YabauseThread;
 
 class QYabVulkanWidget : public QWidget {
@@ -16,9 +16,9 @@ public:
         return _instance;
     }
 
-    Renderer * getRenderer() {
-        return _vulkanRenderer;
-    }
+    //Renderer * getRenderer() {
+    //    return _vulkanRenderer;
+    //}
 
     void setYabauseThread(YabauseThread* p) {
       pYabauseThread = p;
@@ -33,7 +33,7 @@ protected:
     void ready();
     static QYabVulkanWidget * _instance;    
     YabauseThread* pYabauseThread;
-    Renderer * _vulkanRenderer;
+    //Renderer * _vulkanRenderer;
     void paintEvent(QPaintEvent* event) override;
 
 };

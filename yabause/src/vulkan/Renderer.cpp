@@ -150,6 +150,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_messenger_callback(VkDebugUtilsMessageSever
 
 Renderer::Renderer()
 {
+  _window == nullptr;
   LOGI("InitPlatform in");
   InitPlatform();
   LOGI("InitPlatform out");
@@ -198,7 +199,9 @@ void Renderer::setNativeWindow(void * nativeWindow) {
 
 Window * Renderer::OpenWindow(uint32_t size_x, uint32_t size_y, std::string name, void * nativeWindow)
 {
-  _window = new Window(this, size_x, size_y, name, nativeWindow);
+  if (_window == nullptr) {
+    _window = new Window(this, size_x, size_y, name, nativeWindow);
+  }
   return		_window;
 }
 

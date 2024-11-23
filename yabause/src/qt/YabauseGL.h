@@ -21,16 +21,16 @@
 #ifndef YABAUSEGL_H
 #define YABAUSEGL_H
 
-#ifdef HAVE_LIBGL
-#include <QGLWidget>
 
-class YabauseGL : public QGLWidget
-#else
-#include <QWidget>
-#include <QImage>
+#include <QApplication>
+#include <QOpenGLWidget>
+#include <QKeyEvent>
+#include <windows.h>
+#include <QOpenGLFunctions>
+#include <QOpenGLFunctions_1_0>
+class YabauseThread;
 
-class YabauseGL : public QWidget
-#endif
+class YabauseGL : public QOpenGLWidget, public QOpenGLFunctions
 {
 	Q_OBJECT
 	
@@ -55,9 +55,24 @@ public:
     fullscreen = f;
   }
 
+	void setYabauseThread(YabauseThread* p) {
+		pYabauseThread = p;
+	}
+
+
+
+private:
+	YabauseThread* pYabauseThread;
+	
+
+
 protected:
-	virtual void showEvent( QShowEvent* event );
-	virtual void resizeGL( int w, int h );
+	void initializeGL() override;
+	void resizeGL(int w, int h) override;
+	void paintGL() override;
+	void showEvent(QShowEvent* event) override;
+
+
 };
 
 #endif // YABAUSEGL_H

@@ -18,8 +18,13 @@
 */
 package org.uoyabause.android.phone
 
+import android.Manifest
+import android.app.AlertDialog
+import android.app.ProgressDialog.show
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
@@ -38,7 +43,10 @@ import com.google.android.gms.ads.MobileAds
 import org.devmiyax.yabasanshiro.BuildConfig
 import org.devmiyax.yabasanshiro.R
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
@@ -49,6 +57,28 @@ import org.uoyabause.android.BillingViewModel
 class GameSelectActivityPhone : AppCompatActivity() {
     lateinit var frg_: GameSelectFragmentPhone
     var adView: AdView? = null
+
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted: Boolean ->
+            if (isGranted) {
+                // 許可された場合の処理
+            } else {
+                // 拒否された場合の処理
+            }
+        }
+
+    private fun showInContextUI() {
+        // 許可の必要性を説明するダイアログなどを表示
+        AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.notification_permission_title))
+            .setMessage(getString(R.string.notification_permission_message))
+            .setPositiveButton(R.string.ok) { _, _ ->
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
 
 
     public override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +106,29 @@ class GameSelectActivityPhone : AppCompatActivity() {
         } else {
             frg_ =
                 supportFragmentManager.findFragmentById(CONTENT_VIEW_ID) as GameSelectFragmentPhone
+        }
+
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // 既に許可されている場合の処理
+                }
+                ActivityCompat.shouldShowRequestPermissionRationale(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) -> {
+                    // 許可が必要であることを説明するUIを表示
+                    showInContextUI()
+                }
+                else -> {
+                    // 許可をリクエストする
+                    requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
         }
 
         if (BuildConfig.BUILD_TYPE != "pro") {

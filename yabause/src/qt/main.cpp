@@ -18,6 +18,7 @@
 	along with Yabause; if not, write to the Free Software
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
+
 #include <QApplication>
 
 #include "QtYabause.h"
@@ -27,12 +28,27 @@
 #include "Arguments.h"
 #endif
 
+
+#include <QSurfaceFormat>
+#include <crtdbg.h>
 int main( int argc, char** argv )
 {
+	//HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+
+	QSurfaceFormat fmt;
+	fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
+	fmt.setSwapInterval(0);
+	fmt.setDepthBufferSize(24);
+	fmt.setStencilBufferSize(8);
+	fmt.setVersion(3, 2);
+	fmt.setProfile(QSurfaceFormat::CompatibilityProfile);
+	QSurfaceFormat::setDefaultFormat(fmt);
+
 	// create application
 	QApplication app( argc, argv );
 	// init application
-	app.setApplicationName( QString( "Yaba Sanshiro 2 v%1" ).arg( VERSION ) );
+	app.setApplicationName( QString( "Yaba Sanshiro 2 v%1 30th Anniversary Edition" ).arg( VERSION ) );
 	// init settings
 	Settings::setIniInformations();
 #ifdef HAVE_LIBMINI18N
@@ -50,6 +66,7 @@ int main( int argc, char** argv )
 	QObject::connect( &app, SIGNAL( lastWindowClosed() ), &app, SLOT( quit() ) );
 	// exec application
 	int i = app.exec();
+
 	QtYabause::closeTranslation();
 	return i;
 }

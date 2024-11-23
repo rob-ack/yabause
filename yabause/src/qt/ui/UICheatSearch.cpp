@@ -133,24 +133,24 @@ void UICheatSearch::listResults()
          // Show results
          for (i = 0; i < search[j].numResults; i++)
          {
-            QTreeWidgetItem* it = new QTreeWidgetItem( twSearchResults );
-            QString s;
-            s.sprintf("%08X", search[j].results[i].addr);
-            it->setText( 0, s );
+             QTreeWidgetItem* it = new QTreeWidgetItem(twSearchResults);
+             QString s = QString("%1").arg(search[j].results[i].addr, 8, 16, QChar('0')).toUpper();
+             it->setText(0, s);
 
-            switch(searchType & 0x3)
-            {
-            case SEARCHBYTE:
-               s.sprintf("%d", MappedMemoryReadByteNocache(search[j].results[i].addr, NULL));
+             switch (searchType & 0x3)
+             {
+             case SEARCHBYTE:
+               s = QString("%1").arg(MappedMemoryReadByteNocache(search[j].results[i].addr, nullptr));
                break;
-            case SEARCHWORD:
-               s.sprintf("%d", MappedMemoryReadWordNocache(search[j].results[i].addr, NULL));
+             case SEARCHWORD:
+               s = QString("%1").arg(MappedMemoryReadWordNocache(search[j].results[i].addr, nullptr));
                break;
-            case SEARCHLONG:
-               s.sprintf("%d", MappedMemoryReadLongNocache(search[j].results[i].addr, NULL));
+             case SEARCHLONG:
+               s = QString("%1").arg(MappedMemoryReadLongNocache(search[j].results[i].addr, nullptr));
                break;
-            default: break;
-            }
+             default:
+               break;
+             }
             it->setText( 1, s );
          }
       }
@@ -178,10 +178,10 @@ void UICheatSearch::adjustSearchValueQValidator()
    }
    if (rb32Bit->isChecked())
    {
-      if (rbSigned->isChecked())
-         leSearchValue->setValidator(new QRegExpValidator(QRegExp("-?\\d{1,10}"), leSearchValue));
-      else
-         leSearchValue->setValidator(new QRegExpValidator(QRegExp("\\d{1,10}"), leSearchValue));
+     if (rbSigned->isChecked())
+       leSearchValue->setValidator(new QRegularExpressionValidator(QRegularExpression("-?\\d{1,10}"), leSearchValue));
+     else
+       leSearchValue->setValidator(new QRegularExpressionValidator(QRegularExpression("\\d{1,10}"), leSearchValue));
    }
    else
       leSearchValue->setValidator(new QIntValidator(min, max, leSearchValue));
@@ -287,7 +287,7 @@ void UICheatSearch::on_pbAddCheat_clicked()
    // Insert current address/values into dialog
    QTreeWidgetItem *currentItem = twSearchResults->currentItem();
    d.leAddress->setText(currentItem->text(0));
-   s.sprintf("%X", currentItem->text(1).toUInt());
+   s = QString("%1").arg(currentItem->text(1).toUInt(), 0, 16).toUpper();
    d.leValue->setText(s);
    d.rbByte->setChecked(rb8Bit->isChecked());
    d.rbWord->setChecked(rb16Bit->isChecked());

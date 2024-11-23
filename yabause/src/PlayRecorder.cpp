@@ -78,13 +78,13 @@ extern "C" {
 #define CHUNK_SIZE 16384
 
 int compress_file(const char* input_path, const char* output_path) {
-  FILE* input_file = fopen(input_path, "rb");
+  FILE* input_file = fopen_utf8(input_path, "rb");
   if (!input_file) {
     perror("Failed to open input file");
     return -1;
   }
 
-  FILE* output_file = fopen(output_path, "wb");
+  FILE* output_file = fopen_utf8(output_path, "wb");
   if (!output_file) {
     perror("Failed to open output file");
     fclose(input_file);
@@ -146,13 +146,13 @@ int compress_file(const char* input_path, const char* output_path) {
 }
 
 int decompress_file(const char* input_path, const char* output_path) {
-  FILE* input_file = fopen(input_path, "rb");
+  FILE* input_file = fopen_utf8(input_path, "rb");
   if (!input_file) {
     perror("Failed to open input file");
     return -1;
   }
 
-  FILE* output_file = fopen(output_path, "wb");
+  FILE* output_file = fopen_utf8(output_path, "wb");
   if (!output_file) {
     perror("Failed to open output file");
     fclose(input_file);
@@ -216,8 +216,15 @@ int decompress_file(const char* input_path, const char* output_path) {
   return ret == Z_STREAM_END ? 0 : -1;
 }
 
+#if defined(IOS) || defined(WIN32)
+#include <filesystem>
+namespace fs = std::filesystem;
+#else
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
+#endif
+
+
 
 std::pair<std::string, std::string> getParentAndLeaf(const std::string& path) {
   fs::path fsPath(path);
@@ -250,7 +257,7 @@ PlayRecorder * PlayRecorder::instance = NULL;
 
 #ifdef _WINDOWS
 #include <filesystem>
-namespace fs = experimental::filesystem;
+namespace fs = std::filesystem;
 extern "C" int YabMakeCleanDir(const char * dirname) {
   fs::remove_all(dirname);
   if (fs::create_directories(dirname) == false) {
@@ -259,12 +266,12 @@ extern "C" int YabMakeCleanDir(const char * dirname) {
   }
   return 0;
 }
-#elif GCC_VERSION < 9
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
-#else
+#elif IOS
 #include <filesystem>
-namespace fs = std::filesystem;
+namespace fs = filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = experimental::filesystem;
 #endif
 
 

@@ -93,9 +93,9 @@ typedef struct
 
 #define MAX_BREAKPOINTS 10
 
-//#if defined(ARCH_IS_LINUX)
+#if !defined(IOS) // iPhone is too fast 
 #define ASYNC_SCSP
-//#endif
+#endif  
 
 typedef struct
 {

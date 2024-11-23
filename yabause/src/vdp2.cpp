@@ -59,7 +59,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "vidogl.h"
 #include "vidsoft.h"
 #include <atomic>
+#if defined(HAVE_VULKAN)
 #include "vulkan/VIDVulkanCInterface.h"
+#endif
 
 u8 * Vdp2Ram;
 u8 * Vdp2ColorRam;
@@ -1256,12 +1258,14 @@ void vdp2VBlankOUT(void) {
     previous_skipped = 0;
     //VIDCore = saved;
     if( saved != NULL ){
-
-      if (VIDCore->id == VIDCORE_VULKAN) {
 #if defined(HAVE_VULKAN)
+      if (VIDCore->id == VIDCORE_VULKAN) {
+
         VIDCore->Vdp2DrawStart = VIDVulkanVdp2DrawStart;
         VIDCore->Vdp2DrawEnd = VIDVulkanVdp2DrawEnd;
         VIDCore->Vdp2DrawScreens = VIDVulkanVdp2DrawScreens;
+#else
+      if (0) {
 #endif
       }
       else if (VIDCore->id == VIDCORE_OGL) {

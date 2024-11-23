@@ -127,7 +127,12 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
           } else if (productId == 2508 && vendorId == 1356) {
             json =
               "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483631,\"BUTTON_RIGHT_TRIGGER\":-2147483630,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048175,\"PERANALOG_AXIS_RTRIGGER\":-1879048174,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
-            // Generic XBox Controller
+
+          // Anbermic RG405V
+          } else if ( productId == 4353 && vendorId == 18507 ){
+            json = "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483625,\"BUTTON_RIGHT_TRIGGER\":-2147483626,\"BUTTON_START\":108,\"BUTTON_A\":97,\"BUTTON_B\":96,\"BUTTON_C\":103,\"BUTTON_X\":100,\"BUTTON_Y\":99,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048169,\"PERANALOG_AXIS_RTRIGGER\":-1879048170,\"MENU\":109,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
+
+          // Generic XBox Controller
           } else {
             json =
               "{\"BUTTON_UP\":-2147450864,\"BUTTON_DOWN\":-2147483632,\"BUTTON_LEFT\":-2147450865,\"BUTTON_RIGHT\":-2147483633,\"BUTTON_LEFT_TRIGGER\":-2147483625,\"BUTTON_RIGHT_TRIGGER\":-2147483626,\"BUTTON_START\":108,\"BUTTON_A\":96,\"BUTTON_B\":97,\"BUTTON_C\":103,\"BUTTON_X\":99,\"BUTTON_Y\":100,\"BUTTON_Z\":102,\"PERANALOG_AXIS_X\":-1879048192,\"PERANALOG_AXIS_Y\":-1879048191,\"PERANALOG_AXIS_LTRIGGER\":-1879048169,\"PERANALOG_AXIS_RTRIGGER\":-1879048170,\"MENU\":4,\"IS_LTRIGGER_ANALOG\":true,\"IS_RTRIGGER_ANALOG\":true}"
@@ -233,27 +238,40 @@ internal open class BasicInputDevice(pdm: PadManagerV16) {
         if (btn and -0x80000000 != 0) {
           val motion_value = motionEvent.getAxisValue(btn and 0x00007FFF)
           if (btn and 0x8000 != 0) { // Dir
+
             if (java.lang.Float.compare(motion_value, -0.8f) < 0) { // ON
-              if (_testmode) _pdm.addDebugString("onGenericMotionEvent: On  $btn Satpad: $sat_btn") else YabauseRunnable.press(
-                sat_btn, _playerindex
-              )
+              if (_testmode) {
+                _pdm.addDebugString("onGenericMotionEvent: On  $btn Satpad: $sat_btn")
+              } else {
+                YabauseRunnable.press(sat_btn, _playerindex)
+              }
+              Log.d("BasicInputDevice", "onGenericMotionEvent: On  $btn Satpad: $sat_btn")
               rtn = 1
-            } else if (java.lang.Float.compare(motion_value, -0.5f) > 0) { // OFF
-              if (_testmode) _pdm.addDebugString("onGenericMotionEvent: Off  $btn Satpad: $sat_btn") else YabauseRunnable.release(
-                sat_btn, _playerindex
-              )
+            }else if (java.lang.Float.compare(motion_value, -0.5f) > 0) { // OFF
+              if (_testmode) { _pdm.addDebugString("onGenericMotionEvent: Off  $btn Satpad: $sat_btn") }
+              else{
+                YabauseRunnable.release(sat_btn, _playerindex)
+              }
+              Log.d("BasicInputDevice", "onGenericMotionEvent: Off  $btn Satpad: $sat_btn")
               rtn = 1
             }
+
           } else {
             if (java.lang.Float.compare(motion_value, 0.8f) > 0) { // ON
-              if (_testmode) _pdm.addDebugString("onGenericMotionEvent: On  $btn Satpad: $sat_btn") else YabauseRunnable.press(
-                sat_btn, _playerindex
-              )
+              if (_testmode) {
+                _pdm.addDebugString("onGenericMotionEvent: On  $btn Satpad: $sat_btn")
+              } else{
+                YabauseRunnable.press(sat_btn, _playerindex)
+              }
+              Log.d("BasicInputDevice", "onGenericMotionEvent: On  $btn Satpad: $sat_btn")
               rtn = 1
             } else if (java.lang.Float.compare(motion_value, 0.5f) < 0) { // OFF
-              if (_testmode) _pdm.addDebugString("onGenericMotionEvent: Off  $btn Satpad: $sat_btn") else YabauseRunnable.release(
-                sat_btn, _playerindex
-              )
+              if (_testmode){
+                _pdm.addDebugString("onGenericMotionEvent: Off  $btn Satpad: $sat_btn")
+              } else {
+                YabauseRunnable.release(sat_btn, _playerindex)
+              }
+              Log.d("BasicInputDevice", "onGenericMotionEvent: Off  $btn Satpad: $sat_btn")
               rtn = 1
             }
           }

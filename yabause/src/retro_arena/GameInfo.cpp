@@ -76,7 +76,7 @@ shared_ptr<GameInfo> GameInfo::genGameInfoFromBuf(const string & filePath, const
 
 
 shared_ptr<GameInfo> GameInfo::genGameInfoFromISo(const string & filePath) {
-    FILE * fp = fopen(filePath.c_str(), "rb");
+    FILE * fp = fopen_utf8(filePath.c_str(), "rb");
     if (fp == nullptr) {
       return nullptr;
     }
@@ -119,7 +119,7 @@ shared_ptr<GameInfo> GameInfo::genGameInfoFromCUE(const string & filePath) {
     char *temp_buffer;
     int matched = 0;
 
-    FILE * iso_file = fopen(filePath.c_str(), "rb");
+    FILE * iso_file = fopen_utf8(filePath.c_str(), "rb");
 
     fseek(iso_file, 0, SEEK_END);
     size = ftell(iso_file);

@@ -90,6 +90,7 @@ typedef struct {
 
 int OSDInit(int coreid);
 int OSDChangeCore(int coreid);
+void OSDDeInit();
 
 void OSDPushMessage(int msgtype, int ttl, const char * message, ...);
 int  OSDDisplayMessages(pixel_t * buffer, int w, int h);

@@ -77,7 +77,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
     SpvCompilationResult result;
 
     std::size_t hash_value = std::hash<std::string>()(target);
-    
+//#if !defined(_WINDOWS)    
     // Serach from file
     string mempath = YuiGetShaderCachePath();
     std::string hashval = std::to_string(hash_value);
@@ -99,7 +99,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
       file.close();
 
     }else{    
-
+//#endif
       Compiler compiler;
       CompileOptions options;
       options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -117,20 +117,19 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
         throw std::runtime_error("failed to create shader module!");
       }
       data = { result.cbegin(), result.cend() };
-
+//#if !defined(_WINDOWS)
       std::ofstream file(file_path, std::ios::binary);
       if (!file) {
           std::cerr << "Error: Failed to open file." << std::endl;
           throw std::runtime_error("failed to create shader module!");
       }
-
       // データを書き込む
       file.write(reinterpret_cast<char*>(data.data()), data.size() * sizeof(uint32_t));
 
       // ファイルを閉じる
       file.close();
-
     }
+//#endif
 
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1495,10 +1494,10 @@ VdpPipelineBlit::VdpPipelineBlit(VIDVulkan * vulkan, TextureManager * tm, Vertex
 
   fragShaderName = R"s(
   layout(binding = 1) uniform sampler2D s_texture;
-  layout(location = 0) in vec2 v_texcoord;
+  layout(location = 0) in vec4 v_texcoord;
   layout(location = 0) out vec4 outColor;
   void main() {
-    outColor = texture( s_texture, v_texcoord ) ;
+    outColor = texture( s_texture, v_texcoord.xy ) ;
   }
 
   )s";

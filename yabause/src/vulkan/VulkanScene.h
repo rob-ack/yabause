@@ -132,7 +132,9 @@ public:
   VulkanScene();
   ~VulkanScene();
 
-  void setRenderer(Renderer * r) { _renderer = r; };
+  void setRenderer(Renderer * r) { 
+    _renderer = r; 
+  };
   void present();
 
   VkDevice getDevice() {

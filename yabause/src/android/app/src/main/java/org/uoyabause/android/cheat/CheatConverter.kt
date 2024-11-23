@@ -18,20 +18,19 @@
 */
 package org.uoyabause.android.cheat
 
-import com.activeandroid.Model
-import com.activeandroid.query.Delete
-import com.activeandroid.query.Select
-import com.activeandroid.util.Log
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import org.uoyabause.android.YabauseStorage
 import java.lang.Exception
 
 class CheatConverter {
     fun hasOldVersion(): Boolean {
         val Cheats: List<Cheat>?
         Cheats = try {
-            Select().from(Cheat::class.java).execute()
+            YabauseStorage.cheatDao.getAll()
+            //Select().from(Cheat::class.java).execute()
         } catch (e: Exception) {
             return false
         }
@@ -50,7 +49,7 @@ class CheatConverter {
         if (auth.currentUser == null) {
             return -1
         }
-        Cheats = Select().from(Cheat::class.java).execute()
+        Cheats = YabauseStorage.cheatDao.getAll()
         if (Cheats == null || Cheats.isEmpty()) {
             return -1
         }
@@ -66,7 +65,7 @@ class CheatConverter {
             Log.d("CheatConverter",
                 "game:" + cheat.gameid + " desc:" + cheat.description + " code:" + cheat.cheat_code)
         }
-        Delete().from(Cheat::class.java).execute<Model>()
+        YabauseStorage.cheatDao.deleteAll()
         return 0
     }
 }

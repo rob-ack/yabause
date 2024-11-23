@@ -28,6 +28,7 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#define VK_USE_PLATFORM_WIN32_KHR 1
 #include "Window.h"
 #include "Renderer.h"
 #include "Shared.h"
@@ -150,10 +151,12 @@ void Window::_InitSurface() {
 
   auto gpu = _renderer->GetVulkanPhysicalDevice();
 
-  LOGI("%s %d", "vkGetPhysicalDeviceSurfaceSupportKHR in ", _renderer->GetVulkanGraphicsQueueFamilyIndex());
+  uint32_t findex = _renderer->GetVulkanGraphicsQueueFamilyIndex();
+
+  LOGI("%s %d", "vkGetPhysicalDeviceSurfaceSupportKHR in ", findex);
   VkBool32 WSI_supported = false;
 
-  ErrorCheck(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, _renderer->GetVulkanGraphicsQueueFamilyIndex(), _surface,
+  ErrorCheck(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, findex, _surface,
                                                   &WSI_supported));
   if (!WSI_supported) {
     assert(0 && "WSI not supported");
@@ -273,6 +276,11 @@ void Window::_InitSwapchain() {
   swapchain_create_info.clipped = VK_TRUE;
   swapchain_create_info.oldSwapchain = VK_NULL_HANDLE;
 
+  //VkSurfaceFullScreenExclusiveInfoEXT fullScreenExclusiveInfo = {};
+  //fullScreenExclusiveInfo.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
+  //fullScreenExclusiveInfo.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+  //swapchain_create_info.pNext = &fullScreenExclusiveInfo;
+
   ErrorCheck(vkCreateSwapchainKHR(_renderer->GetVulkanDevice(), &swapchain_create_info, nullptr, &_swapchain));
 
   ErrorCheck(vkGetSwapchainImagesKHR(_renderer->GetVulkanDevice(), _swapchain, &_swapchain_image_count, nullptr));
@@ -363,7 +371,7 @@ void Window::_InitDepthStencilImage() {
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   ErrorCheck(vkCreateImage(_renderer->GetVulkanDevice(), &image_create_info, nullptr, &_depth_stencil_image));
-  printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
+  //printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
   vkDebugNameObject(_renderer->GetVulkanDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)_depth_stencil_image, "Window _depth_stencil_image");
 
   VkMemoryRequirements image_memory_requirements{};

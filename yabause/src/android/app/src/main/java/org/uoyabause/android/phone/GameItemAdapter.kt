@@ -45,8 +45,13 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.DrawableImageViewTarget
 import com.frybits.harmony.getHarmonySharedPreferences
 import com.google.firebase.analytics.FirebaseAnalytics
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.devmiyax.yabasanshiro.R
 import org.uoyabause.android.GameInfo
+import org.uoyabause.android.YabauseStorage
 import org.uoyabause.android.phone.GameItemAdapter.GameViewHolder
 import java.io.File
 import javax.sql.DataSource
@@ -265,12 +270,19 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
                                 .setMessage(R.string.delete_confirm)
                                 .setPositiveButton(R.string.ok) { _, _ ->
 
+
                                     var game_info = dataSet?.get(position)!!
 
-                                    dataSet.removeAt(position)
+                                    GlobalScope.launch(Dispatchers.IO) {
+                                        YabauseStorage.dao.delete(game_info)
+                                        game_info.removeInstance()
+                                        withContext(Dispatchers.Main) {
+                                            dataSet.removeAt(position)
+                                            mListener?.onGameRemoved(game_info)
+                                            notifyItemRemoved(position)
+                                        }
+                                    }
 
-                                    mListener?.onGameRemoved(game_info)
-                                    game_info.removeInstance()
 
                                     notifyItemRemoved(position)
                                 }
@@ -291,7 +303,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
         return dataSet!!.size
     }
 
-    fun removeItem(id: Long) {
+    fun removeItem(id: Int) {
         val index = dataSet?.indexOfFirst({ it!!.id == id })
         if (index != null && index != -1) {
             dataSet?.removeAt(index)

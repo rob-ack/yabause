@@ -183,6 +183,8 @@ void YabauseThread_setBackupPath(const char * buf);
 void YabauseThread_coldBoot();
 void YabauseThread_resetPlaymode();
 
+
+
 #ifdef __cplusplus
 }
 #endif

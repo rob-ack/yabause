@@ -28,7 +28,6 @@
 #include <QNetworkReply>
 #include <QUrl>
 #include <QDebug>
-#include <QTextCodec>
 
 #include <firebase/app.h>
 #include <firebase/auth.h>
@@ -46,11 +45,87 @@ using firebase::storage::Storage;
 using std::cout;
 using std::endl;
 
+
+#include <unicode/ucnv.h>
+#include <unicode/unistr.h>
+
 u32 currentbupdevice = 0;
 deviceinfo_struct *devices = NULL;
 int numbupdevices = 0;
 saveinfo_struct *saves = NULL;
 int numsaves = 0;
+
+
+std::string convertShiftJISToUTF8(const char* shiftJisText) {
+	UErrorCode error = U_ZERO_ERROR;
+
+	// 1. Shift-JISコンバータを開く
+	UConverter* converter = ucnv_open("Shift-JIS", &error);
+	if (U_FAILURE(error)) {
+		std::cerr << "コンバータの初期化に失敗しました: " << u_errorName(error) << std::endl;
+		return "";
+	}
+
+	// 2. Shift-JISからUTF-16への変換（UTF-16のサイズをまず取得）
+	int32_t utf16Length = ucnv_toUChars(converter, nullptr, 0, shiftJisText, -1, &error);
+	if (error != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(error)) {
+		std::cerr << "Shift-JISからUTF-16への変換に失敗しました: " << u_errorName(error) << std::endl;
+		ucnv_close(converter);
+		return "";
+	}
+
+	// 3. UTF-16のバッファを確保して変換
+	error = U_ZERO_ERROR;
+	std::u16string utf16Text(utf16Length, '\0');
+	ucnv_toUChars(converter, reinterpret_cast<UChar*>(&utf16Text[0]), utf16Length, shiftJisText, -1, &error);
+	ucnv_close(converter);
+
+	if (U_FAILURE(error)) {
+		std::cerr << "Shift-JISからUTF-16への変換に失敗しました: " << u_errorName(error) << std::endl;
+		return "";
+	}
+
+	// 4. UTF-16からUTF-8へ変換
+	icu::UnicodeString unicodeStr(reinterpret_cast<const UChar*>(utf16Text.data()), utf16Length);
+	std::string utf8Text;
+	unicodeStr.toUTF8String(utf8Text);
+
+	return utf8Text;
+}
+
+QString convertShiftJISToQString(const char* shiftJisText) {
+	UErrorCode error = U_ZERO_ERROR;
+
+	// Shift-JISコンバータを開く
+	UConverter* converter = ucnv_open("Shift-JIS", &error);
+	if (U_FAILURE(error)) {
+		std::cerr << "コンバータの初期化に失敗しました: " << u_errorName(error) << std::endl;
+		return "";
+	}
+
+	// Shift-JISからUTF-16への変換（サイズ取得）
+	int32_t utf16Length = ucnv_toUChars(converter, nullptr, 0, shiftJisText, -1, &error);
+	if (error != U_BUFFER_OVERFLOW_ERROR && U_FAILURE(error)) {
+		std::cerr << "Shift-JISからUTF-16への変換に失敗しました: " << u_errorName(error) << std::endl;
+		ucnv_close(converter);
+		return "";
+	}
+
+	// UTF-16のバッファを確保して変換
+	error = U_ZERO_ERROR;
+	std::u16string utf16Text(utf16Length, '\0');
+	ucnv_toUChars(converter, reinterpret_cast<UChar*>(&utf16Text[0]), utf16Length, shiftJisText, -1, &error);
+	ucnv_close(converter);
+
+	if (U_FAILURE(error)) {
+		std::cerr << "Shift-JISからUTF-16への変換に失敗しました: " << u_errorName(error) << std::endl;
+		return "";
+	}
+
+	// UTF-16からQStringに変換
+	return QString::fromUtf16(reinterpret_cast<const char16_t*>(utf16Text.data()), utf16Text.length());
+}
+
 
 UIBackupRam * UIBackupRam::instance = nullptr;
 
@@ -169,18 +244,18 @@ void UIBackupRam::OnCancelled(const firebase::database::Error &error_code,
 
 void UIBackupRam::OnAuthStateChanged(firebase::auth::Auth *auth)
 {
-	firebase::auth::User *user = auth->current_user();
-	if (user != nullptr)
+	firebase::auth::User user = auth->current_user();
+	if (user.is_valid())
 	{
 		// User is signed in
-		printf("OnAuthStateChanged: signed_in %s\n", user->uid().c_str());
-		const std::string displayName = user->display_name();
-		const std::string emailAddress = user->email();
-		const std::string photoUrl = user->photo_url();
+		printf("OnAuthStateChanged: signed_in %s\n", user.uid().c_str());
+		const std::string displayName = user.display_name();
+		const std::string emailAddress = user.email();
+		const std::string photoUrl = user.photo_url();
 
 		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
-		std::string key = "/user-posts/" + user->uid() + "/backup/";
+		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).AddValueListener(this);
 	}
 	else
@@ -203,15 +278,15 @@ UIBackupRam::UIBackupRam(QWidget *p)
 	new_metadata = nullptr;
 
 	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-	firebase::auth::User *user = auth->current_user();
-	if (user != nullptr)
+  firebase::auth::User user = auth->current_user();
+	if (user.is_valid())
 	{
 
-		printf("signed_in %s\n", user->uid().c_str());
+		printf("signed_in %s\n", user.uid().c_str());
 
 		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
-		std::string key = "/user-posts/" + user->uid() + "/backup/";
+		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).AddValueListener(this);
 	}
 	else
@@ -249,12 +324,12 @@ UIBackupRam::UIBackupRam(QWidget *p)
 UIBackupRam::~UIBackupRam()
 {
 	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-	firebase::auth::User *user = auth->current_user();
-	if (user != nullptr)
+	firebase::auth::User user = auth->current_user();
+	if (user.is_valid())
 	{
 		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
-		std::string key = "/user-posts/" + user->uid() + "/backup/";
+		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).RemoveValueListener(this);
 	}
 	auth->RemoveAuthStateListener(this);
@@ -358,9 +433,7 @@ void UIBackupRam::on_lwSaveList_itemSelectionChanged()
 	if (id != -1)
 	{
 		leFileName->setText(saves[id].filename);
-
-		QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-		leComment->setText(codec->toUnicode(saves[id].comment));
+		leComment->setText(convertShiftJISToQString(saves[id].comment));
 		switch (saves[id].language)
 		{
 		case 0:
@@ -440,7 +513,7 @@ void UIBackupRam::on_pbExport_clicked()
 		backupman_->getFile(index, json);
 
 		QString fileName = QFileDialog::getSaveFileName(this, tr("Export filen name"), "export.json", tr("JSON(*.json)"));
-		FILE *fp = fopen(fileName.toStdString().c_str(), "w");
+		FILE *fp = fopen_utf8(fileName.toStdString().c_str(), "w");
 		if (fp != NULL)
 		{
 			fwrite(json.c_str(), 1, json.length(), fp);
@@ -505,8 +578,8 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 		return;
 
 	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-	firebase::auth::User *user = auth->current_user();
-	if (user == nullptr)
+	firebase::auth::User user = auth->current_user();
+	if (!user.is_valid())
 	{
 		return;
 	}
@@ -515,7 +588,7 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 	Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
 	StorageReference storage_ref = storage->GetReference();
 	cout << "Bucket: " << storage_ref.bucket() << std::endl;
-	StorageReference base = storage_ref.Child(user->uid());
+	StorageReference base = storage_ref.Child(user.uid());
 	StorageReference backup = base.Child("backup");
 	StorageReference fileref = backup.Child(cloud_items[id].key);
 
@@ -527,14 +600,14 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 			if (result.status() == firebase::kFutureStatusComplete) {
 				if (result.error() == firebase::storage::kErrorNone) {
 					firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-					firebase::auth::User *user = auth->current_user();
-					if (user == nullptr) {
+					firebase::auth::User user = auth->current_user();
+					if (!user.is_valid()) {
 						return;
 					}
 
 					firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 					firebase::database::DatabaseReference dbref = database->GetReference();
-					std::string delete_file = "/user-posts/" + user->uid() + "/backup/" + self->del_key;
+					std::string delete_file = "/user-posts/" + user.uid() + "/backup/" + self->del_key;
 					firebase::database::DatabaseReference ref_delete_file = dbref.Child(delete_file);					
 					ref_delete_file.RemoveValue();
 					self->del_key = "";
@@ -638,20 +711,19 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
     }
 
 		firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-		firebase::auth::User *user = auth->current_user();
-		if (user == nullptr)
+		firebase::auth::User user = auth->current_user();
+		if (!user.is_valid())
 		{
 			return;
 		}
 
 		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
-		std::string baseurl = "/user-posts/" + user->uid() + "/backup/";
+		std::string baseurl = "/user-posts/" + user.uid() + "/backup/";
 		firebase::database::DatabaseReference user_dir = dbref.Child(baseurl);
 		new_post = user_dir.PushChild();
 
-    QTextCodec *codec = QTextCodec::codecForName("Shift-JIS");
-    std::string sComment = codec->toUnicode(saves[index].comment).toStdString();
+		std::string sComment = convertShiftJISToUTF8(saves[index].comment);
 
 		char datestring[256];
 		snprintf(datestring, 256, "%04d/%02d/%02d %02d:%02d:00",
@@ -675,7 +747,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
 		StorageReference storage_ref = storage->GetReference();
 		cout << "Bucket: " << storage_ref.bucket() << std::endl;
-		StorageReference base = storage_ref.Child(user->uid());
+		StorageReference base = storage_ref.Child(user.uid());
 		StorageReference backup = base.Child("backup");
 		fileref = backup.Child(new_post.key());
 
@@ -691,7 +763,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		new_metadata->set_content_type("text/json");
 		std::map<std::string, std::string> *custom_metadata = new_metadata->custom_metadata();
 		custom_metadata->insert(std::make_pair("dbref", baseurl + new_post.key()));
-		custom_metadata->insert(std::make_pair("uid", user->uid()));
+		custom_metadata->insert(std::make_pair("uid", user.uid()));
 		custom_metadata->insert(std::make_pair("filename", saves[index].filename));
 		custom_metadata->insert(std::make_pair("comment", sComment));
 		custom_metadata->insert(std::make_pair("size", bytesize));
@@ -712,14 +784,14 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 						{
 
 							firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-							firebase::auth::User *user = auth->current_user();
-							if (user == nullptr)
+							firebase::auth::User user = auth->current_user();
+							if (!user.is_valid())
 							{
 								return;
 							}
 
 							Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp());
-							StorageReference storage_ref = storage->GetReference().Child(user->uid()).Child("backup").Child(self->new_key);
+							StorageReference storage_ref = storage->GetReference().Child(user.uid()).Child("backup").Child(self->new_key);
 							Future<std::string> future = storage_ref.GetDownloadUrl();
 
 							future.OnCompletion(
@@ -730,14 +802,14 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 											if (result.error() == firebase::storage::kErrorNone)
 											{
 												firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-												firebase::auth::User *user = auth->current_user();
-												if (user == nullptr)
+												firebase::auth::User user = auth->current_user();
+												if (!user.is_valid())
 												{
 													return;
 												}
 												firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 												firebase::database::DatabaseReference dbref = database->GetReference();
-												std::string baseurl = "/user-posts/" + user->uid() + "/backup/" + self->new_key + "/url/";
+												std::string baseurl = "/user-posts/" + user.uid() + "/backup/" + self->new_key + "/url/";
 												firebase::database::DatabaseReference url_dir = dbref.Child(baseurl);
 												url_dir.SetValue(*result.result());
 												self->new_key = "";

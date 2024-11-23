@@ -18,7 +18,8 @@
 */
 package org.uoyabause.android.cheat
 
-import com.activeandroid.query.Select
+import org.uoyabause.android.YabauseStorage
+
 
 /**
  * Created by shinya on 2017/03/04.
@@ -26,7 +27,11 @@ import com.activeandroid.query.Select
 class CheatEditDialogStandalone : CheatEditDialog() {
     override fun LoadData(gameid: String?): Int {
         // super.LoadData();
-        Cheats = Select().from(Cheat::class.java).where("gameid = ?", gameid).execute()
+        if( gameid == null ) {
+            return -1
+        }
+
+        Cheats = YabauseStorage.cheatDao.select(gameid).toMutableList() //Select().from(Cheat::class.java).where("gameid = ?", gameid).execute()
         if (Cheats == null) {
             return -1
         }
@@ -47,7 +52,7 @@ class CheatEditDialogStandalone : CheatEditDialog() {
 
     override fun NewItem(gameid: String?, desc: String?, value: String?) {
         val item = Cheat(gameid, desc, value)
-        item.save()
+        YabauseStorage.cheatDao.insert(item)
         CheatAdapter!!.add(item)
     }
 
@@ -56,12 +61,17 @@ class CheatEditDialogStandalone : CheatEditDialog() {
         item.gameid = gameid
         item.description = desc
         item.cheat_code = value
-        item.save()
+        //item.save()
+        YabauseStorage.cheatDao.update(item)
         CheatAdapter!!.notifyDataSetChanged()
     }
 
     override fun Remove(index: Int) {
-        Cheats!![index].delete()
+        try {
+            YabauseStorage.cheatDao.delete(Cheats!![index])
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         LoadData(mGameCode)
         mListView!!.adapter = CheatAdapter
     }

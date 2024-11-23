@@ -21,9 +21,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include <stdio.h>
 #include <string.h>
+#if defined(IOS)
+#else
 #include <malloc.h> 
+#endif
 #include <stdint.h>
-#include <core.h>
+#include "core.h"
 #include <unordered_map>
 
 #include "sh2core.h"
@@ -1713,7 +1716,7 @@ inline int DynarecSh2::Execute(){
 #if defined(DEBUG_CPU) || defined(EXECUTE_STAT)
     u32 prepc = GET_PC();
   if (is_slave_) { //statics_trigger_ == COLLECTING) {
-    //s64 pretime = YabauseGetTicks();
+    s64 pretime = YabauseGetTicks();
     ((dynaFunc)((void*)(pBlock->code)))(m_pDynaSh2);
     //compie_statics_[prepc].count++;
     //compie_statics_[prepc].time += YabauseGetTicks() - pretime;

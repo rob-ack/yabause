@@ -75,6 +75,7 @@ private:
   void _InitDebug();
   void _DeInitDebug();
 
+
   VkInstance								_instance = VK_NULL_HANDLE;
   VkPhysicalDevice						_gpu = VK_NULL_HANDLE;
   VkDevice								_device = VK_NULL_HANDLE;
@@ -86,7 +87,7 @@ private:
   uint32_t	_graphics_family_index = 0;
   uint32_t _compute_family_index = 0;
 
-  Window								*	_window = nullptr;
+  Window* _window = nullptr;
 
   std::vector<const char*>				_instance_layers;
   std::vector<const char*>				_instance_extensions;

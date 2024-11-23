@@ -18,7 +18,25 @@ import org.uoyabause.android.YabauseApplication
 00000040: 02 00 1F 40 03 00 69 78 04 00 69 78 00 00 69 78    ...@..ix..ix..ix
 00000050: 01 00 1F 40 02 00 69 78 03 00 69 78 04 00 69 78    ...@..ix..ix..ix
 00000060: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00    ................
-00000070: 00 00 00 00 00 00 00 00 00 00 00 00 01 01 06 11    ................
+00000070: 00 00 00 00 00 00 00 00 00 00 00 00 01 01 06 11    ........\> Could not resolve all files for configuration ':classpath'.
+   > Could not resolve com.google.firebase:firebase-crashlytics-gradle:3.0.2.
+     Required by:
+         project :
+      > No matching variant of com.google.firebase:firebase-crashlytics-gradle:3.0.2 was found. The consumer was configured to find a library for use during runtime, compatible with Java 11, packaged as a jar, and its dependencies declared externally, as well as attribute 'org.gradle.plugin.api-version' with value '8.6' but:
+          - Variant 'apiElements' capability com.google.firebase:firebase-crashlytics-gradle:3.0.2 declares a library, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component for use during compile-time, compatible with Java 17 and the consumer needed a component for use during runtime, compatible with Java 11
+              - Other compatible attribute:
+                  - Doesn't say anything about org.gradle.plugin.api-version (required '8.6')
+          - Variant 'runtimeElements' capability com.google.firebase:firebase-crashlytics-gradle:3.0.2 declares a library for use during runtime, packaged as a jar, and its dependencies declared externally:
+              - Incompatible because this component declares a component, compatible with Java 17 and the consumer needed a component, compatible with Java 11
+              - Other compatible attribute:
+                  - Doesn't say anything about org.gradle.plugin.api-version (required '8.6')
+          - Variant 'sourcesElements' capability com.google.firebase:firebase-crashlytics-gradle:3.0.2 declares a component for use during runtime, and its dependencies declared externally:
+              - Incompatible because this component declares documentation and the consumer needed a library
+              - Other compatible attributes:
+                  - Doesn't say anything about its target Java version (required compatibility with Java 11)
+                  - Doesn't say anything about its elements (required them packaged as a jar)
+                  - Doesn't say anything about org.gradle.plugin.api-version (required '8.6').........
 00000080: 00 00 1F 40 01 00 69 78 02 00 69 78 03 00 69 78    ...@..ix..ix..ix
 00000090: 04 00 1F 40 00 00 69 78 01 00 69 78 02 00 69 78    ...@..ix..ix..ix
 000000a0: 03 00 1F 40 04 00 69 78 00 00 69 78 01 00 69 78    ...@..ix..ix..ix

@@ -3543,7 +3543,7 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
-void Vdp2DrawRotationThread(void * p) {
+void * Vdp2DrawRotationThread(void * p) {
 #if RBG_PROFILE
   u64 before;
   u64 now;
@@ -3587,6 +3587,8 @@ void Vdp2DrawRotationThread(void * p) {
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread out %d\n", curret_rbg->vdp2_sync_flg);
 
   }
+
+  return NULL;
 }
 
 static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)
@@ -4399,32 +4401,32 @@ void SetSaturnResolution(int width, int height)
         if (_Ygl->rotate_screen) {
           if (_Ygl->isFullScreen) {
             if (  (GlHeight * hrate) > GlWidth) {
-              _Ygl->originy = (GlHeight - GlWidth  * wrate);
+              _Ygl->originy = _Ygl->user_originy + (GlHeight - GlWidth  * wrate);
               GlHeight = _Ygl->screen_width * wrate;
             }
             else {
-              _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+              _Ygl->originx = _Ygl->user_originy + (GlWidth - GlHeight * hrate) / 2.0f;
               GlWidth = GlHeight * hrate;
             }
           }
           else {
-            _Ygl->originx = (GlWidth - GlHeight * hrate) / 2.0f;
+            _Ygl->originx = _Ygl->user_originx + (GlWidth - GlHeight * hrate) / 2.0f;
             GlWidth = GlHeight * hrate;
           }
         }
         else {
           if (_Ygl->isFullScreen) {
             if (  (GlHeight * wrate) > GlWidth) {
-              _Ygl->originy = (GlHeight - GlWidth  * hrate);
+              _Ygl->originy = _Ygl->user_originy + (GlHeight - GlWidth  * hrate);
               GlHeight = _Ygl->screen_width * hrate;
             }
             else {
-              _Ygl->originx = (GlWidth - GlHeight * wrate) / 2.0f;
+              _Ygl->originx = _Ygl->user_originx + (GlWidth - GlHeight * wrate) / 2.0f;
               GlWidth = GlHeight * wrate;
             }
           }
           else {
-            _Ygl->originy = (GlHeight - GlWidth  * hrate) / 2.0f;
+            _Ygl->originy = _Ygl->user_originy + (GlHeight - GlWidth  * hrate) / 2.0f;
             GlHeight = GlWidth * hrate;
           }
         }
@@ -4488,6 +4490,8 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
 {
 
   if (originx == 0 && originy == 0 && w == 0 && h == 0 && on == 0) {
+    _Ygl->originx = 0;
+    _Ygl->originy = 0;    
     YglGLInit(8, 8); // Just rebuild texture
     return;
   }
@@ -4498,8 +4502,8 @@ void VIDOGLResize(int originx, int originy, unsigned int w, unsigned int h, int 
   }
 
   _Ygl->isFullScreen = on;
-  _Ygl->originx = originx;
-  _Ygl->originy = originy;
+  _Ygl->user_originx = originx;
+  _Ygl->user_originy = originy;
   _Ygl->screen_width = w;
   _Ygl->screen_height = h;
   _Ygl->aspect_rate_mode = aspect_rate_mode;

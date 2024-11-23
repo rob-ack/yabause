@@ -26,8 +26,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.multidex.MultiDex
 import androidx.multidex.MultiDexApplication
-import com.activeandroid.ActiveAndroid
-import com.activeandroid.Configuration
 import com.google.android.gms.analytics.GoogleAnalytics
 import com.google.android.gms.analytics.Tracker
 import com.google.firebase.FirebaseApp
@@ -45,14 +43,6 @@ class YabauseApplication : MultiDexApplication() {
 
     override fun onCreate() {
         super.onCreate()
-        val config = Configuration.Builder(this)
-            .setDatabaseName("localgameinfo.db")
-            .setDatabaseVersion(3)
-            .setModelClasses(GameInfo::class.java,
-                GameStatus::class.java,
-                Cheat::class.java)
-            .create()
-        ActiveAndroid.initialize(config)
         appContext = applicationContext
 
         FirebaseApp.initializeApp(applicationContext)

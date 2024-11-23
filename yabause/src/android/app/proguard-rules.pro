@@ -10,6 +10,8 @@
 -keep public class org.uoyabause.android.YabauseRunnable.** { *; }
 -keep class org.uoyabause.android.Yabause.** { *; }
 -keepclassmembers class **.Yabause { *; }
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.protobuf.**
 
  # Add this global rule
  -keepattributes Signature

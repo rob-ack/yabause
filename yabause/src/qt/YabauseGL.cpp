@@ -22,17 +22,15 @@
 #include "QtYabause.h"
 #include "VolatileSettings.h"
 #include <QWindow>
+#include <QOpenGLFunctions>
+#include <YabauseThread.h>
+
 
 YabauseGL::YabauseGL( QWidget* p )
-  : QGLWidget(p)
+  : QOpenGLWidget(p)
 {
 	setFocusPolicy( Qt::StrongFocus );
-
-  windowHandle()->setSurfaceType(QWindow::OpenGLSurface);
-
-  QGLFormat fmt;
-  fmt.setProfile(QGLFormat::CompatibilityProfile);
-  setFormat(fmt);
+	setUpdateBehavior(QOpenGLWidget::PartialUpdate);
 
 	if ( p ) {
 		p->setFocusPolicy( Qt::StrongFocus );
@@ -42,40 +40,59 @@ YabauseGL::YabauseGL( QWidget* p )
   viewport_height_ = 0;
   viewport_origin_x_ = 0;
   viewport_origin_y_ = 0;
+	pYabauseThread = nullptr;
 }
+
+
 
 void YabauseGL::showEvent( QShowEvent* e )
 {
 	// hack for clearing the the gl context
-	QGLWidget::showEvent( e );
+	QOpenGLWidget::showEvent( e );
 	QSize s = size();
 	resize( 0, 0 );
 	resize( s );
 }
 
+void YabauseGL::initializeGL() {
+	printf("YabauseGL::initializeGL");
+	initializeOpenGLFunctions();
+}
+
 void YabauseGL::resizeGL( int w, int h )
 { 
-//	updateView( QSize( w, h ) ); 
+	updateView( QSize( w, h ) ); 
+}
+
+void YabauseGL::paintGL() {
+	// •`‰æˆ—
+	//printf("YabauseGL::paintGL");
+
+	if(pYabauseThread) pYabauseThread->execEmulation();
+	update();
 }
 
 void YabauseGL::updateView( const QSize& s )
 {
-  VolatileSettings* vs = QtYabause::volatileSettings();
-  VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, vs->value("Video/RotateScreen", false).toBool());
-  int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 0).toInt();
+	if (VIDCore && VIDCore->id == VIDCORE_OGL) {
+		VolatileSettings* vs = QtYabause::volatileSettings();
+		VideoSetSetting(VDP_SETTING_ROTATE_SCREEN, vs->value("Video/RotateScreen", false).toBool());
+		int aspectRatio = QtYabause::volatileSettings()->value("Video/AspectRatio", 0).toInt();
 
-  int full = 0;
-  if (fullscreen) {
-    full = 1;
-  }
-  else {
-    full = 0;
-  }
+		int full = 0;
+		if (fullscreen) {
+			full = 1;
+		}
+		else {
+			full = 0;
+		}
 
-	const QSize size = s.isValid() ? s : this->size();
-	glViewport( 0, 0, size.width(), size.height() );
-  if (VIDCore) {
-    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, full, aspectRatio);
+		const QSize size = s.isValid() ? s : this->size();
+		viewport_width_ = size.width();
+		viewport_height_ = size.height();
+		glViewport( 0, 0, size.width(), size.height() );
+  
+    VIDCore->Resize(viewport_origin_x_, viewport_origin_y_, viewport_width_, viewport_height_, 1, aspectRatio);
   }
 }
 

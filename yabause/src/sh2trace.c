@@ -220,7 +220,7 @@ FASTCALL void sh2_trace(SH2_struct *state, u32 address)
             snprintf(cmdbuf, sizeof(cmdbuf), "gzip -3 >'%s'.gz", filename);
             logfile = popen(cmdbuf, "w");
 #else
-            logfile = fopen(filename, "w");
+            logfile = fopen_utf8(filename, "w");
 #endif
             if (!logfile) {
                 return;

@@ -120,7 +120,7 @@ int MappedMemoryLoadCoff(const char *filename)
    u32 i, j;
    size_t num_read = 0;
 
-   if ((fp = fopen(filename, "rb")) == NULL)
+   if ((fp = fopen_utf8(filename, "rb")) == NULL)
       return -1;
 
    num_read = fread((void *)&coff_header, sizeof(coff_header), 1, fp);
@@ -231,7 +231,7 @@ int MappedMemoryLoadElf(const char *filename)
    u8 *buffer;
    size_t num_read = 0;
 
-   fp = fopen(filename, "rb");
+   fp = fopen_utf8(filename, "rb");
 
    if(fp == NULL)
       return -1;

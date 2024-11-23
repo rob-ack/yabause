@@ -111,7 +111,7 @@ int LoadStateSlotScreenshot(const char * dirpath, const char * itemnum, int slot
 
    sprintf(filename, "%s/%s_%03d.yss", dirpath, itemnum, slot);
 
-   fp = fopen(filename, "r");
+   fp = fopen_utf8(filename, "r");
    if (fp == NULL)
       return -1;
 

@@ -23,7 +23,9 @@
 #include "../QtYabause.h"
 
 #ifdef HAVE_QT_MULTIMEDIA
-#include <QAudioOutput>
+#include <QAudioSink>
+#include <QMediaDevices>
+#include <QAudioFormat>
 #endif
 
 class UIDebugSCSP : public QDialog, public Ui::UIDebugSCSP
@@ -33,8 +35,8 @@ private:
 #ifdef HAVE_QT_MULTIMEDIA
 	QTimer *audioBufferTimer;
 
-	QAudioDeviceInfo audioDeviceInfo;
-	QAudioOutput *audioOutput;
+	QMediaDevices audioDeviceInfo;
+	QAudioSink*audioOutput;
 	QIODevice *outputDevice;
 	QAudioFormat audioFormat;
 	bool isPlaying;

@@ -189,8 +189,8 @@ int Vdp2SetGetColor(vdp2draw_struct *info);
 
 extern Vdp2 *fixVdp2Regs;
 
-PFN_vkCmdSetStencilTestEnableEXT vkCmdSetStencilTestEnable = 0;
-PFN_vkCmdSetStencilOpEXT vkCmdSetStencilOp = 0;
+//PFN_vkCmdSetStencilTestEnableEXT vkCmdSetStencilTestEnable = 0;
+//PFN_vkCmdSetStencilOpEXT vkCmdSetStencilOp = 0;
 }
 
 VIDVulkan::VIDVulkan() {
@@ -229,6 +229,23 @@ std::set<std::string> get_supported_extensions() {
 
 int VIDVulkan::init(void) {
   int rtn;
+
+  vdp2width = 320;
+  vdp2height = 240;
+  SetSaturnResolution(vdp2width, vdp2height);
+  crammutex = NULL;
+  pipleLineNBG0 = NULL;
+  pipleLineNBG1 = NULL;
+  pipleLineNBG2 = NULL;
+  pipleLineNBG3 = NULL;
+  pipleLineRBG0 = NULL;
+  frameCount = 0;
+  pipleLineFactory = NULL;
+  layers.reserve(10);
+  rebuildPipelines = 0;
+  frameLimitMode = 0;
+  rebuildSwapChain = 0;
+
   if ((rtn = VulkanScene::init()) != 0) {
     return rtn;
   }
@@ -270,9 +287,9 @@ int VIDVulkan::init(void) {
   std::set<std::string> exts = get_supported_extensions();
 
   const VkDevice device = _renderer->GetVulkanDevice();
-  vkCmdSetStencilTestEnable =
-      (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilTestEnableEXT");
-  vkCmdSetStencilOp = (PFN_vkCmdSetStencilOpEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilOpEXT");
+  //vkCmdSetStencilTestEnable =
+  //    (PFN_vkCmdSetStencilTestEnableEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilTestEnableEXT");
+  //vkCmdSetStencilOp = (PFN_vkCmdSetStencilOpEXT)vkGetDeviceProcAddr(device, "vkCmdSetStencilOpEXT");
 
   generateOffscreenRenderer();
 

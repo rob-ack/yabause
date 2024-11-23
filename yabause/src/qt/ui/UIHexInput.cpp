@@ -26,11 +26,9 @@ UIHexInput::UIHexInput( u32 value, int size, QWidget* p )
 	// setup dialog
 	setupUi( this );
 
-   // Setup Text control
-   QString text;
-   sprintf(format, "%%0%dX", size * 2);
-   text.sprintf(format, value);
-	
+  // Setup Text control
+	QString text = QString("%1").arg(value, size * 2, 16, QChar('0')).toUpper();
+
 	this->value = value;
 	this->size = size;
   

@@ -273,6 +273,6 @@
     <string name="failed_to_initialize">Échec de l\'initialisation</string>
     <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Échec de la récupération du code du jeu. Ce fichier n\'est pas un jeu SEGA Saturn.</string>
     <string name="fail_to_initialize_emulator">Échec de l\'initialisation de l\'émulateur</string>
-
-
+    <string name="notification_permission_title">Demande de permission de notification</string>
+    <string name="notification_permission_message">En autorisant les notifications, vous recevrez des nouvelles du développeur.</string>
 </resources>

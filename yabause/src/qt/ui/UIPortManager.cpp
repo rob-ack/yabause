@@ -46,34 +46,47 @@ UIPortManager::UIPortManager( QWidget* parent )
 	mCore = 0;
 	setupUi( this );
 
-	foreach ( QComboBox* cb, findChildren<QComboBox*>( QRegExp( "cbTypeController*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		cb->addItem( QtYabause::translate( "None" ), 0 );
-		cb->addItem( QtYabause::translate( "Pad" ), PERPAD );
-      cb->addItem( QtYabause::translate( "Wheel" ), PERWHEEL );
-      cb->addItem(QtYabause::translate("Mission Stick"), PERMISSIONSTICK);
-      cb->addItem(QtYabause::translate("Double Mission Stick"), PERTWINSTICKS);
-      cb->addItem( QtYabause::translate( "3D Control Pad" ), PER3DPAD );
-      cb->addItem( QtYabause::translate( "Gun" ), PERGUN );
-      //cb->addItem( QtYabause::translate( "Keyboard" ), PERKEYBOARD );
-		cb->addItem( QtYabause::translate( "Mouse" ), PERMOUSE );
+	QRegularExpression comboBoxRegex("^cbTypeController", QRegularExpression::CaseInsensitiveOption);
 
-		connect( cb, SIGNAL( currentIndexChanged( int ) ), this, SLOT( cbTypeController_currentIndexChanged( int ) ) );
+	for (QComboBox* cb : findChildren<QComboBox*>()) {
+		if (comboBoxRegex.match(cb->objectName()).hasMatch()) {
+			cb->addItem(QtYabause::translate("None"), 0);
+			cb->addItem(QtYabause::translate("Pad"), PERPAD);
+			cb->addItem(QtYabause::translate("Wheel"), PERWHEEL);
+			cb->addItem(QtYabause::translate("Mission Stick"), PERMISSIONSTICK);
+			cb->addItem(QtYabause::translate("Double Mission Stick"), PERTWINSTICKS);
+			cb->addItem(QtYabause::translate("3D Control Pad"), PER3DPAD);
+			cb->addItem(QtYabause::translate("Gun"), PERGUN);
+			// cb->addItem(QtYabause::translate("Keyboard"), PERKEYBOARD);
+			cb->addItem(QtYabause::translate("Mouse"), PERMOUSE);
+
+			connect(cb, &QComboBox::currentIndexChanged, this, &UIPortManager::cbTypeController_currentIndexChanged);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbSetJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		connect( tb, SIGNAL( clicked() ), this, SLOT( tbSetJoystick_clicked() ) );
+	QRegularExpression setJoystickRegex("^tbSetJoystick", QRegularExpression::CaseInsensitiveOption);
+	QRegularExpression clearJoystickRegex("^tbClearJoystick", QRegularExpression::CaseInsensitiveOption);
+	QRegularExpression removeJoystickRegex("^tbRemoveJoystick", QRegularExpression::CaseInsensitiveOption);
+
+	// Set Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (setJoystickRegex.match(tb->objectName()).hasMatch()) {
+			connect(tb, &QToolButton::clicked, this, &UIPortManager::tbSetJoystick_clicked);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbClearJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		connect( tb, SIGNAL( clicked() ), this, SLOT( tbClearJoystick_clicked() ) );
+	// Clear Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (clearJoystickRegex.match(tb->objectName()).hasMatch()) {
+			connect(tb, &QToolButton::clicked, this, &UIPortManager::tbClearJoystick_clicked);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbRemoveJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		connect( tb, SIGNAL( clicked() ), this, SLOT( tbRemoveJoystick_clicked() ) );
+	// Remove Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (removeJoystickRegex.match(tb->objectName()).hasMatch()) {
+			connect(tb, &QToolButton::clicked, this, &UIPortManager::tbRemoveJoystick_clicked);
+		}
 	}
 }
 
@@ -94,27 +107,39 @@ void UIPortManager::setCore( PerInterface_struct* core )
 
 void UIPortManager::loadSettings()
 {
-	// reset gui
-	foreach ( QComboBox* cb, findChildren<QComboBox*>( QRegExp( "cbTypeController*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		bool blocked = cb->blockSignals( true );
-		cb->setCurrentIndex( 0 );
-		cb->blockSignals( blocked );
+	QRegularExpression comboBoxRegex("^cbTypeController", QRegularExpression::CaseInsensitiveOption);
+	QRegularExpression setJoystickRegex("^tbSetJoystick", QRegularExpression::CaseInsensitiveOption);
+	QRegularExpression clearJoystickRegex("^tbClearJoystick", QRegularExpression::CaseInsensitiveOption);
+	QRegularExpression removeJoystickRegex("^tbRemoveJoystick", QRegularExpression::CaseInsensitiveOption);
+
+	// Reset QComboBox
+	for (QComboBox* cb : findChildren<QComboBox*>()) {
+		if (comboBoxRegex.match(cb->objectName()).hasMatch()) {
+			bool blocked = cb->blockSignals(true);
+			cb->setCurrentIndex(0);
+			cb->blockSignals(blocked);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbSetJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		tb->setEnabled( false );
+	// Disable QToolButtons for Set Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (setJoystickRegex.match(tb->objectName()).hasMatch()) {
+			tb->setEnabled(false);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbClearJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		tb->setEnabled( false );
+	// Disable QToolButtons for Clear Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (clearJoystickRegex.match(tb->objectName()).hasMatch()) {
+			tb->setEnabled(false);
+		}
 	}
 
-	foreach ( QToolButton* tb, findChildren<QToolButton*>( QRegExp( "tbRemoveJoystick*", Qt::CaseInsensitive, QRegExp::Wildcard ) ) )
-	{
-		tb->setEnabled( false );
+	// Disable QToolButtons for Remove Joystick
+	for (QToolButton* tb : findChildren<QToolButton*>()) {
+		if (removeJoystickRegex.match(tb->objectName()).hasMatch()) {
+			tb->setEnabled(false);
+		}
 	}
 
 	// load settings

@@ -14,4 +14,7 @@ yabause/ax86_64/*
 yabause/src/qt/firebase_cpp_sdk/*
 yabause/src/android/.settings/*
 yabause/src/android/app/.settings/*
+build*/
+yabause/src/ios/uoyabause/secrets.plist
+**/Pods/*
 

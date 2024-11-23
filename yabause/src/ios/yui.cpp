@@ -15,10 +15,22 @@ extern "C"{
 #include "osdcore_ios.h"
 #include "sndal.h"
 #include "sndCoreAudio.h"
+#include "ygl.h"
+#include "chd.h"
 }
 
-#include <OpenGLES/ES3/gl.h>
-#include <OpenGLES/ES3/glext.h>
+#include <cstdio>
+#include <stdarg.h>
+#include <string>
+
+const int MSG_SAVE_STATE = 1;
+const int MSG_LOAD_STATE = 2;
+const int MSG_RESET = 3;
+const int MSG_OPEN_TRAY = 4;
+const int MSG_CLOSE_TRAY = 5;
+
+//#include <OpenGLES/ES3/gl.h>
+//#include <OpenGLES/ES3/glext.h>
 
 #define YUI_LOG printf
 #define MAKE_PAD(a,b) ((a<<24)|(b))
@@ -33,10 +45,10 @@ extern "C" {
 int yprintf( const char * fmt, ... )
 {
     int result = 0;
-  // va_list ap;
-   //va_start(ap, fmt);
-   //result = __android_log_vprint(ANDROID_LOG_INFO, LOG_TAG, fmt, ap);
-   //va_end(ap);
+   va_list ap;
+   va_start(ap, fmt);
+   result = vprintf(fmt, ap);
+   va_end(ap);
    return result;
 }
 }
@@ -83,6 +95,9 @@ SH2Interface_struct *SH2CoreList[] = {
 #ifdef SH2_DYNAREC
     &SH2Dynarec,
 #endif
+#ifdef DYNAREC_DEVMIYAX
+    &SH2Dyn,
+#endif
     NULL
 };
 
@@ -121,8 +136,113 @@ extern "C" {
     int GetVideFilterType();
     int GetResolutionType();
     int GetIsRotateScreen();
+    int SetAnalogMode(int mode);
+
+    char * getGameinfoFromChd( const char * path );
     
 int swapAglBuffer ();
+
+int g_pad_mode = 0;
+int g_pad2_mode = 0;
+void update_pad_mode();
+
+int SetAnalogMode(int mode){
+    g_pad_mode = mode;
+    update_pad_mode();
+    return 0;
+}
+
+void update_pad_mode()
+{
+    void *padbits;
+
+    PerPortReset();
+
+    if (g_pad_mode == 0)
+    {
+        padbits = PerPadAdd(&PORTDATA1);
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+    }
+    else if (g_pad_mode == 1)
+    {
+
+        padbits = Per3DPadAdd(&PORTDATA1);
+
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+        PerSetKey(MAKE_PAD(0, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+
+        PerSetKey(MAKE_PAD(0, PERPAD_UP), PERPAD_UP, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_DOWN), PERPAD_DOWN, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT), PERPAD_LEFT, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_START), PERPAD_START, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_A), PERPAD_A, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_B), PERPAD_B, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_C), PERPAD_C, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_X), PERPAD_X, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Y), PERPAD_Y, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_Z), PERPAD_Z, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+        PerSetKey(MAKE_PAD(0, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+    }
+
+    if (s_player2Enable != -1)
+    {
+        if (g_pad2_mode == 0)
+        {
+            padbits = PerPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+        }
+        else
+        {
+            padbits = Per3DPadAdd(&PORTDATA2);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS1), PERANALOG_AXIS1, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS2), PERANALOG_AXIS2, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS3), PERANALOG_AXIS3, padbits);
+            PerSetKey(MAKE_PAD(1, PERANALOG_AXIS4), PERANALOG_AXIS4, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_UP), PERPAD_UP, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT), PERPAD_RIGHT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_DOWN), PERPAD_DOWN, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT), PERPAD_LEFT, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_START), PERPAD_START, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_A), PERPAD_A, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_B), PERPAD_B, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_C), PERPAD_C, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_X), PERPAD_X, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Y), PERPAD_Y, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_Z), PERPAD_Z, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_RIGHT_TRIGGER), PERPAD_RIGHT_TRIGGER, padbits);
+            PerSetKey(MAKE_PAD(1, PERPAD_LEFT_TRIGGER), PERPAD_LEFT_TRIGGER, padbits);
+        }
+    }
+}
+
     
 int start_emulation( int originx, int originy, int width, int height ){
 	int i;
@@ -145,6 +265,10 @@ int start_emulation( int originx, int originy, int width, int height ){
     YUI_LOG("%s",glGetString(GL_VERSION));
     YUI_LOG("%s",glGetString(GL_EXTENSIONS));
     //YUI_LOG("%s",eglQueryString(g_Display,EGL_EXTENSIONS));
+
+#if !defined(YAB_ASYNC_RENDERING)
+    UseOGLOnThisThread();
+#endif    
 
     g_EnagleFPS = GetEnableFPS();
  
@@ -184,6 +308,11 @@ int start_emulation( int originx, int originy, int width, int height ){
     yinit.resolution_mode = GetResolutionType();
     yinit.rotate_screen = GetIsRotateScreen();
     yinit.extend_backup = 1;
+    yinit.scsp_sync_count_per_frame = 4;
+    yinit.scsp_main_mode = 0;
+    yinit.use_cpu_affinity = 0;
+    yinit.use_sh2_cache = 1;
+    yinit.polygon_generation_mode = PERSPECTIVE_CORRECTION;
 
     res = YabauseInit(&yinit);
     if (res != 0) {
@@ -191,38 +320,7 @@ int start_emulation( int originx, int originy, int width, int height ){
       return -1;
     }
 
-    PerPortReset();
-    padbits = PerPadAdd(&PORTDATA1);
-    PerSetKey(MAKE_PAD(0,PERPAD_UP), PERPAD_UP, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_DOWN), PERPAD_DOWN, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT), PERPAD_LEFT, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_START), PERPAD_START, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_A), PERPAD_A, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_B), PERPAD_B, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_C), PERPAD_C, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_X), PERPAD_X, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Y), PERPAD_Y, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_Z), PERPAD_Z, padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-    PerSetKey(MAKE_PAD(0,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	
-	if( s_player2Enable != -1 ) {
-		padbits = PerPadAdd(&PORTDATA2);
-		PerSetKey(MAKE_PAD(1,PERPAD_UP), PERPAD_UP, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT), PERPAD_RIGHT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_DOWN), PERPAD_DOWN, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT), PERPAD_LEFT, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_START), PERPAD_START, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_A), PERPAD_A, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_B), PERPAD_B, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_C), PERPAD_C, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_X), PERPAD_X, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Y), PERPAD_Y, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_Z), PERPAD_Z, padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_RIGHT_TRIGGER),PERPAD_RIGHT_TRIGGER,padbits);
-		PerSetKey(MAKE_PAD(1,PERPAD_LEFT_TRIGGER),PERPAD_LEFT_TRIGGER,padbits);
-	}
+    update_pad_mode();
 
     //ScspSetFrameAccurate(1);
     ScspUnMuteAudio(SCSP_MUTE_SYSTEM);
@@ -230,6 +328,7 @@ int start_emulation( int originx, int originy, int width, int height ){
 
     OSDInit(0);
     OSDChangeCore(OSDCORE_NANOVG);
+
     
     if( s_vidcoretype == VIDCORE_OGL ){
         
@@ -245,7 +344,7 @@ int start_emulation( int originx, int originy, int width, int height ){
         //OSDChangeCore(OSDCORE_SOFT);
         //if( YuiInitProgramForSoftwareRendering() != GL_TRUE ){
         //    YUI_LOG("Fail to YuiInitProgramForSoftwareRendering");
-        //    return -1;
+        //    return -1; 
         //}
     }
 
@@ -289,18 +388,31 @@ int start_emulation( int originx, int originy, int width, int height ){
         int rtn;
 
         switch (command ) {
-            case 1:
+            case MSG_SAVE_STATE:
                 YUI_LOG("MSG_SAVE_STATE %s\n",s_savepath);
                 if( (rtn = YabSaveStateSlot(s_savepath, 1)) != 0 ){
                     YUI_LOG("StateSave is failed %d\n",rtn);
                 }
                 break;
-            case 2:
+            case MSG_LOAD_STATE:
                 YUI_LOG("MSG_LOAD_STATE %s\n",s_savepath);
                  if( (rtn = YabLoadStateSlot(s_savepath, 1)) != 0 ){
                     YUI_LOG("StateLoad is failed %d\n",rtn);
                 }               
                 break;            
+            case MSG_RESET:
+                YUI_LOG("MSG_RESET\n");
+                YabauseReset();            
+                break;            
+            case MSG_OPEN_TRAY:
+                YUI_LOG("MSG_OPEN_TRAY\n");
+                Cs2ForceOpenTray();            
+                break;     
+            case MSG_CLOSE_TRAY:
+                s_cdpath = GetGamePath();
+                YUI_LOG("MSG_CLOSE_TRAY %s\n",s_cdpath);                
+                Cs2ForceCloseTray(CDCORE_ISO, s_cdpath); 
+                break;                     
         }
 
         YabauseExec();
@@ -320,9 +432,43 @@ int start_emulation( int originx, int originy, int width, int height ){
         YabFlushBackups();
         return 0;
     }
+
+ 
     
+
+
+char * getGameinfoFromChd( const char * path ){
+
+  chd_file *chd;
+  char * hunk_buffer;
+  int current_hunk_id;
+  const int len = 256;
+  char * buf = (char*)malloc( sizeof(char)*len);
+
+  chd_error error = chd_open(path, CHD_OPEN_READ, NULL, &chd);
+  if (error != CHDERR_NONE) {
+    return NULL;
+  }
+  const chd_header * header = chd_get_header(chd);
+  if( header == NULL ){
+    return NULL;
+  }
+
+  hunk_buffer = (char*)malloc(header->hunkbytes);
+  chd_read(chd, 0, hunk_buffer);
+  
+  memcpy(buf,&hunk_buffer[16],len); 
+  buf[len-1] = 0;
+  //putc(buf[0], stdout);
+  //putc(buf[1], stdout);
+  //putc(buf[2], stdout);
+  //putc(buf[3], stdout);
+  free(hunk_buffer);
+  chd_close(chd);
+  return buf;
 }
 
+} // extern "C"
 
 extern "C" {
 
@@ -349,16 +495,19 @@ extern "C" {
   void YabauseThread_coldBoot() {
   }
 
-  void glMemoryBarrier( int a ){
-
-  }
+  //void glMemoryBarrier( int a ){
+//
+ //}
 
   void RBGGenerator_init(int width, int height) {
   }
   void RBGGenerator_resize(int width, int height) {
   }
-  void RBGGenerator_update(void * rbg ) {
+    
+  void RBGGenerator_update(RBGDrawInfo * rbg ){
+
   }
+
   GLuint RBGGenerator_getTexture( int id ) {
       return 0;
   }
@@ -366,3 +515,5 @@ extern "C" {
   }
 
 }
+
+  

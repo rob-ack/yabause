@@ -44,7 +44,7 @@ import org.json.JSONObject
 import org.uoyabause.android.PadManager.Companion.padManager
 import org.uoyabause.android.YabauseStorage.Companion.storage
 
-class InputSettingPresenter : DialogInterface.OnKeyListener,
+class InputSettingPresenter : View.OnKeyListener,
 OnGenericMotionListener, View.OnClickListener {
   private var key_message: TextView? = null
   private val skip: Button? = null
@@ -155,7 +155,7 @@ OnGenericMotionListener, View.OnClickListener {
   fun onCreateDialog(context: Context, dlg: Dialog, view: View) {
     InitObjects(context)
     val res = context.resources
-    dlg.setOnKeyListener(this)
+    //dlg.setOnKeyListener(this)
     pad_m = padManager
     if (pad_m!!.hasPad() == false) {
       Toast.makeText(context_m, R.string.joystick_is_not_connected, Toast.LENGTH_LONG).show()
@@ -176,6 +176,7 @@ OnGenericMotionListener, View.OnClickListener {
     key_message!!.setOnGenericMotionListener(this)
     key_message!!.isFocusableInTouchMode = true
     key_message!!.requestFocus()
+    key_message!!.setOnKeyListener(this)
     val button: View = view.findViewById<View>(R.id.button_skip) as Button
     button.setOnClickListener(this)
 
@@ -300,7 +301,7 @@ OnGenericMotionListener, View.OnClickListener {
   private val KEYCODE_R2 = 105
   var onkey = false
 
-  override fun onKey(dialogInterface: DialogInterface?, keyCode: Int, event: KeyEvent?): Boolean {
+  override fun onKey(dialogInterface: View?, keyCode: Int, event: KeyEvent?): Boolean {
     var lkeyCode = keyCode
     if (event?.deviceId != _selected_device_id) return false
     if (event.source and InputDevice.SOURCE_GAMEPAD == InputDevice.SOURCE_GAMEPAD ||
@@ -345,7 +346,7 @@ OnGenericMotionListener, View.OnClickListener {
 
   override fun onGenericMotion(view: View?, event: MotionEvent?): Boolean {
 
-    // Log.d("Yabause", "onGenericMotion: ${event} ")
+    //Log.d("Yabause", "onGenericMotion: ${event} ")
 
     if (event?.deviceId != _selected_device_id) return false
     // if (onkey == false) return false
@@ -353,7 +354,7 @@ OnGenericMotionListener, View.OnClickListener {
       for (i in motions!!.indices) {
         val value = event.getAxisValue(motions!![i].id)
         if (value.toDouble() != 0.0) {
-          Log.d("Yabause", "onGenericMotion:" + motions!![i].id + " value:" + value)
+          Log.d("Yabause", "onGenericMotion:" + i +" " + motions!![i].id + " value:" + value)
         }
         val dev = InputDevice.getDevice(_selected_device_id)
         if (dev?.name!!.contains("Moga") && motions!![i].id == 32) {
@@ -363,30 +364,32 @@ OnGenericMotionListener, View.OnClickListener {
           map!![index] == PadEvent.PERANALOG_AXIS_Y ||
           map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER ||
           map!![index] == PadEvent.PERANALOG_AXIS_RTRIGGER) {
-          if (value <= -0.9f || value >= 0.9f) {
-            motions!![i].oldval = value
-            if (map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER) {
-              isLTriggerAnalog = true
+            if (value <= -0.9f || value >= 0.9f) {
+              motions!![i].oldval = value
+              if (map!![index] == PadEvent.PERANALOG_AXIS_LTRIGGER) {
+                isLTriggerAnalog = true
+              }
+              if (map!![index] == PadEvent.PERANALOG_AXIS_RTRIGGER) {
+                isRTriggerAnalog = true
+              }
+              onkey = false
+              setKeymap(motions!!.get(i).id or -0x70000000)
+              return true
             }
-            if (map!![index] == PadEvent.PERANALOG_AXIS_RTRIGGER) {
-              isRTriggerAnalog = true
-            }
-            onkey = false
-            setKeymap(motions!!.get(i).id or -0x70000000)
-            return true
-          }
-      } else {
+          } else {
 
-          if (java.lang.Float.compare(value, -1.0f) <= 0) {
-            motions!![i].oldval = value
-            onkey = false
-            return setKeymap(motions!![i].id or 0x8000 or -0x80000000)
-          }
-          if (java.lang.Float.compare(value, 1.0f) >= 0) {
-            onkey = false
-            motions!![i].oldval = value
-            return setKeymap(motions!![i].id or -0x80000000)
-          }
+            if (java.lang.Float.compare(value, -1.0f) <= 0) {
+              motions!![i].oldval = value
+              onkey = false
+              val mapcode = motions!![i].id or 0x8000 or -0x80000000
+              return setKeymap(mapcode)
+            }
+            if (java.lang.Float.compare(value, 1.0f) >= 0) {
+              onkey = false
+              motions!![i].oldval = value
+              val mapcode = motions!![i].id or -0x80000000
+              return setKeymap(mapcode)
+            }
         }
       }
     }

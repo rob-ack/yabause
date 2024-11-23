@@ -57,6 +57,7 @@ void AddRequiredPlatformInstanceExtensions(std::vector<const char *> *instance_e
 
 #if USE_FRAMEWORK_GLFW
 
+
 void InitPlatform()
 {
   glfwInit();

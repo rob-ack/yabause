@@ -8,122 +8,163 @@
 
 import Foundation
 import UIKit
-import GoogleMobileAds
+import UniformTypeIdentifiers
 
-class MainScreenController :UIViewController, UIDocumentPickerDelegate, GADBannerViewDelegate {
-
-//    @IBOutlet weak var menu_setting: UIBarButtonItem!
-    @IBOutlet weak var bannerView: GADBannerView!
+class MainScreenController :UIViewController, UIDocumentPickerDelegate  {
     
-    @IBAction func onAddFile(_ sender: Any) {
-        let dv = UIDocumentPickerViewController(documentTypes:  ["public.item"], in: .import)
-        dv.delegate = self
-        //dv.allowsDocumentCreation = false
-        //dv.allowsPickingMultipleItems = false
-        self.present(dv, animated:true, completion: nil)
-    }
-    
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt documentURLs: [URL]){
-        print(documentURLs[0])
-        
-        var documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        
-        let theFileName = documentURLs[0].lastPathComponent
-        
-        if !theFileName.lowercased().contains(".chd") {
-            let alert: UIAlertController = UIAlertController(title: "Fail to open", message: "You can open a CHD only", preferredStyle:  UIAlertController.Style.alert)
-            
-            let defaultAction: UIAlertAction = UIAlertAction(title: "OK", style: UIAlertAction.Style.default, handler:{
-                (action: UIAlertAction!) -> Void in
-                print("OK")
-            })
-            
-            alert.addAction(defaultAction)
-            
-            present(alert, animated: true, completion: nil)
-            return
-        }
+    var activityIndicator: UIActivityIndicatorView!
+    var blurEffectView: UIVisualEffectView!
+    var selected_file_path: String = ""
+    @IBOutlet weak var settingButton: UIButton!
 
-        documentsUrl.appendPathComponent(theFileName)
-        let fileManager = FileManager.default
-         do {
-            try fileManager.copyItem(at: documentURLs[0], to: documentsUrl)
-         } catch let error as NSError {
-            NSLog("Fail to copy \(error.localizedDescription)")
-         }
-        
-        self.children.forEach{
-            //if ($0.isKind(of: FileSelectController)){
-            let fc = $0 as? FileSelectController
-            if fc != nil {
-                fc?.updateDoc()
-            }
-            //}
-        }
-       
-    }
-    var val: Int = 0
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let filePath = Bundle.main.path(forResource: "apikey", ofType: "plist")
-        let plist = NSDictionary(contentsOfFile:filePath!)
-        let value = plist?.value(forKey: "ADMOB_KEY") as! String
+        // Blur Effect Viewの設定
+        let blurEffect = UIBlurEffect(style: .dark)
+        blurEffectView = UIVisualEffectView(effect: blurEffect)
+        blurEffectView.frame = self.view.bounds
+        blurEffectView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        blurEffectView.isHidden = true
+        self.view.addSubview(blurEffectView)
         
-        bannerView.adUnitID = value
+        // Activity Indicatorの設定
+        activityIndicator = UIActivityIndicatorView(style: .large)
+        activityIndicator.center = self.view.center
+        activityIndicator.hidesWhenStopped = true
+        self.view.addSubview(activityIndicator)
         
-        bannerView.rootViewController = self
-        bannerView.delegate = self
+        // Activity Indicatorをビュー階層の一番上に持ってくる
+        self.view.bringSubviewToFront(activityIndicator)
+        #if FREE_VERSION
+        self.navigationItem.title = "Yaba Sanshiro 2 Lite"
+        #endif
         
-        let request = GADRequest()
+       settingButton.accessibilityIdentifier = "settingButton"
         
-        //request.testDevices = ["ea16d8d48e439597ec9e49ec690fe356"]
-        bannerView.load(request)
-        //bannerView.hidden = true
+    }
+
+   
+    @IBAction func onAddFile(_ sender: Any) {
         
-//        menu_setting.action = "onClickMyButton:"
-//        menu_setting.tag = 0
+        for child in self.children {
+            if let fc = child as? FileSelectController {
+                if fc.checkLimitation() == false {
+                    return
+                }
+            }
+        }
         
-        val = 0
+        var documentPicker: UIDocumentPickerViewController!
+            // iOS 14 & later
+            let supportedTypes: [UTType] = [
+                UTType(filenameExtension: "bin")!,
+                UTType(filenameExtension: "cue")!,
+                UTType(filenameExtension: "chd")!,
+                UTType(filenameExtension: "ccd")!,
+                UTType(filenameExtension: "img")!,
+                UTType(filenameExtension: "mds")!,
+                UTType(filenameExtension: "mdf")!,
+            ]
+            
+        documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: supportedTypes)
+        documentPicker.delegate = self
+        documentPicker.allowsMultipleSelection = true
+        self.present(documentPicker, animated:true, completion: nil)
     }
     
-    internal func onClickMyButton(_ sender: UIButton){
-        let url = URL(string:UIApplication.openSettingsURLString)
-        UIApplication.shared.openURL(url!)
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]){
+        
+        self.view.bringSubviewToFront(activityIndicator)
+        blurEffectView.isHidden = false
+        activityIndicator.startAnimating()
+        
+        DispatchQueue.global(qos: .userInitiated).async {
+                // 選択されたファイルのURLを処理
+            for url in urls {
+                // ここで各ファイルのURLを処理します
+                print("Selected file URL: \(url)")
+                // 例: ファイルを解凍して処理する
+                self.processFile(at: url)
+            }
+            
+            DispatchQueue.main.async {
+                self.children.forEach{
+                    let fc = $0 as? FileSelectController
+                    if fc != nil {
+                        fc?.updateDoc()
+                    }
+                }
+                self.blurEffectView.isHidden = true
+                self.activityIndicator.stopAnimating()
+            }
+        }
+        
     }
     
-    /// Tells the delegate an ad request loaded an ad.
-    func adViewDidReceiveAd(_ bannerView: GADBannerView) {
-      print("adViewDidReceiveAd")
-    }
+    func processFile(at fileURL: URL) {
+        print(fileURL)
 
-    /// Tells the delegate an ad request failed.
-    func adView(_ bannerView: GADBannerView,
-        didFailToReceiveAdWithError error: GADRequestError) {
-      print("adView:didFailToReceiveAdWithError: \(error.localizedDescription)")
-    }
+        guard fileURL.startAccessingSecurityScopedResource() else {
+            // エラー処理
+            return
+        }
+        
+        var documentsUrl = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        
+        
+        let theFileName = fileURL.lastPathComponent
+            
+        if theFileName.lowercased().contains(".cue") ||
+            theFileName.lowercased().contains(".bin") ||
+            theFileName.lowercased().contains(".chd") ||
+            theFileName.lowercased().contains(".ccd") ||
+            theFileName.lowercased().contains(".img") ||
+            theFileName.lowercased().contains(".mdf") ||
+            theFileName.lowercased().contains(".mds")
+        {
+            documentsUrl.appendPathComponent(theFileName)
+            
+            if( documentsUrl != fileURL ){
+                
+                let fileManager = FileManager.default
+                do {
+                    if fileManager.fileExists(atPath: documentsUrl.path) {
+                        try fileManager.removeItem(at: documentsUrl)
+                    }
+                    try fileManager.copyItem(at: fileURL, to: documentsUrl)
+                } catch let error as NSError {
+                    print("Fail to copy \(error.localizedDescription)")
+                    return
+                }
+            }
+            
+        } else{
+            let alert: UIAlertController = UIAlertController(
+                title: NSLocalizedString("Fail to open", comment: "Title for the alert when a file fails to open"),
+                message: NSLocalizedString("You can select chd or bin or cue", comment: "Message indicating the supported file formats"),
+                preferredStyle: UIAlertController.Style.alert
+            )
 
-    /// Tells the delegate that a full-screen view will be presented in response
-    /// to the user clicking on an ad.
-    func adViewWillPresentScreen(_ bannerView: GADBannerView) {
-      print("adViewWillPresentScreen")
-    }
+            let defaultAction: UIAlertAction = UIAlertAction(
+                title: NSLocalizedString("OK", comment: "Default action button title"),
+                style: UIAlertAction.Style.default,
+                handler: { (action: UIAlertAction!) -> Void in
+                    print("OK")
+                }
+            )
 
-    /// Tells the delegate that the full-screen view will be dismissed.
-    func adViewWillDismissScreen(_ bannerView: GADBannerView) {
-      print("adViewWillDismissScreen")
+            alert.addAction(defaultAction)
+            present(alert, animated: true, completion: nil)
+            return
+        }
+        
+        fileURL.stopAccessingSecurityScopedResource()
+        
+                
     }
-
-    /// Tells the delegate that the full-screen view has been dismissed.
-    func adViewDidDismissScreen(_ bannerView: GADBannerView) {
-      print("adViewDidDismissScreen")
-    }
-
-    /// Tells the delegate that a user click will open another app (such as
-    /// the App Store), backgrounding the current app.
-    func adViewWillLeaveApplication(_ bannerView: GADBannerView) {
-      print("adViewWillLeaveApplication")
-    }
+    
+    
     
 }

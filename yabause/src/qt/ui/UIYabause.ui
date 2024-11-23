@@ -40,10 +40,10 @@
      </sizepolicy>
     </property>
     <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
+     <enum>QFrame::Shape::StyledPanel</enum>
     </property>
     <property name="frameShadow">
-     <enum>QFrame::Sunken</enum>
+     <enum>QFrame::Shadow::Sunken</enum>
     </property>
     <layout class="QVBoxLayout">
      <item>
@@ -64,10 +64,10 @@
         <number>100</number>
        </property>
        <property name="orientation">
-        <enum>Qt::Vertical</enum>
+        <enum>Qt::Orientation::Vertical</enum>
        </property>
        <property name="tickPosition">
-        <enum>QSlider::TicksBothSides</enum>
+        <enum>QSlider::TickPosition::TicksBothSides</enum>
        </property>
        <property name="tickInterval">
         <number>15</number>
@@ -106,10 +106,10 @@
      </sizepolicy>
     </property>
     <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
+     <enum>QFrame::Shape::StyledPanel</enum>
     </property>
     <property name="frameShadow">
-     <enum>QFrame::Sunken</enum>
+     <enum>QFrame::Shadow::Sunken</enum>
     </property>
     <layout class="QVBoxLayout">
      <item>
@@ -123,8 +123,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
-     <height>22</height>
+     <width>640</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="mFile">
@@ -179,6 +179,7 @@
     </widget>
     <addaction name="aFileSettings"/>
     <addaction name="separator"/>
+    <addaction name="actionGame_Browser"/>
     <addaction name="aFileOpenISO"/>
     <addaction name="aFileOpenCDRom"/>
     <addaction name="aFileOpenSSF"/>
@@ -190,6 +191,9 @@
     <addaction name="aFileScreenshot"/>
     <addaction name="separator"/>
     <addaction name="aFileQuit"/>
+    <addaction name="separator"/>
+    <addaction name="aFileAndroid"/>
+    <addaction name="aFileiOS"/>
    </widget>
    <widget class="QMenu" name="mView">
     <property name="title">
@@ -315,7 +319,8 @@
    <addaction name="separator"/>
    <addaction name="aFileQuit"/>
    <addaction name="aHelpAbout"/>
-   <addaction name="actionDonate"/>
+   <addaction name="actionAndroid"/>
+   <addaction name="actioniOS"/>
   </widget>
   <action name="aFileQuit">
    <property name="icon">
@@ -993,16 +998,16 @@
     <string>Open Tray</string>
    </property>
   </action>
-  <action name="actionDonate">
+  <action name="actionAndroid">
    <property name="icon">
     <iconset resource="../resources/resources.qrc">
-     <normaloff>:/actions/icons/actions/donate.png</normaloff>:/actions/icons/actions/donate.png</iconset>
+     <normaloff>:/actions/icons/actions/android-head_flat.png</normaloff>:/actions/icons/actions/android-head_flat.png</iconset>
    </property>
    <property name="text">
-    <string>donate</string>
+    <string>Android</string>
    </property>
    <property name="toolTip">
-    <string>Donate</string>
+    <string>Android</string>
    </property>
   </action>
   <action name="actionOpen_web_interface">
@@ -1049,6 +1054,44 @@
   <action name="actionPlay">
    <property name="text">
     <string>Play</string>
+   </property>
+  </action>
+  <action name="actionGame_Browser">
+   <property name="text">
+    <string>Game Browser</string>
+   </property>
+  </action>
+  <action name="actioniOS">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/Apple_iOS_logo.svg.png</normaloff>:/actions/icons/actions/Apple_iOS_logo.svg.png</iconset>
+   </property>
+   <property name="text">
+    <string>iOS</string>
+   </property>
+   <property name="toolTip">
+    <string>iOS</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::NoRole</enum>
+   </property>
+  </action>
+  <action name="aFileAndroid">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/android-head_flat.png</normaloff>:/actions/icons/actions/android-head_flat.png</iconset>
+   </property>
+   <property name="text">
+    <string>Android</string>
+   </property>
+  </action>
+  <action name="aFileiOS">
+   <property name="icon">
+    <iconset resource="../resources/resources.qrc">
+     <normaloff>:/actions/icons/actions/Apple_iOS_logo.svg.png</normaloff>:/actions/icons/actions/Apple_iOS_logo.svg.png</iconset>
+   </property>
+   <property name="text">
+    <string>iOS</string>
    </property>
   </action>
  </widget>

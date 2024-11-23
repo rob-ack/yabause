@@ -2900,7 +2900,7 @@ void SH2DumpHistory(SH2_struct *context){
 #if defined(ANDROID)
 	history = fopen("/mnt/sdcard/history.txt", "w");
 #else
-        history = fopen("history.txt", "w");
+        history = fopen_utf8("history.txt", "w");
 #endif
 	if (history){
 		int i;

@@ -313,7 +313,7 @@ int CheatSave(const char *filename)
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "wb")) == NULL)
+   if ((fp = fopen_utf8(filename, "wb")) == NULL)
       return -1;
 
    fprintf(fp, "YCHT");
@@ -362,7 +362,7 @@ int CheatLoad(const char *filename)
    if (!filename)
       return -1;
 
-   if ((fp = fopen(filename, "rb")) == NULL)
+   if ((fp = fopen_utf8(filename, "rb")) == NULL)
       return -1;
 
    yread(&check, (void *)id, 1, 4, fp);

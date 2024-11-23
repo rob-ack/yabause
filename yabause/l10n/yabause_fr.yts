@@ -486,3 +486,10 @@ Yabause is not initialized, can't manage backup ram.|Yabause n'est pas initialis
 http://www.emu-compatibility.com/yabause/index.php?lang=uk|http://www.emu-compatibility.com/yabause/index.php?lang=fr
 http://www.monkeystudio.org|http://www.monkeystudio.org
 toolBar|Barre d'Outils
+Emulation Speed|Vitesse d'émulation
+Sh2 Cahce|Activer le cache Sh2
+Aspect Ratio|Format d'image
+Rendering Option|Options de rendu
+Render Quality|Qualité de rendu
+Low|Faible qualité
+High|Haute qualité

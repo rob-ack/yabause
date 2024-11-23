@@ -21,11 +21,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include "../core.h"
 #include <stdio.h>
 #include <string.h>
+#if defined(IOS)
+
+#else
 #include <malloc.h> 
+#endif
 #include <stdint.h>
-#include "../sh2core.h"
+#include "sh2core.h"
 #include "DynarecSh2.h"
-#include "../debug.h"
+#include "debug.h"
 #include "yabause.h"
 
 

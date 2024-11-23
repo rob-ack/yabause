@@ -50,11 +50,16 @@ bool MyItemDelegate::eventFilter ( QObject * editor, QEvent * event )
 		if (keyEvent->key() == Qt::Key_Shift ||
 			keyEvent->key() == Qt::Key_Control ||
 			keyEvent->key() == Qt::Key_Meta ||
-			keyEvent->key() == Qt::Key_Alt)
-			text = QKeySequence((keyEvent->modifiers() & ~Qt::KeypadModifier)).toString();
-		else
-			text = QKeySequence((keyEvent->modifiers() & ~Qt::KeypadModifier) + keyEvent->key()).toString();
-		((QLineEdit *)editor)->setText(text);
+			keyEvent->key() == Qt::Key_Alt) {
+			text = QKeySequence(keyEvent->modifiers() & ~Qt::KeypadModifier).toString();
+		}
+		else {
+			text = QKeySequence((keyEvent->modifiers() & ~Qt::KeypadModifier) | keyEvent->key()).toString();
+		}
+
+		// C++スタイルキャストを使用
+		qobject_cast<QLineEdit*>(editor)->setText(text);
+
 		return true;
 	}
 	return QStyledItemDelegate::eventFilter(editor, event);

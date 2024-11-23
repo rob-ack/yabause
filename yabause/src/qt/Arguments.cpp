@@ -8,7 +8,6 @@
 #include <QApplication>
 #include <QString>
 #include <QStringList>
-#include <QStringListIterator>
 #include <QVector>
 #include <QVectorIterator>
 

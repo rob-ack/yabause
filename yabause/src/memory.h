@@ -226,7 +226,7 @@ extern "C" {
     if (!filename)
       return -1;
 
-    if ((fp = fopen(filename, "rb")) == NULL)
+    if ((fp = fopen_utf8(filename, "rb")) == NULL)
       return -1;
 
     // Calculate file size
@@ -331,7 +331,7 @@ extern "C" {
     }
     }
 
-    if ((fp = fopen(filename, "wb")) == NULL)
+    if ((fp = fopen_utf8(filename, "wb")) == NULL)
     {
       free(buffer);
       return -1;

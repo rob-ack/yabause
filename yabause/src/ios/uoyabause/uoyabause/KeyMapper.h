@@ -31,10 +31,10 @@ typedef NS_ENUM(NSInteger, KeyMapMappableButton) {
 -(void)loadFromDefaults;
 -(void) resetToDefaults;
 -(void) saveKeyMapping;
--(void) mapKey:(SaturnKey)keyboardKey ToControl:(KeyMapMappableButton)button;
--(void) unmapKey:(SaturnKey)keyboardKey;
--(SaturnKey) getMappedKeyForControl:(KeyMapMappableButton)button;
+-(void) mapKey:(SaturnKeyXX)keyboardKey ToControl:(KeyMapMappableButton)button;
+-(void) unmapKey:(SaturnKeyXX)keyboardKey;
+-(SaturnKeyXX) getMappedKeyForControl:(KeyMapMappableButton)button;
 +(NSString*) controlToDisplayName:(KeyMapMappableButton)button;
--(NSArray*) getControlsForMappedKey:(SaturnKey) keyboardKey;
+-(NSArray*) getControlsForMappedKey:(SaturnKeyXX) keyboardKey;
 
 @end

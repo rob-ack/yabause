@@ -134,6 +134,7 @@ extern "C"{
 #define YGLLOG(...)
 #endif
 
+//#define FRAME_DEBUG
 #ifdef FRAME_DEBUG
 #define FRAMELOG(...) DebugPrintf(MainLog, __FILE__, __LINE__, __VA_ARGS__)
 #else

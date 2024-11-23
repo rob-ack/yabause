@@ -176,8 +176,10 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
   case DEBUG_STREAM:
     if (d->output.stream == NULL)
       break;
-    fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, (long)line);
+    //fprintf(d->output.stream, "%s (%s:%ld): ", d->name, file, (long)line);
     vfprintf(d->output.stream, format, l);
+    printf("\n");
+ 
     break;
   case DEBUG_STRING:
     {
@@ -199,7 +201,7 @@ void DebugPrintf(Debug * d, const char * file, u32 line, const char * format, ..
       static FILE * dfp = NULL;
       YabThreadLock(dbugMutex);
       if (dfp == NULL){
-        dfp = fopen("debug.txt", "w");
+        dfp = fopen_utf8("debug.txt", "w");
       }
 #else
 //      static FILE * dfp = NULL;

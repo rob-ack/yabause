@@ -1,22 +1,35 @@
 # Uncomment the next line to define a global platform for your project
-platform :ios, '9.3'
+platform :ios, '13.6'
 
 target 'YabaSnashiro' do
   # Comment the next line if you're not using Swift and don't want to use dynamic frameworks
   use_frameworks!
   pod 'Firebase/Core'
-  #pod 'Firebase/AdMob'
-  pod 'Google-Mobile-Ads-SDK'
+  pod 'FirebaseCrashlytics'
+  pod 'Kingfisher', '~> 7.0' 
+
   # Pods for uoyabause
+
+  target 'YabaSnashiro-Lite' do
+    inherit! :search_paths
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
+    pod 'Google-Mobile-Ads-SDK'
+    end
 
   target 'YabaSnashiroTests' do
     inherit! :search_paths
-    # Pods for testing
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
   end
 
   target 'YabaSnashiroUITests' do
     inherit! :search_paths
-    # Pods for testing
+    pod 'Firebase/Core'
+    pod 'FirebaseCrashlytics'
+    pod 'Kingfisher', '~> 7.0'  
   end
 
 end

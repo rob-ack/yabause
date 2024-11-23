@@ -96,7 +96,9 @@ int YabThreadInit(){
   memset( thread_handle, 0, sizeof(pthread_t) * YAB_NUM_THREADS );
 
   pthread_t self_thread = pthread_self();
-  pthread_setname_np(self_thread,"yaba main");  
+#if defined(ARCH_IS_LINUX)
+    pthread_setname_np(self_thread,"yaba main");  
+#endif    
 
   return 0;
 }
@@ -130,8 +132,9 @@ int YabThreadStart(unsigned int id, const char * name, void* (*func)(void *), vo
       perror("pthread_create");
       return -1;
    }
-
+#if defined(LINUX)
    pthread_setname_np(thread_handle[id], name);
+#endif   
 
    return 0;
 }
@@ -312,7 +315,7 @@ void YabThreadFreeMutex( YabMutex * mtx ){
     }
 }
 
-
+pthread_mutex_t used_cpu_cores_mutex = PTHREAD_MUTEX_INITIALIZER;
 int YabThreadGetFastestCpuIndex(){
 #if defined(IOS) || defined(__JETSON__)
   return 0;
@@ -326,6 +329,7 @@ int YabThreadGetFastestCpuIndex(){
 
   
     // Find Fastest CPU
+    pthread_mutex_lock(&used_cpu_cores_mutex);
     for ( int cpuindex = 0; cpuindex < cpu_count; cpuindex++){
         sprintf(fname, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", cpuindex);
         FILE * fp = fopen(fname, "r");
@@ -341,6 +345,7 @@ int YabThreadGetFastestCpuIndex(){
     }
 
     used_cpu_cores[max_cpu_index] = 1;
+    pthread_mutex_unlock(&used_cpu_cores_mutex);
     return max_cpu_index;
 #endif    
 }
@@ -370,7 +375,7 @@ void YabThreadSetCurrentThreadAffinityMask(int mask)
       err = errno;
       //LOG("Error in the syscall setaffinity: mask=%d=0x%x err=%d=0x%x", mask, mask, err, err);
   }
-#else    
+#elif defined(ARCH_IS_LINUX)
   cpu_set_t my_set;        /* Define your cpu_set bit mask. */
   CPU_ZERO(&my_set);       /* Initialize it all to 0, i.e. no CPUs selected. */
   CPU_SET(mask, &my_set);

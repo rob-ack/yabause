@@ -52,6 +52,9 @@ public:
 
   bool IsFullscreen(void);
   void SetFullScreen(bool fullscreen);
+	void execEmulation();
+
+	void resize(int w, int h);
 
 
 protected:
@@ -74,7 +77,7 @@ protected:
   int _wndSize[2];
 
 public slots:
-	bool pauseEmulation( bool pause, bool reset );
+	bool pauseEmulation( bool pause, bool reset, std::function<void()> preInitcallback = nullptr);
 	bool resetEmulation();
 	void reloadControllers();
 	void reloadClock();

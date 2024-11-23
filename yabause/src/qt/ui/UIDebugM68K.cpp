@@ -54,8 +54,8 @@ UIDebugM68K::UIDebugM68K( YabauseThread *mYabauseThread, QWidget* p )
          QString text;
          if (cbp[i].addr != 0xFFFFFFFF)
          {
-            text.sprintf("%08X", (int)cbp[i].addr);
-            lwCodeBreakpoints->addItem(text);
+           text = QString("%1").arg(static_cast<uint32_t>(cbp[i].addr), 8, 16, QChar('0')).toUpper();
+           lwCodeBreakpoints->addItem(text);
          }
       }
 
@@ -85,23 +85,27 @@ void UIDebugM68K::updateRegList()
    // Data registers
    for (i = 0; i < 8; i++)
    {
-      str.sprintf("D%d =   %08X", i, (int)regs.D[i]);
-      lwRegisters->addItem(str);
+     str = QString("D%1 =   %2")
+       .arg(i)
+       .arg((uint32_t)regs.D[i], 8, 16, QChar('0')).toUpper();
+     lwRegisters->addItem(str);
    }
 
    // Address registers
    for (i = 0; i < 8; i++)
    {
-      str.sprintf("A%d =   %08X", i, (int)regs.A[i]);
-      lwRegisters->addItem(str);
+     str = QString("A%1 =   %2")
+       .arg(i)
+       .arg((uint32_t)regs.A[i], 8, 16, QChar('0')).toUpper();
+     lwRegisters->addItem(str);
    }
 
    // SR
-   str.sprintf("SR =   %08X", (int)regs.SR);
+   str = QString("SR =   %1").arg((uint32_t)regs.SR, 8, 16, QChar('0')).toUpper();
    lwRegisters->addItem(str);
 
    // PC
-   str.sprintf("PC =   %08X", (int)regs.PC);
+   str = QString("PC =   %1").arg((uint32_t)regs.PC, 8, 16, QChar('0')).toUpper();
    lwRegisters->addItem(str);
 }
 

@@ -31,15 +31,15 @@
 }
 
 -(NSMutableDictionary*) defaultMapping {
-    return [@{ [NSNumber numberWithInteger:MFI_BUTTON_X] : [NSNumber numberWithInteger:SaturnKeyA],
-               [NSNumber numberWithInteger:MFI_BUTTON_A] : [NSNumber numberWithInteger:SaturnKeyB],
-               [NSNumber numberWithInteger:MFI_BUTTON_B] : [NSNumber numberWithInteger:SaturnKeyC],
-               [NSNumber numberWithInteger:MFI_BUTTON_Y] : [NSNumber numberWithInteger:SaturnKeyX],
-               [NSNumber numberWithInteger:MFI_BUTTON_LT] : [NSNumber numberWithInteger:SaturnKeyY],
-               [NSNumber numberWithInteger:MFI_BUTTON_RT] : [NSNumber numberWithInteger:SaturnKeyZ],
-               [NSNumber numberWithInteger:MFI_BUTTON_LS] : [NSNumber numberWithInteger:SaturnKeyLeftTrigger],
-               [NSNumber numberWithInteger:MFI_BUTTON_RS] : [NSNumber numberWithInteger:SaturnKeyRightTrigger],
-               [NSNumber numberWithInteger:MFI_BUTTON_HOME] : [NSNumber numberWithInteger:SaturnKeyStart],
+    return [@{ [NSNumber numberWithInteger:MFI_BUTTON_A] : [NSNumber numberWithInteger:SaturnKeyA],
+               [NSNumber numberWithInteger:MFI_BUTTON_B] : [NSNumber numberWithInteger:SaturnKeyB],
+               [NSNumber numberWithInteger:MFI_BUTTON_RS] : [NSNumber numberWithInteger:SaturnKeyC],
+               [NSNumber numberWithInteger:MFI_BUTTON_X] : [NSNumber numberWithInteger:SaturnKeyX],
+               [NSNumber numberWithInteger:MFI_BUTTON_Y] : [NSNumber numberWithInteger:SaturnKeyY],
+               [NSNumber numberWithInteger:MFI_BUTTON_LS] : [NSNumber numberWithInteger:SaturnKeyZ],
+               [NSNumber numberWithInteger:MFI_BUTTON_LT] : [NSNumber numberWithInteger:SaturnKeyLeftTrigger],
+               [NSNumber numberWithInteger:MFI_BUTTON_RT] : [NSNumber numberWithInteger:SaturnKeyRightTrigger],
+               [NSNumber numberWithInteger:MFI_BUTTON_OPTION] : [NSNumber numberWithInteger:SaturnKeyStart],
                
                } mutableCopy];
 }
@@ -53,19 +53,19 @@
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
--(void) mapKey:(SaturnKey)keyboardKey ToControl:(KeyMapMappableButton)button {
+-(void) mapKey:(SaturnKeyXX)keyboardKey ToControl:(KeyMapMappableButton)button {
     NSNumber *buttonKey = [NSNumber numberWithInteger:button];
     [self.keyMapping setObject:[NSNumber numberWithInteger:keyboardKey] forKey:buttonKey];
 }
 
--(void) unmapKey:(SaturnKey)saturnKey {
+-(void) unmapKey:(SaturnKeyXX)saturnKey {
     NSArray *mappedButtons = [self getControlsForMappedKey:saturnKey];
     for (NSNumber *button in mappedButtons) {
         [self.keyMapping removeObjectForKey:button];
     }
 }
 
--(SaturnKey) getMappedKeyForControl:(KeyMapMappableButton)button {
+-(SaturnKeyXX) getMappedKeyForControl:(KeyMapMappableButton)button {
     NSNumber *buttonKey = [NSNumber numberWithInteger:button];
     NSNumber *mappedKey = [self.keyMapping objectForKey:buttonKey];
     if ( mappedKey != nil ) {
@@ -75,7 +75,7 @@
     }
 }
 
--(NSArray*) getControlsForMappedKey:(SaturnKey) saturnKey {
+-(NSArray*) getControlsForMappedKey:(SaturnKeyXX) saturnKey {
     NSMutableArray *foundControls = [NSMutableArray array];
     for (NSNumber *buttonKey in self.keyMapping) {
         NSNumber *mappedKey = [self.keyMapping objectForKey:buttonKey];

@@ -30,7 +30,9 @@ import kotlinx.coroutines.withContext
 import okhttp3.Authenticator
 import okhttp3.Credentials
 import okhttp3.Headers
+import okhttp3.Headers.Companion.headersOf
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -56,7 +58,7 @@ class AsyncReportV2(
     private fun responseCount(httpResponse: Response): Int {
         var response = httpResponse
         var result = 1
-        while (response.priorResponse().also { response = it!! } != null) {
+        while (response.priorResponse.also { response = it!! } != null) {
             result++
         }
         return result
@@ -74,7 +76,7 @@ class AsyncReportV2(
             var request = Request.Builder().url(url).build()
             var response = client!!.newCall(request).execute()
             if (response.isSuccessful) {
-                val rootObject = JSONObject(response.body()!!.string())
+                val rootObject = JSONObject(response.body!!.string())
                 if (rootObject.getBoolean("result") == true) {
                     id = rootObject.getLong("id")
                 }
@@ -83,13 +85,13 @@ class AsyncReportV2(
             // if failed create new data
             if (id == -1L) {
                 url = "$baseurl/games/"
-                val MIMEType = MediaType.parse("application/json; charset=utf-8")
+                val MIMEType = "application/json; charset=utf-8".toMediaTypeOrNull()
                 val requestBody =
                     RequestBody.create(MIMEType, gameInfo.toString())
                 request = Request.Builder().url(url).post(requestBody).build()
                 response = client!!.newCall(request).execute()
                 if (response.isSuccessful) {
-                    val rootObject = JSONObject(response.body()!!.string())
+                    val rootObject = JSONObject(response.body!!.string())
                     if (rootObject.getBoolean("result") == true) {
                         id = rootObject.getLong("id")
                     }
@@ -143,13 +145,13 @@ class AsyncReportV2(
             }
             return -1
         }
-        val MIMEType = MediaType.parse("application/json; charset=utf-8")
+        val MIMEType = "application/json; charset=utf-8".toMediaTypeOrNull()
         val BOUNDARY = System.currentTimeMillis().toString()
 
         // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
         val requestBody: RequestBody = MultipartBody.Builder(BOUNDARY).setType(MultipartBody.FORM)
             .addPart(
-                Headers.of("Content-Disposition", "form-data; name=\"report\""),
+                headersOf("Content-Disposition", "form-data; name=\"report\""),
                 RequestBody.create(MIMEType, reportJson.toString())
             )
             .addFormDataPart(
@@ -166,7 +168,7 @@ class AsyncReportV2(
         CONTENT_LENGTH = try {
             requestBody.writeTo(buffer)
             Log.d(LOG_TAG, buffer.toString())
-            buffer.size().toString()
+            buffer.size.toString()
         } catch (e: IOException) {
             e.printStackTrace()
             withContext(Dispatchers.Main) {
@@ -187,7 +189,7 @@ class AsyncReportV2(
             if (!response.isSuccessful) {
                 throw IOException("Unexpected code $response")
             } else {
-                val rootObject = JSONObject(response.body()!!.string())
+                val rootObject = JSONObject(response.body!!.string())
                 if (rootObject.getBoolean("result") == true) {
                     mainActivity._report_status = Yabause.REPORT_STATE_SUCCESS
                 } else {
@@ -216,8 +218,8 @@ class AsyncReportV2(
     companion object {
         private const val LOG_TAG = "AsyncReportv2"
         private const val IMGUR_CLIENT_ID = "..."
-        private val MEDIA_TYPE_PNG = MediaType.parse("image/png")
-        private val MEDIA_TYPE_ZIP = MediaType.parse("application/x-zip-compressed")
+        private val MEDIA_TYPE_PNG = "image/png".toMediaTypeOrNull()
+        private val MEDIA_TYPE_ZIP = "application/x-zip-compressed".toMediaTypeOrNull()
     }
 
     // コンストラクター
@@ -234,7 +236,7 @@ class AsyncReportV2(
                     mainActivity.getString(R.string.basic_user),
                     mainActivity.getString(R.string.basic_password)
                 )
-                response.request().newBuilder().header("Authorization", credential).build()
+                response.request.newBuilder().header("Authorization", credential).build()
             })
             .build()
     }

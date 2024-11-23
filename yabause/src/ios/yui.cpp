@@ -16,6 +16,7 @@ extern "C"{
 #include "sndal.h"
 #include "sndCoreAudio.h"
 #include "ygl.h"
+#include "chd.h"
 }
 
 #include <stdarg.h>
@@ -127,6 +128,8 @@ extern "C" {
     int GetVideFilterType();
     int GetResolutionType();
     int GetIsRotateScreen();
+
+    char * getGameinfoFromChd( const char * path );
     
 int swapAglBuffer ();
     
@@ -384,5 +387,33 @@ extern "C" {
   void RBGGenerator_onFinish() {
   }
 
+
+char * getGameinfoFromChd( const char * path ){
+
+  chd_file *chd;
+  char * hunk_buffer;
+  int current_hunk_id;
+  const int len = 256;
+  char * buf = (char*)malloc( sizeof(char)*len);
+
+  chd_error error = chd_open(path, CHD_OPEN_READ, NULL, &chd);
+  if (error != CHDERR_NONE) {
+    return NULL;
+  }
+  const chd_header * header = chd_get_header(chd);
+  if( header == NULL ){
+    return NULL;
+  }
+
+  hunk_buffer = (char*)malloc(header->hunkbytes);
+  chd_read(chd, 0, hunk_buffer);
+  
+  memcpy(buf,&hunk_buffer[16],len); 
+  buf[len-1] = 0;
+  free(hunk_buffer);
+  return buf;
 }
+
+}
+
   

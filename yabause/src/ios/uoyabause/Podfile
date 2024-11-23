@@ -6,6 +6,7 @@ target 'YabaSnashiro' do
   use_frameworks!
   pod 'Firebase/Core'
   pod 'FirebaseCrashlytics'
+  pod 'Kingfisher', '~> 7.0'  
   #pod 'Firebase/AdMob'
   # Pods for uoyabause
 

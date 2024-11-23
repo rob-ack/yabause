@@ -8,22 +8,180 @@
 
 import Foundation
 import UIKit
+import Kingfisher
 
 
-class FileSelectController :UITableViewController {
+class GameItemCell: UICollectionViewCell {
+    let titleLabel = UILabel()
+    let imageView = UIImageView()
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        setupViews()
+        setupConstraints()
+    }
     
-    var file_list: [String] = [""]
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    override var isSelected: Bool {
+        didSet {
+            contentView.backgroundColor = isSelected ? UIColor.lightGray : UIColor.white
+        }
+    }
+    
+    private func setupViews() {
+        // ImageViewの設定
+        imageView.contentMode = .scaleAspectFit
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(imageView)
+        
+        
+        // TitleLabelの設定
+        titleLabel.textAlignment = .center
+        titleLabel.numberOfLines = 0
+        titleLabel.lineBreakMode = .byWordWrapping
+        titleLabel.translatesAutoresizingMaskIntoConstraints = false
+        titleLabel.font = UIFont.systemFont(ofSize: 14)
+        contentView.addSubview(titleLabel)
+        
+       
+    }
+    
+    private func setupConstraints() {
+        // ImageViewの制約
+        NSLayoutConstraint.activate([
+            //imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            //imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            //imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            //imageView.heightAnchor.constraint(equalTo: contentView.heightAnchor, multiplier: 0.8)
+            imageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            imageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            imageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            imageView.heightAnchor.constraint(equalToConstant: 100)
+        ])
+        
+        // TitleLabelの制約
+        NSLayoutConstraint.activate([
+            //titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor),
+            //titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            //titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            //titleLabel.bottomAnchor.constraint(lessThanOrEqualTo: contentView.bottomAnchor)
+            
+            titleLabel.topAnchor.constraint(equalTo: imageView.bottomAnchor),
+            titleLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            titleLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            titleLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor)
+
+        ])
+    }
+}
+
+
+
+class FileSelectController :UICollectionViewController,UICollectionViewDelegateFlowLayout {
+    
+    var file_list: [GameInfo] = []
     var selected_file_path: String = ""
+    var columns = 3.0
     
    
     //required init?(coder aDecoder: NSCoder) {
     //    fatalError("init(coder:) has not been implemented")
     //}
     
+    func setupCollectionViewLayout(columns: CGFloat) {
+        self.columns = columns
+        let layout = UICollectionViewFlowLayout()
+        let spacing: CGFloat = 10 // アイテム間のスペース
+        let totalSpacing = spacing * (columns - 1) + 20 // 合計のスペース
+        let width = (view.frame.width - totalSpacing) / columns
+        layout.itemSize = CGSize(width: width, height: width)
+        layout.minimumLineSpacing = spacing
+        layout.minimumInteritemSpacing = spacing
+        collectionView.collectionViewLayout = layout
+    }
+    
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+        coordinator.animate(alongsideTransition: { _ in
+            // デバイスの向きに応じて列数を調整
+            if UIDevice.current.orientation.isLandscape {
+                self.columns = 5
+                // 横画面の時は4列
+                self.setupCollectionViewLayout(columns: 5)
+            } else {
+                self.columns = 3
+                // 縦画面の時は3列
+                self.setupCollectionViewLayout(columns: 3)
+            }
+            self.collectionView.reloadData()
+        }, completion: nil)
+    }
+    
     
     override func viewDidLoad(){
         super.viewDidLoad()
+        collectionView.register(GameItemCell.self, forCellWithReuseIdentifier: "GameItemCell")
+        self.collectionView!.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "files")
+        // デバイスの向きに応じて列数を調整
+        if UIDevice.current.orientation.isLandscape {
+            // 横画面の時は4列
+            self.setupCollectionViewLayout(columns: 5)
+        } else {
+            // 縦画面の時は3列
+            self.setupCollectionViewLayout(columns: 3)
+        }
         updateDoc()
+    }
+    
+    override func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return file_list.count
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "GameItemCell", for: indexPath) as! GameItemCell
+        let gameInfo = file_list[indexPath.row]
+        // ここでcellの内容を設定します。例えば:
+        cell.titleLabel.text = gameInfo.gameTitle
+        // Kingfisherを使用して画像を設定
+        if let imageUrl = gameInfo.imageUrl, let url = URL(string: imageUrl) {
+            cell.imageView.kf.setImage(with: url, placeholder: UIImage(named: "missing"))
+        }
+        return cell
+    }
+
+    func calculateCellHeight(for indexPath: IndexPath) -> CGFloat {
+        let gameInfo = file_list[indexPath.row]
+        if let text = gameInfo.gameTitle{
+            let attributes = [NSAttributedString.Key.font: UIFont.systemFont(ofSize: 14)]
+            
+            let spacing: CGFloat = 10 // アイテム間のスペース
+            let totalSpacing = spacing * (columns - 1) + 20 // 合計のスペース
+            let width = (view.frame.width - totalSpacing) / columns
+            
+            let size = CGSize(width: width, height: CGFloat.greatestFiniteMagnitude)
+            let options = NSStringDrawingOptions.usesFontLeading.union(.usesLineFragmentOrigin)
+            let estimatedRect = NSString(string: text).boundingRect(with: size, options: options, attributes: attributes, context: nil)
+            return estimatedRect.height + 20 + 100// テキストの上下にマージンを追加
+        }else{
+            return 120
+        }
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+        // アイテムのサイズを設定
+        let spacing: CGFloat = 10 // アイテム間のスペース
+        let totalSpacing = spacing * (columns - 1) + 20 // 合計のスペース
+        let width = (view.frame.width - totalSpacing) / columns
+
+        let height = calculateCellHeight(for: indexPath)
+        return CGSize(width: width, height: height)
     }
     
     func updateDoc(){
@@ -31,19 +189,33 @@ class FileSelectController :UITableViewController {
         let manager = FileManager.default
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         
+        var count=0
         do {
             let all_file_list = try manager.contentsOfDirectory(atPath: documentsPath)
             for path in all_file_list {
                 var isDir: ObjCBool = false
                 if manager.fileExists(atPath: documentsPath + "/" + path, isDirectory: &isDir) && !isDir.boolValue {
                 
-                        file_list.append(path);
-
+                   
+                    #if FREE_VERSION // Fore free
+                    count += 1;
+                    if( count >= 3){
+                        break;
+                    }
+                    #endif
+                    
+                    if let buf = getGameinfoFromChd(documentsPath + "/" + path){
+                        let data = Data(bytes: buf, count: 256)
+                        if let gi = getGameInfoFromBuf(filePath: path, header: data){
+                            file_list.append(gi);
+                        }
+                    }
+                    
                 } else {
                     
                 }
             }
-            tableView.reloadData()
+            file_list.sort { $0.gameTitle ?? "" < $1.gameTitle ?? "" }
         }catch{
         }
     }
@@ -52,16 +224,41 @@ class FileSelectController :UITableViewController {
         super.didReceiveMemoryWarning()
     }
     
+/*
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
 
         return file_list.count
     }
-    
+*/
+/*
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
-      
-       
         let cell = tableView.dequeueReusableCell(withIdentifier: "files")! as UITableViewCell
-        cell.textLabel!.text = file_list[(indexPath as NSIndexPath).row];
+        let gameInfo = file_list[(indexPath as NSIndexPath).row]
+        cell.textLabel!.text = gameInfo.gameTitle;
+        
+        if let imageUrl = gameInfo.imageUrl {
+            // Download image and display it in the cell
+            if let url = URL(string: imageUrl), let data = try? Data(contentsOf: url), let image = UIImage(data: data) {
+                cell.imageView?.image = image
+            }
+        }
+        return cell
+    }
+*/
+/*
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "files", for: indexPath)
+        let gameInfo = file_list[indexPath.row]
+        cell.textLabel!.text = gameInfo.gameTitle
+        
+        // Kingfisherを使用して画像を非同期にダウンロードし、キャッシュする
+        if let imageUrl = gameInfo.imageUrl, let url = URL(string: imageUrl) {
+            cell.imageView?.kf.setImage(with: url, placeholder: UIImage(named: "missing"))
+        } else {
+            // 画像URLが無効な場合や存在しない場合は、プレースホルダー画像を設定
+            cell.imageView?.image = UIImage(named: "missing")
+        }
+        
         return cell
     }
     
@@ -69,9 +266,17 @@ class FileSelectController :UITableViewController {
         
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         
-        selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row]
+        selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row].filePath!
         performSegue(withIdentifier: "toSubViewController",sender: nil)
         
+    }
+*/
+    
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
+        selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row].filePath!
+        
+        performSegue(withIdentifier: "toSubViewController",sender: nil)
     }
     
     // Segue 準備
@@ -82,5 +287,21 @@ class FileSelectController :UITableViewController {
         }
     }
     
+    override func collectionView(_ collectionView: UICollectionView, didHighlightItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.2) {
+            cell?.transform = CGAffineTransform(scaleX: 1.3, y: 1.3)
+        }
+    }
+
+    override func collectionView(_ collectionView: UICollectionView, didUnhighlightItemAt indexPath: IndexPath) {
+        let cell = collectionView.cellForItem(at: indexPath)
+        UIView.animate(withDuration: 0.2) {
+            cell?.transform = .identity
+        }
+    }
+    
 
 }
+
+

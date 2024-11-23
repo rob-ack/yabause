@@ -5,3 +5,5 @@
 #import "GameViewController.h"
 #import "SWRevealViewController.h"
 #import "GameRevealViewController.h"
+#import "ChdWrapper.h"
+

@@ -189,13 +189,13 @@
 
         ## 3. 点击 + 按钮\n
 
-        如果您已经有 CHD 或压缩的 iso 图像文件。只需点按 + 按钮并选择文件。* 您需要在 Android TV 上使用鼠标 \n\n
+        如果您已经有 CHD 或压缩的 iso 图像文件。只需点按 + 按钮并选择文件。\n\n
 
         ## 4. 选择一个包含 ISO 镜像的目录\n
 
-        [设置] -> [选择游戏目录] -> [添加] * 您需要在 Android TV 上使用鼠标 \n\n
+        [设置] -> [选择游戏目录] -> [添加]  \n\n
 
-        我们的网站 [此处](https://www.uoyabause.org/static_pages/guide) 中描述了更多详细信息。\n
+        我们的网站 [https://www.uoyabause.org/static_pages/guide](https://www.uoyabause.org/static_pages/guide) 中描述了更多详细信息。\n
         ]]>
     </string>
 
@@ -228,6 +228,18 @@
     <string name="force_feedback">力量反馈</string>
     <string name="visual_feedback">视觉反馈</string>
     <string name="show_analog_dpad_switch_button">显示模拟/Dpad切换按钮</string>
+
+    <string name="file_not_found">文件未找到：%1$s</string>
+    <string name="i_o_error_occurred">输入/输出错误：%1$s</string>
+    <string name="read_permission_denied">读取权限被拒绝：%1$s</string>
+    <string name="other_file_error">其他文件错误：%1$s</string>
+    <string name="no_game_file_is_selected">未选择游戏文件</string>
+    <string name="fail_to_open_with">无法使用%2$s打开%1$s</string>
+    <string name="fail_to_open">无法打开%1$s</string>
+
+    <string name="failed_to_initialize">初始化失败</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">获取游戏代码失败。该文件不是SEGA Saturn游戏。</string>
+    <string name="fail_to_initialize_emulator">模拟器初始化失败</string>
 
 </resources>
 	

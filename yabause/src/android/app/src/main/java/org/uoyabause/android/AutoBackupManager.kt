@@ -1,5 +1,9 @@
 package org.uoyabause.android
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -438,8 +442,9 @@ class AutoBackupManager(
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-
+                    Log.d(TAG,"timeout");
                 }
+
             })
 
 
@@ -515,6 +520,20 @@ class AutoBackupManager(
 
     }
 
+    fun isOnline(context: Context): Boolean {
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val network = connectivityManager.activeNetwork ?: return false
+            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+            return capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+        } else {
+            val netInfo = connectivityManager.activeNetworkInfo ?: return false
+            return netInfo.isConnected
+        }
+    }
+
     fun syncBackup() {
 
         if (isOnSubscription == false) {
@@ -527,6 +546,10 @@ class AutoBackupManager(
 
         // 同期中は何もしない
         if (syncState == BackupSyncState.CHECKING_DOWNLOAD) {
+            return
+        }
+
+        if( !isOnline(context) ){
             return
         }
 
@@ -544,6 +567,8 @@ class AutoBackupManager(
 
             }
             return
+        }else{
+            Log.d(TAG, "current user is ${currentUser.displayName}")
         }
 
         val mem = YabauseStorage.storage.getMemoryPath("memory.ram")
@@ -690,6 +715,7 @@ class AutoBackupManager(
                         }
                     }
                 }
+
 
                 override fun onCancelled(databaseError: DatabaseError) {
                     // データの読み取りに失敗した場合の処理

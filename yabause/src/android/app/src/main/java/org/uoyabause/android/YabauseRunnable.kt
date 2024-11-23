@@ -22,7 +22,8 @@ import android.util.Log
 import android.view.Surface
 
 class YabauseRunnable(yabause: Yabause?) : Runnable {
-    private var inited: Boolean
+    var inited: Boolean
+        private set
     private val paused = false
     fun destroy() {
         Log.v("Yabause", "destroying yabause...")

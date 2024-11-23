@@ -264,13 +264,13 @@
 
         ## 3. +ボタンをタップ\n
 
-        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。* Android TVの場合はマウスが必要です。 \n\n
+        すでにCHDまたはzip圧縮したISOイメージファイルがある場合,+ボタンをタップしてファイルを選択します。 \n\n
 
         ## 4. ISOイメージがあるディレクトリを指定\n
 
-        [設定] -> [ゲームディレクトリの選択] -> [追加] でISOイメージがあるディレクトリを選択します。 * Android TVの場合はマウスが必要です。 \n\n
+        [設定] -> [ゲームディレクトリの選択] -> [追加] でISOイメージがあるディレクトリを選択します。  \n\n
 
-        詳細については、当社の [Webサイト](https://www.uoyabause.org/static_pages/guide)を参照してください。\n
+        詳細については、当社の [https://www.uoyabause.org/static_pages/guide](https://www.uoyabause.org/static_pages/guide)を参照してください。\n
         ]]>
     </string>
 
@@ -329,5 +329,16 @@
     <string name="force_feedback">フォース フィードバック</string>
     <string name="visual_feedback">ビジュアル フィードバック</string>
     <string name="show_analog_dpad_switch_button">アナログ/Dpad切り替えボタンを表示</string>
+
+    <string name="file_not_found">ファイルが見つかりません：%1$s</string>
+    <string name="i_o_error_occurred">入出力エラーが発生しました：%1$s</string>
+    <string name="read_permission_denied">読み取り権限が拒否されました：%1$s</string>
+    <string name="other_file_error">その他のファイルエラー：%1$s</string>
+    <string name="no_game_file_is_selected">ゲームファイルが選択されていません</string>
+    <string name="fail_to_open_with">%1$sを%2$sで開けませんでした</string>
+    <string name="fail_to_open">%1$sを開けませんでした</string>
+    <string name="failed_to_initialize">初期化に失敗しました</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">ゲームコードの取得に失敗しました。このファイルはSEGA Saturnのゲームではありません。</string>
+    <string name="fail_to_initialize_emulator">エミュレータの初期化に失敗しました</string>
 
 </resources>

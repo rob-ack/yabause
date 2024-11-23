@@ -118,6 +118,7 @@ import org.uoyabause.android.game.GameUiEvent
 import org.uoyabause.android.game.SonicR
 import java.io.*
 import java.net.URLDecoder
+import java.nio.file.Paths
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
@@ -164,7 +165,7 @@ class Yabause : AppCompatActivity(),
     private var testCase: String? = null
 
     private lateinit var padManager: PadManager
-    private lateinit var yabauseThread: YabauseRunnable
+    private var yabauseThread: YabauseRunnable? = null
     private var audio: YabauseAudio? = null
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var progressBar: View
@@ -217,77 +218,93 @@ class Yabause : AppCompatActivity(),
     public override fun onStop(){
         val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
         if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
-            val autoSaveFile =
-                File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-            YabauseRunnable.savestate(autoSaveFile.absolutePath)
+
         }
         super.onStop()
     }
 
     fun showAutoStateLoadDialog(){
 
-        val autoSaveFile = File( YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-        if( !autoSaveFile.exists() ) return
+        val directory = Paths.get(YabauseStorage.storage.stateSavePath + "/" + gameCode ).toFile()
 
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(R.string.auto_state_save_data_found)
-        builder.setMessage(R.string.auto_state_detail)
+        // ディレクトリ内の指定した拡張子を持つファイルリストを取得
+        val files = directory.listFiles { _, name -> name.endsWith(".yss") }
 
+        if( files != null ) {
+            // 最新のファイルを見つける
+            val autoSaveFile = files.maxByOrNull { it.lastModified() }
+            if( autoSaveFile != null ) {
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle(R.string.auto_state_save_data_found)
+                builder.setMessage(R.string.auto_state_detail)
 
-        val layoutInflater = layoutInflater
-        val ProgressButton = layoutInflater.inflate(R.layout.pbutton,null,false)
-        builder.setView(ProgressButton)
+                val layoutInflater = layoutInflater
+                val ProgressButton = layoutInflater.inflate(R.layout.pbutton, null, false)
+                builder.setView(ProgressButton)
 
-        // ダイアログを表示
-        val dialog = builder.create()
+                // ダイアログを表示
+                val dialog = builder.create()
 
-        val dialogButton = ProgressButton.findViewById<Button>(R.id.progress_btn_back)
-        dialogButton.setOnClickListener{
-            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        val dialogButtonFront = ProgressButton.findViewById<Button>(R.id.progress_btn_front)
-        dialogButtonFront.setOnClickListener{
-            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        val dialogCancelButton = ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
-        dialogCancelButton.setOnClickListener{
-            autoSaveFile.delete()
-            dialog.dismiss()
-        }
-
-        // ダイアログが表示されたときにアニメーションを開始する
-        dialog.setOnShowListener {
-            //colorAnimation.start()
-
-            val valueAnimator = ValueAnimator.ofInt(0, dialogButtonFront.width)
-            valueAnimator.addUpdateListener {
-                val animatedValue = it.animatedValue as Int
-                dialogButtonFront.layoutParams.width = animatedValue
-                dialogButtonFront.requestLayout()
-            }
-
-            valueAnimator.addListener(
-                onEnd = {
-                    dialogButtonFront.callOnClick()
-                },
-                onCancel = {
-
+                val dialogButton = ProgressButton.findViewById<Button>(R.id.progress_btn_back)
+                dialogButton.setOnClickListener {
+                    YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+                    dialog.dismiss()
                 }
-            )
 
-            dialogButtonFront.visibility = View.VISIBLE
-            valueAnimator.duration = 5000
-            valueAnimator.start()
+                val dialogButtonFront =
+                    ProgressButton.findViewById<Button>(R.id.progress_btn_front)
+                dialogButtonFront.setOnClickListener {
+                    YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+                    dialog.dismiss()
+                }
 
+
+                // ダイアログが表示されたときにアニメーションを開始する
+                dialog.setOnShowListener {
+                    val observer = dialogButton.viewTreeObserver
+                    observer.addOnGlobalLayoutListener(object : ViewTreeObserver.OnGlobalLayoutListener {
+                        override fun onGlobalLayout() {
+
+                            var isCanceled = false
+                            // Ensure we only call this once
+                            dialogButton.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                            val valueAnimator = ValueAnimator.ofInt(0, dialogButton.width)
+                            valueAnimator.addUpdateListener { animation ->
+                                val animatedValue = animation.animatedValue as Int
+                                dialogButtonFront.layoutParams.width = animatedValue
+                                dialogButtonFront.requestLayout()
+                            }
+                            valueAnimator.addListener(
+                                onEnd = {
+                                    if( !isCanceled ) {
+                                        dialogButtonFront.callOnClick()
+                                    }
+                                },
+                                onCancel = {
+                                    // Handle cancellation
+                                    dialogButtonFront.isEnabled = false
+                                }
+                            )
+
+                            val dialogCancelButton =
+                                ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
+                            dialogCancelButton.setOnClickListener {
+                                isCanceled = true
+                                valueAnimator.cancel()
+                                dialog.dismiss()
+                            }
+
+                            dialogButtonFront.visibility = View.VISIBLE
+                            valueAnimator.duration = 5000
+                            valueAnimator.start()
+                        }
+                    })
+                }
+
+                dialog.show()
+            }
         }
 
-        dialog.show()
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
@@ -303,6 +320,22 @@ class Yabause : AppCompatActivity(),
         }else {
             analogSwitch.visibility = View.GONE
         }
+    }
+
+    private fun showInitFailedDialog( message: String) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(getString(R.string.failed_to_initialize))
+        builder.setMessage(message)
+        Log.e(TAG,message)
+        builder.setPositiveButton(R.string.ok) { dialog, which ->
+            // OKを押したらActivityを終了
+            finish()
+        }
+        builder.setOnCancelListener {
+            // ダイアログがキャンセルされた場合もActivityを終了
+            finish()
+        }
+        builder.show()
     }
 
     /**
@@ -335,7 +368,9 @@ class Yabause : AppCompatActivity(),
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
 
-
+        padManager = PadManager.padManager!!
+        padManager.loadSettings()
+        padManager.showMenulistener = this // setShowMenulistener(this)
 
         val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
 
@@ -459,6 +494,7 @@ class Yabause : AppCompatActivity(),
             gamePath = exgame
         }
 
+        var fileDesc = -1
         val uriString: String? = intent.getStringExtra("org.uoyabause.android.FileNameUri")
         if (uriString != null) {
             val fnameIndex = uriString.lastIndexOf("%2F", ignoreCase = true)
@@ -471,20 +507,21 @@ class Yabause : AppCompatActivity(),
                         val fd: Int? = mParcelFileDescriptor?.getFd()
                         if (fd != null) {
                             apath = "/proc/self/fd/$fd;$fname"
+                            fileDesc = fd
                         }
                     }
             } catch (e: Exception) {
-                    Toast.makeText(this@Yabause,
-                        "Fail to open $uri with ${e.localizedMessage}",
-                        Toast.LENGTH_LONG).show()
-                    return
+                showInitFailedDialog(getString(R.string.fail_to_open_with, uri, e.localizedMessage))
+                return
             }
 
             if (apath == "") {
-                    Toast.makeText(this@Yabause, "Fail to open $apath", Toast.LENGTH_LONG).show()
-                    return
+                showInitFailedDialog(getString(R.string.fail_to_open, apath))
+                return
             }
             gamePath = apath
+        }else{
+
         }
 
         val dirString: String? = intent.getStringExtra("org.uoyabause.android.FileDir")
@@ -496,8 +533,32 @@ class Yabause : AppCompatActivity(),
 
         Log.d(TAG, "File is " + gamePath)
         if (gamePath == "") {
-            Toast.makeText(this, "No Game file is selected", Toast.LENGTH_LONG).show()
+            showInitFailedDialog(getString(R.string.no_game_file_is_selected))
             return
+        }
+
+
+        if( fileDesc == -1 ) {
+            var file = File(gamePath)
+            try {
+                val filereader = FileReader(file)
+                val br = BufferedReader(filereader)
+                var c: CharArray = CharArray(4)
+                br.read(c, 0, 1)
+                br.close()
+            } catch (e: FileNotFoundException) {
+                showInitFailedDialog(getString(R.string.file_not_found, e.message))
+                return
+            } catch (e: IOException) {
+                showInitFailedDialog(getString(R.string.i_o_error_occurred, e.message))
+                return
+            } catch (e: SecurityException) {
+                showInitFailedDialog(getString(R.string.read_permission_denied, e.message))
+                return
+            } catch (e: Exception) {
+                showInitFailedDialog(getString(R.string.other_file_error, e.message))
+                return
+            }
         }
 
         val gameCode = intent.getStringExtra("org.uoyabause.android.gamecode")
@@ -524,41 +585,44 @@ class Yabause : AppCompatActivity(),
                 }
             }
         }
+
         testCase = intent.getStringExtra("TestCase")
-//        PreferenceManager.setDefaultValues(this, R.xml.preferences, false)
         audio = YabauseAudio(this)
         currentGame = null
-        if (this.gameCode != null) {
-            readPreferences(this.gameCode)
-            if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
-                val c = SonicR()
-                c.uievent = this
-                val lmenu = navigationView.menu
-                val submenu = lmenu.addSubMenu(Menu.NONE,
-                    MENU_ID_LEADERBOARD,
-                    Menu.NONE,
-                    "Leader Board")
-                c.leaderBoards?.forEach {
-                    val lbmenu = submenu.add(it.title)
-                    lbmenu.setIcon(R.drawable.baseline_list_24)
-                    lbmenu.setOnMenuItemClickListener { _ ->
-                        waitingResult = true
-                        val account = GoogleSignIn.getLastSignedInAccount(this)
-                        if (account != null) {
-                            Games.getLeaderboardsClient(this, account)
-                                .getLeaderboardIntent(it.id)
-                                .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
-                                    startActivityForResult(
-                                        intent,
-                                        MENU_ID_LEADERBOARD
-                                    )
-                                })
-                        }
-                        true
+        if (this.gameCode == null) {
+            showInitFailedDialog(getString(R.string.fail_to_get_game_code_this_file_is_not_sega_saturn_game))
+            return
+        }
+
+        readPreferences(this.gameCode)
+        if (this.gameCode == "GS-9170" || this.gameCode == "MK-81800") {
+            val c = SonicR()
+            c.uievent = this
+            val lmenu = navigationView.menu
+            val submenu = lmenu.addSubMenu(Menu.NONE,
+                MENU_ID_LEADERBOARD,
+                Menu.NONE,
+                "Leader Board")
+            c.leaderBoards?.forEach {
+                val lbmenu = submenu.add(it.title)
+                lbmenu.setIcon(R.drawable.baseline_list_24)
+                lbmenu.setOnMenuItemClickListener { _ ->
+                    waitingResult = true
+                    val account = GoogleSignIn.getLastSignedInAccount(this)
+                    if (account != null) {
+                        Games.getLeaderboardsClient(this, account)
+                            .getLeaderboardIntent(it.id)
+                            .addOnSuccessListener(OnSuccessListener<Intent?> { intent ->
+                                startActivityForResult(
+                                    intent,
+                                    MENU_ID_LEADERBOARD
+                                )
+                            })
                     }
+                    true
                 }
-                currentGame = c
             }
+            currentGame = c
         }
 
         if (currentGame != null) {
@@ -567,34 +631,12 @@ class Yabause : AppCompatActivity(),
             navigationView.menu.removeItem(MENU_ID_LEADERBOARD)
         }
 
-        padManager = PadManager.padManager!!
-        padManager.loadSettings()
-        padManager.showMenulistener = this // setShowMenulistener(this)
         waitingResult = false
-/*
-        val uiModeManager = getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-        if (uiModeManager.currentModeType != Configuration.UI_MODE_TYPE_TELEVISION && BuildConfig.BUILD_TYPE != "pro") {
-            val prefs = getSharedPreferences("private", Context.MODE_PRIVATE)
-            val hasDonated = prefs.getBoolean("donated", false)
-            if (hasDonated) {
-                adView = null
-            } else {
-                adView = AdView(this)
-                adView!!.adUnitId = getString(R.string.banner_ad_unit_id2)
-                adView!!.adSize = AdSize.BANNER
-                val adRequest = AdRequest.Builder().build()
-                adView!!.loadAd(adRequest)
-                adView!!.adListener = object : AdListener() {
-                    override fun onAdOpened() {
-                        // Save app state before going to the ad overlay.
-                    }
-                }
-            }
-        } else {
-            adView = null
-        }
- */
         yabauseThread = YabauseRunnable(this)
+        if( yabauseThread?.inited == false ){
+            showInitFailedDialog(getString(R.string.fail_to_initialize_emulator))
+            return
+        }
 
         if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
             showAutoStateLoadDialog()
@@ -871,6 +913,7 @@ class Yabause : AppCompatActivity(),
                 }
                 checkMaxFileCount(save_path + current_gamecode)
             }
+/*
             R.id.save_state_cloud -> {
                 if (YabauseApplication.checkDonated(this) == 0) {
                     waitingResult = true
@@ -977,6 +1020,7 @@ class Yabause : AppCompatActivity(),
                     checkAuth(loginobserver)
                 }
             }
+*/
             R.id.load_state -> {
 
                 // String save_path = YabauseStorage.getStorage().getStateSavePath();
@@ -1144,9 +1188,27 @@ class Yabause : AppCompatActivity(),
 
                     val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
                     if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
-                        val autoSaveFile =
-                            File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
-                        YabauseRunnable.savestate(autoSaveFile.absolutePath)
+
+                        val save_path = YabauseStorage.storage.stateSavePath
+                        val current_gamecode = YabauseRunnable.getCurrentGameCode()
+                        val save_root =
+                            current_gamecode?.let { File(YabauseStorage.storage.stateSavePath, it) }
+                        if (save_root != null) {
+                            if (!save_root.exists()) save_root.mkdir()
+                        }
+                        var save_filename = YabauseRunnable.savestate(save_path + current_gamecode)
+                        if (save_filename != null) {
+                            val point = save_filename!!.lastIndexOf(".")
+                            if (point != -1) {
+                                save_filename = save_filename!!.substring(0, point)
+                            }
+                            val screen_shot_save_path = "$save_filename.png"
+                            if (YabauseRunnable.screenshot(screen_shot_save_path) != 0) {
+                            } else {
+                            }
+                        } else {
+                        }
+                        checkMaxFileCount(save_path + current_gamecode)
                     }
 
                     YabauseRunnable.deinit()
@@ -1163,15 +1225,14 @@ class Yabause : AppCompatActivity(),
                         val resultIntent = Intent()
                         resultIntent.putExtra("playTime",playTime)
                         setResult(RESULT_OK, resultIntent)
-
                         finish()
                         killProcess(myPid())
                     } //public void run() {
                     )
                 }
                 myThread.start()
-
             }
+
             R.id.menu_in_game_setting -> {
                 waitingResult = true
                 val transaction = supportFragmentManager.beginTransaction()
@@ -1316,7 +1377,7 @@ class Yabause : AppCompatActivity(),
         setResult(RESULT_OK, resultIntent)
 
         Log.v(TAG, "this is the end...")
-        yabauseThread.destroy()
+        yabauseThread?.destroy()
         super.onDestroy()
     }
 

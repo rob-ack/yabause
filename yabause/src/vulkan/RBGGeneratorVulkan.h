@@ -43,7 +43,7 @@ public:
   RBGGeneratorVulkan();
   ~RBGGeneratorVulkan();
 
-  void init(VIDVulkan * vulkan, int width, int height);
+  int init(VIDVulkan * vulkan, int width, int height);
   void resize(int width, int height);
   void update(VIDVulkan::RBGDrawInfo * rbg, const vdp2rotationparameter_struct & paraa, const vdp2rotationparameter_struct & parab);
   VkImageView getTexture(int id);

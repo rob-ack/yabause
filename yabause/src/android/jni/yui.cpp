@@ -316,7 +316,9 @@ const char *GetBiosPath()
     yclass = env->GetObjectClass(yabause);
     getBiosPath = env->GetMethodID(yclass, "getBiosPath", "()Ljava/lang/String;");
     message = (jstring)env->CallObjectMethod(yabause, getBiosPath);
-    if (env->GetStringLength(message) == 0)
+    if( message == nullptr ){
+        rtn = NULL;
+    }else if (env->GetStringLength(message) == 0)
         rtn = NULL;
     else
         rtn = env->GetStringUTFChars(message, &dummy);
@@ -1211,10 +1213,7 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     if (initEGLFunc() == -1)
         return -1;
 
-    s_isRunning = 1;
-
     yabause = env->NewGlobalRef(yab);
-
     s_biospath = GetBiosPath();
     s_cdpath = GetGamePath();
     s_buppath = GetMemoryPath();
@@ -1224,25 +1223,13 @@ extern "C" jint Java_org_uoyabause_android_YabauseRunnable_init(JNIEnv *env, job
     s_player2Enable = GetPlayer2Device();
     s_playdatadir = GetPlayDataDir();
     shaderCachePath = string(GetShaderPath());
-/*
-    std::size_t pos = shaderCachePath.rfind("/");
-    if (pos != std::string::npos) {
-        shaderCachePath = shaderCachePath.substr(0,pos+1);
-        YUI_LOG("shader path = %s", shaderCachePath.c_str() );
-    } else {
-        YUI_LOG("YabauseRunnable_init s_buppath is invalid");
-    }
-*/
-
-    GetFileDescriptorPath("test");
 
     YUI_LOG("YabauseRunnable_init s_vidcoretype = %d", s_vidcoretype);
 
-    OSDInit(0);
 
     pthread_attr_t tattr;
     pthread_attr_init(&tattr);
-
+    s_isRunning = 1;
     pthread_create(&_threadId, &tattr, threadStartCallback, NULL);
 
     return res;
@@ -2287,18 +2274,10 @@ void renderLoop()
             int ret;
             YUI_LOG("MSG_SAVE_STATE");
 
-            char prefix[] = "autosave_";
-            char* result = strstr(s_savepath, prefix);
-            if( result != NULL ){
-              if (remove(s_savepath) == 0) {
-              }
-              ret = YabSaveState(s_savepath);
-            }else{
-              time_t t = time(NULL);
-              sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
-              ret = YabSaveState(last_state_filename);
-            }
-
+            time_t t = time(NULL);
+            sprintf(last_state_filename, "%s/%s_%ld.yss", s_savepath, cdip->itemnum, t);
+            ret = YabSaveState(last_state_filename);
+ 
             pthread_mutex_lock(&g_mtxFuncSync);
             pthread_cond_signal(&g_cndFuncSync);
             pthread_mutex_unlock(&g_mtxFuncSync);
@@ -2308,7 +2287,7 @@ void renderLoop()
         case MSG_LOAD_STATE:
         {
             int rtn;
-            YUI_LOG("MSG_LOAD_STATE");
+            YUI_LOG("MSG_LOAD_STATE %s", s_savepath);
             rtn = YabLoadState(s_savepath);
             switch (rtn)
             {

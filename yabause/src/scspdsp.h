@@ -41,6 +41,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #include "core.h"
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 typedef struct
 {
    u16 coef[64];
@@ -187,4 +191,7 @@ void ScspDspExec(ScspDsp* dsp, int addr, u8 * sound_ram);
 
 extern ScspDsp scsp_dsp;
 
+#if defined (__cplusplus)
+}
+#endif
 #endif

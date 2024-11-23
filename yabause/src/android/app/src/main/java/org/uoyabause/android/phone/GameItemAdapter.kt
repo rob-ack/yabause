@@ -159,9 +159,7 @@ class GameItemAdapter(private val dataSet: MutableList<GameInfo?>?) :
             textViewName.text = game.game_title
             // textViewVersion.setText(game.product_number);
             var rate = ""
-            for (i in 0 until game.rating) {
-                rate += "★"
-            }
+            for (i in 0 until game.rating) rate += "★"
             if (game.device_infomation == "CD-1/1") {
             } else {
                 rate += " " + game.device_infomation

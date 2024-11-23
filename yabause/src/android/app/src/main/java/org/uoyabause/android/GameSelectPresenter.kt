@@ -125,6 +125,9 @@ class GameSelectPresenter(
         fun onStartSyncBackUp()
 
         fun onFinishSyncBackUp(result: AutoBackupManager.SyncResult, message: String )
+
+        fun onSignOut()
+
     }
 
     private fun updateGameDatabaseRx(observer: Observer<String>?) {
@@ -211,6 +214,7 @@ class GameSelectPresenter(
         AuthUI.getInstance()
             .signOut(target_.requireActivity())
             .addOnCompleteListener {
+                this.listener_.onSignOut()
                 // user is now signed out
                 // startActivity(new Intent(MyActivity.this, SignInActivity.class));
                 // finish();

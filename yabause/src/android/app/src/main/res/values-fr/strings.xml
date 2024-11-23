@@ -204,13 +204,13 @@
 
         ## 3. Appuyez sur le bouton +\n
 
-        Si vous avez déjà des fichiers d\'images iso CHD ou zippés. Appuyez simplement sur le bouton + et sélectionnez le fichier. * Vous avez besoin d\'une souris sur Android TV\n\n
+        Si vous avez déjà des fichiers d\'images iso CHD ou zippés. Appuyez simplement sur le bouton + et sélectionnez le fichier. \n\n
 
         ## 4. Sélectionnez un répertoire contenant des images ISO\n
 
-        [Configuration] -> [Choisir un Répertoire de Jeu] -> [ADD] * Vous avez besoin d\'une souris sur Android TV\n\n
+        [Configuration] -> [Choisir un Répertoire de Jeu] -> [ADD] \n\n
 
-        Plus de détails sont décrits sur notre site Web [ici] (https://www.uoyabause.org/static_pages/guide).\n
+        Plus de détails sont décrits sur notre site Web [https://www.uoyabause.org/static_pages/guide] (https://www.uoyabause.org/static_pages/guide).\n
         ]]>
     </string>
 
@@ -261,5 +261,18 @@
     <string name="force_feedback">Retour de force</string>
     <string name="visual_feedback">Retour visuel</string>
     <string name="show_analog_dpad_switch_button">Afficher le bouton de basculement Analogique/Dpad</string>
+
+    <string name="file_not_found">Fichier introuvable : %1$s</string>
+    <string name="i_o_error_occurred">Erreur I/O : %1$s</string>
+    <string name="read_permission_denied">Permission de lecture refusée : %1$s</string>
+    <string name="other_file_error">Autre erreur de fichier : %1$s</string>
+    <string name="no_game_file_is_selected">Aucun fichier de jeu sélectionné</string>
+    <string name="fail_to_open_with">Échec de l\'ouverture de %1$s avec %2$s</string>
+    <string name="fail_to_open">Échec de l\'ouverture de %1$s</string>
+
+    <string name="failed_to_initialize">Échec de l\'initialisation</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Échec de la récupération du code du jeu. Ce fichier n\'est pas un jeu SEGA Saturn.</string>
+    <string name="fail_to_initialize_emulator">Échec de l\'initialisation de l\'émulateur</string>
+
 
 </resources>

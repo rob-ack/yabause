@@ -110,13 +110,13 @@
 
         ## 3. Toque no botão + \n\n
 
-        Se você já tiver arquivos CHD ou imagens ISO compactadas. Basta tocar no botão + e selecionar o arquivo. * Você precisa de um mouse na Android TV. \n\n
+        Se você já tiver arquivos CHD ou imagens ISO compactadas. Basta tocar no botão + e selecionar o arquivo. \n\n
 
         ## 4. Selecione um diretório que contenha imagens ISO \n
 
-        [Configurações] -> [selecione o diretório do jogo] -> [adicionar] * Você precisa de um mouse na Android TV. \n\n
+        [Configurações] -> [selecione o diretório do jogo] -> [adicionar]\n\n
 
-        Mais detalhes são descritos em nosso site [aqui] (https://www.uoyabause.org/static_pages/guide). \n
+        Mais detalhes são descritos em nosso site [https://www.uoyabause.org/static_pages/guide] (https://www.uoyabause.org/static_pages/guide). \n
 
         ]]>
     </string>
@@ -168,6 +168,18 @@
     <string name="force_feedback">Feedback de força</string>
     <string name="visual_feedback">Feedback visual</string>
     <string name="show_analog_dpad_switch_button">Mostrar botão de troca Analógico/Dpad</string>
+
+    <string name="file_not_found">Arquivo não encontrado: %1$s</string>
+    <string name="i_o_error_occurred">Erro de I/O: %1$s</string>
+    <string name="read_permission_denied">Permissão de leitura negada: %1$s</string>
+    <string name="other_file_error">Outro erro de arquivo: %1$s</string>
+    <string name="no_game_file_is_selected">Nenhum arquivo de jogo selecionado</string>
+    <string name="fail_to_open_with">Falha ao abrir %1$s com %2$s</string>
+    <string name="fail_to_open">Falha ao abrir %1$s</string>
+
+    <string name="failed_to_initialize">Falha ao inicializar</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Falha ao obter o código do jogo. Este arquivo não é um jogo do SEGA Saturn.</string>
+    <string name="fail_to_initialize_emulator">Falha ao inicializar o emulador</string>
 
 
 </resources>

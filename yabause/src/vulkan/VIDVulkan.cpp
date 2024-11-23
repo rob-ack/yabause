@@ -257,7 +257,9 @@ int VIDVulkan::init(void) {
   fbRender->setup();
 
   rbgGenerator = new RBGGeneratorVulkan();
-  rbgGenerator->init(this, _device_width, _device_height);
+  if( rtn = rbgGenerator->init(this, _device_width, _device_height) != 0 ){
+    return rtn;
+  }
 
   pipleLineFactory->setRenderPath(getRenderPass());
 
@@ -7202,26 +7204,23 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
   if (supportsBlit)
   {
     // Define the region to blit (we will blit the whole swapchain image)
-    VkOffset3D oblitSize;
-    oblitSize.x = viewportData.z;
-    oblitSize.y = viewportData.w;
-    oblitSize.z = 1;
-
-    VkOffset3D sblitSize;
-    sblitSize.x = deviceWidth - viewportData.x;
-    sblitSize.y = deviceHeight - viewportData.y;
-    sblitSize.z = 1;
-
-
     VkImageBlit imageBlitRegion{};
     imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.srcSubresource.layerCount = 1;
     imageBlitRegion.srcOffsets[0].x = viewportData.x;    
-    imageBlitRegion.srcOffsets[0].y = viewportData.y;    
-    imageBlitRegion.srcOffsets[1] = sblitSize;
+    imageBlitRegion.srcOffsets[0].y = viewportData.y;
+    imageBlitRegion.srcOffsets[0].z = 0;
+    imageBlitRegion.srcOffsets[1].x = viewportData.z + viewportData.x;
+    imageBlitRegion.srcOffsets[1].y = viewportData.w + viewportData.y;
+    imageBlitRegion.srcOffsets[1].z = 1;
     imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.dstSubresource.layerCount = 1;
-    imageBlitRegion.dstOffsets[1] = oblitSize;
+    imageBlitRegion.dstOffsets[0].x = 0;
+    imageBlitRegion.dstOffsets[0].y = 0;
+    imageBlitRegion.dstOffsets[0].z = 0;
+    imageBlitRegion.dstOffsets[1].x = viewportData.z;
+    imageBlitRegion.dstOffsets[1].y = viewportData.w;
+    imageBlitRegion.dstOffsets[1].z = 1;
 
     // Issue the blit command
     vkCmdBlitImage(

@@ -61,22 +61,32 @@ class StartupActivity : AppCompatActivity() {
         if( video == "-1" ){
 
             val editor = sharedPref.edit()
-            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL)) {
-                // Defulat is Vulkan!
-                editor.putString("pref_video", "4")
-                editor.putBoolean("pref_use_compute_shader", true)
-                editor.putString("pref_polygon_generation", "2")
-            }else {
-                val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                val configurationInfo = activityManager.deviceConfigurationInfo
-                val supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000
-                if (supportsEs3) {
-                    editor.putString("pref_video", "1")
-                }else{
-                    editor.putString("pref_video", "2")
+
+            var isPC = packageManager.hasSystemFeature("com.google.android.play.feature.HPE_EXPERIENCE")
+            // PC向けのデフォルト値
+            if(isPC){
+                editor.putString("pref_video", "1")  // OpenGL
+                editor.putBoolean("pref_use_compute_shader", true) // ComputeShaderは使える
+                editor.putString("pref_polygon_generation", "0") // Tesselationがつかえない
+            }else{
+                if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL)) {
+                    // Defulat is Vulkan!
+                    editor.putString("pref_video", "4")
+                    editor.putBoolean("pref_use_compute_shader", true)
+                    editor.putString("pref_polygon_generation", "2")
+                } else {
+                    val activityManager =
+                        getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+                    val configurationInfo = activityManager.deviceConfigurationInfo
+                    val supportsEs3 = configurationInfo.reqGlEsVersion >= 0x30000
+                    if (supportsEs3) {
+                        editor.putString("pref_video", "1")
+                    } else {
+                        editor.putString("pref_video", "2")
+                    }
+                    editor.putBoolean("pref_use_compute_shader", false)
+                    editor.putString("pref_polygon_generation", "0")
                 }
-                editor.putBoolean("pref_use_compute_shader", false)
-                editor.putString("pref_polygon_generation", "0")
             }
             editor.apply()
 

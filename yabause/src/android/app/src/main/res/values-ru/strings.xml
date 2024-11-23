@@ -354,13 +354,13 @@
 
         ## 3. Нажмите кнопку + \n
 
-        Если у вас уже есть файлы изображений в формате CHD или zip. Просто нажмите кнопку + и выберите файл. * Вам нужна мышь на Android TV.\n\n
+        Если у вас уже есть файлы изображений в формате CHD или zip. Просто нажмите кнопку + и выберите файл. \n\n
 
         ## 4. Выберите каталог, содержащий образы ISO \n
 
          [Настройки] -> [Папки загрузки игр] -> [ДОБАВИТЬ] \n\n
 
-        Более подробно описано на нашем веб-сайте [здесь] (https://www.uoyabause.org/static_pages/guide). \n
+        Более подробно описано на нашем веб-сайте [https://www.uoyabause.org/static_pages/guide] (https://www.uoyabause.org/static_pages/guide). \n
         ]]>
     </string>
 
@@ -453,6 +453,18 @@
     <string name="visual_feedback">Визуальная обратная связь</string>
     <string name="show_analog_dpad_switch_button">Показать кнопку переключения Аналоговый/Dpad</string>
 
+    <string name="file_not_found">Файл не найден: %1$s</string>
+    <string name="i_o_error_occurred">Ошибка ввода/вывода: %1$s</string>
+    <string name="read_permission_denied">Доступ на чтение запрещён: %1$s</string>
+    <string name="other_file_error">Другая ошибка файла: %1$s</string>
+    <string name="no_game_file_is_selected">Игровой файл не выбран</string>
+    <string name="fail_to_open_with">Не удалось открыть %1$s с помощью %2$s</string>
+    <string name="fail_to_open">Не удалось открыть %1$s</string>
+
+
+    <string name="failed_to_initialize">Не удалось инициализировать</string>
+    <string name="fail_to_get_game_code_this_file_is_not_sega_saturn_game">Не удалось получить код игры. Этот файл не является игрой SEGA Saturn.</string>
+    <string name="fail_to_initialize_emulator">Не удалось инициализировать эмулятор</string>
 
 </resources>
 	

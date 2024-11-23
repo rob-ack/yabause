@@ -22,14 +22,10 @@
     -->
     <uses-permission-sdk-23 android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission-sdk-23 android:name="android.permission.READ_EXTERNAL_STORAGE" />
-
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />
     <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.VIBRATE"/>
@@ -122,7 +118,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
                         android:process=":emulationmain"
-                        android:theme="@style/Theme.Gameselect.Leanback"
+                        android:theme="@style/Theme.Gameselect.Leanback"m
             android:process=":emulationmain"
         </activity>
         -->
@@ -134,11 +130,7 @@
             android:name="org.uoyabause.android.Yabause"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard"
             android:label="@string/app_name"
-            android:theme="@style/AppTheme.NoActionBar"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-            </intent-filter>
+            android:theme="@style/AppTheme.NoActionBar">
         </activity>
 
         <activity

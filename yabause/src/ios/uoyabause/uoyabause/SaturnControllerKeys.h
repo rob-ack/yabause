@@ -10,7 +10,7 @@
 #define SaturnControllerKeys_h
 #endif /* SaturnControllerKeys_h */
 
-typedef NS_ENUM(NSInteger, SaturnKey) {
+typedef NS_ENUM(NSInteger, SaturnKeyXX) {
     SaturnKeyUp = 0,
     SaturnKeyRight = 1,
     SaturnKeyDown = 2,

@@ -53,7 +53,7 @@
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
     {
-        GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+        GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
         if( view ){
             [view setPaused:YES];
         }
@@ -65,7 +65,7 @@
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
     {
-        GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+        GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
         if( view && !_ad_showing){
             [view setPaused:NO];
         }
@@ -87,10 +87,7 @@
         switch(indexPath.row){
             case 0:
             {
- 
-                
-            
-            UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
+             UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"Are you sure you want to exit?" preferredStyle:UIAlertControllerStyleAlert];
             
                 // addActionした順に左から右にボタンが配置されます
                 [alertController addAction:[UIAlertAction actionWithTitle:@"Yes" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
@@ -110,7 +107,7 @@
                 if ( revealViewController )
                 {
                     [revealViewController revealToggleAnimated:YES];
-                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
                     if( view ){
                         [view saveState];
                     }
@@ -125,7 +122,7 @@
                 if ( revealViewController )
                 {
                     [revealViewController revealToggleAnimated:YES];
-                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
                     if( view ){
                         [view loadState];
                     }
@@ -141,7 +138,7 @@
                 if ( revealViewController )
                 {
                     [revealViewController revealToggleAnimated:YES];
-                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
                     if( view ){
                         if ( [view isCurrentlyRemappingControls] ) {
                             self.showRemapControlsLabel.text = @"Show Remap Controls";
@@ -160,7 +157,7 @@
                 if ( revealViewController )
                 {
                     [revealViewController revealToggleAnimated:YES];
-                    GameViewController * view = (GameViewController * )[revealViewController frontViewController];
+                    GameViewControllerO * view = (GameViewControllerO * )[revealViewController frontViewController];
                     if( view ){
                         [view toggleControllerEditMode];
                     }
@@ -193,7 +190,7 @@
     // hide the remap controls overlay if there is no mfi controller present
     if ( indexPath.row == 4 ) {
         GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
-        GameViewController * vc = (GameViewController * )[revealViewController frontViewController];
+        GameViewControllerO * vc = (GameViewControllerO * )[revealViewController frontViewController];
         if ( ![vc hasControllerConnected] ) {
             return 0.0;
         }

@@ -129,8 +129,8 @@ yglcache.c
 ygles.c
 yglshaderes.c )
 
-set(yabause_SOURCES ${yabause_SOURCES} SNDCoreAudio.c)
-set(yabause_HEADERS ${yabause_HEADERS} SNDCoreAudio.h)
+set(yabause_SOURCES ${yabause_SOURCES} sndCoreAudio.c)
+set(yabause_HEADERS ${yabause_HEADERS} sndCoreAudio.h)
 
 endif (IOS)
 

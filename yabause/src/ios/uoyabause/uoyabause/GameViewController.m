@@ -11,61 +11,18 @@
 #include <MetalANGLE/GLES3/gl3.h>
 @import GameController;
 
+#import "YabaSnashiro-Swift.h"
+
 #import <AVFoundation/AVFoundation.h>
 #import <AudioToolbox/AudioToolbox.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
 #import "GameRevealViewController.h"
-#import "SaturnControllerKeys.h"
-#import "KeyMapper.h"
 #import "SidebarViewController.h"
 #import "iOSCoreAudio.h"
-
-/** @defgroup pad Pad
- *
- * @{
- */
+#import "YabaInterface.h"
 
 
-#define CART_NONE            0
-#define CART_PAR             1
-#define CART_BACKUPRAM4MBIT  2
-#define CART_BACKUPRAM8MBIT  3
-#define CART_BACKUPRAM16MBIT 4
-#define CART_BACKUPRAM32MBIT 5
-#define CART_DRAM8MBIT       6
-#define CART_DRAM32MBIT      7
-#define CART_NETLINK         8
-#define CART_ROM16MBIT       9
-
-void PerKeyDown(unsigned int key);
-void PerKeyUp(unsigned int key);
-int start_emulation( int originx, int originy, int width, int height );
-void resize_screen( int x, int y, int width, int height );
-int emulation_step( int command );
-int enterBackGround();
-int MuteSound();
-int UnMuteSound();
-
-MGLContext *g_context = nil;
-MGLContext *g_share_context = nil;
-
-// Settings
-BOOL _bios =YES;
-int _cart = 0;
-BOOL _fps = NO;
-BOOL _frame_skip = NO;
-BOOL _aspect_rate = NO;
-int _filter = 0;
-int _sound_engine = 0;
-int _rendering_resolution = 0;
-BOOL _rotate_screen = NO;
-float _controller_scale = 1.0;
-
-GLuint _renderBuffer = 0;
-NSObject* _objectForLock;
-MGLLayer *glLayer = nil;
-
-@interface GameViewController () {
+@interface GameViewControllerO () {
    int command;
     int controller_edit_mode;
     BOOL canRotateToAllOrientations;
@@ -77,272 +34,25 @@ MGLLayer *glLayer = nil;
 @property (nonatomic, strong) GCController *controller;
 @property (nonatomic, assign) int command;
 @property (nonatomic, assign) Boolean _return;
-
 @property (nonatomic,strong) KeyMapper *keyMapper;
 @property (nonatomic) BOOL isKeyRemappingMode;
 @property (nonatomic,strong) UIAlertController *remapAlertController;
 @property (nonatomic) SaturnKey currentlyMappingKey;
 @property (nonatomic,strong) NSMutableArray *remapLabelViews;
-
 @property (nonatomic) BOOL _isFirst;
+@property (nonatomic, strong) NSMutableArray<PadButton *> *pad_buttons_;
 
 - (void)setup;
 - (void)tearDownGL;
 
 @end
 
-static GameViewController *sharedData_ = nil;
+static GameViewControllerO *sharedData_ = nil;
 static NSDictionary *saturnKeyDescriptions;
 static NSDictionary *saturnKeyToViewMappings;
 
-int swapAglBuffer ()
-{
-    if( glLayer == nil ) return 0;
-    
-    @synchronized (_objectForLock){
-        
-        MGLContext* context = [MGLContext currentContext];
-        if (![context present:glLayer])
-        {
-            //Throw(@"Failed to present framebuffer");
-        }
-        //MGLContext* context = [MGLContext currentContext];
-        //glBindRenderbuffer(GL_RENDERBUFFER, _renderBuffer);
-        //[context presentRenderbuffer:GL_RENDERBUFFER];
-        
-    }
-    return 0;
-}
 
-void RevokeOGLOnThisThread(){
-    [MGLContext setCurrentContext:g_share_context forLayer:glLayer];
-}
-
-void UseOGLOnThisThread(){
-    [MGLContext setCurrentContext:g_context forLayer:glLayer];
-}
-
-const char * GetBiosPath(){
-#if 1
-    return NULL;
-#else
-    if( _bios == YES ){
-        return NULL;
-    }
-    
-    NSFileManager *filemgr;
-    filemgr = [NSFileManager defaultManager];
-    NSString * fileName = @"bios.bin";
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectory = [paths objectAtIndex:0];
-    
-    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
-    NSLog(@"full path name: %@", filePath);
-    
-    // check if file exists
-    if ([filemgr fileExistsAtPath: filePath] == YES){
-        NSLog(@"File exists");
-        
-    }else {
-        NSLog (@"File not found, file will be created");
-        return NULL;
-    }
-    
-    return [filePath fileSystemRepresentation];
-#endif
-}
-
-const char * GetGamePath(){
-    
-    if( sharedData_ == nil ){
-        return nil;
-    }
-    NSString *path = sharedData_.selected_file;
-    return [path cStringUsingEncoding:1];
-}
-
-const char * GetStateSavePath(){
-    BOOL isDir;
-    NSFileManager *filemgr;
-    filemgr = [NSFileManager defaultManager];
-    NSString * fileName = @"state/";
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectory = [paths objectAtIndex:0];
-    
-    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
-    NSLog(@"full path name: %@", filePath);
-    
-    
-    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
-    NSString *dirName = [docDir stringByAppendingPathComponent:@"state"];
-    
-    
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
-    {
-        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
-            NSLog(@"Directory Created");
-        else
-            NSLog(@"Directory Creation Failed");
-    }
-    else
-        NSLog(@"Directory Already Exist");
-
-    return [filePath fileSystemRepresentation];
-}
-
-const char * GetMemoryPath(){
-    BOOL isDir;
-    NSFileManager *filemgr;
-    filemgr = [NSFileManager defaultManager];
-    NSString * fileName = @"backup/memory.bin";
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectory = [paths objectAtIndex:0];
-    
-    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
-    NSLog(@"full path name: %@", filePath);
-    
-    
-    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
-    NSString *dirName = [docDir stringByAppendingPathComponent:@"backup"];
-    
-    
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
-    {
-        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
-            NSLog(@"Directory Created");
-        else
-            NSLog(@"Directory Creation Failed");
-    }
-    else
-        NSLog(@"Directory Already Exist");
-    
-    // check if file exists
-    if ([filemgr fileExistsAtPath: filePath] == YES){
-        NSLog(@"File exists");
-        
-    }else {
-        NSLog (@"File not found, file will be created");
-    }
-    
-    return [filePath fileSystemRepresentation];
-}
-
-int GetCartridgeType(){
-    return _cart;
-}
-
-int GetVideoInterface(){
-    return 0;
-}
-
-int GetEnableFPS(){
-    if( _fps == YES )
-        return 1;
-    
-    return 0;
-}
-
-int GetIsRotateScreen() {
-    if( _rotate_screen == YES )
-        return 1;
-    
-    return 0;
-}
-
-int GetEnableFrameSkip(){
-    if( _frame_skip == YES ){
-        return 1;
-    }
-    return 0;
-}
-
-int GetUseNewScsp(){
-    return _sound_engine;
-}
-
-int GetVideFilterType(){
-    return _filter;
-}
-
-int GetResolutionType(){
-    NSLog (@"GetResolutionType %d",_rendering_resolution);
-    return _rendering_resolution;
-}
-
-const char * GetCartridgePath(){
-    BOOL isDir;
-    NSFileManager *filemgr;
-    filemgr = [NSFileManager defaultManager];
-    NSString * fileName = @"cart/invalid.ram";
-    
-    switch(_cart) {
-        case CART_NONE:
-            fileName = @"cart/none.ram";
-        case CART_PAR:
-            fileName = @"cart/par.ram";
-        case CART_BACKUPRAM4MBIT:
-            fileName = @"cart/backup4.ram";
-        case CART_BACKUPRAM8MBIT:
-            fileName = @"cart/backup8.ram";
-        case CART_BACKUPRAM16MBIT:
-            fileName = @"cart/backup16.ram";
-        case CART_BACKUPRAM32MBIT:
-            fileName = @"cart/backup32.ram";
-        case CART_DRAM8MBIT:
-            fileName = @"cart/dram8.ram";
-        case CART_DRAM32MBIT:
-            fileName = @"cart/dram32.ram";
-        case CART_NETLINK:
-            fileName = @"cart/netlink.ram";
-        case CART_ROM16MBIT:
-            fileName = @"cart/om16.ram";
-        default:
-            fileName = @"cart/invalid.ram";
-    }
-    
-    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-    NSString *documentsDirectory = [paths objectAtIndex:0];
-    
-    NSString *filePath = [documentsDirectory stringByAppendingPathComponent: fileName];
-    NSLog(@"full path name: %@", filePath);
-    
-    
-    NSString *docDir = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
-    NSString *dirName = [docDir stringByAppendingPathComponent:@"cart"];
-    
-    
-    NSFileManager *fm = [NSFileManager defaultManager];
-    if(![fm fileExistsAtPath:dirName isDirectory:&isDir])
-    {
-        if([fm createDirectoryAtPath:dirName withIntermediateDirectories:YES attributes:nil error:nil])
-            NSLog(@"Directory Created");
-        else
-            NSLog(@"Directory Creation Failed");
-    }
-    else
-        NSLog(@"Directory Already Exist");
-    
-    // check if file exists
-    if ([filemgr fileExistsAtPath: filePath] == YES){
-        NSLog(@"File exists");
-        
-    }else {
-        NSLog (@"File not found, file will be created");
-    }
-    return [filePath fileSystemRepresentation];
-}
-
-int GetPlayer2Device(){
-    return -1;
-}
-
-
-@implementation GameViewController
+@implementation GameViewControllerO
 @synthesize iPodIsPlaying;
 @synthesize selected_file;
 
@@ -400,7 +110,6 @@ int GetPlayer2Device(){
     _sound_engine = [[dic objectForKey: @"sound engine"] intValue];
     _rendering_resolution = [[dic objectForKey: @"rendering resolution"] intValue];
     _rotate_screen = [[dic objectForKey: @"rotate screen"]boolValue];
-    //_controller_scale = [[dic objectForKey: @"controller scale"] floatValue];
     
     NSUserDefaults *ud = [NSUserDefaults standardUserDefaults];
     NSMutableDictionary *defaults = [NSMutableDictionary dictionary];
@@ -411,16 +120,6 @@ int GetPlayer2Device(){
     _controller_scale = [ud floatForKey:@"controller scale"];
     _landscape = [ud boolForKey:@"landscape"];
 
-    /*
-    NSUserDefaults* userDefaults = [NSUserDefaults standardUserDefaults];
-    _bios = [userDefaults boolForKey: @"bios"];
-    _cart = (int)[userDefaults integerForKey: @"cart"];
-    _fps = [userDefaults boolForKey: @"fps"];
-    _frame_skip = [userDefaults boolForKey: @"frame_skip"];
-    _aspect_rate = [userDefaults boolForKey: @"aspect_rate"];
-    _filter = [userDefaults boolForKey: @"filter"];
-    _sound_engine = [userDefaults boolForKey: @"sound_engine"];
-     */
 }
 
 - (id)init
@@ -430,15 +129,14 @@ int GetPlayer2Device(){
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
-    //NSSet *allTouches = [event allTouches];
     for (UITouch *touch in touches)
     {
-        for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
-            UIView * target = pad_buttons_[btnindex].target_;
+        for (int btnindex = 0; btnindex < PadButtonsLast; btnindex++) {
+            UIView * target = _pad_buttons_[btnindex].target;
             CGPoint point = [touch locationInView:target];
             if( CGRectContainsPoint( target.bounds , point) ) {
-                [pad_buttons_[btnindex] On:touch];
- //               printf("PAD:%d on\n",btnindex);
+                [_pad_buttons_[btnindex] on:touch];
+                printf("PAD:%d on\n",btnindex);
             }else{
                 //printf("%d: [%d,%d,%d,%d]-[%d,%d]\n", btnindex, (int)target.frame.origin.x, (int)target.frame.origin.y, (int)target.bounds.size.width, (int)target.bounds.size.height, (int)point.x, (int)point.y);
             }
@@ -446,8 +144,8 @@ int GetPlayer2Device(){
     }
     
     if( [self hasControllerConnected ] ) return;
-    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
-        if ([pad_buttons_[btnindex] isOn] ) {
+    for (int btnindex = 0; btnindex < PadButtonsLast; btnindex++) {
+        if ([_pad_buttons_[btnindex] isOn] ) {
             PerKeyDown(btnindex);
         } else {
             PerKeyUp(btnindex);
@@ -461,55 +159,55 @@ int GetPlayer2Device(){
     int handleEvent = 0;
     for( UIPress * press in presses ){
         if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputLeftArrow] ){
-            PerKeyDown(BUTTON_LEFT);
+            PerKeyDown(PadButtonsLeft);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputRightArrow] ){
-            PerKeyDown(BUTTON_RIGHT);
+            PerKeyDown(PadButtonsRight);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputUpArrow] ){
-            PerKeyDown(BUTTON_UP);
+            PerKeyDown(PadButtonsUp);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputDownArrow] ){
-            PerKeyDown(BUTTON_DOWN);
+            PerKeyDown(PadButtonsDown);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"\r"] ){
-            PerKeyDown(BUTTON_START);
+            PerKeyDown(PadButtonsStart);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"z"] ){
-            PerKeyDown(BUTTON_A);
+            PerKeyDown(PadButtonsA);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"x"] ){
-            PerKeyDown(BUTTON_B);
+            PerKeyDown(PadButtonsB);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"c"] ){
-            PerKeyDown(BUTTON_C);
+            PerKeyDown(PadButtonsC);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"a"] ){
-            PerKeyDown(BUTTON_X);
+            PerKeyDown(PadButtonsX);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"s"] ){
-            PerKeyDown(BUTTON_Y);
+            PerKeyDown(PadButtonsY);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"d"] ){
-            PerKeyDown(BUTTON_Z);
+            PerKeyDown(PadButtonsZ);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"q"] ){
-            PerKeyDown(BUTTON_LEFT_TRIGGER);
+            PerKeyDown(PadButtonsLeftTrigger);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"e"] ){
-            PerKeyDown(BUTTON_RIGHT_TRIGGER);
+            PerKeyDown(PadButtonsRightTrigger);
             handleEvent++;
         }
     }
@@ -525,55 +223,55 @@ int GetPlayer2Device(){
     int handleEvent = 0;
     for( UIPress * press in presses ){
         if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputLeftArrow] ){
-            PerKeyUp(BUTTON_LEFT);
+            PerKeyUp(PadButtonsLeft);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputRightArrow] ){
-            PerKeyUp(BUTTON_RIGHT);
+            PerKeyUp(PadButtonsRight);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputUpArrow] ){
-            PerKeyUp(BUTTON_UP);
+            PerKeyUp(PadButtonsUp);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:UIKeyInputDownArrow] ){
-            PerKeyUp(BUTTON_DOWN);
+            PerKeyUp(PadButtonsDown);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"\r"] ){
-            PerKeyUp(BUTTON_START);
+            PerKeyUp(PadButtonsStart);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"z"] ){
-            PerKeyUp(BUTTON_A);
+            PerKeyUp(PadButtonsA);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"x"] ){
-            PerKeyUp(BUTTON_B);
+            PerKeyUp(PadButtonsB);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"c"] ){
-            PerKeyUp(BUTTON_C);
+            PerKeyUp(PadButtonsC);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"a"] ){
-            PerKeyUp(BUTTON_X);
+            PerKeyUp(PadButtonsX);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"s"] ){
-            PerKeyUp(BUTTON_Y);
+            PerKeyUp(PadButtonsY);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"d"] ){
-            PerKeyUp(BUTTON_Z);
+            PerKeyUp(PadButtonsZ);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"q"] ){
-            PerKeyUp(BUTTON_LEFT_TRIGGER);
+            PerKeyUp(PadButtonsLeftTrigger);
             handleEvent++;
         }
         else if( [press.key.charactersIgnoringModifiers isEqualToString:@"e"] ){
-            PerKeyUp(BUTTON_RIGHT_TRIGGER);
+            PerKeyUp(PadButtonsRightTrigger);
             handleEvent++;
         }
 
@@ -591,85 +289,85 @@ int GetPlayer2Device(){
     //NSSet *allTouches = [event allTouches];
     for (UITouch *touch in touches)
     {
-        if( [pad_buttons_[BUTTON_DOWN] isOn] && pad_buttons_[BUTTON_DOWN].getPointId == touch ){
+        if( [_pad_buttons_[PadButtonsDown] isOn] && _pad_buttons_[PadButtonsDown].getPointId == touch ){
 
-            UIView * target = pad_buttons_[BUTTON_DOWN].target_;
+            UIView * target = _pad_buttons_[PadButtonsDown].target;
             CGPoint point = [touch locationInView:target];
             if( point.y < 0 ){
-                [pad_buttons_[BUTTON_DOWN] Off ];
+                [_pad_buttons_[PadButtonsDown] off ];
                 //printf("PAD:%d OFF\n",(int)BUTTON_DOWN );
             }
         }
-        if( [pad_buttons_[BUTTON_UP] isOn] && pad_buttons_[BUTTON_UP].getPointId == touch ){
+        if( [_pad_buttons_[PadButtonsUp] isOn] && _pad_buttons_[PadButtonsUp].getPointId == touch ){
             
-            UIView * target = pad_buttons_[BUTTON_UP].target_;
+            UIView * target = _pad_buttons_[PadButtonsUp].target;
             CGPoint point = [touch locationInView:target];
             //printf("PAD:%d MOVE %d\n",(int)BUTTON_UP,(int)point.y);
             if( point.y > target.bounds.size.height){
-                [pad_buttons_[BUTTON_UP] Off ];
+                [_pad_buttons_[PadButtonsUp] off ];
                 //printf("PAD:%d OFF\n",(int)BUTTON_UP );
             }
         }
         
-        UIView * target = pad_buttons_[BUTTON_DOWN].target_;
+        UIView * target = _pad_buttons_[PadButtonsDown].target;
         CGPoint point = [touch locationInView:target];
         if( CGRectContainsPoint( target.bounds , point) ) {
-            [pad_buttons_[BUTTON_DOWN] On:touch];
+            [_pad_buttons_[PadButtonsDown] on:touch];
             //printf("PAD:%d ON\n",(int)BUTTON_DOWN );
         }
-        target = pad_buttons_[BUTTON_UP].target_;
+        target = _pad_buttons_[PadButtonsUp].target;
         point = [touch locationInView:target];
         if( CGRectContainsPoint( target.bounds , point) ) {
-            [pad_buttons_[BUTTON_UP] On:touch];
+            [_pad_buttons_[PadButtonsUp] on:touch];
             //printf("PAD:%d ON\n",(int)BUTTON_UP );
         }
 
-        if( [pad_buttons_[BUTTON_RIGHT] isOn] && pad_buttons_[BUTTON_RIGHT].getPointId == touch ){
+        if( [_pad_buttons_[PadButtonsRight] isOn] && _pad_buttons_[PadButtonsRight].getPointId == touch ){
             
-            UIView * target = pad_buttons_[BUTTON_RIGHT].target_;
+            UIView * target = _pad_buttons_[PadButtonsRight].target;
             CGPoint point = [touch locationInView:target];
             if( point.x < 0 ){
-                [pad_buttons_[BUTTON_RIGHT] Off ];
+                [_pad_buttons_[PadButtonsRight] off ];
                 //printf("PAD:%d OFF\n",(int)BUTTON_RIGHT );
             }
         }
-        if( [pad_buttons_[BUTTON_LEFT] isOn] && pad_buttons_[BUTTON_LEFT].getPointId == touch ){
+        if( [_pad_buttons_[PadButtonsLeft] isOn] && _pad_buttons_[PadButtonsLeft].getPointId == touch ){
             
-            UIView * target = pad_buttons_[BUTTON_LEFT].target_;
+            UIView * target = _pad_buttons_[PadButtonsLeft].target;
             CGPoint point = [touch locationInView:target];
             if( point.x > target.bounds.size.width){
-                [pad_buttons_[BUTTON_LEFT] Off ];
+                [_pad_buttons_[PadButtonsLeft] off ];
                 //printf("PAD:%d OFF\n",(int)BUTTON_LEFT );
             }
         }
         
-        target = pad_buttons_[BUTTON_LEFT].target_;
+        target = _pad_buttons_[PadButtonsLeft].target;
         point = [touch locationInView:target];
         if( CGRectContainsPoint( target.bounds , point) ) {
-            [pad_buttons_[BUTTON_LEFT] On:touch];
+            [_pad_buttons_[PadButtonsLeft] on:touch];
             //printf("PAD:%d ON\n",(int)BUTTON_LEFT );
         }
-        target = pad_buttons_[BUTTON_RIGHT].target_;
+        target = _pad_buttons_[PadButtonsRight].target;
         point = [touch locationInView:target];
         if( CGRectContainsPoint( target.bounds , point) ) {
-            [pad_buttons_[BUTTON_RIGHT] On:touch];
+            [_pad_buttons_[PadButtonsRight] on:touch];
             //printf("PAD:%d ON\n",(int)BUTTON_RIGHT );
         }
 
 
-        for (int btnindex = BUTTON_RIGHT_TRIGGER; btnindex < BUTTON_LAST; btnindex++) {
+        for (int btnindex = PadButtonsRightTrigger; btnindex < PadButtonsLast; btnindex++) {
 
-            UIView * target = pad_buttons_[btnindex].target_;
+            UIView * target = _pad_buttons_[btnindex].target;
             CGPoint point = [touch locationInView:target];
 
-            if( pad_buttons_[btnindex].getPointId == touch ) {
+            if( _pad_buttons_[btnindex].getPointId == touch ) {
                 if( !CGRectContainsPoint( target.bounds , point) ) {
-                    [pad_buttons_[btnindex] Off];
+                    [_pad_buttons_[btnindex] off];
                     //printf("touchesMoved PAD:%d OFF\n",btnindex);
                 }
             }else{
                 if( CGRectContainsPoint( target.bounds , point) ) {
-                    [pad_buttons_[btnindex] On:touch];
+                    [_pad_buttons_[btnindex] on:touch];
                     //printf("touchesMoved PAD:%d MOVE\n",btnindex);
                 }else{
                     //printf("%d: [%d,%d,%d,%d]-[%d,%d]\n", btnindex, (int)target.frame.origin.x, (int)target.frame.origin.y, (int)target.bounds.size.width, (int)target.bounds.size.height, (int)point.x, (int)point.y);
@@ -679,8 +377,8 @@ int GetPlayer2Device(){
     }
     
     if( [self hasControllerConnected ] ) return;
-    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
-        if ([pad_buttons_[btnindex] isOn] ) {
+    for (int btnindex = 0; btnindex < PadButtonsLast; btnindex++) {
+        if ([_pad_buttons_[btnindex] isOn] ) {
             PerKeyDown(btnindex);
         } else {
             PerKeyUp(btnindex);
@@ -695,9 +393,9 @@ int GetPlayer2Device(){
     //NSSet *allTouches = [event allTouches];
     for (UITouch *touch in touches)
     {
-        for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
-            if ( [pad_buttons_[btnindex] isOn] && [pad_buttons_[btnindex] getPointId] == touch)  {
-                [pad_buttons_[btnindex] Off ];
+        for (int btnindex = 0; btnindex < PadButtonsLast; btnindex++) {
+            if ( [_pad_buttons_[btnindex] isOn] && [_pad_buttons_[btnindex] getPointId] == touch)  {
+                [_pad_buttons_[btnindex] off ];
                 //printf("touchesEnded PAD:%d Up\n",btnindex);
                 if( self.isKeyRemappingMode ){
                     [self showRemapControlAlertWithSaturnKey:btnindex];
@@ -707,8 +405,8 @@ int GetPlayer2Device(){
     }
     
     if( [self hasControllerConnected ] ) return;
-    for (int btnindex = 0; btnindex < BUTTON_LAST; btnindex++) {
-        if ([pad_buttons_[btnindex] isOn] ) {
+    for (int btnindex = 0; btnindex < PadButtonsLast; btnindex++) {
+        if ([_pad_buttons_[btnindex] isOn] ) {
             PerKeyDown(btnindex);
         } else {
             PerKeyUp(btnindex);
@@ -801,7 +499,7 @@ int GetPlayer2Device(){
     
     void (^mfiButtonHandler)(KeyMapMappableButton,BOOL) = ^void(KeyMapMappableButton mfiButton, BOOL pressed) {
         if ( self.isKeyRemappingMode && self.currentlyMappingKey != NSNotFound ) {
-            [self.keyMapper mapKey:self.currentlyMappingKey ToControl:mfiButton];
+            [self.keyMapper mapKey:self.currentlyMappingKey toControl:mfiButton];
             if ( self.remapAlertController != nil ) {
                 [self.remapAlertController dismissViewControllerAnimated:YES completion:nil];
             }
@@ -809,12 +507,14 @@ int GetPlayer2Device(){
             self.currentlyMappingKey = NSNotFound;
             [self refreshViewsWithKeyRemaps];
         } else {
-            SaturnKey saturnKey = [self.keyMapper getMappedKeyForControl:mfiButton];
-            if ( saturnKey != NSNotFound ) {
+//            SaturnKey saturnKey = [self.keyMapper getMappedKeyForControl:mfiButton];
+            NSNumber *mappedKeyNumber = [self.keyMapper getMappedKeyForControl:mfiButton];
+            if (mappedKeyNumber != nil) {
+                SaturnKey mappedKey = (SaturnKey)mappedKeyNumber.integerValue;
                 if(pressed){
-                    PerKeyDown(saturnKey);
+                    PerKeyDown(mappedKey);
                 }else{
-                    PerKeyUp(saturnKey);
+                    PerKeyUp(mappedKey);
                 }
             }
         }
@@ -825,11 +525,11 @@ int GetPlayer2Device(){
         if (self.controller.gamepad) {
 
             [self.controller.extendedGamepad.buttonHome setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_HOME, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_HOME, pressed);
             }];
 
             [self.controller.extendedGamepad.buttonMenu setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_MENU, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_MENU, pressed);
                 GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
                 if ( revealViewController && pressed)
                 {
@@ -838,38 +538,38 @@ int GetPlayer2Device(){
             }];
 
             [self.controller.extendedGamepad.buttonOptions setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_OPTION, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_OPTION, pressed);
             }];
 
             
             [self.controller.extendedGamepad.buttonA setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_A, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_A, pressed);
             }];
             
             [self.controller.extendedGamepad.rightShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_RS, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_RS, pressed);
             }];
             
             [self.controller.extendedGamepad.leftShoulder setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_LS, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_LS, pressed);
             }];
             
             [self.controller.extendedGamepad.leftTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_LT, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_LT, pressed);
             }];
             
             [self.controller.extendedGamepad.rightTrigger setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_RT, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_RT, pressed);
             }];
             
             [self.controller.extendedGamepad.buttonX setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_X, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_X, pressed);
             }];
             [self.controller.extendedGamepad.buttonY setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_Y, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_Y, pressed);
             }];
             [self.controller.extendedGamepad.buttonB setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
-                mfiButtonHandler(MFI_BUTTON_B, pressed);
+                mfiButtonHandler(KeyMapMappableButtonMFI_BUTTON_B, pressed);
             }];
             [self.controller.extendedGamepad.dpad.up setValueChangedHandler:^(GCControllerButtonInput *button, float value, BOOL pressed) {
                 if(pressed){
@@ -937,6 +637,7 @@ int GetPlayer2Device(){
         [self patientlyDiscoverController];
     }
     canRotateToAllOrientations = YES;
+    [self becomeFirstResponder];
 }
 
 - (void)patientlyDiscoverController {
@@ -991,39 +692,11 @@ int GetPlayer2Device(){
     }];
      
 }
-/*
--(void)setPaused:(BOOL)paused
-{
-    if( paused == YES ){
-//    TODO    [gv stopAnimation];
-        
-    }else{
-        if( self->controller_edit_mode != 1 ){
-// TODO       [gv startAnimation];
-        }
-    }
-}
-*/
-/*
--(BOOL) shouldAutorotate{
-    return NO;
-}
-
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
-    return UIInterfaceOrientationMaskLandscapeLeft;
-}
-*/
-
 
 - (void)viewDidLoad
 {
     [super viewDidLoad];
     [self loadSettings];
-    
-    //if( _landscape == YES ){
-    //    NSNumber *value = [NSNumber numberWithInt:UIInterfaceOrientationLandscapeRight];
-    //    [[UIDevice currentDevice] setValue:value forKey:@"orientation"];
-    //}
     
     sharedData_ = self;
     _objectForLock = [[NSObject alloc] init];
@@ -1035,15 +708,6 @@ int GetPlayer2Device(){
     GameRevealViewController *revealViewController = (GameRevealViewController *)self.revealViewController;
     if ( revealViewController )
     {
-//        [_menu_button setTarget: self.revealViewController];
-  //      [_menu_button setAction: @selector( revealToggle: )];
-        //[_menu_button addTarget:revealViewController action:@selector(revealToggle:)  ];
-        //[_menu_button addTarget:<#(nullable id)#> action:<#(nonnull SEL)#> forControlEvents:<#(UIControlEvents)#> ];
-//        UIButton * rbutton = [[UIButton alloc] target:revealViewController action:@selector(revealToggle:) ];
-        
-        //UIBarButtonItem *revealButtonItem = [[UIBarButtonItem alloc] initWithImage:[UIImage imageNamed:@"reveal-icon.png"]
-        //    style:UIBarButtonItemStylePlain target:revealViewController action:@selector(revealToggle:)];
-        
         [self.view addGestureRecognizer:self.revealViewController.panGestureRecognizer];
         self.selected_file = revealViewController.selected_file;
     }
@@ -1068,33 +732,61 @@ int GetPlayer2Device(){
     [self right_trigger ].alpha = 0.0f;
     [self start_button ].alpha = 0.0f;
  
-    pad_buttons_[BUTTON_UP] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_UP].target_ = self.up_button;
-    pad_buttons_[BUTTON_DOWN] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_DOWN].target_ = self.down_button;
-    pad_buttons_[BUTTON_LEFT] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_LEFT].target_ = self.left_button;
-    pad_buttons_[BUTTON_RIGHT] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_RIGHT].target_ = self.right_button;
-    pad_buttons_[BUTTON_A] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_A].target_ = self.a_button;
-    pad_buttons_[BUTTON_B] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_B].target_ = self.b_button;
-    pad_buttons_[BUTTON_C] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_C].target_ = self.c_button;
-    pad_buttons_[BUTTON_X] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_X].target_ = self.x_button;
-    pad_buttons_[BUTTON_Y] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_Y].target_ = self.y_button;
-    pad_buttons_[BUTTON_Z] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_Z].target_ = self.z_button;
-    pad_buttons_[BUTTON_LEFT_TRIGGER] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_LEFT_TRIGGER].target_ = self.left_trigger;
-    pad_buttons_[BUTTON_RIGHT_TRIGGER] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_RIGHT_TRIGGER].target_ = self.right_trigger;
-    pad_buttons_[BUTTON_START] = [[PadButton alloc] init];
-    pad_buttons_[BUTTON_START].target_ = self.start_button;
+    _pad_buttons_ = [[NSMutableArray alloc] initWithCapacity:PadButtonsLast];
+    // Create and add PadButton objects to the _pad_buttons_ array
+    PadButton *upButton = [[PadButton alloc] init];
+    upButton.target = self.up_button;
+    [_pad_buttons_ addObject:upButton];
+
+    PadButton *rightButton = [[PadButton alloc] init];
+    rightButton.target = self.right_button;
+    [_pad_buttons_ addObject:rightButton];
     
+    PadButton *downButton = [[PadButton alloc] init];
+    downButton.target = self.down_button;
+    [_pad_buttons_ addObject:downButton];
+
+    PadButton *leftButton = [[PadButton alloc] init];
+    leftButton.target = self.left_button;
+    [_pad_buttons_ addObject:leftButton];
+
+    PadButton *rightTriggerButton = [[PadButton alloc] init];
+    rightTriggerButton.target = self.right_trigger;
+    [_pad_buttons_ addObject:rightTriggerButton];
+
+    PadButton *leftTriggerButton = [[PadButton alloc] init];
+    leftTriggerButton.target = self.left_trigger;
+    [_pad_buttons_ addObject:leftTriggerButton];
+
+    PadButton *startButton = [[PadButton alloc] init];
+    startButton.target = self.start_button;
+    [_pad_buttons_ addObject:startButton];
+    
+    PadButton *aButton = [[PadButton alloc] init];
+    aButton.target = self.a_button;
+    [_pad_buttons_ addObject:aButton];
+
+    PadButton *bButton = [[PadButton alloc] init];
+    bButton.target = self.b_button;
+    [_pad_buttons_ addObject:bButton];
+
+    PadButton *cButton = [[PadButton alloc] init];
+    cButton.target = self.c_button;
+    [_pad_buttons_ addObject:cButton];
+
+    PadButton *xButton = [[PadButton alloc] init];
+    xButton.target = self.x_button;
+    [_pad_buttons_ addObject:xButton];
+
+    PadButton *yButton = [[PadButton alloc] init];
+    yButton.target = self.y_button;
+    [_pad_buttons_ addObject:yButton];
+
+    PadButton *zButton = [[PadButton alloc] init];
+    zButton.target = self.z_button;
+    [_pad_buttons_ addObject:zButton];
+   
+     
     self.preferredFramesPerSecond = 60;
     
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didEnterBackground) name:UIApplicationDidEnterBackgroundNotification object:nil];
@@ -1117,48 +809,7 @@ int GetPlayer2Device(){
     
     [self setup];
     
-//    GLView * gview = (GLView*)self.view;
-//    gview.context = g_context;
-//    gview.controller = self;
-    
-    
-    //[self.view  addSubview:self.myGLKView];
-    // Configure the audio session
-    
-#if 0
-    AVAudioSession *sessionInstance = [AVAudioSession sharedInstance];
-    NSError *error;
-    
-    // set the session category
-    iPodIsPlaying = [sessionInstance isOtherAudioPlaying];
-    NSString *category = iPodIsPlaying ? AVAudioSessionCategoryAmbient : AVAudioSessionCategorySoloAmbient;
-    bool success = [sessionInstance setCategory:category error:&error];
-    if (!success) NSLog(@"Error setting AVAudioSession category! %@\n", [error localizedDescription]);
-    
-    double hwSampleRate = 44100.0;
-    success = [sessionInstance setPreferredSampleRate:hwSampleRate error:&error];
-    if (!success) NSLog(@"Error setting preferred sample rate! %@\n", [error localizedDescription]);
-    
-    // add interruption handler
-    [[NSNotificationCenter defaultCenter]   addObserver:self
-                                               selector:@selector(handleInterruption:)
-                                                   name:AVAudioSessionInterruptionNotification
-                                                 object:sessionInstance];
-    
-    // we don't do anything special in the route change notification
-    [[NSNotificationCenter defaultCenter]   addObserver:self
-                                               selector:@selector(handleRouteChange:)
-                                                   name:AVAudioSessionRouteChangeNotification
-                                                 object:sessionInstance];
-    
-    // activate the audio session
-    success = [sessionInstance setActive:YES error:&error];
-    if (!success) NSLog(@"Error setting session active! %@\n", [error localizedDescription]);
-#endif
     iOSCoreAudioInit();
-   
-    
-    //self.preferredFramesPerSecond =120;
     
     
     static dispatch_once_t onceToken;
@@ -1204,7 +855,6 @@ int GetPlayer2Device(){
 }
 
 - (BOOL)shouldAutorotate {
-    // _landscape が YES の場合には回転を禁止し、固定向きを保持
     return !_landscape;
 }
 
@@ -1253,19 +903,14 @@ int GetPlayer2Device(){
 }
 
 - (void)toggleControllerEditMode {
-    
-//    GLView * gview = (GLView*)self.view;
     if(controller_edit_mode==0){
         self.scale_slider.hidden = NO;
         controller_edit_mode = 1;
-// TODO        [gview stopAnimation];
     }else{
         self.scale_slider.hidden = YES;
         controller_edit_mode = 0;
-// TODO       [gview startAnimation];
     }
 }
-
 
 - (void)dealloc
 {
@@ -1303,60 +948,17 @@ int GetPlayer2Device(){
 - (void)setup
 {
     [MGLContext setCurrentContext:self.context];
-//    GLView *view = (GLView *)self.view;
-//    view.context = self.context;
-//    view.contentScaleFactor = [UIScreen mainScreen].scale;
-//    [view bindDrawable ];
-    
-    //_renderBuffer = view._renderBuffer;
-    
     CGFloat scale = [[UIScreen mainScreen] scale];
-    //printf("viewport(%f,%f)\n",[view frame].size.width,[view frame].size.height);
-
     CGRect newFrame = self.view.frame;
-    /*
-    if( _aspect_rate ){
-        int specw = self.view.frame.size.width;
-        int spech = self.view.frame.size.height;
-        float specratio = (float)specw / (float)spech;
-        int saturnw = 4;
-        int saturnh = 3;
-        if( _rotate_screen == YES ){
-            saturnw = 3;
-            saturnh = 4;
-        }
-        float saturnraito = (float)saturnw/ (float)saturnh;
-        float revraito = (float) saturnh/ (float)saturnw;
-        
-        if( specratio > saturnraito ){
-            
-            newFrame.size.width = spech * saturnraito;
-            newFrame.size.height = spech;
-            newFrame.origin.x = (self.view.frame.size.width - newFrame.size.width)/2.0;
-            newFrame.origin.y = 0;
-        }else{
-            newFrame.size.width = specw ;
-            newFrame.size.height = specw * revraito;
-            newFrame.origin.x = 0;
-            newFrame.origin.y = spech - newFrame.size.height;
-        }
-    }
-    */
     UIEdgeInsets safeArea = self.view.safeAreaInsets;
     
     if( self._isFirst == YES){
         start_emulation(safeArea.left*scale,safeArea.bottom*scale, (newFrame.size.width-safeArea.right-safeArea.left)*scale  , (newFrame.size.height - safeArea.top-safeArea.bottom) *scale );
         self._isFirst = NO;
-//        [view startAnimation];
     }else{
         resize_screen(safeArea.left*scale,safeArea.bottom*scale, (newFrame.size.width-safeArea.right-safeArea.left)*scale  , (newFrame.size.height - safeArea.top-safeArea.bottom) *scale );
     }
     self._return = YES;
-    
-    //CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(update)];
-    //[displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSDefaultRunLoopMode];
-    //start_emulation(1920,1080);
-    
 }
 
 - (void)tearDownGL
@@ -1369,22 +971,11 @@ int GetPlayer2Device(){
 
 - (void)emulate_one_frame
 {
-    
     if( self._return == YES ){
-//        GLView *view = (GLView *)self.view;
-//        GLint defaultFBO;
-//        [view bindDrawable];
-//       glGetIntegerv(GL_FRAMEBUFFER_BINDING, &defaultFBO);
-//       printf("DEFAULT FBO: %d\n", defaultFBO);
         self._return = NO;
     }
-
-    
     emulation_step(self.command);
     self.command = 0;
-    //[self.myGLKView setNeedsDisplay];
-    
-
 }
 
 - (void)viewDidLayoutSubviews
@@ -1399,22 +990,14 @@ int GetPlayer2Device(){
 
 
 - (void)didEnterBackground {
-    
-//    GLView *view = (GLView *)self.view;
-//    [view stopAnimation];
     enterBackGround();
     [self setPaused:true];
 }
 
 - (void)didBecomeActive {
-    //if (self.view.active)
     [self.view becomeFirstResponder];
-    
     [self setPaused:false];
     self._return = YES;
-    
-//    GLView *view = (GLView *)self.view;
-//    [view startAnimation];
 }
 
 - (BOOL)canBecomeFirstResponder {
@@ -1433,7 +1016,7 @@ int GetPlayer2Device(){
 }
 
 - (void)deleteBackward {
-    // This space intentionally left blank to complete protocol
+
 }
 
 #pragma mark -
@@ -1533,10 +1116,8 @@ int GetPlayer2Device(){
 
 - (void)mglkView:(MGLKView *)view drawInRect:(CGRect)rect
 {
-   
-    //glViewport(0, 0, self.size.width, self.size.height);
-    //glClearColor(0, 104.0 / 255.0, 55.0 / 255.0, 1.0);
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  
+
 }
 
 

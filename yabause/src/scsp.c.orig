@@ -1343,9 +1343,9 @@ void scsp_slot_write_word(struct Scsp *s, u32 addr, u16 data)
       slot->regs.dipan = (data >> 8) & 0x1f;
       slot->regs.efsdl = (data >> 5) & 7;
       slot->regs.efpan = data & 0x1f;
-      if (slot_num == 16) {
-        printf("%d", slot->regs.efsdl);
-      }
+      //if (slot_num == 16) {
+        //printf("%d", slot->regs.efsdl);
+      //}
       break;
    default:
       break;

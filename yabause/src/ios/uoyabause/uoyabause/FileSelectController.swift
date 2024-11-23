@@ -184,7 +184,34 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
         return CGSize(width: width, height: height)
     }
     
+    func addSkipBackupAttributeToItemAtURL(url: URL) throws {
+        var url = url
+        var resourceValues = URLResourceValues()
+        resourceValues.isExcludedFromBackup = true
+        try url.setResourceValues(resourceValues)
+    }
+
+    func excludeDirectoryFromBackup(directoryURL: URL) throws {
+        try addSkipBackupAttributeToItemAtURL(url: directoryURL)
+        
+        let fileManager = FileManager.default
+        let enumerator = fileManager.enumerator(at: directoryURL, includingPropertiesForKeys: nil)
+        
+        while let fileURL = enumerator?.nextObject() as? URL {
+            try addSkipBackupAttributeToItemAtURL(url: fileURL)
+        }
+    }
+    
     func updateDoc(){
+        
+        // ドキュメントディレクトリをバックアップ対象外にする
+        do {
+            let documentsDirectory = try FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
+            try excludeDirectoryFromBackup(directoryURL: documentsDirectory)
+        } catch {
+            print("Error excludiong directory")
+        }
+        
         file_list.removeAll()
         let manager = FileManager.default
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
@@ -217,6 +244,11 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
             }
             file_list.sort { $0.gameTitle ?? "" < $1.gameTitle ?? "" }
         }catch{
+        }
+        
+        // UIの更新をメインスレッドで実行
+        DispatchQueue.main.async { [weak self] in
+            self?.collectionView.reloadData() // collectionViewのデータをリロード
         }
     }
     
@@ -276,14 +308,14 @@ class FileSelectController :UICollectionViewController,UICollectionViewDelegateF
         let documentsPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0] as String
         selected_file_path = documentsPath + "/" + file_list[(indexPath as NSIndexPath).row].filePath!
         
-        performSegue(withIdentifier: "toSubViewController",sender: nil)
+        performSegue(withIdentifier: "toGameView",sender: self)
     }
     
     // Segue 準備
     override func prepare(for segue: UIStoryboardSegue, sender: Any!) {
-        if (segue.identifier == "toSubViewController") {
-            let subVCmain: GameRevealViewController = (segue.destination as? GameRevealViewController)!
-            subVCmain.selected_file = selected_file_path
+        if (segue.identifier == "toGameView") {
+            let subVCmain: GameMainViewController = (segue.destination as? GameMainViewController)!
+            subVCmain.selectedFile = selected_file_path
         }
     }
     

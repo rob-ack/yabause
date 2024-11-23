@@ -53,19 +53,19 @@
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
--(void) mapKey:(SaturnKey)keyboardKey ToControl:(KeyMapMappableButton)button {
+-(void) mapKey:(SaturnKeyXX)keyboardKey ToControl:(KeyMapMappableButton)button {
     NSNumber *buttonKey = [NSNumber numberWithInteger:button];
     [self.keyMapping setObject:[NSNumber numberWithInteger:keyboardKey] forKey:buttonKey];
 }
 
--(void) unmapKey:(SaturnKey)saturnKey {
+-(void) unmapKey:(SaturnKeyXX)saturnKey {
     NSArray *mappedButtons = [self getControlsForMappedKey:saturnKey];
     for (NSNumber *button in mappedButtons) {
         [self.keyMapping removeObjectForKey:button];
     }
 }
 
--(SaturnKey) getMappedKeyForControl:(KeyMapMappableButton)button {
+-(SaturnKeyXX) getMappedKeyForControl:(KeyMapMappableButton)button {
     NSNumber *buttonKey = [NSNumber numberWithInteger:button];
     NSNumber *mappedKey = [self.keyMapping objectForKey:buttonKey];
     if ( mappedKey != nil ) {
@@ -75,7 +75,7 @@
     }
 }
 
--(NSArray*) getControlsForMappedKey:(SaturnKey) saturnKey {
+-(NSArray*) getControlsForMappedKey:(SaturnKeyXX) saturnKey {
     NSMutableArray *foundControls = [NSMutableArray array];
     for (NSNumber *buttonKey in self.keyMapping) {
         NSNumber *mappedKey = [self.keyMapping objectForKey:buttonKey];

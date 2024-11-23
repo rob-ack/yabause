@@ -8,13 +8,12 @@
 
 #import <UIKit/UIKit.h>
 #import <MetalANGLE/MGLKViewController.h>
-#import "PadButton.h"
 
-@interface GameViewController : MGLKViewController
+@interface GameViewControllerO : MGLKViewController
 {
     UInt32	 iPodIsPlaying;
     NSString *selected_file;
-    PadButton * pad_buttons_[BUTTON_LAST];
+    //PadButton * pad_buttons_[PadButtonsLast];
 }
 
 @property (nonatomic, assign) UInt32		iPodIsPlaying;		// Whether the iPod is playing

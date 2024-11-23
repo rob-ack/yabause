@@ -3543,7 +3543,7 @@ static INLINE void ReadVdp2ColorOffset(Vdp2 * regs, vdp2draw_struct *info, int m
 /*------------------------------------------------------------------------------
  Rotate Screen drawing
  ------------------------------------------------------------------------------*/
-void Vdp2DrawRotationThread(void * p) {
+void * Vdp2DrawRotationThread(void * p) {
 #if RBG_PROFILE
   u64 before;
   u64 now;
@@ -3587,6 +3587,8 @@ void Vdp2DrawRotationThread(void * p) {
     YGL_THREAD_DEBUG("Vdp2DrawRotationThread out %d\n", curret_rbg->vdp2_sync_flg);
 
   }
+
+  return NULL;
 }
 
 static void FASTCALL Vdp2DrawRotation(RBGDrawInfo * rbg)

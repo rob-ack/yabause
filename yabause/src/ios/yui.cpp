@@ -21,6 +21,10 @@ extern "C"{
 
 #include <stdarg.h>
 
+const int MSG_SAVE_STATE = 1;
+const int MSG_LOAD_STATE = 2;
+const int MSG_RESET = 3;
+
 //#include <OpenGLES/ES3/gl.h>
 //#include <OpenGLES/ES3/glext.h>
 
@@ -308,18 +312,23 @@ int start_emulation( int originx, int originy, int width, int height ){
         int rtn;
 
         switch (command ) {
-            case 1:
+            case MSG_SAVE_STATE:
                 YUI_LOG("MSG_SAVE_STATE %s\n",s_savepath);
                 if( (rtn = YabSaveStateSlot(s_savepath, 1)) != 0 ){
                     YUI_LOG("StateSave is failed %d\n",rtn);
                 }
                 break;
-            case 2:
+            case MSG_LOAD_STATE:
                 YUI_LOG("MSG_LOAD_STATE %s\n",s_savepath);
                  if( (rtn = YabLoadStateSlot(s_savepath, 1)) != 0 ){
                     YUI_LOG("StateLoad is failed %d\n",rtn);
                 }               
                 break;            
+            case MSG_RESET:
+                YUI_LOG("MSG_RESET %s\n",s_savepath);
+                YabauseReset();            
+                break;            
+
         }
 
         YabauseExec();

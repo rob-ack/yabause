@@ -22,7 +22,7 @@ public:
 
     void setYabauseThread(YabauseThread* p) {
       pYabauseThread = p;
-      ready();
+      ready();  
     }
 
     void updateView(const QSize& size = QSize());

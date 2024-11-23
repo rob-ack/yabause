@@ -22,10 +22,14 @@
 #endif
 */
 
+#if defined(ARCH_IS_LINUX)
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 //#include <EGL/egl.h>
 #include <GLES3/gl32.h>
+#else
+#include <SDL_opengl.h>
+#endif
 
 
 #include <nanogui/common.h>
@@ -33,9 +37,9 @@
 
 NAMESPACE_BEGIN(nanogui)
 
-inline Color::operator const NVGcolor &() const {
-    return reinterpret_cast<const NVGcolor &>(*this->data());
-}
+//inline Color::operator const NVGcolor &() const {
+//    return reinterpret_cast<const NVGcolor &>(*this->data());
+//}
 
 /// Determine whether an icon ID is a texture loaded via nvgImageIcon
 inline bool nvgIsImageIcon(int value) { return value < 1024; }

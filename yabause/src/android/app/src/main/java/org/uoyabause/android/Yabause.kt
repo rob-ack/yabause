@@ -36,6 +36,9 @@
 */
 package org.uoyabause.android
 
+import android.animation.AnimatorInflater
+import android.animation.AnimatorSet
+import android.animation.ValueAnimator
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.Dialog
@@ -54,11 +57,13 @@ import android.os.Process.myPid
 import android.util.Log
 import android.view.*
 import android.view.WindowInsets.Type
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.documentfile.provider.DocumentFile
@@ -117,6 +122,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+
 
 internal enum class TrayState {
     OPEN,
@@ -205,6 +211,82 @@ class Yabause : AppCompatActivity(),
             ).show()
         }
         toggleMenu()
+    }
+
+    public override fun onStop(){
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
+        if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
+            val autoSaveFile =
+                File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
+            YabauseRunnable.savestate(autoSaveFile.absolutePath)
+        }
+        super.onStop()
+    }
+
+    fun showAutoStateLoadDialog(){
+
+        val autoSaveFile = File( YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
+        if( !autoSaveFile.exists() ) return
+
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(R.string.auto_state_save_data_found)
+        builder.setMessage(R.string.auto_state_detail)
+
+
+        val layoutInflater = layoutInflater
+        val ProgressButton = layoutInflater.inflate(R.layout.pbutton,null,false)
+        builder.setView(ProgressButton)
+
+        // ダイアログを表示
+        val dialog = builder.create()
+
+        val dialogButton = ProgressButton.findViewById<Button>(R.id.progress_btn_back)
+        dialogButton.setOnClickListener{
+            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+            autoSaveFile.delete()
+            dialog.dismiss()
+        }
+
+        val dialogButtonFront = ProgressButton.findViewById<Button>(R.id.progress_btn_front)
+        dialogButtonFront.setOnClickListener{
+            YabauseRunnable.loadstate(autoSaveFile.absolutePath)
+            autoSaveFile.delete()
+            dialog.dismiss()
+        }
+
+        val dialogCancelButton = ProgressButton.findViewById<Button>(R.id.progress_btn_cancel)
+        dialogCancelButton.setOnClickListener{
+            autoSaveFile.delete()
+            dialog.dismiss()
+        }
+
+        // ダイアログが表示されたときにアニメーションを開始する
+        dialog.setOnShowListener {
+            //colorAnimation.start()
+
+            val valueAnimator = ValueAnimator.ofInt(0, dialogButtonFront.width)
+            valueAnimator.addUpdateListener {
+                val animatedValue = it.animatedValue as Int
+                dialogButtonFront.layoutParams.width = animatedValue
+                dialogButtonFront.requestLayout()
+            }
+
+            valueAnimator.addListener(
+                onEnd = {
+                    dialogButtonFront.callOnClick()
+                },
+                onCancel = {
+
+                }
+            )
+
+            dialogButtonFront.visibility = View.VISIBLE
+            valueAnimator.duration = 5000
+            valueAnimator.start()
+
+        }
+
+        dialog.show()
     }
 
     var mParcelFileDescriptor: ParcelFileDescriptor? = null
@@ -458,6 +540,10 @@ class Yabause : AppCompatActivity(),
         }
  */
         yabauseThread = YabauseRunnable(this)
+
+        if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
+            showAutoStateLoadDialog()
+        }
     }
 
     private fun isSignedIn(): Boolean {
@@ -1000,6 +1086,14 @@ class Yabause : AppCompatActivity(),
                 progressBar.visibility = View.VISIBLE
                 waitingResult = true
                 val myThread = Thread {
+
+                    val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
+                    if( sharedPref.getBoolean("pref_auto_state_save", false) ) {
+                        val autoSaveFile =
+                            File(YabauseStorage.storage.stateSavePath + "/autosave_" + this.gameCode + ".yss")
+                        YabauseRunnable.savestate(autoSaveFile.absolutePath)
+                    }
+
                     YabauseRunnable.deinit()
                     runOnUiThread(Runnable {
                         waitingResult = false
@@ -1133,6 +1227,8 @@ class Yabause : AppCompatActivity(),
             YabauseRunnable.closeTray()
         }
     }
+
+
 
     public override fun onPause() {
         super.onPause()

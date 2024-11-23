@@ -157,4 +157,12 @@
     <string name="msg_fail_to_zip_backup_data">Falha ao compactar os dados de backup</string>
     <string name="msg_success_to_upload_backup_data_to_cloud">Sucesso ao fazer o upload de dados de backup para a nuvem.</string>
 
+    <string name="perf_use_cpu_affinity_detail">No caso de um processador multicore assimétrico, os núcleos com maior frequência são preferencialmente utilizados. No entanto, dependendo do dispositivo, pode haver uma diminuição de desempenho em sentido contrário.</string>
+    <string name="pref_use_sh2_cache_detail">A ativação da emulação do processamento de cache SH2 melhora a compatibilidade. No entanto, isso vem com o custo da velocidade de emulação.</string>
+    <string name="pref_auto_state_save_title">Ativar Salvamento Automático de Estado</string>
+    <string name="pref_auto_state_save_detail">Salva automaticamente o estado ao sair. Na próxima inicialização, pode ser retomado a partir do ponto salvo. No entanto, pode haver casos em que a reprodução não é bem-sucedida.</string>
+
+    <string name="auto_state_save_data_found">Dados de salvamento automático encontrados!</string>
+    <string name="auto_state_detail">Deseja carregar o estado? Infelizmente, pode não ser muito confiável. Se não funcionar bem, toque em Cancelar.</string>
+
 </resources>

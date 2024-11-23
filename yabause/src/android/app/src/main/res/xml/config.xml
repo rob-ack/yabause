@@ -37,5 +37,9 @@
         <key>is_enable_subscription</key>
         <value>false</value>
     </entry>
+    <entry>
+        <key>is_enable_subscription</key>
+        <value>false</value>
+    </entry>
 </defaultsMap>
     <!-- END xml_defaults -->

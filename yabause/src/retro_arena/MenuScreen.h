@@ -18,9 +18,11 @@ along with YabaSanshiro; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
+#if defined(ARCH_IS_LINUX)
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL2/SDL_opengles2.h>
+#include <SDL_opengles2.h>
+#endif
 #undef Success 
 #include "nanogui/screen.h"
 #include "nanovg.h"
@@ -35,6 +37,9 @@ using std::shared_ptr;
 #endif
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+using std::vector;
+
+#include "EventManager.h"
 
 
 #include "InputConfig.h"
@@ -118,6 +123,7 @@ class MenuScreen : public nanogui::Screen
 {
 public:
     //Widget *activeWindow = nullptr;
+    EventManager * evm = EventManager::getInstance();
     Widget *tools = nullptr;
     std::vector<PlayerConfig> player_configs_;
 /*    
@@ -129,6 +135,8 @@ public:
 */    
     Button *bAnalog = nullptr;
     Button *bCdTray = nullptr;
+    Button * btnPlay = nullptr;
+    Button * btnRecord = nullptr;
     bool is_cdtray_open_ = false;
 
     std::map<SDL_JoystickID, SDL_Joystick*> joysticks_;
@@ -151,42 +159,20 @@ public:
     
     
     MenuScreen( SDL_Window* pwindow, int rwidth, int rheight, const std::string & fname, const std::string & game  );
-    virtual bool keyboardEvent( std::string & keycode , int scancode, int action, int modifiers);
+    virtual bool keyboardEvent( const std::string & keycode , int scancode, int action, int modifiers);
     virtual void draw(NVGcontext *ctx);
-
-	uint32_t reset_ = 0;
-	void setResetMenuEventCode( uint32_t type ){ reset_ = type; }
-
-	uint32_t pad_ = 0;
-	void setTogglePadModeMenuEventCode( uint32_t type ){ pad_ = type; }
-
-	uint32_t toggile_fps_ = 0;
-	void setToggleFpsCode( uint32_t type ){ toggile_fps_ = type; }
-
-	uint32_t toggile_frame_skip_ = 0;
-	void setToggleFrameSkip( uint32_t type ){ toggile_frame_skip_ = type; }
-
-	uint32_t update_config_ = 0;
-	void setUpdateConfig( uint32_t type ){ update_config_ = type; }
-
-	uint32_t open_tray_ = 0;
-	void setOpenTrayMenuEventCode( uint32_t type ){ open_tray_ = type; }
-
-	uint32_t close_tray_ = 0;
-	void setCloseTrayMenuEventCode( uint32_t type ){ close_tray_ = type; }
 
     std::string current_game_path_;
     void setCurrentGamePath( const char * path ){ current_game_path_ = path; }
 
-    uint32_t save_state_ = 0;
-    void setSaveStateEventCode( uint32_t code ){ save_state_ = code; }
+    uint32_t repeat_ = 0;
+    void setRepeatEventCode(uint32_t code) { repeat_ = code; }
 
-    uint32_t load_state_ = 0;
-    void setLoadStateEventCode( uint32_t code ){ load_state_ = code; }
+    bool sendRepeatEvent( const std::string & keycode, int scancode, int action, int modifiers);
 
     void showInputCheckDialog( const std::string & key );
 
-    void showFileSelectDialog( Widget * parent, Widget * toback, const std::string & base_path );
+    void showFileSelectDialog( Widget * parent, Widget * toback, const vector<std::string> & base_paths );
 
     void setupPlayerPsuhButton( int user_index, PopupButton *player, const std::string & label, ComboBox **cb );
 
@@ -204,6 +190,7 @@ public:
     }
     void getSelectedGUID( int user_index, std::string & selguid );
 
+    void checkGameFiles(Widget * parent, const vector<std::string> & base_paths);
 
     //void showSaveStateDialog( Widget * parent, Widget * toback );
     void setCurrentGameId( const std::string & id ){ cuurent_game_id_ = id; }

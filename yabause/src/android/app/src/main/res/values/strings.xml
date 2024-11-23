@@ -399,5 +399,14 @@
     <string name="msg_fail_to_zip_backup_data">Fail to zip backup data</string>
     <string name="msg_success_to_upload_backup_data_to_cloud">Success to upload backup data to cloud</string>
 
+    <string name="perf_use_cpu_affinity_detail">In the case of an asymmetric multi-core CPU, the higher clocked cores are preferentially utilized. However, depending on the device, there may be a decrease in performance in reverse.</string>
+    <string name="pref_use_sh2_cache_detail">Enabling the emulation of SH2 cache processing improves compatibility. However, it comes at the cost of emulation speed.</string>
+    <string name="pref_auto_state_save_title">Enable Auto State Save</string>
+    <string name="pref_auto_state_save_detail">Automatically saves the state upon exiting. The next time it starts, it can resume from the saved point. However, there may be cases where reproduction is not successful.</string>
+
+    <string name="auto_state_save_data_found">Auto state save data found!</string>
+    <string name="auto_state_detail">Do you want to load the state? Unfortunately, it may not be very reliable. If it doesn\'t work well, please tap Cancel.</string>
+    <string name="load_state">Load State</string>
+
 </resources>
 	

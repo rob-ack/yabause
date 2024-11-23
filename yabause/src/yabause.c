@@ -659,8 +659,9 @@ u64 getM68KCounter();
 u64 g_m68K_dec_cycle = 0;
 
 
+
 int YabauseEmulate(void) {
-   int oneframeexec = 0;
+  int oneframeexec = 0;
    yabsys.frame_count++;
    PlayRecorder_proc(yabsys.frame_count);
 
@@ -838,9 +839,9 @@ int YabauseEmulate(void) {
       yabsys.UsecFrac &= YABSYS_TIMING_MASK;
       
 #if !defined(ASYNC_SCSP)
-      if(!use_new_scsp)
+      //if(!use_new_scsp)
       {
-         int cycles;
+         //int cycles;
 
          PROFILE_START("68K");
          cycles = m68kcycles;

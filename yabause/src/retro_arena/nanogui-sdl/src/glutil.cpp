@@ -14,12 +14,25 @@
 #include <iostream>
 #include <fstream>
 
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
+
 #define GL_GLEXT_PROTOTYPES 1
 #define GLX_GLXEXT_PROTOTYPES 1
 //#include <EGL/egl.h>
+
+#include <SDL_opengl.h>
+
+
+//void GLAPIENTRY glActiveTexture(GLenum texture) {
+//
+//}
+
+#if !defined(_WINDOWS)
+
 #include <GLES3/gl32.h>
 
-#if 0
+#else
+extern PFNGLACTIVETEXTUREPROC glActiveTexture;
 extern PFNGLCREATESHADERPROC glCreateShader;
 extern PFNGLSHADERSOURCEPROC glShaderSource;
 extern PFNGLCOMPILESHADERPROC glCompileShader;
@@ -802,5 +815,5 @@ Eigen::Matrix4f translate(const Eigen::Matrix4f &m, const Eigen::Vector3f &v) {
                     m.col(2).array() * v(2) + m.col(3).array();
     return Result;
 }
-
 NAMESPACE_END(nanogui)
+#endif

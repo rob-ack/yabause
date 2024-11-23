@@ -79,7 +79,7 @@ Vdp2Window::Vdp2Window() {
 int Vdp2Window::init(int id, VIDVulkan * vulkan, VkRenderPass offscreenPass) {
 
   this->id = id;
-  VkDeviceSize bufferSize = sizeof(Vertex) * 512;
+  VkDeviceSize bufferSize = sizeof(Vertex) * MAX_VERTEX_COUNT;
   const VkDevice device = vulkan->getDevice();
 
   this->vulkan = vulkan;
@@ -121,7 +121,7 @@ int Vdp2Window::flush(VkCommandBuffer commandBuffer) {
   copyRegion.size = vertexcnt * sizeof(Vertex);
   vkCmdCopyBuffer(commandBuffer, stagingBuffer, vertexBuffer, 1, &copyRegion);
 
-  VkDeviceSize bufferSize = sizeof(Vertex) * 512;
+  VkDeviceSize bufferSize = sizeof(Vertex) * MAX_VERTEX_COUNT;
   vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, (void**)&vertex);
 
   return 0;
@@ -593,8 +593,8 @@ void WindowRenderer::generateWindowInfo(Vdp2 * fixVdp2Regs, int which) {
             }
           }
 
-          if (w->vertexcnt >= 1024) {
-            w->vertexcnt = 1023;
+          if (w->vertexcnt >= MAX_VERTEX_COUNT) {
+            w->vertexcnt = MAX_VERTEX_COUNT-1;
           }
 
           preHStart = HStart;
@@ -709,6 +709,7 @@ void WindowRenderer::prepareOffscreen() {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.color.image));
+  printf("offscreenPass.color.image = %llx\n", offscreenPass.color.image);
   vkGetImageMemoryRequirements(device, offscreenPass.color.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   //memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -741,6 +742,7 @@ void WindowRenderer::prepareOffscreen() {
   samplerInfo.maxAnisotropy = 1.0f;
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 1.0f;
+  samplerInfo.anisotropyEnable = VK_FALSE;
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
   VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
 
@@ -749,6 +751,7 @@ void WindowRenderer::prepareOffscreen() {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = vulkan->findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);

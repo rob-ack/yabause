@@ -603,6 +603,8 @@ void YglTmPull(YglTextureManager * tm, u32 flg){
       tm->texture_in[tm->current] = (int*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, tm->width * tm->height * 4, GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
     }
     if (tm->texture_in[tm->current] == NULL) {
+      int error = glGetError();
+      YGLLOG("Fail to glMapBufferRange %X", error );
       abort();
     }
     glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
@@ -859,32 +861,32 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
         break;
       case 1:
         if (val & 0x8000) {
-          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(val));
+          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, 0, VDP1COLOR16TO24(val));
         }
         else {
           spritepixelinfo_struct spi = { 0 };
           Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &val, &spi);
-          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, val);
+          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0, val);
         }
         break;
       case 2: {
         u16 color = (u16)((val >> 16) & 0xFFFF); 
         if (color & 0x8000) {
-          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(color));
+          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, 0, VDP1COLOR16TO24(color));
         }
         else {
           spritepixelinfo_struct spi = { 0 };
           Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &color, &spi);
-          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, color);
+          _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0, color);
         }
         color = (u16)(val & 0xFFFF);
         if (color & 0x8000) {
-          _Ygl->CpuWriteFrameBuffer[texaddr+1] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24((color)));
+          _Ygl->CpuWriteFrameBuffer[texaddr+1] = VDP1COLOR(0, 0, 0, 0, 0, VDP1COLOR16TO24((color)));
         }
         else {
           spritepixelinfo_struct spi = { 0 };
           Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &color, &spi);
-          _Ygl->CpuWriteFrameBuffer[texaddr+1] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, color);
+          _Ygl->CpuWriteFrameBuffer[texaddr+1] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0, color);
         }
         break;
       }
@@ -906,8 +908,8 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
         LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
         break;
       case 1:
-        _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, (val>>8) & 0xFF);
-        _Ygl->CpuWriteFrameBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, val&0xFF);
+        _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, 0,(val>>8) & 0xFF);
+        _Ygl->CpuWriteFrameBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, 0, val&0xFF);
         break;
       case 2:
         LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
@@ -929,8 +931,8 @@ void VIDOGLVdp1WriteFrameBuffer(u32 type, u32 addr, u32 val ) {
         LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
         break;
       case 1:
-        _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, (val>>8)&0xFF);
-        _Ygl->CpuWriteFrameBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, val&0xFF);
+        _Ygl->CpuWriteFrameBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, 0, (val>>8)&0xFF);
+        _Ygl->CpuWriteFrameBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, 0, val&0xFF);
         break;
       case 2:
         LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
@@ -2941,7 +2943,7 @@ void YglEraseWriteVDP1(void) {
       //u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
       //cclist[0] &= 0x1F;
       //u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
-      alpha = VDP1COLOR(0, 0, 0, 0, 0);
+      alpha = VDP1COLOR(0, 0, 0, 0, 0,0);
       alpha >>= 24;
     }
     //alpha = rgb_alpha;
@@ -2960,7 +2962,7 @@ void YglEraseWriteVDP1(void) {
       alpha = 0xF8;
     }
 #endif
-    alpha = VDP1COLOR(1, colorcalc, priority, 0, 0);
+    alpha = VDP1COLOR(1, colorcalc, priority, 0, 0,0);
     alpha >>= 24;
   }
   //alpha |= priority;

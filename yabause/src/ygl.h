@@ -858,17 +858,17 @@ extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 
 /*
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|S|C|A|A|A|P|P|P|s| | | | | | | |
+|S|C|A|A|A|P|P|P|s|w| | | | | | |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 S show flag
 C index or direct color
 A alpha index
 P priority
 s Shadow Flag
-
+W sprite window flag
 */
-static INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 color) {
-  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | color;
+static INLINE u32 VDP1COLOR(u32 C, u32 A, u32 P, u32 shadow, u32 window, u32 color) {
+  return 0x80000000 | (C << 30) | (A << 27) | (P << 24) | (shadow << 23) | (window<<22) | color;
 }
 
 static INLINE u32 VDP1COLOR16TO24(u16 temp) {

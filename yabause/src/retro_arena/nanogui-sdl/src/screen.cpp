@@ -13,14 +13,53 @@
 
 #include <nanogui/screen.h>
 #include <nanogui/theme.h>
-#include <nanogui/opengl.h>
+//#include <nanogui/opengl.h>
 #include <nanogui/window.h>
 #include <nanogui/popup.h>
+#include <SDL2/SDL.h>
+#include <nanovg.h>
 #include <iostream>
 #include <map>
 
+static NVGcontext* vg = nullptr;
 
-#if 0
+#include <vulkan/vulkan.h>
+#include <nanovg/nanovg_vk.h>
+
+#include "vulkan/VulkanScene.h"
+
+VulkanScene * mainScene = nullptr;
+
+ 
+
+  NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer) {
+    VKNVGCreateInfo createInfo = { 0 };
+    createInfo.device = device;
+    createInfo.gpu = gpu;
+    createInfo.renderpass = renderPass;
+    createInfo.cmdBuffer = cmdBuffer;
+
+    if (vg != NULL) {
+      nvgUpdateVk(vg, createInfo);
+      return vg;
+    }
+
+    vg = nvgCreateVk(createInfo, NVG_ANTIALIAS);
+    if (vg == NULL) {
+      printf("Could not init nanovg.\n");
+      return nullptr;
+    }
+    return vg;
+  }
+
+  void deleteNanoGuiVg(NVGcontext * vg) {
+    nvgDeleteVk(vg);
+  }
+
+
+
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
+#if defined(_WINDOWS)
 #ifndef GL_GLEXT_PROTOTYPES
 #ifdef WIN32
   PFNGLACTIVETEXTUREPROC glActiveTexture;
@@ -108,22 +147,29 @@
   PFNGLSTENCILOPSEPARATEPROC glStencilOpSeparate;
   PFNGLUNIFORM2FVPROC glUniform2fv;
   PFNGLBINDBUFFERBASEPROC glBindBufferBase;
+
+  PFNGLBLENDFUNCSEPARATEPROC glBlendFuncSeparate;
+
 #endif
 #endif
-#include <SDL2/SDL.h>
 #include <nanovg/nanovg_gl.h>
+#else
+#include <vulkan/vulkan.h>
+#include <nanovg/nanovg_vk.h>
+#endif
 
 NAMESPACE_BEGIN(nanogui)
 static bool __glInit = false;
 
 std::map<SDL_Window *, Screen *> __nanogui_screens;
 
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
 static void __initGl()
 {
    if( !__glInit )
    {
     __glInit = true;
-#if 0    
+#if defined(_WINDOWS)    
  #ifndef GL_GLEXT_PROTOTYPES
     #define ASSIGNGLFUNCTION(type,name) name = (type)SDL_GL_GetProcAddress( #name );
 #ifdef WIN32
@@ -185,16 +231,19 @@ static void __initGl()
     ASSIGNGLFUNCTION(PFNGLSTENCILOPSEPARATEPROC,glStencilOpSeparate)
     ASSIGNGLFUNCTION(PFNGLUNIFORM2FVPROC,glUniform2fv)
     ASSIGNGLFUNCTION(PFNGLBINDBUFFERBASEPROC,glBindBufferBase)
+    ASSIGNGLFUNCTION(PFNGLBLENDFUNCSEPARATEPROC,glBlendFuncSeparate)
  #endif
  #endif 
    }
 }
-
+#endif
 Screen::Screen( SDL_Window* window, const Vector2i &size, const std::string &caption,
                bool resizable, bool fullscreen)
     : Widget(nullptr), _window(nullptr), mNVGContext(nullptr), mCaption(caption)
 {
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
     __initGl();
+#endif
     SDL_SetWindowTitle( window, caption.c_str() );
     initialize( window );
 }
@@ -247,11 +296,19 @@ void Screen::onEvent(SDL_Event& event)
     }
 }
 
+
 void Screen::initialize(SDL_Window* window)
 {
     _window = window;    
     SDL_GetWindowSize( window, &mSize[0], &mSize[1]);
     SDL_GetWindowSize( window, &mFBSize[0], &mFBSize[1]);
+
+    float ddpi, hdpi, vdpi;
+    SDL_GetDisplayDPI(0, &ddpi, &hdpi, &vdpi);
+    mPixelRatio = ddpi / 96.0f;
+    if (mPixelRatio == 0.0f) {
+      mPixelRatio = 1.0f;
+    }
     
     int flags = NVG_STENCIL_STROKES | NVG_ANTIALIAS;
 #ifdef NDEBUG
@@ -266,10 +323,18 @@ void Screen::initialize(SDL_Window* window)
     mNVGContext = nvgCreateGLES2(flags);
 #elif defined(NANOVG_GLES3_IMPLEMENTATION)
     mNVGContext = nvgCreateGLES3(flags);
+#elif defined(NANOVG_VULKAN_IMPLEMENTATION)
 #endif
-    if (mNVGContext == nullptr)
-        throw std::runtime_error("Could not initialize NanoVG!");
 
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
+
+
+#else
+    mNVGContext = vg;
+#endif
+
+    if (mNVGContext == nullptr)
+      throw std::runtime_error("Could not initialize NanoVG!");
     mVisible = true;
     mTheme = new Theme(mNVGContext);
     mMousePos = Vector2i::Zero();
@@ -323,10 +388,23 @@ void Screen::setSize(const Vector2i &size)
     SDL_SetWindowSize(_window, size.x(), size.y());
 }
 
-void Screen::drawAll()
+
+void Screen::drawAll() {
+
+}
+
+void Screen::drawAll(
+  VkDevice device,
+  VkPhysicalDevice gpu,
+  VkRenderPass renderPass,
+  VkCommandBuffer commandBuffer)
 {
-    drawContents();
-    drawWidgets();
+  mNVGContext = InitNanoGuiVg(device, gpu, renderPass, commandBuffer);
+  if (vg == nullptr) return;
+
+  drawContents();
+  drawWidgets();
+
 }
 
 void Screen::drawWidgets()
@@ -337,17 +415,14 @@ void Screen::drawWidgets()
     //SDL_GL_MakeCurrent( _window, _glcontext );
     SDL_GL_GetDrawableSize(_window, &mFBSize[0], &mFBSize[1]);
     SDL_GetWindowSize( _window, &mSize[0], &mSize[1]);
-    glViewport(0, 0, mFBSize[0], mFBSize[1]);  
 
-    /* Calculate pixel ratio for hi-dpi devices. */
-    mPixelRatio = (float) mFBSize[0] / (float) mSize[0];
-    
+   
     nvgBeginFrame(mNVGContext, mSize[0], mSize[1], mPixelRatio);
 
     draw(mNVGContext);
 
     double elapsed = SDL_GetTicks() - mLastInteraction;
-
+#if 0
     if (elapsed > 0.5f) {
         /* Draw tooltips */
         const Widget *widget = findWidget(mMousePos);
@@ -387,9 +462,15 @@ void Screen::drawWidgets()
                        widget->tooltip().c_str(), nullptr);
         }
     }
-
+#endif
     nvgEndFrame(mNVGContext);
 }
+
+Color::operator const NVGcolor &() const {
+  return reinterpret_cast<const NVGcolor &>(*this->data());
+}
+
+  
 
 bool Screen::keyboardEvent(int key, int scancode, int action, int modifiers) {
     if (mFocusPath.size() > 0) {
@@ -411,7 +492,7 @@ bool Screen::keyboardCharacterEvent(unsigned int codepoint) {
 }
 
 bool Screen::cursorPosCallbackEvent(double x, double y) {
-    Vector2i p((int) x, (int) y);
+    Vector2i p((int) (x/mPixelRatio) , (int) (y/mPixelRatio));
     bool ret = false;
     mLastInteraction = SDL_GetTicks();
     try {
@@ -543,7 +624,6 @@ bool Screen::scrollCallbackEvent(double x, double y)
                   << std::endl;
         abort();
     }
-
     return false;
 }
 
@@ -567,6 +647,7 @@ bool Screen::resizeCallbackEvent(int, int)
                   << std::endl;
         abort();
     }
+    return true;
 }
 
 void Screen::updateFocus(Widget *widget) {
@@ -603,7 +684,7 @@ void Screen::centerWindow(Window *window) {
         window->setSize(window->preferredSize(mNVGContext));
         window->performLayout(mNVGContext);
     }
-    window->setPosition((mSize - window->size()) / 2);
+    window->setPosition(((mSize / mPixelRatio) - window->size()) / 2);
 }
 
 void Screen::moveWindowToFront(Window *window) {
@@ -639,3 +720,4 @@ void Screen::performLayout()
 }
 
 NAMESPACE_END(nanogui)
+

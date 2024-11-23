@@ -19,7 +19,7 @@ class NANOGUI_EXPORT ComboBox : public PopupButton
 {
 public:
     /// Create an empty combo box
-    ComboBox(Widget *parent);
+  ComboBox(Widget *parent);
 
     /// Create a new combo box with the given items
     //ComboBox(Widget *parent, const std::vector<std::string>& items={});
@@ -32,8 +32,8 @@ public:
     ComboBox(Widget *parent, const std::vector<std::string> &items,
              const std::vector<std::string> &itemsShort);
 
-    std::function<void(int)> callbackSelect() const { return mCallbackSelect; }
-    void setCallbackSelect(const std::function<void(int)> &callback) { mCallbackSelect = callback; }
+    std::function<void(int32_t)> callbackSelect() const { return mCallbackSelect; }
+    void setCallbackSelect(const std::function<void(int32_t)> &callback);
 
     int selectedIndex() const { return mSelectedIndex; }
     void setSelectedIndex(int idx);
@@ -51,7 +51,7 @@ public:
     virtual bool load(Serializer &s);
 protected:
     std::vector<std::string> mItems, mItemsShort;
-    std::function<void(int)> mCallbackSelect;
+    std::function<void(int32_t)> mCallbackSelect;
     int mSelectedIndex;
 };
 

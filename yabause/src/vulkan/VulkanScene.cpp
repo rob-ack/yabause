@@ -137,6 +137,10 @@ void VulkanScene::createImage(uint32_t width, uint32_t height, VkFormat format, 
     throw std::runtime_error("failed to create image!");
   }
 
+  printf("VulkanScene image = %llx\n", image);
+
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "VulkanScene image");
+
   VkMemoryRequirements memRequirements;
   vkGetImageMemoryRequirements(device, image, &memRequirements);
 
@@ -317,6 +321,13 @@ void VulkanScene::transitionImageLayout(VkImage image, VkFormat format, VkImageL
     sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
     destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
   }
+  else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+    destinationStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+  }
   else {
     throw std::invalid_argument("unsupported layout transition!");
   }
@@ -462,6 +473,9 @@ void VulkanScene::getScreenshot(void ** outbuf, int & width, int & height)
 
     // Create the image
     VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
+    printf("dstScreenImage = %llx\n", dstScreenImage);
+    vkDebugNameObject(getDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)dstScreenImage, "VulkanScene dstScreenImage");
+
     // Create memory to back up the image
     VkMemoryRequirements memRequirements;
     VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());

@@ -471,6 +471,149 @@ void VIDVulkan::Vdp2DrawStart(void) {
   vm->reset();
 }
 
+void VIDVulkan::renderExternal(const std::function<void(
+  VkDevice device,
+  VkPhysicalDevice gpu,
+  VkRenderPass renderPass,
+  VkCommandBuffer commandBuffer)>& f) {
+
+  if (_renderer == nullptr) return;
+  const VkDevice device = _renderer->GetVulkanDevice();
+  if (device == VK_NULL_HANDLE) return;
+
+  int ci = getCurrentCommandIndex();
+  int fi = _renderer->getWindow()->BeginRender();
+
+//  if (frameCount >= MAX_COMMANDBUFFER_COUNT) {
+//    ErrorCheck(vkWaitForFences(device, 1, &commandFence[ci], VK_TRUE, UINT64_MAX));
+//    ErrorCheck(vkResetFences(device, 1, &commandFence[ci]));
+//  }
+
+  VkCommandBufferBeginInfo command_buffer_begin_info{};
+  command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  VkRect2D render_area{};
+  render_area.offset.x = 0;
+  render_area.offset.y = 0;
+  render_area.extent = _renderer->getWindow()->GetVulkanSurfaceSize();
+
+  std::array<VkClearValue, 2> clear_values{};
+  clear_values[1].depthStencil.depth = 0.0f;
+  clear_values[1].depthStencil.stencil = 0;
+  clear_values[0].color.float32[0] = 0.0;
+  clear_values[0].color.float32[1] = 0.0;
+  clear_values[0].color.float32[2] = 0.0;
+  clear_values[0].color.float32[3] = 0.0f;
+
+  VkRenderPassBeginInfo render_pass_begin_info{};
+  render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+  render_pass_begin_info.renderPass = _renderer->getWindow()->GetVulkanRenderPass();
+  render_pass_begin_info.framebuffer = _renderer->getWindow()->GetVulkanActiveFramebuffer();
+  render_pass_begin_info.renderArea = render_area;
+  render_pass_begin_info.clearValueCount = clear_values.size();
+  render_pass_begin_info.pClearValues = clear_values.data();
+
+  VkCommandBuffer commandBuffer = _command_buffers[ci];
+
+
+  vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
+
+  VkImageMemoryBarrier imageBarrier = {};
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
+  imageBarrier.image = tm->geTextureImage();
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+  imageBarrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+  imageBarrier.image = _renderer->getWindow()->getCurrentImage();
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+
+  VkImageMemoryBarrier simageBarrier = {};
+  simageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  simageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  simageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  simageBarrier.srcAccessMask = 0;
+  simageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  simageBarrier.image = _renderer->getWindow()->getDepthStencilImage();
+  simageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  simageBarrier.subresourceRange.baseMipLevel = 0;
+  simageBarrier.subresourceRange.levelCount = 1;
+  simageBarrier.subresourceRange.baseArrayLayer = 0;
+  simageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &simageBarrier);
+
+
+  vkCmdBeginRenderPass(commandBuffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+  auto c = vk::CommandBuffer(commandBuffer);
+  vk::Viewport viewport;
+  vk::Rect2D scissor;
+  viewport.width = render_area.extent.width;
+  viewport.height = render_area.extent.height;
+  viewport.x = 0;
+  viewport.y = 0;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  c.setViewport(0, 1, &viewport);
+
+  scissor.extent.width = render_area.extent.width;
+  scissor.extent.height = render_area.extent.height;
+  scissor.offset.x = 0;
+  scissor.offset.y = 0;
+  c.setScissor(0, 1, &scissor);
+  
+  //NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+  
+  f(device,
+    this->getPhysicalDevice(),
+    _renderer->getWindow()->GetVulkanRenderPass(),
+    commandBuffer);
+   
+  vkCmdEndRenderPass(commandBuffer);
+  vkEndCommandBuffer(commandBuffer);
+  VkPipelineStageFlags graphicsWaitStageMasks[] = { VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+  VkSemaphore graphicsWaitSemaphores[] = { rbgGenerator->getCompleteSemaphore() };
+
+  vector<VkSemaphore> waitSem;
+
+  VkSemaphore texSem = tm->getCompleteSemaphore();
+  if (texSem != VK_NULL_HANDLE) {
+    waitSem.push_back(texSem);
+  }
+
+  VkSemaphore rbgSem = rbgGenerator->getCompleteSemaphore();
+  if (rbgSem != VK_NULL_HANDLE) {
+    waitSem.push_back(rbgSem);
+  }
+
+  // Submit command buffer
+  VkSubmitInfo submit_info{};
+  submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submit_info.waitSemaphoreCount = waitSem.size();
+  submit_info.pWaitSemaphores = waitSem.data();
+  submit_info.pWaitDstStageMask = graphicsWaitStageMasks;
+  submit_info.commandBufferCount = 1;
+  submit_info.pCommandBuffers = &commandBuffer;
+  submit_info.signalSemaphoreCount = 1;
+  submit_info.pSignalSemaphores = &_render_complete_semaphore;
+  ErrorCheck(vkQueueSubmit(_renderer->GetVulkanQueue(), 1, &submit_info, VK_NULL_HANDLE));
+  YuiSwapBuffers();
+  frameCount++;
+}
+
+
 void VIDVulkan::Vdp2DrawEnd(void) {
   if (_renderer == nullptr)
     return;
@@ -498,7 +641,8 @@ void VIDVulkan::Vdp2DrawEnd(void) {
       if (layers[i][j]->interuput_texture != VK_NULL_HANDLE) {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, layers[i][j]->interuput_texture, tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, tm->geTextureImageView(), tm->getTextureSampler());
-      } else {
+      }
+      else {
         layers[i][j]->setSampler(VdpPipeline::bindIdTexture, tm->geTextureImageView(), tm->getTextureSampler());
         layers[i][j]->setSampler(VdpPipeline::bindIdLine, lineColor.imageView, lineColor.sampler);
       }
@@ -546,27 +690,28 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   command_buffer_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   command_buffer_begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    glm::vec4 viewportData;
-    int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
-    int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
-    int deviceOriginX = originx;
-    int deviceOriginY = originy;
-    if( resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0 ){
-      deviceWidth = renderWidth;
-      deviceHeight = renderHeight;
-      deviceOriginX = 0;
-      deviceOriginY = 0;
-    }
+  glm::vec4 viewportData;
+  int deviceWidth = _renderer->getWindow()->GetVulkanSurfaceSize().width;
+  int deviceHeight = _renderer->getWindow()->GetVulkanSurfaceSize().height;
+  int deviceOriginX = originx;
+  int deviceOriginY = originy;
+  if (resolutionMode != RES_NATIVE && (Vdp2Regs->TVMD & 0x8000) != 0) {
+    deviceWidth = renderWidth;
+    deviceHeight = renderHeight;
+    deviceOriginX = 0;
+    deviceOriginY = 0;
+  }
 
   int pretransformFlag = _renderer->getWindow()->GetPreTransFlag();
   VkRect2D render_area{};
   render_area.offset.x = 0;
   render_area.offset.y = 0;
   if (pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
-      pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
+    pretransformFlag & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR) {
     render_area.extent.width = deviceHeight;
     render_area.extent.height = deviceWidth;
-  } else {
+  }
+  else {
     render_area.extent.width = deviceWidth;
     render_area.extent.height = deviceHeight;
   }
@@ -593,7 +738,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   vkResetCommandBuffer(commandBuffer, 0);
   vkBeginCommandBuffer(commandBuffer, &command_buffer_begin_info);
 
-
+  vdp1->useImageAsShaderRead(commandBuffer);
 
     int u_dir = 0;
 
@@ -1021,6 +1166,7 @@ void VIDVulkan::Vdp2DrawEnd(void) {
   }
 
 ENDEND:
+
   vkEndCommandBuffer(commandBuffer);
 
   vector<VkSemaphore> waitSem;
@@ -5887,6 +6033,7 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
   vulkan->createImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
                       VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                       image, memory);
+  printf("DynamicTexture image = %llx\n", image);
   vulkan->transitionImageLayout(image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
                                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
   vulkan->copyBufferToImage(stagingBuffer, image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -5910,6 +6057,7 @@ void DynamicTexture::create(VIDVulkan *vulkan, int texWidth, int texHeight) {
   if (vkCreateImageView(device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
     throw std::runtime_error("failed to create texture image view!");
   }
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)image, "DynamicTexture");
 
   VkSamplerCreateInfo samplerInfo = {};
   samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -6097,6 +6245,8 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.image));
+  printf("offscreenPass.image = %llx\n", offscreenPass.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.image, "offscreenPass.image");
   vkGetImageMemoryRequirements(device, offscreenPass.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6129,6 +6279,7 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   samplerInfo.maxAnisotropy = 1.0f;
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 1.0f;
+  samplerInfo.anisotropyEnable = VK_FALSE;
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
   VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
 
@@ -6141,6 +6292,8 @@ void VIDVulkan::generateOffscreenPath(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.depth.image, "offscreenPass.depth.image");
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6666,6 +6819,8 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   VkMemoryRequirements memReqs;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.color.image));
+  printf("subRenderTarget.color.image = %llx\n", subRenderTarget.color.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.color.image, "subRenderTarget.color.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.color.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6698,6 +6853,7 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 1.0f;
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+  samplerInfo.anisotropyEnable = VK_FALSE;
   VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &subRenderTarget.sampler));
 
   // Depth stencil attachment
@@ -6705,6 +6861,8 @@ void VIDVulkan::generateSubRenderTarget(int width, int height) {
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &subRenderTarget.depth.image));
+  printf("subRenderTarget.depth.image = %llx\n", subRenderTarget.depth.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)subRenderTarget.depth.image, "subRenderTarget.depth.image");
   vkGetImageMemoryRequirements(device, subRenderTarget.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -6996,6 +7154,8 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
 
     // Create the image
     VK_CHECK_RESULT(vkCreateImage(getDevice(), &imageCreateCI, nullptr, &dstScreenImage));
+    printf("dstScreenImage = %llx\n", dstScreenImage);
+    vkDebugNameObject(getDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)dstScreenImage, "dstScreenImage");
     // Create memory to back up the image
     VkMemoryRequirements memRequirements;
     VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -7042,22 +7202,26 @@ void VIDVulkan::getScreenshot(void ** outbuf, int & width, int & height)
   if (supportsBlit)
   {
     // Define the region to blit (we will blit the whole swapchain image)
-    VkOffset3D blitSize;
+    VkOffset3D oblitSize;
+    oblitSize.x = viewportData.z;
+    oblitSize.y = viewportData.w;
+    oblitSize.z = 1;
+
+    VkOffset3D sblitSize;
+    sblitSize.x = deviceWidth - viewportData.x;
+    sblitSize.y = deviceHeight - viewportData.y;
+    sblitSize.z = 1;
 
 
-    blitSize.x = viewportData.z;
-    blitSize.y = viewportData.w;
-
-    blitSize.z = 1;
     VkImageBlit imageBlitRegion{};
     imageBlitRegion.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.srcSubresource.layerCount = 1;
     imageBlitRegion.srcOffsets[0].x = viewportData.x;    
     imageBlitRegion.srcOffsets[0].y = viewportData.y;    
-    imageBlitRegion.srcOffsets[1] = blitSize;
+    imageBlitRegion.srcOffsets[1] = sblitSize;
     imageBlitRegion.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     imageBlitRegion.dstSubresource.layerCount = 1;
-    imageBlitRegion.dstOffsets[1] = blitSize;
+    imageBlitRegion.dstOffsets[1] = oblitSize;
 
     // Issue the blit command
     vkCmdBlitImage(

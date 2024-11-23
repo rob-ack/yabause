@@ -34,6 +34,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <chrono>
 
 #define MAX_COMMANDBUFFER_COUNT (4)
+struct Vertex2v {
+  glm::vec4 pos;
+  glm::vec4 texCoord;
+
+  Vertex2v(glm::vec4 pos, glm::vec4 texCoord) {
+    this->pos = pos;
+    this->texCoord = texCoord;
+  }
+
+  Vertex2v() {
+    pos.x = pos.y = pos.z = 0.0f;
+    pos.w = 1.0f;
+    texCoord.x = texCoord.y = texCoord.z = texCoord.w = 0.0f;
+  }
+
+  static VkVertexInputBindingDescription getBindingDescription() {
+    VkVertexInputBindingDescription bindingDescription = {};
+    bindingDescription.binding = 0;
+    bindingDescription.stride = sizeof(Vertex2v);
+    bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+    return bindingDescription;
+  }
+  static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+    std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions = {};
+
+    attributeDescriptions[0].binding = 0;
+    attributeDescriptions[0].location = 0;
+    attributeDescriptions[0].format = VK_FORMAT_R32G32B32A32_SFLOAT; // vec2
+    attributeDescriptions[0].offset = offsetof(Vertex2v, pos);
+
+    attributeDescriptions[1].binding = 0;
+    attributeDescriptions[1].location = 1;
+    attributeDescriptions[1].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+    attributeDescriptions[1].offset = offsetof(Vertex2v, texCoord);
+
+    return attributeDescriptions;
+  }
+
+
+};
 
 struct Vertex {
   glm::vec4 pos;
@@ -45,7 +85,7 @@ struct Vertex {
     this->color = color;
     this->texCoord = texCoord;
   }
-
+  
   Vertex() {
     pos.x = pos.y = pos.z = 0.0f;
     pos.w = 1.0f;
@@ -80,6 +120,9 @@ struct Vertex {
 
     return attributeDescriptions;
   }
+
+
+
 };
 
 
@@ -122,7 +165,7 @@ public:
   }
 
   const VkQueue getVulkanComputeQueue() {
-    return _renderer->GetVulkanQueue();
+    return _renderer->GetComputeQueue();
   }
 
   const uint32_t getFrameBufferCount() {
@@ -182,3 +225,4 @@ protected:
 
 };
 
+void vkDebugNameObject(VkDevice device, VkObjectType object_type, uint64_t vulkan_handle, const char *format, ...);

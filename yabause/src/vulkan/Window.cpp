@@ -46,14 +46,17 @@ Window::Window(Renderer *renderer, uint32_t size_x, uint32_t size_y, std::string
 #if defined(__ANDROID__)
   window = (ANativeWindow *)nativeWindow;
 #endif
-  _InitOSWindow();
-  _InitSurface();
-  _InitSwapchain();
-  _InitSwapchainImages();
-  _InitDepthStencilImage();
-  _InitRenderPass();
-  _InitFramebuffers();
-  _InitSynchronizations();
+#if defined(__RETORO_ARENA__)  
+    window = (SDL_Window*)nativeWindow;
+#endif
+	_InitOSWindow();
+	_InitSurface();
+	_InitSwapchain();
+	_InitSwapchainImages();
+	_InitDepthStencilImage();
+	_InitRenderPass();
+	_InitFramebuffers();
+	_InitSynchronizations();
 }
 
 Window::~Window() {
@@ -314,9 +317,9 @@ void Window::_DeInitSwapchainImages() {
 void Window::_InitDepthStencilImage() {
   {
     std::vector<VkFormat> try_formats{
-        // VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D24_UNORM_S8_UINT
-        // VK_FORMAT_D16_UNORM_S8_UINT,
+        //VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
         // VK_FORMAT_D32_SFLOAT,
         // VK_FORMAT_D16_UNORM
     };
@@ -332,13 +335,11 @@ void Window::_InitDepthStencilImage() {
       assert(0 && "Depth stencil format not selected.");
       std::exit(-1);
     }
-    /*
+   
     if( ( _depth_stencil_format == VK_FORMAT_D32_SFLOAT_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_D16_UNORM_S8_UINT ) ||
       ( _depth_stencil_format == VK_FORMAT_S8_UINT ) ) {
-      */
-    if (_depth_stencil_format == VK_FORMAT_D24_UNORM_S8_UINT) {
       _stencil_available = true;
     }
   }
@@ -362,6 +363,8 @@ void Window::_InitDepthStencilImage() {
   image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
   ErrorCheck(vkCreateImage(_renderer->GetVulkanDevice(), &image_create_info, nullptr, &_depth_stencil_image));
+  printf("_depth_stencil_image = %llx\n", _depth_stencil_image);
+  vkDebugNameObject(_renderer->GetVulkanDevice(), VK_OBJECT_TYPE_IMAGE, (uint64_t)_depth_stencil_image, "Window _depth_stencil_image");
 
   VkMemoryRequirements image_memory_requirements{};
   vkGetImageMemoryRequirements(_renderer->GetVulkanDevice(), _depth_stencil_image, &image_memory_requirements);
@@ -412,7 +415,7 @@ void Window::_InitRenderPass() {
   attachments[0].samples = VK_SAMPLE_COUNT_1_BIT;
   attachments[0].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   attachments[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attachments[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attachments[0].initialLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
   attachments[0].finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
   attachments[1].flags = 0;
@@ -425,6 +428,16 @@ void Window::_InitRenderPass() {
   attachments[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
   attachments[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
+	attachments[ 1 ].flags						= 0;
+	attachments[ 1 ].format						= _depth_stencil_format;
+	attachments[ 1 ].samples					= VK_SAMPLE_COUNT_1_BIT;
+	attachments[ 1 ].loadOp						= VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[ 1 ].storeOp					= VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[ 1 ].stencilLoadOp				= VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[ 1 ].stencilStoreOp				= VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[ 1 ].initialLayout				= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	attachments[ 1 ].finalLayout				= VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
   VkAttachmentReference sub_pass_0_depth_stencil_attachment{};
   sub_pass_0_depth_stencil_attachment.attachment = 1;
   sub_pass_0_depth_stencil_attachment.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -432,7 +445,7 @@ void Window::_InitRenderPass() {
   std::array<VkAttachmentReference, 1> sub_pass_0_color_attachments{};
   sub_pass_0_color_attachments[0].attachment = 0;
   sub_pass_0_color_attachments[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
+  
   std::array<VkSubpassDescription, 1> sub_passes{};
   sub_passes[0].pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
   sub_passes[0].colorAttachmentCount = sub_pass_0_color_attachments.size();

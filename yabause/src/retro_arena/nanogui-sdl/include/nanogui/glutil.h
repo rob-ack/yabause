@@ -20,7 +20,8 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace half_float { class half; }
 #endif
-/*
+
+#if defined(_WINDOWS)
 extern PFNGLUNIFORM1IPROC glUniform1i ;
 extern PFNGLUNIFORM1FPROC glUniform1f ;
 extern PFNGLUNIFORM2IPROC glUniform2i ;
@@ -29,7 +30,8 @@ extern PFNGLUNIFORM3FPROC glUniform3f ;
 extern PFNGLUNIFORM3IPROC glUniform3i ;
 extern PFNGLUNIFORM4FPROC glUniform4f ;
 extern PFNGLUNIFORM4IPROC glUniform4i ;
-*/
+#endif
+
 NAMESPACE_BEGIN(nanogui)
 
 // bypass template specializations

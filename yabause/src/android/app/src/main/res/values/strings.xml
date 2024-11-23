@@ -407,6 +407,9 @@
     <string name="auto_state_save_data_found">Auto state save data found!</string>
     <string name="auto_state_detail">Do you want to load the state? Unfortunately, it may not be very reliable. If it doesn\'t work well, please tap Cancel.</string>
     <string name="load_state">Load State</string>
+    <string name="force_feedback">Force feedback</string>
+    <string name="visual_feedback">Visual feedback</string>
+    <string name="show_analog_dpad_switch_button">Show Analog/Dpad switch button</string>
 
 </resources>
 	

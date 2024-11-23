@@ -225,5 +225,9 @@
     <string name="auto_state_save_data_found">找到自动保存数据！</string>
     <string name="auto_state_detail">您想加载状态吗？不幸的是，这可能不是非常可靠的。如果它运行得不好，请点击取消。</string>
 
+    <string name="force_feedback">力量反馈</string>
+    <string name="visual_feedback">视觉反馈</string>
+    <string name="show_analog_dpad_switch_button">显示模拟/Dpad切换按钮</string>
+
 </resources>
 	

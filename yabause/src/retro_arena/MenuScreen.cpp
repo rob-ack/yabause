@@ -1050,8 +1050,6 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   new Label(popup, label);
 
   std::string username;
-
-
   json j;
   string selguid="BADGUID";
   string selname="BADNAME";
@@ -1059,6 +1057,7 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   std::stringstream ss;
   std::string userid;
 
+#if 0
   try{
     std::ifstream fin( config_file_ );
     fin >> j;
@@ -1105,6 +1104,7 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   }
 
   printf("selguid = %d:%s\n", selindex, selguid.c_str() );
+
 
   Popup *cbpopup = cb->popup(); 
   cb->setCallback([this,cbpopup,cb]() {       
@@ -1187,8 +1187,9 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
       evm->postEvent("update config");
 
   });
-
   *cbo = cb;
+#endif
+
 
   Button * ba = new Button(popup,"Analog mode");  
   ba->setFlags(Button::ToggleButton); 
@@ -1316,30 +1317,22 @@ void MenuScreen::setupPlayerPsuhButton( int user_index, PopupButton *player, con
   b = new Button(popup, "Analog X");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1" ){
-      showInputCheckDialog("analogx");
-    }
+    showInputCheckDialog("analogx");
   });   
   b = new Button(popup, "Analog Y");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1" ){
-      showInputCheckDialog("analogy");
-    }
+    showInputCheckDialog("analogy");
   });   
   b = new Button(popup, "Analog L");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1"){
-      showInputCheckDialog("analogl");
-    }
+    showInputCheckDialog("analogl");
   });   
   b = new Button(popup, "Analog R");
   b->setCallback([this, user_index]{
     getSelectedGUID( user_index, this->cuurent_deviceguid_ );
-    if( this->cuurent_deviceguid_ != "-1_Keyboard_-1"){
-      showInputCheckDialog("analogr");
-    }
+    showInputCheckDialog("analogr");
   });   
 }
 
@@ -1358,10 +1351,12 @@ int MenuScreen::onRawInputEvent( InputManager & imp, const std::string & deviceg
 
   cout << "onRawInputEvent deviceguid:" << deviceguid << " type:" << type << " id:" << id << " val:" << value << endl;
 
+#if 0
   if( deviceguid != cuurent_deviceguid_ ){ 
     cout << "deviceguid = " << deviceguid << " vs cuurent_deviceguid = " << cuurent_deviceguid_ << endl;
     return -1; 
   }
+#endif
 
   // wait for key input?
   if( current_key_ != "l" && current_key_ != "r" ) {
@@ -1554,6 +1549,7 @@ void MenuScreen::setCurrentInputDevices( std::map<SDL_JoystickID, SDL_Joystick*>
   itemsShort.push_back("Disable");
   items.push_back("Disable_-2");
 
+#if 0
   for( int i=0; i< player_configs_.size(); i++ ){
     ComboBox * cb = player_configs_[i].cb ;
     if( cb != nullptr ){
@@ -1575,6 +1571,7 @@ void MenuScreen::setCurrentInputDevices( std::map<SDL_JoystickID, SDL_Joystick*>
       }
     }
   }
+#endif
   performLayout();
 }
 

@@ -449,5 +449,10 @@
     <string name="auto_state_save_data_found">Обнаружены сохраненные данные авто-состояния!</string>
     <string name="auto_state_detail">Вы хотите загрузить состояние? К сожалению, это может быть не совсем надежно. Если что-то работает неправильно, нажмите "Отмена".</string>
 
+    <string name="force_feedback">Обратная сила</string>
+    <string name="visual_feedback">Визуальная обратная связь</string>
+    <string name="show_analog_dpad_switch_button">Показать кнопку переключения Аналоговый/Dpad</string>
+
+
 </resources>
 	

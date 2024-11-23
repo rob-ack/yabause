@@ -165,4 +165,9 @@
     <string name="auto_state_save_data_found">Dados de salvamento automático encontrados!</string>
     <string name="auto_state_detail">Deseja carregar o estado? Infelizmente, pode não ser muito confiável. Se não funcionar bem, toque em Cancelar.</string>
 
+    <string name="force_feedback">Feedback de força</string>
+    <string name="visual_feedback">Feedback visual</string>
+    <string name="show_analog_dpad_switch_button">Mostrar botão de troca Analógico/Dpad</string>
+
+
 </resources>

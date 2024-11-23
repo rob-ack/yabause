@@ -548,7 +548,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 #endif
   }
 
-#if 0
+#if 1
   AllocConsole();
   FILE * stdout_fp = freopen("CONOUT$", "wb", stdout);
   FILE * stderr_fp = freopen("CONOUT$", "wb", stderr);
@@ -568,7 +568,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   std::string bckup_dir = home_dir + "/backup.bin";
   strcpy(buppath, bckup_dir.c_str());
   strcpy(s_savepath, home_dir.c_str());
-  g_keymap_filename = home_dir + "/keymapv2.json";
+  g_keymap_filename = home_dir + "/keymapv3.json";
+
+  s_playrecord_path = home_dir + "/record/";
+  s_playdatadir = home_dir + "/record/GS-9039/";
+
 
   s_playrecord_path = home_dir + "/record/";
   s_playdatadir = home_dir + "/record/GS-9039/";
@@ -660,7 +664,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
   defpref->setString("last play game path", cdpath);
 
-  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+  if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
     printf("Fail to init SDL Bye! (%s)", SDL_GetError());
     return -1;
   }
@@ -820,7 +824,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 
 
   evm->setEvent("reset", [](int code, void * data1, void * data2) {
-     printf("hello");
      YabauseReset();
      hideMenuScreen(); 
   });

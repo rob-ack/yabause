@@ -326,5 +326,8 @@
     <string name="auto_state_save_data_found">自動状態保存データが見つかった！</string>
     <string name="auto_state_detail">状態を読み込みますか？ 残念ながらあまり信用できません。 うまく動作しない場合は キャンセル をタップしてください</string>
 
+    <string name="force_feedback">フォース フィードバック</string>
+    <string name="visual_feedback">ビジュアル フィードバック</string>
+    <string name="show_analog_dpad_switch_button">アナログ/Dpad切り替えボタンを表示</string>
 
 </resources>

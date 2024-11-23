@@ -63,6 +63,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
@@ -294,6 +295,16 @@ class Yabause : AppCompatActivity(),
 
     private val apiscope = CoroutineScope(Dispatchers.IO)
 
+    override fun onUpdateAnalogDpad( a : Boolean ) {
+        val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
+        val analogSwitch = findViewById<View>(R.id.layer_pad_mode)
+        if( a ) {
+            analogSwitch.visibility = View.VISIBLE
+        }else {
+            analogSwitch.visibility = View.GONE
+        }
+    }
+
     /**
      * Called when the activity is first created.
      */
@@ -323,6 +334,50 @@ class Yabause : AppCompatActivity(),
         progressBar = findViewById(R.id.llProgressBar)
         progressBar.visibility = View.GONE
         progressMessage = findViewById(R.id.pbText)
+
+
+
+        val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+
+        val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+
+        analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
+
+
+        val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
+        padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+        if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+            padModeLayer.visibility = View.VISIBLE
+        }else {
+            padModeLayer.visibility = View.GONE
+        }
+
+        analogSwitch.setOnCheckedChangeListener { _, isChecked ->
+            val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
+            if (isChecked) {
+
+                padManager.analogMode = PadManager.MODE_ANALOG
+                YabauseRunnable.switch_padmode(PadManager.MODE_ANALOG)
+                padv.setPadMode(PadManager.MODE_ANALOG)
+
+                val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+                val editor = hprefernce.edit()
+                editor.putBoolean("pref_analog_pad", true)
+                editor.apply()
+
+            } else {
+                // The switch isn't checked.
+                YabauseRunnable.switch_padmode(PadManager.MODE_HAT)
+                padManager.analogMode = PadManager.MODE_HAT
+                padv.setPadMode(PadManager.MODE_HAT)
+
+                val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+                val editor = hprefernce.edit()
+                editor.putBoolean("pref_analog_pad", false)
+                editor.apply()
+
+            }
+        }
 /*
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -1250,6 +1305,7 @@ class Yabause : AppCompatActivity(),
             YabauseRunnable.resume()
         }
         inputManager!!.registerInputDeviceListener(this, null)
+
     }
 
     public override fun onDestroy() {
@@ -1635,6 +1691,11 @@ class Yabause : AppCompatActivity(),
     private var menu_showing = false
     private fun toggleMenu() {
         if (menu_showing == true) {
+
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(this)
+            val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
+            padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+
             menu_showing = false
             val mainview = findViewById(R.id.yabause_view) as View
             mainview.requestFocus()
@@ -2023,6 +2084,22 @@ class Yabause : AppCompatActivity(),
             transaction.commit()
             val padv = findViewById<View>(R.id.yabause_pad) as YabausePad
             padv.updateScale()
+
+            val analogSwitch = findViewById<SwitchCompat>(R.id.toggleAnalogButton)
+
+            val hprefernce = getHarmonySharedPreferences("pref_analog_pad")
+            analogSwitch.isChecked = hprefernce.getBoolean("pref_analog_pad",false)
+
+            val sharedPref = PreferenceManager.getDefaultSharedPreferences(this@Yabause)
+
+            val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
+            padModeLayer?.alpha = sharedPref.getFloat("pref_pad_trans", 0.7f)
+            if( sharedPref.getBoolean("pref_show_analog_switch", false) ) {
+                padModeLayer.visibility = View.VISIBLE
+            }else {
+                padModeLayer.visibility = View.GONE
+            }
+
         }
         waitingResult = false
         toggleMenu()
@@ -2037,6 +2114,11 @@ class Yabause : AppCompatActivity(),
         }
         waitingResult = false
         toggleMenu()
+    }
+
+    override fun onUpdateTransparency(a: Float) {
+        val padModeLayer = findViewById<View>(R.id.layer_pad_mode)
+        padModeLayer?.alpha = a
     }
 
     override fun onFinishInputSetting() {

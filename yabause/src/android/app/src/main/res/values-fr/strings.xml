@@ -258,4 +258,8 @@
     <string name="auto_state_save_data_found">Données de sauvegarde automatique trouvées !</string>
     <string name="auto_state_detail">Voulez-vous charger l\'état ? Malheureusement, cela peut ne pas être très fiable. Si cela ne fonctionne pas correctement, veuillez appuyer sur Annuler.</string>
 
+    <string name="force_feedback">Retour de force</string>
+    <string name="visual_feedback">Retour visuel</string>
+    <string name="show_analog_dpad_switch_button">Afficher le bouton de basculement Analogique/Dpad</string>
+
 </resources>

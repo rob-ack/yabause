@@ -17,6 +17,9 @@
 	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 */
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include "httplib.h"
+
 #include "UIYabause.h"
 #include "UIBackupRam.h"
 #include "../CommonDialogs.h"
@@ -50,9 +53,9 @@ using std::endl;
 #include <unicode/unistr.h>
 
 u32 currentbupdevice = 0;
-deviceinfo_struct *devices = NULL;
+deviceinfo_struct* devices = NULL;
 int numbupdevices = 0;
-saveinfo_struct *saves = NULL;
+saveinfo_struct* saves = NULL;
 int numsaves = 0;
 
 
@@ -127,10 +130,10 @@ QString convertShiftJISToQString(const char* shiftJisText) {
 }
 
 
-UIBackupRam * UIBackupRam::instance = nullptr;
+UIBackupRam* UIBackupRam::instance = nullptr;
 
 void UIBackupRam::OnValueChanged(
-		const firebase::database::DataSnapshot &snapshot)
+	const firebase::database::DataSnapshot& snapshot)
 {
 
 	std::vector<DataSnapshot> cd = snapshot.children();
@@ -187,31 +190,31 @@ void UIBackupRam::OnValueChanged(
 		}
 
 #if 0
-          if( cd[i].Child("year").is_valid() && cd[i].Child("year").value().is_int64() ){
-            tmp.year = cd[i].Child("year").value().int64_value();
-            std::cout << "year: " << tmp.year << endl;
-          }
-          if( cd[i].Child("month").is_valid() && cd[i].Child("month").value().is_int64() ){
-            tmp.month = cd[i].Child("month").value().int64_value();
-            std::cout << "month: " << tmp.month << endl;
-          }
-          if( cd[i].Child("day").is_valid() && cd[i].Child("day").value().is_int64() ){
-            tmp.day = cd[i].Child("day").value().int64_value();
-            std::cout << "day: " << tmp.day << endl;
-          }
+		if (cd[i].Child("year").is_valid() && cd[i].Child("year").value().is_int64()) {
+			tmp.year = cd[i].Child("year").value().int64_value();
+			std::cout << "year: " << tmp.year << endl;
+		}
+		if (cd[i].Child("month").is_valid() && cd[i].Child("month").value().is_int64()) {
+			tmp.month = cd[i].Child("month").value().int64_value();
+			std::cout << "month: " << tmp.month << endl;
+		}
+		if (cd[i].Child("day").is_valid() && cd[i].Child("day").value().is_int64()) {
+			tmp.day = cd[i].Child("day").value().int64_value();
+			std::cout << "day: " << tmp.day << endl;
+		}
 
-          if( cd[i].Child("hour").is_valid() && cd[i].Child("hour").value().is_int64() ){
-            tmp.hour = cd[i].Child("hour").value().int64_value();
-            std::cout << "hour: " << tmp.hour << endl;
-          }
+		if (cd[i].Child("hour").is_valid() && cd[i].Child("hour").value().is_int64()) {
+			tmp.hour = cd[i].Child("hour").value().int64_value();
+			std::cout << "hour: " << tmp.hour << endl;
+		}
 
-          if( cd[i].Child("minute").is_valid() && cd[i].Child("minute").value().is_int64() ){
-            tmp.hour = cd[i].Child("minute").value().int64_value();
-            std::cout << "minute: " << tmp.minute << endl;
-          }
+		if (cd[i].Child("minute").is_valid() && cd[i].Child("minute").value().is_int64()) {
+			tmp.hour = cd[i].Child("minute").value().int64_value();
+			std::cout << "minute: " << tmp.minute << endl;
+		}
 
 		char datestring[256];
-		sprintf(datestring, "%04d/%02d/%02d %02d:%02d:00",tmp.year+1980,tmp.month,tmp.day,tmp.hour,tmp.minute);
+		sprintf(datestring, "%04d/%02d/%02d %02d:%02d:00", tmp.year + 1980, tmp.month, tmp.day, tmp.hour, tmp.minute);
 		tmp.savedate = datestring;
 #endif
 		cloud_items.push_back(tmp);
@@ -237,12 +240,12 @@ void UIBackupRam::OnValueChanged(
 	on_lwCloudSaveList_itemSelectionChanged();
 }
 
-void UIBackupRam::OnCancelled(const firebase::database::Error &error_code,
-															const char *error_message)
+void UIBackupRam::OnCancelled(const firebase::database::Error& error_code,
+	const char* error_message)
 {
 }
 
-void UIBackupRam::OnAuthStateChanged(firebase::auth::Auth *auth)
+void UIBackupRam::OnAuthStateChanged(firebase::auth::Auth* auth)
 {
 	firebase::auth::User user = auth->current_user();
 	if (user.is_valid())
@@ -253,7 +256,7 @@ void UIBackupRam::OnAuthStateChanged(firebase::auth::Auth *auth)
 		const std::string emailAddress = user.email();
 		const std::string photoUrl = user.photo_url();
 
-		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+		firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
 		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).AddValueListener(this);
@@ -266,25 +269,25 @@ void UIBackupRam::OnAuthStateChanged(firebase::auth::Auth *auth)
 	// ...
 }
 
-UIBackupRam::UIBackupRam(QWidget *p)
-		: QDialog(p)
+UIBackupRam::UIBackupRam(QWidget* p)
+	: QDialog(p)
 {
 	backupman_ = BackupManager::getInstance();
-  UIBackupRam::instance = this;
+	UIBackupRam::instance = this;
 
-  connect(this, SIGNAL(errorMessage(QString)),
-    SLOT(onErrorMessage(QString)));
+	connect(this, SIGNAL(errorMessage(QString)),
+		SLOT(onErrorMessage(QString)));
 
 	new_metadata = nullptr;
 
-	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-  firebase::auth::User user = auth->current_user();
+	firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+	firebase::auth::User user = auth->current_user();
 	if (user.is_valid())
 	{
 
 		printf("signed_in %s\n", user.uid().c_str());
 
-		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+		firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
 		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).AddValueListener(this);
@@ -323,11 +326,11 @@ UIBackupRam::UIBackupRam(QWidget *p)
 
 UIBackupRam::~UIBackupRam()
 {
-	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+	firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
 	firebase::auth::User user = auth->current_user();
 	if (user.is_valid())
 	{
-		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+		firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
 		std::string key = "/user-posts/" + user.uid() + "/backup/";
 		dbref.Child(key).RemoveValueListener(this);
@@ -480,7 +483,7 @@ void UIBackupRam::on_lwSaveList_itemSelectionChanged()
 
 void UIBackupRam::on_pbDelete_clicked()
 {
-	if (QListWidgetItem *it = lwSaveList->selectedItems().value(0))
+	if (QListWidgetItem* it = lwSaveList->selectedItems().value(0))
 	{
 		u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
 		if (CommonDialogs::question(QtYabause::translate("Are you sure you want to delete '%1' ?").arg(it->text())))
@@ -513,7 +516,7 @@ void UIBackupRam::on_pbExport_clicked()
 		backupman_->getFile(index, json);
 
 		QString fileName = QFileDialog::getSaveFileName(this, tr("Export filen name"), "export.json", tr("JSON(*.json)"));
-		FILE *fp = fopen_utf8(fileName.toStdString().c_str(), "w");
+		FILE* fp = fopen_utf8(fileName.toStdString().c_str(), "w");
 		if (fp != NULL)
 		{
 			fwrite(json.c_str(), 1, json.length(), fp);
@@ -533,7 +536,7 @@ void UIBackupRam::on_pbImport_clicked()
 		//try {
 		std::ifstream t(fileName.toStdString());
 		std::string str((std::istreambuf_iterator<char>(t)),
-										std::istreambuf_iterator<char>());
+			std::istreambuf_iterator<char>());
 
 		u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
 		string filejson;
@@ -577,7 +580,7 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 	if (id == -1)
 		return;
 
-	firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+	firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
 	firebase::auth::User user = auth->current_user();
 	if (!user.is_valid())
 	{
@@ -585,7 +588,7 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 	}
 
 	// Delte Storage
-	Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
+	Storage* storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
 	StorageReference storage_ref = storage->GetReference();
 	cout << "Bucket: " << storage_ref.bucket() << std::endl;
 	StorageReference base = storage_ref.Child(user.uid());
@@ -595,68 +598,74 @@ void UIBackupRam::on_pbDeleteCloudItem_clicked()
 	del_key = cloud_items[id].key;
 
 	Future<void> future = fileref.Delete();
-	future.OnCompletion([](const firebase::Future<void> &result, void *user_data) {
-			UIBackupRam *self = (UIBackupRam *)user_data;
-			if (result.status() == firebase::kFutureStatusComplete) {
-				if (result.error() == firebase::storage::kErrorNone) {
-					firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-					firebase::auth::User user = auth->current_user();
-					if (!user.is_valid()) {
-						return;
-					}
-
-					firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
-					firebase::database::DatabaseReference dbref = database->GetReference();
-					std::string delete_file = "/user-posts/" + user.uid() + "/backup/" + self->del_key;
-					firebase::database::DatabaseReference ref_delete_file = dbref.Child(delete_file);					
-					ref_delete_file.RemoveValue();
-					self->del_key = "";
-
-				}else{
-					std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-					self->del_key = "";
+	future.OnCompletion([](const firebase::Future<void>& result, void* user_data) {
+		UIBackupRam* self = (UIBackupRam*)user_data;
+		if (result.status() == firebase::kFutureStatusComplete) {
+			if (result.error() == firebase::storage::kErrorNone) {
+				firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+				firebase::auth::User user = auth->current_user();
+				if (!user.is_valid()) {
+					return;
 				}
-			}else{
+
+				firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+				firebase::database::DatabaseReference dbref = database->GetReference();
+				std::string delete_file = "/user-posts/" + user.uid() + "/backup/" + self->del_key;
+				firebase::database::DatabaseReference ref_delete_file = dbref.Child(delete_file);
+				ref_delete_file.RemoveValue();
+				self->del_key = "";
+
+			}
+			else {
 				std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
 				self->del_key = "";
 			}
 		}
-		,this
+		else {
+			std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+			self->del_key = "";
+		}
+	}
+		, this
 	);
 }
 
 void UIBackupRam::on_pbCopyFromCloud_clicked()
 {
-  int id = -1;
+	int id = -1;
 
-  id = lwCloudSaveList->currentRow();
-  
-  // update gui
+	id = lwCloudSaveList->currentRow();
+
+	// update gui
 	if (id != -1)
 	{
-    QNetworkRequest request;
-    request.setSslConfiguration(QSslConfiguration::defaultConfiguration());
 
-    request.setUrl(QUrl(cloud_items[id].url.c_str()));
+		std::size_t pos = cloud_items[id].url.find("/", 8);
+		if (pos == std::string::npos) {
+			qDebug() << "Error: Invalid URL";
 
-		QNetworkAccessManager dlManager;
-		dlManager.setNetworkAccessible(QNetworkAccessManager::Accessible);
-		QNetworkReply *reply = dlManager.get(request);
+			QString meg = "Error: Invalid URL";
+			QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
 
-		QEventLoop Loop;
-		QObject::connect(reply, SIGNAL(finished()), &Loop, SLOT(quit()));
-		Loop.exec();
-		QObject::disconnect(reply, SIGNAL(finished()), &Loop, SLOT(quit()));
-
-		qDebug("Result: %d", reply->error());
-		if (reply->error() != QNetworkReply::NoError)
-		{
-			qDebug() << "Error: " << reply->errorString();
 			return;
 		}
 
-		std::string str = reply->readAll().toStdString();
+		std::string host = cloud_items[id].url.substr(0, pos);
+		std::string path = cloud_items[id].url.substr(pos);
 
+		const char* url = cloud_items[id].url.c_str();
+		httplib::Client cli(host.c_str());
+		auto res = cli.Get(path.c_str());
+		if (res->status != 200) {
+			qDebug() << "Error: " << res->reason.c_str();
+
+			QString meg = res->reason.c_str();
+			QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+
+			return;
+		}
+
+		std::string str = res->body;
 
 		u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
 		string filejson;
@@ -672,27 +681,28 @@ void UIBackupRam::on_pbCopyFromCloud_clicked()
 
 #if 0
 		Storage* storage = Storage::GetInstance(UIYabause::getFirebaseApp());
-		StorageReference storage_ref = storage->GetReferenceFromUrl( cloud_items[id].url.c_str() );
+		StorageReference storage_ref = storage->GetReferenceFromUrl(cloud_items[id].url.c_str());
 
 		const size_t kMaxAllowedSize = 1 * 1024 * 1024;
 		tmpbuf = (char*)malloc(kMaxAllowedSize);
 		firebase::Future<size_t> result = storage_ref.GetBytes(tmpbuf, kMaxAllowedSize);
 
 		result.OnCompletion(
-		[](const firebase::Future<size_t>& result,
-			void* user_data) {
-  
+			[](const firebase::Future<size_t>& result,
+				void* user_data) {
+
 			if (result.status() == firebase::kFutureStatusComplete) {
 				if (result.error() == firebase::storage::kErrorNone) {
 					size_t read_size = *result.result();
 					UIBackupRam* self = (UIBackupRam*)user_data;
 					self->finishedGetBackupData();
-				}else{
+				}
+				else {
 					std::cout << "Failed: " << result.error_message() << endl;
 				}
 			}
 		}
-		,this
+			, this
 		);
 #endif
 	}
@@ -706,18 +716,18 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		u32 id = cbDeviceList->itemData(cbDeviceList->currentIndex()).toInt();
 		string filejson;
 		backupman_->getFilelist(id, filejson);
-    if (backupman_->getFile(index, new_backup_data) != 0) {
-      CommonDialogs::information(QtYabause::translate("Fail to export backup data"));
-    }
+		if (backupman_->getFile(index, new_backup_data) != 0) {
+			CommonDialogs::information(QtYabause::translate("Fail to export backup data"));
+		}
 
-		firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+		firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
 		firebase::auth::User user = auth->current_user();
 		if (!user.is_valid())
 		{
 			return;
 		}
 
-		firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+		firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
 		firebase::database::DatabaseReference dbref = database->GetReference();
 		std::string baseurl = "/user-posts/" + user.uid() + "/backup/";
 		firebase::database::DatabaseReference user_dir = dbref.Child(baseurl);
@@ -727,11 +737,11 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 
 		char datestring[256];
 		snprintf(datestring, 256, "%04d/%02d/%02d %02d:%02d:00",
-						 saves[index].year + 1980,
-						 saves[index].month,
-						 saves[index].day,
-						 saves[index].hour,
-						 saves[index].minute);
+			saves[index].year + 1980,
+			saves[index].month,
+			saves[index].day,
+			saves[index].hour,
+			saves[index].minute);
 
 		new_data["filename"] = saves[index].filename;
 		new_data["comment"] = sComment;
@@ -744,7 +754,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 
 		new_post.UpdateChildren(new_data);
 
-		Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
+		Storage* storage = Storage::GetInstance(UIYabause::getFirebaseApp(), "gs://uoyabause.appspot.com");
 		StorageReference storage_ref = storage->GetReference();
 		cout << "Bucket: " << storage_ref.bucket() << std::endl;
 		StorageReference base = storage_ref.Child(user.uid());
@@ -761,7 +771,7 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 		}
 		new_metadata = new Metadata();
 		new_metadata->set_content_type("text/json");
-		std::map<std::string, std::string> *custom_metadata = new_metadata->custom_metadata();
+		std::map<std::string, std::string>* custom_metadata = new_metadata->custom_metadata();
 		custom_metadata->insert(std::make_pair("dbref", baseurl + new_post.key()));
 		custom_metadata->insert(std::make_pair("uid", user.uid()));
 		custom_metadata->insert(std::make_pair("filename", saves[index].filename));
@@ -771,78 +781,78 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 
 		this->new_key = new_post.key();
 		Future<Metadata> future = fileref.PutBytes(
-				new_backup_data.c_str(),
-				new_backup_data.size(),
-				*new_metadata);
+			new_backup_data.c_str(),
+			new_backup_data.size(),
+			*new_metadata);
 
 		future.OnCompletion(
-				[](const firebase::Future<Metadata> &result, void *user_data) {
-					UIBackupRam *self = (UIBackupRam *)user_data;
-					if (result.status() == firebase::kFutureStatusComplete)
+			[](const firebase::Future<Metadata>& result, void* user_data) {
+			UIBackupRam* self = (UIBackupRam*)user_data;
+			if (result.status() == firebase::kFutureStatusComplete)
+			{
+				if (result.error() == firebase::storage::kErrorNone)
+				{
+
+					firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+					firebase::auth::User user = auth->current_user();
+					if (!user.is_valid())
 					{
-						if (result.error() == firebase::storage::kErrorNone)
+						return;
+					}
+
+					Storage* storage = Storage::GetInstance(UIYabause::getFirebaseApp());
+					StorageReference storage_ref = storage->GetReference().Child(user.uid()).Child("backup").Child(self->new_key);
+					Future<std::string> future = storage_ref.GetDownloadUrl();
+
+					future.OnCompletion(
+						[](const firebase::Future<std::string>& result, void* user_data) {
+						UIBackupRam* self = (UIBackupRam*)user_data;
+						if (result.status() == firebase::kFutureStatusComplete)
 						{
-
-							firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-							firebase::auth::User user = auth->current_user();
-							if (!user.is_valid())
+							if (result.error() == firebase::storage::kErrorNone)
 							{
-								return;
+								firebase::auth::Auth* auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
+								firebase::auth::User user = auth->current_user();
+								if (!user.is_valid())
+								{
+									return;
+								}
+								firebase::database::Database* database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
+								firebase::database::DatabaseReference dbref = database->GetReference();
+								std::string baseurl = "/user-posts/" + user.uid() + "/backup/" + self->new_key + "/url/";
+								firebase::database::DatabaseReference url_dir = dbref.Child(baseurl);
+								url_dir.SetValue(*result.result());
+								self->new_key = "";
 							}
-
-							Storage *storage = Storage::GetInstance(UIYabause::getFirebaseApp());
-							StorageReference storage_ref = storage->GetReference().Child(user.uid()).Child("backup").Child(self->new_key);
-							Future<std::string> future = storage_ref.GetDownloadUrl();
-
-							future.OnCompletion(
-									[](const firebase::Future<std::string> &result, void *user_data) {
-										UIBackupRam *self = (UIBackupRam *)user_data;
-										if (result.status() == firebase::kFutureStatusComplete)
-										{
-											if (result.error() == firebase::storage::kErrorNone)
-											{
-												firebase::auth::Auth *auth = firebase::auth::Auth::GetAuth(UIYabause::getFirebaseApp());
-												firebase::auth::User user = auth->current_user();
-												if (!user.is_valid())
-												{
-													return;
-												}
-												firebase::database::Database *database = ::firebase::database::Database::GetInstance(UIYabause::getFirebaseApp());
-												firebase::database::DatabaseReference dbref = database->GetReference();
-												std::string baseurl = "/user-posts/" + user.uid() + "/backup/" + self->new_key + "/url/";
-												firebase::database::DatabaseReference url_dir = dbref.Child(baseurl);
-												url_dir.SetValue(*result.result());
-												self->new_key = "";
-											}
-											else
-											{
-												std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-                        QString meg = result.error_message();
-                        QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
-                        self->new_key = "";
-											}
-										}
-										else
-										{
-											std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-                      QString meg = result.error_message();
-                      QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
-                      self->new_key = "";
-										}
-									},
-									user_data);
+							else
+							{
+								std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+								QString meg = result.error_message();
+								QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+								self->new_key = "";
+							}
 						}
 						else
 						{
 							std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
-              QString meg = result.error_message();
-              QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
-
+							QString meg = result.error_message();
+							QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
 							self->new_key = "";
 						}
-					}
-				},
-				this);
+					},
+						user_data);
+				}
+				else
+				{
+					std::cout << "Failed: " << result.error() << " " << result.error_message() << std::endl;
+					QString meg = result.error_message();
+					QMetaObject::invokeMethod(UIBackupRam::instance, "onErrorMessage", Q_ARG(QString, meg));
+
+					self->new_key = "";
+				}
+			}
+		},
+			this);
 		while (this->new_key != "")
 		{
 			QThread::sleep(1);
@@ -851,5 +861,5 @@ void UIBackupRam::on_pbCopyFromLocal_clicked()
 }
 
 void UIBackupRam::onErrorMessage(QString info) {
-  CommonDialogs::warning(info);
+	CommonDialogs::warning(info);
 }

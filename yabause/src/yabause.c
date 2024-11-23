@@ -930,7 +930,7 @@ int YabauseEmulate(void) {
 
 void SyncCPUtoSCSP() {
   //LOG("[SH2] WAIT SCSP");
-  if (yabsys.scsp_main_mode == 0) {
+  if (g_scsp_main_mode == 0) {
     setM68kCounter(1);
     YabWaitEventQueue(q_scsp_finish);
     saved_m68k_cycles = 0;

@@ -38,7 +38,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 
 #define NANOVG_VULKAN_IMPLEMENTATION
 #include "nanovg.h"
+#if defined(ANDROID) || !defined(__RETORO_ARENA__)
 #include "nanovg_vk.h"
+#endif
 
 //#include "Roboto-Bold.h"
 //#include "Roboto-Regular.h"
@@ -73,7 +75,7 @@ extern "C" {
 
 
 
-static NVGcontext* vg = NULL;
+NVGcontext* vg = NULL;
 static int fontNormal, fontBold;
 
 #define MAX_HISTORY 4
@@ -89,9 +91,23 @@ static FrameProfileInfo frameinfo_histroy[MAX_HISTORY];
 static int current_history_index = 0;
 static int profile_index = 0;
 
+NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
+void deleteNanoGuiVg(NVGcontext * vg);
+
+
 int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer, int preTransformFlag) {
   
-  VKNVGCreateInfo createInfo={0};
+#if defined(__RETORO_ARENA__)
+ 
+  if (vg == NULL) {
+    vg = InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
+    OSDNanovgVInit();
+  }
+  else {
+    InitNanoGuiVg(device, gpu, renderPass, cmdBuffer);
+  }
+#else
+  VKNVGCreateInfo createInfo = { 0 };
   createInfo.device = device;
   createInfo.gpu = gpu;
   createInfo.renderpass = renderPass;
@@ -99,9 +115,9 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
   createInfo.pretransformFlag = preTransformFlag;
 
   if (vg != NULL) {
-    nvgUpdateVk(vg,createInfo);
+    nvgUpdateVk(vg, createInfo);
     return 0;
-  }
+}
 
   vg = nvgCreateVk(createInfo, NVG_ANTIALIAS);
   if (vg == NULL) {
@@ -109,15 +125,15 @@ int NanovgVulkanSetDevices(VkDevice device, VkPhysicalDevice gpu, VkRenderPass r
     return -1;
   }
   OSDNanovgVInit();
+#endif
   return 0;
-
 }
 
 extern "C" {
 
 static int OSDNanovgVInit(void)
 {
-  VKNVGCreateInfo create_info = { 0 };
+  //VKNVGCreateInfo create_info = { 0 };
   //create_info.device = device->device;
   //create_info.gpu = device->gpu;
   //create_info.renderpass = fb.render_pass;
@@ -127,7 +143,27 @@ static int OSDNanovgVInit(void)
     printf("Could not init nanovg.\n");
     return 0;
   }
+#if defined(__RETORO_ARENA__)
+  fontNormal = nvgCreateFont(vg, "sans", "./fonts/NotoSansJP-Medium.ttf");
+  if (fontNormal == -1) {
+    printf("Could not add font italic.\n");
+    fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
+    if (fontNormal == -1) {
+      printf("Could not add font italic.\n");
+      return -1;
+    }
+  }
+  fontBold = nvgCreateFont(vg, "sans-bold", "./fonts/NotoSansJP-Bold.ttf");
+  if (fontBold == -1) {
+    printf("Could not add font bold.\n");
+    fontBold = nvgCreateFontMem(vg, "sans", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
+    if (fontBold == -1) {
+      printf("Could not add font bold.\n");
+      return -1;
+    }
+  }
 
+#else
   fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
   if (fontNormal == -1) {
     printf("Could not add font italic.\n");
@@ -138,6 +174,9 @@ static int OSDNanovgVInit(void)
     printf("Could not add font bold.\n");
     return -1;
   }
+#endif
+
+
 
   memset(frameinfo_histroy, 0, sizeof(FrameProfileInfo)*MAX_HISTORY);
   current_history_index = 0;
@@ -148,7 +187,11 @@ static int OSDNanovgVInit(void)
 
 static void OSDNanovgVDeInit(void)
 {
-  nvgDeleteVk(vg);
+#if defined(__RETORO_ARENA__)
+  deleteNanoGuiVg(vg);
+#else
+  nvgDeleteVk(vg); 
+#endif
   vg = NULL;
 
 }

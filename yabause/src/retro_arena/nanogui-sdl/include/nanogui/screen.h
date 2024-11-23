@@ -15,6 +15,7 @@
 #define __RRR_SCREEN_H__
 
 #include <nanogui/widget.h>
+#include <vulkan/vulkan.h>
 
 union SDL_Event;
 struct SDL_Window;
@@ -58,8 +59,14 @@ public:
     /// Return the ratio between pixel and device coordinates (e.g. >= 2 on Mac Retina displays)
     float pixelRatio() const { return mPixelRatio; }
 
-    /// Draw the Screen contents
     virtual void drawAll();
+
+    /// Draw the Screen contents
+    virtual void drawAll(
+      VkDevice device,
+      VkPhysicalDevice gpu,
+      VkRenderPass renderPass,
+      VkCommandBuffer commandBuffer);
 
     virtual void onEvent(SDL_Event& event);
 

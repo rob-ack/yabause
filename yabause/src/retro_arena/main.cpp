@@ -39,7 +39,7 @@ namespace fs = std::experimental::filesystem ;
 #elif defined(_WINDOWS)
 #include <windows.h>
 #include <commdlg.h>
-
+#include <shellscalingapi.h>
 #include <direct.h>
 #include <SDL.h>
 #include <SDL_syswm.h>
@@ -71,10 +71,26 @@ extern "C" {
 #include "libpng16/png.h"
 }
 
+#include "PlayRecorder.h"
+
+#if HAVE_VULKAN
+#include <SDL_vulkan.h>
+#include "../vulkan/VIDVulkanCInterface.h"
+#include "../vulkan/VIDVulkan.h"
+#include "../vulkan/Renderer.h"
+#include "../vulkan/Window.h"
+#else
+#define VIDCORE_VULKAN 0xFF
+#endif
+
+
 #include "InputManager.h"
 #include "MenuScreen.h"
 #include "Preference.h"
 #include "EventManager.h"
+
+
+int g_vidcoretype = VIDCORE_OGL;
 
 #define YUI_LOG printf
 
@@ -89,6 +105,8 @@ extern "C" {
   static char buppath[256] = "./back.bin";
   static char mpegpath[256] = "\0";
   static char cartpath[256] = "\0";
+  static string s_playdatadir = "";
+  static string s_playrecord_path = "";
   static bool menu_show = false;
 
 #define LOG printf
@@ -143,6 +161,9 @@ extern "C" {
   VideoInterface_struct *VIDCoreList[] = {
     &VIDDummy,
     &VIDOGL,
+#if HAVE_VULKAN
+    &CVIDVulkan,
+#endif
     NULL
   };
 
@@ -151,11 +172,19 @@ extern "C" {
 #include "nanovg/nanovg_osdcore.h"
   OSD_struct *OSDCoreList[] = {
     &OSDNnovg,
+#if HAVE_VULKAN
+    &OSDNnovgVulkan,
+#endif
     &OSDDummy,
     NULL
   };
 #endif
 
+  enum PlayMode {
+    NORMAL,
+    RECORD,
+    PLAY
+  };
 
   static SDL_Window* wnd;
   static SDL_Window* subwnd;
@@ -168,13 +197,39 @@ extern "C" {
   int g_frame_skip = 1;
   int g_emulated_bios = 1;
   bool g_full_screen = false;
+  int g_emulation_speed_mode = 0;
   InputManager* inputmng;
-  MenuScreen * menu;
+  MenuScreen * menu = nullptr;
+
+  static PlayMode g_playMode = NORMAL;
+  static PlayRecorder *sPlayer = nullptr;
+
+
+  int saveScreenshot(const char * filename);
+
+  class ScreenRecorder
+  {
+  public:
+    void setScreenshotCallback(PlayRecorder *p)
+    {
+      using std::placeholders::_1;
+      p->f_takeScreenshot = std::bind(&ScreenRecorder::takeScreenshot, this, _1);
+    }
+    void takeScreenshot(const char *fname)
+    {
+      ::saveScreenshot(fname);
+    }
+  };
+
+  ScreenRecorder gsc;
+
 
   using std::string;
   string g_keymap_filename;
 
   void hideMenuScreen();
+
+  NVGcontext * InitNanoGuiVg(VkDevice device, VkPhysicalDevice gpu, VkRenderPass renderPass, VkCommandBuffer cmdBuffer);
 
   //----------------------------------------------------------------------------------------------
   NVGcontext * getGlobalNanoVGContext() {
@@ -192,14 +247,26 @@ extern "C" {
 
   void YuiSwapBuffers(void)
   {
+#if HAVE_VULKAN
+    if (g_vidcoretype == VIDCORE_VULKAN) {
+      VIDVulkan::getInstance()->present();
+      SetOSDToggle(g_EnagleFPS);
+      return;
+    }
+#endif
     SDL_GL_SwapWindow(wnd);
     SetOSDToggle(g_EnagleFPS);
+
   }
 
   int YuiRevokeOGLOnThisThread() {
-#if defined(YAB_ASYNC_RENDERING)
     LOG("revoke thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+      return 0;
+    }
+
     int rc = -1;
     int retry = 0;
     while (rc != 0) {
@@ -210,19 +277,22 @@ extern "C" {
       if (retry > 100) {
         LOG("out of retry cont\n");
         abort();
-      }
+      } 
     }
 #else
     SDL_GL_MakeCurrent(wnd, nullptr);
 #endif  
-#endif
     return 0;
   }
 
   int YuiUseOGLOnThisThread() {
-#if defined(YAB_ASYNC_RENDERING)
     LOG("use thread\n");
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+      return 0;
+    }
+
     int rc = -1;
     int retry = 0;
     while (rc != 0) {
@@ -238,13 +308,11 @@ extern "C" {
 #else
     SDL_GL_MakeCurrent(wnd, glc);
 #endif
-#endif
     return 0;
   }
 
 }
 
-int saveScreenshot( const char * filename );
 
 //int padmode = 0;
 
@@ -262,8 +330,16 @@ int yabauseinit()
 #else
   yinit.sh2coretype = 3;
 #endif  
+
+
+  yinit.sh2coretype = 3;
   //yinit.vidcoretype = VIDCORE_SOFT;
+#if HAVE_VULKAN
+  g_vidcoretype = VIDCORE_VULKAN;
+  yinit.vidcoretype = g_vidcoretype;
+#else
   yinit.vidcoretype = 1;
+#endif
   yinit.sndcoretype = SNDCORE_SDL;
   //yinit.sndcoretype = SNDCORE_DUMMY;
   //yinit.cdcoretype = CDCORE_DEFAULT;
@@ -295,7 +371,7 @@ int yabauseinit()
   yinit.scsp_sync_count_per_frame = g_scsp_sync;
   yinit.extend_backup = 1;
 #if defined(__JETSON__) || defined(__SWITCH__) || defined(_WINDOWS)
-  yinit.scsp_main_mode = 1;
+  yinit.scsp_main_mode = 0;
 #else
   yinit.scsp_main_mode = 1;
 #endif
@@ -307,6 +383,14 @@ int yabauseinit()
 #endif
 
   yinit.use_sh2_cache = 1;
+  yinit.framelimit = g_emulation_speed_mode;
+
+  if (g_playMode == PLAY) {
+    sPlayer = PlayRecorder::getInstance();
+    gsc.setScreenshotCallback(sPlayer);
+    sPlayer->startPlay(s_playdatadir.c_str(), false, &yinit);
+  }
+
 
   res = YabauseInit(&yinit);
   if( res == -1) {
@@ -316,7 +400,7 @@ int yabauseinit()
   //padmode = inputmng->getCurrentPadMode( 0 );
 #if !defined(__PC__)  
   OSDInit(0);
-  OSDChangeCore(OSDCORE_NANOVG);
+  OSDChangeCore(OSDCORE_NANOVG_VULKAN);
 #endif
   LogStart();
   LogChangeOutput(DEBUG_CALLBACK, NULL);
@@ -326,23 +410,37 @@ int yabauseinit()
 #include <Shlobj.h>
 
 void narrow(const std::wstring &src, std::string &dest) {
+  setlocale(LC_ALL, "ja_JP.UTF-8");
   char *mbs = new char[src.length() * MB_CUR_MAX + 1];
   wcstombs(mbs, src.c_str(), src.length() * MB_CUR_MAX + 1);
   dest = mbs;
   delete[] mbs;
 }
 
+
 void getHomeDir( std::string & homedir ) {
 #if defined(ARCH_IS_LINUX)
   homedir = getenv("HOME");
   homedir += ".yabasanshiro";
 #elif defined(_WINDOWS)
-  
+
+  //homedir = "./";
+  //return;
   WCHAR * path;
   if (SUCCEEDED(SHGetKnownFolderPath(FOLDERID_Documents, KF_FLAG_DEFAULT, NULL, &path))) {
     std::wstring tmp;
     tmp = path;
     narrow(tmp, homedir);
+
+    //int bufferSize = WideCharToMultiByte(CP_OEMCP, 0, path, -1, nullptr, 0, nullptr, nullptr);
+    //std::vector<char> buffer(bufferSize);
+    //WideCharToMultiByte(CP_OEMCP, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
+
+    //int bufferSize = WideCharToMultiByte(CP_UTF8, 0, path, -1, nullptr, 0, nullptr, nullptr);
+    //std::vector<char> buffer(bufferSize);
+    //WideCharToMultiByte(CP_UTF8, 0, path, -1, buffer.data(), bufferSize, nullptr, nullptr);
+    //homedir = buffer.data();
+
     homedir += "/YabaSanshiro/";
     CoTaskMemFree(path);
   }
@@ -423,12 +521,14 @@ bool selectDirectory(std::string & out) {
    return true;
 }
 
-
 //#undef main
 //int main(int argc, char** argv)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine, int cmdShow)
 {
 
+  UINT value = GetACP();
+  SetConsoleOutputCP(value);
+  setlocale(LC_ALL, "ja_JP.UTF-8");
   inputmng = InputManager::getInstance();
 
   char** argv = __argv;
@@ -455,7 +555,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
 #else
   FILE * stdout_fp = freopen(string(home_dir + "/stdout.txt").c_str(), "wb", stdout);
   FILE * stderr_fp = freopen(string(home_dir + "/stderr.txt").c_str(), "wb", stderr);
-#endif
 
   std::string games_dir = home_dir + "games";
   if (stat(games_dir.c_str(), &st) == -1) {
@@ -470,6 +569,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   strcpy(buppath, bckup_dir.c_str());
   strcpy(s_savepath, home_dir.c_str());
   g_keymap_filename = home_dir + "/keymapv3.json";
+
+  s_playrecord_path = home_dir + "/record/";
+  s_playdatadir = home_dir + "/record/GS-9039/";
+
 
   s_playrecord_path = home_dir + "/record/";
   s_playdatadir = home_dir + "/record/GS-9039/";
@@ -516,6 +619,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   g_full_screen = defpref->getBool("Full screen", false);
   g_EnagleFPS = defpref->getBool("Show Fps", false);
 
+  //g_EnagleFPS = true;
+
   for (int i = 0; i < all_args.size(); i++) {
     string x = all_args[i];
     if ((x == "-b" || x == "--bios") && (i + 1 < all_args.size())) {
@@ -540,12 +645,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     else if ((x == "-w" || x == "--window")) {
       g_full_screen = false;
     }
+    else if ((x == "-rc" || x == "--record")) {
+      g_playMode = RECORD;
+    }
+    else if ((x == "-p" || x == "--play") && (i + 1 < all_args.size()) ) {
+      g_playMode = PLAY;
+      s_playdatadir = all_args[i + 1];
+    }
+    else if ((x == "-sp" || x == "--emulation_speed_mode" ) && (i + 1 < all_args.size())) {
+      g_emulation_speed_mode = std::stoi(all_args[i + 1]);
+    }
     else if ((x == "-v" || x == "--version")) {
       printf("YabaSanshiro version %s(%s)\n", YAB_VERSION, GIT_SHA1);
       return 0;
     }
   }
 
+  SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE);
   defpref->setString("last play game path", cdpath);
 
   if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -572,20 +688,29 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
   SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, 1);
 
+
   int width = 1280;
   int height = 720;
 
+  int winflg = SDL_WINDOW_OPENGL;
+#if HAVE_VULKAN
+  winflg = SDL_WINDOW_VULKAN;
+#else
+
+#endif
+
   if (g_full_screen == false) {
+
     wnd = SDL_CreateWindow("Yaba Snashiro", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
+      width, height, winflg | SDL_WINDOW_SHOWN);
 
     subwnd = SDL_CreateWindow("Yaba Snashiro sub", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-      width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
+      width, height, winflg | SDL_WINDOW_HIDDEN);
 
   }
   else {
 
-    int targetDisplay = 0; // defpref->getInt("target display", 0);
+    int targetDisplay = defpref->getInt("target display", 0);
 
     // enumerate displays
     int displays = SDL_GetNumVideoDisplays();
@@ -611,7 +736,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     width = dsp.w;
     height = dsp.h;
     wnd = SDL_CreateWindow("Yaba Snashiro", x, y,
-      w, h, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN );
+      w, h, winflg | SDL_WINDOW_SHOWN );
     if (wnd == nullptr) {
       printf("Fail to SDL_CreateWindow Bye! (%s)", SDL_GetError());
       return -1;
@@ -644,40 +769,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     return -1;
   }
 #endif  
-  glc = SDL_GL_CreateContext(wnd);
-  if(glc == nullptr ) {
-    printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError() );
-    return -1;
-  }
 
-  printf("context renderer string: \"%s\"\n", glGetString(GL_RENDERER));
-  printf("context vendor string: \"%s\"\n", glGetString(GL_VENDOR));
-  printf("version string: \"%s\"\n", glGetString(GL_VERSION));
-  printf("Extentions: %s\n",glGetString(GL_EXTENSIONS));
+#if HAVE_VULKAN
+  Renderer *r = NULL;
+  g_vidcoretype = VIDCORE_VULKAN;
+#endif
 
-/*
-  if (strlen(cdpath) <= 0 ) {
-    strcpy(cdpath, home_dir.c_str());
-    p = new Preference(cdpath);
+  if (g_vidcoretype == VIDCORE_VULKAN) {
+    r = new Renderer();
+    r->setNativeWindow((void*)wnd);
+    VIDVulkan::getInstance()->setRenderer(r);
   }
   else {
-    p = new Preference("default");
+    glc = SDL_GL_CreateContext(wnd);
+    if (glc == nullptr) {
+      printf("Fail to SDL_GL_CreateContext Bye! (%s)", SDL_GetError());
+      return -1;
+    }
+    printf("context renderer string: \"%s\"\n", glGetString(GL_RENDERER));
+    printf("context vendor string: \"%s\"\n", glGetString(GL_VENDOR));
+    printf("version string: \"%s\"\n", glGetString(GL_VERSION));
+    printf("Extentions: %s\n", glGetString(GL_EXTENSIONS));
+    SDL_GL_MakeCurrent(wnd, glc);
   }
-*/
-
-  SDL_GL_MakeCurrent(wnd, glc);
 
   inputmng->init(g_keymap_filename);
-  menu = new MenuScreen(wnd,width,height, g_keymap_filename, cdpath);
-  menu->setConfigFile(g_keymap_filename);  
-  menu->setCurrentGamePath(cdpath);
-  
 
-  if( yabauseinit() == -1 ) {
-      printf("Fail to yabauseinit Bye! (%s)", SDL_GetError() );
-      return -1;
+  if (yabauseinit() == -1) {
+    printf("Fail to yabauseinit Bye! (%s)", SDL_GetError());
+    return -1;
   }
-
   
   VIDCore->Resize(0,0,width,height,1,defpref->getInt("Aspect rate",0));
   
@@ -694,7 +815,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
   inputmng->setToggleMenuEventCode(evToggleMenu);
 
   Uint32  evRepeat = SDL_RegisterEvents(1);
+#if HAVE_VULKAN
+#else
   menu->setRepeatEventCode(evRepeat);
+#endif
 
   EventManager * evm = EventManager::getInstance();
 
@@ -832,6 +956,48 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     hideMenuScreen();
   });
 
+#if 0
+  evm->setEvent("play", [tmpfilename](int code, void * data1, void * data2) {
+    int ret;
+    time_t t = time(NULL);
+    YUI_LOG("MSG_PLAY");
+
+    PlayRecorder *p = PlayRecorder::getInstance();
+    if (p->getStatus() == PlayRecorder::IDLE)
+    {
+      gsc.setScreenshotCallback(p);
+      p->startPlay(s_playdatadir.c_str(), true, NULL);
+    }
+    hideMenuScreen();
+  });
+
+  evm->setEvent("record", [tmpfilename](int code, void * data1, void * data2) {
+    int ret;
+    time_t t = time(NULL);
+    YUI_LOG("MSG_RECORD");
+
+    PlayRecorder *p = PlayRecorder::getInstance();
+    if (p->getStatus() == PlayRecorder::IDLE)
+    {
+      gsc.setScreenshotCallback(p);
+      p->setBaseDir(s_playrecord_path.c_str());
+      p->startRocord();
+    }
+    else if (p->getStatus() == 0)
+    {
+      p->stopRocord();
+    }
+    hideMenuScreen();
+  });
+#endif
+
+  if (g_playMode == RECORD) {
+    sPlayer = PlayRecorder::getInstance();
+    gsc.setScreenshotCallback(sPlayer);
+    sPlayer->setBaseDir("./record/");
+    sPlayer->startRocord();
+  }
+
   
   // 初期設定がされていない場合はメニューを表示する
   // BIOSなしの状態でゲームが選択されていない場合も
@@ -862,24 +1028,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     while(SDL_PollEvent(&e)) {
       event_count++;
       if(e.type == SDL_QUIT){
-        glClearColor(0.0,0.0,0.0,1.0);
-        glClear(GL_COLOR_BUFFER_BIT);        
-        SDL_GL_SwapWindow(wnd);
-        YabauseDeInit();
-        SDL_Quit();
-        return 0;
+        goto FINISH;
       }
 
       else if (e.type == SDL_WINDOWEVENT) {
 
         switch (e.window.event) {
         case SDL_WINDOWEVENT_CLOSE:   // exit game
-          glClearColor(0.0, 0.0, 0.0, 1.0);
-          glClear(GL_COLOR_BUFFER_BIT);
-          SDL_GL_SwapWindow(wnd);
-          YabauseDeInit();
-          SDL_Quit();
-          return 0;
+          goto FINISH;
           break;
         default:
           break;
@@ -888,31 +1044,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
       }
       else if(e.type == evToggleMenu){
         if( menu_show ){
-            Preference * p = new Preference(cdpath);
+            Preference * p = new Preference("default");
             VIDCore->Resize(0,0,width,height,1,p->getInt("Aspect rate",0));
             delete p;
           hideMenuScreen();           
-        }else{
+        }
+        else {
           menu_show = true;
           SDL_ShowCursor(SDL_TRUE);
           ScspMuteAudio(1);
-#if defined(YAB_ASYNC_RENDERING)  
 #if defined(_JETSON_) || defined(PC) || defined(_WINDOWS)
-          SDL_GL_MakeCurrent(subwnd,nullptr);
+          SDL_GL_MakeCurrent(subwnd, nullptr);
           VdpRevoke();
           YuiUseOGLOnThisThread();
 #else
           VdpRevoke();
 #endif
-#endif
+
           fflush(stdout_fp);
           fflush(stderr_fp);
+
+          if (menu == nullptr) {
+            menu = new MenuScreen(wnd, width, height, g_keymap_filename, cdpath);
+            menu->setConfigFile(g_keymap_filename);
+            menu->setCurrentGamePath(cdpath);
+          }
+
           
           char pngname_base[256];
           snprintf(pngname_base,256,"%s/%s_", s_savepath, cdip->itemnum);
           menu->setCurrentGameId(pngname_base);
 
           inputmng->setMenuLayer(menu);
+          saveScreenshot(tmpfilename.c_str());
+          menu->setBackGroundImage(tmpfilename);
+
+#if 0
           saveScreenshot(tmpfilename.c_str());
           glUseProgram(0);
           glGetError();
@@ -926,6 +1093,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
           glDisable(GL_STENCIL_TEST);
           glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);   
           menu->setBackGroundImage( tmpfilename );
+#endif
         }
       }
 
@@ -948,25 +1116,55 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, LPSTR lpCmdLine,
     if( menu_show ){
 
       if( event_count > 0 ){
+
+#if 0
         glClearColor(0.0f, 0.0f, 0.0f, 1);
         glClear(GL_COLOR_BUFFER_BIT);
         menu->drawAll();
         SDL_GL_SwapWindow(wnd);
+#else
+        //NanovgVulkanSetDevices(device, this->getPhysicalDevice(), _renderer->getWindow()->GetVulkanRenderPass(), _command_buffers[fi]);
+        //OSDDisplayMessages(NULL, 0, 0);
+
+        VIDVulkan::getInstance()->renderExternal([&](
+            VkDevice device,
+            VkPhysicalDevice gpu,
+            VkRenderPass renderPass,
+            VkCommandBuffer commandBuffer
+          ){
+
+          //       InitNanoGuiVg( device,  gpu, renderPass, commandBuffer);
+            menu->drawAll(device, gpu, renderPass, commandBuffer );
+
+        });
+        
+#endif
+        
       }else{
         YabThreadUSleep( 16*1000 );
       }
     }else{
       //printf("\033[%d;%dH Frmae = %d \n", 0, 0, frame_cont);
-      //frame_cont++;
+      frame_cont++;
+      if (sPlayer != nullptr && g_playMode == RECORD) {
+        if (frame_cont > 3000) {
+          goto FINISH;
+        }
+      }
       YabauseExec(); // exec one frame
     }
   }
 
+FINISH:
   fclose(stdout_fp);
   fclose(stderr_fp);
 
+  if (sPlayer != nullptr && g_playMode == RECORD) {
+    sPlayer->stopRocord();
+  }
+
   YabauseDeInit();
-//  SDL_FreeCursor(cursor);
+  //SDL_FreeCursor(cursor);
   SDL_Quit();
   return 0;
 }
@@ -977,8 +1175,7 @@ void hideMenuScreen(){
   inputmng->setMenuLayer(nullptr);
   glClearColor(0.0f, 0.0f, 0.0f, 1);
   glClear(GL_COLOR_BUFFER_BIT);
-  SDL_GL_SwapWindow(wnd);       
-#if defined(YAB_ASYNC_RENDERING)
+  SDL_GL_SwapWindow(wnd);          
 #if defined(_JETSON_)  || defined(PC) || defined(_WINDOWS)
   SDL_GL_MakeCurrent(wnd,nullptr);
   VdpResume();
@@ -1012,26 +1209,45 @@ int saveScreenshot( const char * filename ){
     png_infop info_ptr;
     int number_of_passes;
     int rtn = -1;
+
   
     SDL_GetWindowSize( wnd, &width, &height);
-    buf = (unsigned char *)malloc(width*height*4);
-    if( buf == NULL ) {
+
+    if (g_vidcoretype == VIDCORE_VULKAN)
+    {
+
+      for (int i = 0; VIDCoreList[i] != NULL; i++)
+      {
+        if (VIDCoreList[i]->id == g_vidcoretype)
+        {
+          VIDCoreList[i]->GetScreenshot((void **)&buf, &width, &height);
+          break;
+        }
+      }
+
+    }
+    else {
+
+      buf = (unsigned char *)malloc(width*height * 4);
+      if (buf == NULL) {
         YUI_LOG("not enough memory\n");
         goto FINISH;
+      }
+
+      glReadBuffer(GL_BACK);
+      pmode = GL_RGBA;
+      glGetError();
+      glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
+      if ((glerror = glGetError()) != GL_NO_ERROR) {
+        YUI_LOG("glReadPixels %04X\n", glerror);
+        goto FINISH;
+      }
+      for (u = 3; u < width*height * 4; u += 4) {
+        buf[u] = 0xFF;
+      }
     }
 
-    glReadBuffer(GL_BACK);
-    pmode = GL_RGBA;
-    glGetError();
-    glReadPixels(0, 0, width, height, pmode, GL_UNSIGNED_BYTE, buf);
-    if( (glerror = glGetError()) != GL_NO_ERROR ){
-        YUI_LOG("glReadPixels %04X\n",glerror);
-         goto FINISH;
-    }
-	
-	for( u = 3; u <width*height*4; u+=4 ){
-		buf[u]=0xFF;
-	}
+
     row_pointers = (png_byte**)malloc(sizeof(png_bytep) * height);
     for (v=0; v<height; v++)
         row_pointers[v] = (png_byte*)&buf[ (height-1-v) * width * 4];
@@ -1118,27 +1334,47 @@ int saveScreenshot( const char * filename ){
     rtn = 0;
 FINISH: 
     if(outfile) fclose(outfile);
-    if(buf) free(buf);
+    if (g_vidcoretype == VIDCORE_VULKAN) {
+
+    }
+    else {
+      if (buf) free(buf);
+    }
+
     if(bufRGB) free(bufRGB);
     if(row_pointers) free(row_pointers);
     return rtn;
 }
 
+std::string shaderCacheDir = "";
 
+const char * YuiGetShaderCachePath() {
+
+  if (shaderCacheDir == "") {
+    std::string home_dir;
+    getHomeDir(home_dir);
+    shaderCacheDir = home_dir + "/cache/";
+    struct stat st = { 0 };
+    if (stat(shaderCacheDir.c_str(), &st) == -1) {
+#if defined(_WINDOWS)
+      mkdir(shaderCacheDir.c_str());
+#else
+      mkdir(shaderCacheDir.c_str(), 0700);
+#endif
+    }
+
+  }
+  return shaderCacheDir.c_str();
+}
 
 extern "C" {
 
   int YabauseThread_IsUseBios() {
-    //if( s_biospath == NULL){
-    //    return 1;
-    //}
-    return 0;
-
+    return g_emulated_bios;
   }
 
   const char * YabauseThread_getBackupPath() {
-    //return s_buppath;
-    return NULL;
+    return buppath;
   }
 
   void YabauseThread_setUseBios(int use) {
@@ -1148,21 +1384,20 @@ extern "C" {
 
   char tmpbakcup[256];
   void YabauseThread_setBackupPath( const char * buf) {
-      //strcpy(tmpbakcup,buf);
-      //s_buppath = tmpbakcup;
+      strcpy(buppath,buf);
   }
 
   void YabauseThread_resetPlaymode() {
-      //if( s_playrecord_path != NULL ){
-      //    free(s_playrecord_path);
-      //    s_playrecord_path = NULL;
-      //}
-      //s_buppath = GetMemoryPath();
+      s_playrecord_path = "";
+      std::string home_dir;
+      getHomeDir(home_dir);
+      std::string bckup_dir = home_dir + "/backup.bin";
+      strcpy(buppath, bckup_dir.c_str());
   }
 
   void YabauseThread_coldBoot() {
-    //YabauseDeInit();
-    //YabauseInit();
-    //YabauseReset();
+    YabauseDeInit();
+    yabauseinit();
+    YabauseReset();
   }
 }

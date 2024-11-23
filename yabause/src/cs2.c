@@ -4101,6 +4101,12 @@ char * Cs2GetCurrentGmaecode(){
 	return cdip->itemnum;
 }
 
+char * Cs2GetCurrentGameName() {
+  if (cdip == NULL) return NULL;
+  return cdip->gamename;
+}
+
+
 //////////////////////////////////////////////////////////////////////////////
 u8 Cs2GetIP(int autoregion) {
    partition_struct * gripartition;

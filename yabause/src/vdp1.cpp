@@ -380,21 +380,21 @@ extern "C" u16 FASTCALL Vdp1ReadWord(u32 addr) {
    addr &= 0xFF;
    switch(addr) {
       case 0x10:
-        FRAMELOG("Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
+        FRAMELOG("[VDP1] Read EDSR %X line = %d\n", Vdp1Regs->EDSR, yabsys.LineCount);
         return Vdp1Regs->EDSR;
       case 0x12:
-        FRAMELOG("Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
+        FRAMELOG("[VDP1] Read LOPR %X line = %d\n", Vdp1Regs->LOPR, yabsys.LineCount);
         return Vdp1Regs->LOPR;
       case 0x14:
-        FRAMELOG("Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
+        FRAMELOG("[VDP1] Read COPR %X line = %d\n", Vdp1Regs->COPR, yabsys.LineCount);
         return Vdp1Regs->COPR;
       case 0x16: {
         u16 mode = 0x1000 | ((Vdp1Regs->PTMR & 2) << 7) | ((Vdp1Regs->FBCR & 0x1E) << 3) | (Vdp1Regs->TVMR & 0xF);
-        FRAMELOG("Read MODR %X line = %d\n", mode, yabsys.LineCount);
+        FRAMELOG("[VDP1] Read MODR %X line = %d\n", mode, yabsys.LineCount);
         return mode;
       }
       default:
-         LOG("trying to read a Vdp1 write-only register\n");
+         LOG("[VDP1] trying to read a Vdp1 write-only register\n");
    }
    return 0;
 }
@@ -637,7 +637,7 @@ extern "C" void Vdp1DrawCommands(u8 * ram, Vdp1 * regs, u8* back_framebuffer)
       command = T1ReadWord(ram, regs->addr & 0x7FFFF);
       command_count++;
       if (command & 0x8000) {
-        LOG("VDP1: Command Finished! count = %d @ %08X", command_count, regs->addr);
+        LOG("VDP1: Command Finished! count = %d @ %08X line=%d", command_count, regs->addr, yabsys.LineCount);
 		  regs->LOPR = regs->addr >> 3;
 		  regs->COPR = regs->addr >> 3;
         Vdp1External.status = VDP1_STATUS_IDLE;
@@ -793,7 +793,7 @@ extern "C" void Vdp1Draw(void)
    //Vdp1Regs->EDSR |= 2;
    //Vdp1Regs->COPR = Vdp1Regs->addr >> 3;
    //ScuSendDrawEnd();
-   //FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
+   FRAMELOG("Vdp1Draw end at %d line EDSR=%02X", yabsys.LineCount, Vdp1Regs->EDSR);
 
 }
 

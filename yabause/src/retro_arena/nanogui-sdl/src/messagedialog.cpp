@@ -49,6 +49,7 @@ MessageDialog::MessageDialog(Widget *parent, Type type, const std::string &title
     }
     Button *button = new Button(panel2, buttonText, ENTYPO_ICON_CHECK);
     button->setCallback([&] { if (mCallback) mCallback(0); dispose(); });
+    okButton = button;
     center();
     requestFocus();
 }

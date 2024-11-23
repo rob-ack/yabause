@@ -223,6 +223,8 @@ void Vdp1Renderer::prepareOffscreen() {
     }
 
     VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.color[i].image));
+    printf("offscreenPass.color[%d].image = %llx\n", i,offscreenPass.color[i].image);
+    vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.color[i].image, "offscreenPass.color[i].image");
     vkGetImageMemoryRequirements(device, offscreenPass.color[i].image, &memReqs);
     memAlloc.allocationSize = memReqs.size;
     // memAlloc.memoryTypeIndex = vulkanDevice->getMemoryType(memReqs.memoryTypeBits,
@@ -259,14 +261,19 @@ void Vdp1Renderer::prepareOffscreen() {
   samplerInfo.maxAnisotropy = 1.0f;
   samplerInfo.minLod = 0.0f;
   samplerInfo.maxLod = 1.0f;
+  samplerInfo.anisotropyEnable = VK_FALSE;
   samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
   VK_CHECK_RESULT(vkCreateSampler(device, &samplerInfo, nullptr, &offscreenPass.sampler));
 
   // Depth stencil attachment
   image.format = fbDepthFormat;
   image.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+  image.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
 
   VK_CHECK_RESULT(vkCreateImage(device, &image, nullptr, &offscreenPass.depth.image));
+  printf("offscreenPass.depth.image = %llx\n", offscreenPass.depth.image);
+  vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)offscreenPass.depth.image, "offscreenPass.depth.image");
   vkGetImageMemoryRequirements(device, offscreenPass.depth.image, &memReqs);
   memAlloc.allocationSize = memReqs.size;
   memAlloc.memoryTypeIndex = vulkan->findMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -296,7 +303,7 @@ void Vdp1Renderer::prepareOffscreen() {
   attchmentDescriptions[0].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attchmentDescriptions[0].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
   attchmentDescriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-  attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attchmentDescriptions[0].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   attchmentDescriptions[0].finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   // Depth attachment
   attchmentDescriptions[1].format = fbDepthFormat;
@@ -305,7 +312,7 @@ void Vdp1Renderer::prepareOffscreen() {
   attchmentDescriptions[1].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
   attchmentDescriptions[1].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
   attchmentDescriptions[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
-  attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  attchmentDescriptions[1].initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   attchmentDescriptions[1].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
   VkAttachmentReference colorReference = {
@@ -396,9 +403,18 @@ void Vdp1Renderer::prepareOffscreen() {
   // offscreenPass.descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
   // offscreenPass.descriptor.imageView = offscreenPass.color[0].view;
   // offscreenPass.descriptor.sampler = offscreenPass.sampler;
+  
+  vulkan->transitionImageLayout(offscreenPass.color[0].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-  // vulkan->transitionImageLayout(offscreenPass.color.image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
-  // VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  offscreenPass.color[0].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+  vulkan->transitionImageLayout(offscreenPass.color[1].image, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED,
+    VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+  offscreenPass.color[1].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+
 }
 
 void Vdp1Renderer::createCommandPool() {
@@ -502,7 +518,7 @@ void Vdp1Renderer::erase() {
       // u8 *cclist = (u8 *)&Vdp2Regs->CCRSA;
       // cclist[0] &= 0x1F;
       // u8 rgb_alpha = 0xF8 - (((cclist[0] & 0x1F) << 3) & 0xF8);
-      alpha = VDP1COLOR(0, 0, 0, 0, 0);
+      alpha = VDP1COLOR(0, 0, 0, 0, 0, 0);
       alpha >>= 24;
     }
     // alpha = rgb_alpha;
@@ -520,14 +536,14 @@ void Vdp1Renderer::erase() {
       alpha = 0xF8;
     }
 #endif
-    alpha = VDP1COLOR(1, colorcalc, priority, 0, 0);
+    alpha = VDP1COLOR(1, colorcalc, priority, 0, 0,0);
     alpha >>= 24;
   }
 
   clearUbo.clearColor.r = (color & 0x1F) / 31.0f;
   clearUbo.clearColor.g = ((color >> 5) & 0x1F) / 31.0f;
   clearUbo.clearColor.b = ((color >> 10) & 0x1F) / 31.0f;
-  clearUbo.clearColor.a = alpha / 255.0f;
+  clearUbo.clearColor.a =  alpha / 255.0f;
 
   void *data;
   vkMapMemory(device, _clearUniformBufferMemory, 0, sizeof(clearUbo), 0, &data);
@@ -542,13 +558,14 @@ void Vdp1Renderer::erase() {
   std::array<VkWriteDescriptorSet, 1> descriptorWrites = {};
 
   descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].dstSet = _descriptorSet[readframe];
+  descriptorWrites[0].dstSet = _descriptorSet[currentDesc];
   descriptorWrites[0].dstBinding = 0;
   descriptorWrites[0].dstArrayElement = 0;
   descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   descriptorWrites[0].descriptorCount = 1;
   descriptorWrites[0].pBufferInfo = &bufferInfo;
 
+  
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
   VkClearValue clearValues[2];
@@ -565,8 +582,42 @@ void Vdp1Renderer::erase() {
 
   VkCommandBuffer cb = getNextCommandBuffer();
 
+
   VkCommandBufferBeginInfo cmdBufInfo = vks::initializers::commandBufferBeginInfo();
   vkBeginCommandBuffer(cb, &cmdBufInfo);
+
+  VkImageMemoryBarrier imageBarrier = {};
+
+  if (offscreenPass.color[readframe].layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.oldLayout = offscreenPass.color[readframe].layout;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    imageBarrier.srcAccessMask = 0;
+    imageBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    imageBarrier.image = offscreenPass.color[readframe].image;
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0;
+    imageBarrier.subresourceRange.levelCount = 1;
+    imageBarrier.subresourceRange.baseArrayLayer = 0;
+    imageBarrier.subresourceRange.layerCount = 1;
+    vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+    offscreenPass.color[readframe].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  }
+
+  imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+  imageBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+  imageBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+  imageBarrier.srcAccessMask = 0;
+  imageBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  imageBarrier.image = offscreenPass.depth.image;
+  imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+  imageBarrier.subresourceRange.baseMipLevel = 0;
+  imageBarrier.subresourceRange.levelCount = 1;
+  imageBarrier.subresourceRange.baseArrayLayer = 0;
+  imageBarrier.subresourceRange.layerCount = 1;
+  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+
+
   vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
   VkViewport viewport =
@@ -598,7 +649,6 @@ void Vdp1Renderer::erase() {
     right = 0;
   if (left < 0)
     left = 0;
-
   int width = right - left + wrate;
   int height = bottom - top + (interlace*hrate);
   if (width <= 0)
@@ -610,11 +660,12 @@ void Vdp1Renderer::erase() {
   if (height >= offscreenPass.height)
     height = offscreenPass.height;
 
+
   VkRect2D scissor = vks::initializers::rect2D(width, height, left, top);
   // VkRect2D scissor = vks::initializers::rect2D(offscreenPass.width, offscreenPass.height, 0, 0);
   vkCmdSetScissor(cb, 0, 1, &scissor);
 
-  vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSet[readframe], 0,
+  vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _pipelineLayout, 0, 1, &_descriptorSet[currentDesc], 0,
                           nullptr);
 
   vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, _graphicsPipeline);
@@ -664,6 +715,10 @@ void Vdp1Renderer::erase() {
   offscreenPass.color[readframe].renderFences.push(fence);
 
   clearCount++;
+  currentDesc++;
+  currentDesc &= (DESC_COUNT - 1);
+
+
   // vkQueueWaitIdle(vulkan->getVulkanQueue());
   // vkDeviceWaitIdle(device);
 }
@@ -739,23 +794,51 @@ void Vdp1Renderer::drawEnd(void) {
 
   // tm->updateTextureImage();
 
-  VkImageMemoryBarrier imageMemoryBarrier = vks::initializers::imageMemoryBarrier();
+  vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+  if (offscreenPass.color[drawframe].layout != VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL) {
+
+    VkImageMemoryBarrier barrier_from_readonly_to_attachment = {};
+    barrier_from_readonly_to_attachment.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier_from_readonly_to_attachment.oldLayout = offscreenPass.color[drawframe].layout;
+    barrier_from_readonly_to_attachment.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    barrier_from_readonly_to_attachment.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier_from_readonly_to_attachment.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier_from_readonly_to_attachment.image = offscreenPass.color[drawframe].image;
+    barrier_from_readonly_to_attachment.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier_from_readonly_to_attachment.subresourceRange.baseMipLevel = 0;
+    barrier_from_readonly_to_attachment.subresourceRange.levelCount = 1;
+    barrier_from_readonly_to_attachment.subresourceRange.baseArrayLayer = 0;
+    barrier_from_readonly_to_attachment.subresourceRange.layerCount = 1;
+    barrier_from_readonly_to_attachment.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier_from_readonly_to_attachment.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    // レンダリングコマンドの開始前にバリアを発行
+    vkCmdPipelineBarrier(cb,
+      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+      VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+      0,
+      0, nullptr,
+      0, nullptr,
+      1, &barrier_from_readonly_to_attachment);
+
+    offscreenPass.color[drawframe].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  }
+
+  /*
+  imageMemoryBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
   imageMemoryBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+  imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
   imageMemoryBarrier.srcAccessMask = 0;
-  imageMemoryBarrier.dstAccessMask = 0;
-  imageMemoryBarrier.image = offscreenPass.color[drawframe].image;
-  imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+  imageMemoryBarrier.image = offscreenPass.depth.image;
+  imageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
   imageMemoryBarrier.subresourceRange.baseMipLevel = 0;
   imageMemoryBarrier.subresourceRange.levelCount = 1;
   imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
   imageMemoryBarrier.subresourceRange.layerCount = 1;
-
-  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, nullptr, 0,
-                       nullptr, 1, &imageMemoryBarrier);
-
-  vkCmdBeginRenderPass(cb, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdPipelineBarrier(cb, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
+  */
 
   VkViewport viewport =
       vks::initializers::viewport((float)offscreenPass.width, (float)offscreenPass.height, 0.0f, 1.0f);
@@ -2079,27 +2162,31 @@ void Vdp1Renderer::genClearPipeline() {
 
   std::array<VkDescriptorPoolSize, 1> poolSizes = {};
   poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  poolSizes[0].descriptorCount = 2;
+  poolSizes[0].descriptorCount = 4;
 
   VkDescriptorPoolCreateInfo poolInfo = {};
   poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
   poolInfo.pPoolSizes = poolSizes.data();
-  poolInfo.maxSets = 2;
+  poolInfo.maxSets = DESC_COUNT;
 
   if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &_descriptorPool) != VK_SUCCESS) {
     throw std::runtime_error("failed to create descriptor pool!");
   }
 
-  VkDescriptorSetLayout layouts[] = {_descriptorSetLayout};
+  VkDescriptorSetLayout layouts[] = {_descriptorSetLayout,_descriptorSetLayout ,_descriptorSetLayout ,_descriptorSetLayout };
   VkDescriptorSetAllocateInfo allocInfo = {};
   allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
   allocInfo.descriptorPool = _descriptorPool;
   allocInfo.descriptorSetCount = 1;
   allocInfo.pSetLayouts = layouts;
-
+  
   ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[0]));
   ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[1]));
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[2]));
+  ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[3]));
+
+  //ErrorCheck(vkAllocateDescriptorSets(device, &allocInfo, &_descriptorSet[1]));
 
   Compiler compiler;
   CompileOptions options;
@@ -2306,23 +2393,17 @@ void Vdp1Renderer::genClearPipeline() {
   bufferInfo.offset = 0;
   bufferInfo.range = sizeof(ClearUbo);
 
-  std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
+  std::array<VkWriteDescriptorSet, DESC_COUNT> descriptorWrites = {};
 
-  descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[0].dstSet = _descriptorSet[0];
-  descriptorWrites[0].dstBinding = 0;
-  descriptorWrites[0].dstArrayElement = 0;
-  descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrites[0].descriptorCount = 1;
-  descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-  descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-  descriptorWrites[1].dstSet = _descriptorSet[1];
-  descriptorWrites[1].dstBinding = 0;
-  descriptorWrites[1].dstArrayElement = 0;
-  descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-  descriptorWrites[1].descriptorCount = 1;
-  descriptorWrites[1].pBufferInfo = &bufferInfo;
+  for (int i = 0; i < DESC_COUNT; i++) {
+    descriptorWrites[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    descriptorWrites[i].dstSet = _descriptorSet[i];
+    descriptorWrites[i].dstBinding = 0;
+    descriptorWrites[i].dstArrayElement = 0;
+    descriptorWrites[i].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorWrites[i].descriptorCount = 1;
+    descriptorWrites[i].pBufferInfo = &bufferInfo;
+  }
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
@@ -3114,14 +3195,16 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
   }
 
   if ((fixVdp2Regs->SPCTL & 0x10) &&                                       // Sprite Window is enabled
-      ((fixVdp2Regs->SPCTL & 0xF) >= 2 && (fixVdp2Regs->SPCTL & 0xF) < 8)) // inside sprite type
+      ((fixVdp2Regs->SPCTL & 0xF) >= 2 && (fixVdp2Regs->SPCTL & 0xF) < 8) && // inside sprite type
+    (cmd->CMDCOLR & 0x8000) && (((cmd->CMDPMOD >> 3) & 0x7) != 1 && ((cmd->CMDPMOD >> 3) & 0x7) != 5))
   {
     sprite_window = 1;
+    MSB_SHADOW = 0;
+  }
+  else {
+    sprite_window = 0;
   }
 
-  if (sprite_window == 1 && (cmd->CMDCOLR & 0x8000) && (((cmd->CMDPMOD >> 3) & 0x7) != 1 && ((cmd->CMDPMOD >> 3) & 0x7) != 5)) {
-	  MSB_SHADOW = 1;
-  }
 
   addcolor = ((fixVdp2Regs->CCCTL & 0x540) == 0x140);
 
@@ -3149,15 +3232,15 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x00;
           endcnt++;
         } else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else if (((dot >> 4) | colorBank) == nromal_shadow) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else {
           int colorindex = ((dot >> 4) | colorBank);
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
         j += 1;
@@ -3171,15 +3254,15 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x00;
           endcnt++;
         } else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else if (((dot & 0xF) | colorBank) == nromal_shadow) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else {
           int colorindex = ((dot & 0x0F) | colorBank);
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
         j += 1;
@@ -3212,21 +3295,21 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
         } else {
           const int colorindex = T1ReadWord(Vdp1Ram, ((dot >> 4) * 2 + colorLut) & 0x7FFFF);
           if ((colorindex & 0x8000) && MSB_SHADOW) {
-            *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+            *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0, 0);
           } else if (colorindex != 0x0000) {
             if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-              *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(colorindex));
+              *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, 0, VDP1COLOR16TO24(colorindex));
             } else {
               temp = colorindex;
               Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
               if (shadow || normalshadow) {
-                *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+                *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0, 0);
               } else {
-                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0, temp);
               }
             }
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0, 0);
           }
         }
 
@@ -3242,21 +3325,21 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
         } else {
           const int colorindex = T1ReadWord(Vdp1Ram, ((dot & 0xF) * 2 + colorLut) & 0x7FFFF);
           if ((colorindex & 0x8000) && MSB_SHADOW) {
-            *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+            *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0, 0);
           } else if (colorindex != 0x0000) {
             if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-              *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, VDP1COLOR16TO24(colorindex));
+              *texture->textdata++ = VDP1COLOR(0, colorcl, 0, 0, 0,VDP1COLOR16TO24(colorindex));
             } else {
               temp = colorindex;
               Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
               if (shadow || normalshadow) {
-                *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+                *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0, 0);
               } else {
-                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, temp);
+                *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0, temp);
               }
             }
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0, 0);
           }
         }
         j += 1;
@@ -3273,6 +3356,7 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
     for (i = 0; i < sprite->h; i++) {
       endcnt = 0;
       for (j = 0; j < sprite->w; j++) {
+
         dot = T1ReadByte(Vdp1Ram, charAddr & 0x7FFFF);
         charAddr++;
         if (endcnt >= 2) {
@@ -3283,17 +3367,18 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x00;
           endcnt++;
         } else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else if (((dot & 0x3F) | colorBank) == nromal_shadow) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else {
           const int colorindex = ((dot & 0x3F) | colorBank);
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
+
       }
       texture->textdata += texture->w;
     }
@@ -3316,15 +3401,15 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x00;
           endcnt++;
         } else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else if (((dot & 0x7F) | colorBank) == nromal_shadow) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else {
           const int colorindex = ((dot & 0x7F) | colorBank);
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
           } else {
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
       }
@@ -3350,16 +3435,16 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x0;
           endcnt++;
         } else if (MSB_SHADOW) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else if ((dot | colorBank) == nromal_shadow) {
-          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
         } else {
           u16 colorindex = (dot | colorBank);
           if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
           } else {
             maskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &colorindex, &colorcl); // ToDo
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
           }
         }
       }
@@ -3391,13 +3476,13 @@ void Vdp1Renderer::readTexture(vdp1cmd_struct *cmd, YglSprite *sprite, CharTextu
           *texture->textdata++ = 0x0;
           endcnt++;
         } else if (MSB_SHADOW || (nromal_shadow != 0 && dot == nromal_shadow)) {
-          *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0);
+          *texture->textdata++ = VDP1COLOR(0, 1, priority, 1, 0, 0);
         } else {
           if (dot & 0x8000 && (fixVdp2Regs->SPCTL & 0x20)) {
-            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
+            *texture->textdata++ = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(dot));
           } else {
             // Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl); //ToDo
-            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, dot);
+            *texture->textdata++ = VDP1COLOR(1, colorcl, priority, 0, 0, dot);
           }
         }
       }
@@ -3429,8 +3514,20 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
   u32 alpha = 0xFF;
   u32 color = 0x00;
   int SPCCCS = (fixVdp2Regs->SPCTL >> 12) & 0x3;
+  int sprite_window = 0;
 
   readPriority(cmd, &priority, &colorcl, &nromal_shadow);
+
+  if ((fixVdp2Regs->SPCTL & 0x10) &&                                       // Sprite Window is enabled
+    ((fixVdp2Regs->SPCTL & 0xF) >= 2 && (fixVdp2Regs->SPCTL & 0xF) < 8) && // inside sprite type
+    (cmd->CMDCOLR & 0x8000) && (((cmd->CMDPMOD >> 3) & 0x7) != 1 && ((cmd->CMDPMOD >> 3) & 0x7) != 5))
+  {
+    sprite_window = 1;
+  }
+  else {
+    sprite_window = 0;
+  }
+
 
   switch ((cmd->CMDPMOD >> 3) & 0x7) {
   case 0: {
@@ -3439,13 +3536,13 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
     if (colorBank == 0 && !SPD) {
       color = 0;
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(1, 0, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
     } else {
       const int colorindex = (colorBank);
       if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
       } else {
-        color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+        color = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
       }
     }
     break;
@@ -3460,32 +3557,32 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
 
     // RBG and pallet mode
     if ((cmd->CMDCOLR & 0x8000) && (Vdp2Regs->SPCTL & 0x20)) {
-      return VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(cmd->CMDCOLR));
+      return VDP1COLOR(0, colorcl, priority, 0, 0,VDP1COLOR16TO24(cmd->CMDCOLR));
     }
 
     temp = T1ReadWord(Vdp1Ram, colorLut & 0x7FFFF);
     if (temp & 0x8000) {
       if (MSB)
-        color = VDP1COLOR(0, 1, priority, 1, 0);
+        color = VDP1COLOR(0, 1, priority, 1, 0, 0);
       else
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(temp));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(temp));
     } else if (temp != 0x0000) {
       u32 colorBank = temp;
       if (colorBank == 0x0000 && !SPD) {
-        color = VDP1COLOR(0, 1, priority, 0, 0);
+        color = VDP1COLOR(0, 1, priority, 0, 0, 0);
       } else if (MSB || shadow) {
-        color = VDP1COLOR(1, 0, priority, 1, 0);
+        color = VDP1COLOR(1, 0, priority, 1, 0, 0);
       } else {
         const int colorindex = (colorBank);
         if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-          color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+          color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
         } else {
           Vdp1ProcessSpritePixel(fixVdp2Regs->SPCTL & 0xF, &temp, &shadow, &normalshadow, &priority, &colorcl);
-          color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+          color = VDP1COLOR(1, colorcl, priority, 0, 0, colorindex);
         }
       }
     } else {
-      color = VDP1COLOR(1, colorcl, priority, 0, 0);
+      color = VDP1COLOR(1, colorcl, priority, 0, 0, 0);
     }
     break;
   }
@@ -3495,13 +3592,13 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
     if (colorBank == 0 && !SPD) {
       color = 0;
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(1, 0, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
     } else {
       const int colorindex = colorBank;
       if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
       } else {
-        color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+        color = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
       }
     }
     break;
@@ -3512,13 +3609,13 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
     if (colorBank == 0 && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(1, 0, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, 0, 0);
     } else {
       const int colorindex = (colorBank);
       if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
       } else {
-        color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+        color = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
       }
     }
     break;
@@ -3530,13 +3627,13 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
     if ((colorBank == 0x0000) && !SPD) {
       color = 0; // VDP1COLOR(0, 1, priority, 0, 0);
     } else if (MSB || colorBank == nromal_shadow) {
-      color = VDP1COLOR(1, 0, priority, 1, 0);
+      color = VDP1COLOR(1, 0, priority, 1, sprite_window, 0);
     } else {
       const int colorindex = (colorBank);
       if ((colorindex & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(colorindex));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(colorindex));
       } else {
-        color = VDP1COLOR(1, colorcl, priority, 0, colorindex);
+        color = VDP1COLOR(1, colorcl, priority, 0, sprite_window, colorindex);
       }
     }
     break;
@@ -3551,13 +3648,13 @@ u32 Vdp1Renderer::readPolygonColor(vdp1cmd_struct *cmd) {
     } else if ((dot == 0x7FFF) && !END) {
       color = 0x0;
     } else if (MSB || dot == nromal_shadow) {
-      color = VDP1COLOR(0, 1, priority, 1, 0);
+      color = VDP1COLOR(0, 1, priority, 1, sprite_window, 0);
     } else {
       if ((dot & 0x8000) && (fixVdp2Regs->SPCTL & 0x20)) {
-        color = VDP1COLOR(0, colorcl, priority, 0, VDP1COLOR16TO24(dot));
+        color = VDP1COLOR(0, colorcl, priority, 0, 0, VDP1COLOR16TO24(dot));
       } else {
         // Vdp1MaskSpritePixel(fixVdp2Regs->SPCTL & 0xF, &dot, &colorcl);
-        color = VDP1COLOR(1, colorcl, priority, 0, dot);
+        color = VDP1COLOR(1, colorcl, priority, 0, sprite_window, dot);
       }
     }
   } break;
@@ -3580,6 +3677,28 @@ VkImageView Vdp1Renderer::getFrameBufferImage() {
     }
 #endif
   return offscreenPass.color[readframe].view;
+}
+
+
+void Vdp1Renderer::useImageAsShaderRead( VkCommandBuffer commandBuffer ) {
+
+  if (offscreenPass.color[readframe].layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+    VkImageMemoryBarrier imageBarrier = {};
+    imageBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    imageBarrier.srcAccessMask = 0;
+    imageBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageBarrier.subresourceRange.baseMipLevel = 0;
+    imageBarrier.subresourceRange.levelCount = 1;
+    imageBarrier.subresourceRange.baseArrayLayer = 0;
+    imageBarrier.subresourceRange.layerCount = 1;
+    imageBarrier.oldLayout = offscreenPass.color[readframe].layout;
+    imageBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    imageBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    imageBarrier.image = offscreenPass.color[readframe].image;
+    vkCmdPipelineBarrier(commandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageBarrier);
+    offscreenPass.color[readframe].layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  }
+  
 }
 
 int Vdp1Renderer::genPolygon(YglSprite *input, CharTexture *output, float *colors, TextureCache *c, int cash_flg) {
@@ -3915,6 +4034,8 @@ void Vdp1Renderer::readFrameBuffer(u32 type, u32 addr, void *out) {
 
         // Create the image
         VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &dstDeviceImage));
+        printf("dstDeviceImage = %llx\n", dstDeviceImage);
+        vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)dstDeviceImage, "dstDeviceImage");
         // Create memory to back up the image
         VkMemoryRequirements memRequirements;
         VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -3945,6 +4066,8 @@ void Vdp1Renderer::readFrameBuffer(u32 type, u32 addr, void *out) {
 
       // Create the image
       VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &dstImage));
+      printf("dstImage = %llx\n", dstImage);
+      vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)dstImage, "dstImage");
       // Create memory to back up the image
       VkMemoryRequirements memRequirements;
       VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -4205,6 +4328,8 @@ void Vdp1Renderer::blitCpuWrittenFramebuffer(int target) {
 
       // Create the image
       VK_CHECK_RESULT(vkCreateImage(device, &imageCreateCI, nullptr, &writeImage));
+      printf("writeImage = %llx\n", writeImage);
+      vkDebugNameObject(device, VK_OBJECT_TYPE_IMAGE, (uint64_t)writeImage, "writeImage");
       // Create memory to back up the image
       VkMemoryRequirements memRequirements;
       VkMemoryAllocateInfo memAllocInfo(vks::initializers::memoryAllocateInfo());
@@ -4333,30 +4458,30 @@ void Vdp1Renderer::writeFrameBuffer(u32 type, u32 addr, u32 val) {
       break;
     case 1:
       if (val & 0x8000) {
-        cpuWriteBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(val));
+        cpuWriteBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, 0,VDP1COLOR16TO24(val));
       } else {
         spritepixelinfo_struct spi = {0};
         u16 val16 = val;
         Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &val16, &spi);
-        cpuWriteBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, val);
+        cpuWriteBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0,val);
       }
       break;
     case 2: {
       u16 color = (u16)((val >> 16) & 0xFFFF);
       if (color & 0x8000) {
-        cpuWriteBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24(color));
+        cpuWriteBuffer[texaddr] = VDP1COLOR(0, 0, 0, 0, 0,VDP1COLOR16TO24(color));
       } else {
         spritepixelinfo_struct spi = {0};
         Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &color, &spi);
-        cpuWriteBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, color);
+        cpuWriteBuffer[texaddr] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0, color);
       }
       color = (u16)(val & 0xFFFF);
       if (color & 0x8000) {
-        cpuWriteBuffer[texaddr + 1] = VDP1COLOR(0, 0, 0, 0, VDP1COLOR16TO24((color)));
+        cpuWriteBuffer[texaddr + 1] = VDP1COLOR(0, 0, 0, 0, 0, VDP1COLOR16TO24((color)));
       } else {
         spritepixelinfo_struct spi = {0};
         Vdp1GetSpritePixelInfo(Vdp2Regs->SPCTL & 0x0F, &color, &spi);
-        cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, color);
+        cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, spi.colorcalc, spi.priority, 0, 0, color);
       }
       break;
     }
@@ -4387,8 +4512,8 @@ void Vdp1Renderer::writeFrameBuffer(u32 type, u32 addr, u32 val) {
       LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
       break;
     case 1:
-      cpuWriteBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, (val >> 8) & 0xFF);
-      cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, val & 0xFF);
+      cpuWriteBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, 0, (val >> 8) & 0xFF);
+      cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, 0, val & 0xFF);
       break;
     case 2:
       LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
@@ -4419,8 +4544,8 @@ void Vdp1Renderer::writeFrameBuffer(u32 type, u32 addr, u32 val) {
       LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);
       break;
     case 1:
-      cpuWriteBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, (val >> 8) & 0xFF);
-      cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, val & 0xFF);
+      cpuWriteBuffer[texaddr] = VDP1COLOR(1, 0, 0, 0, 0, (val >> 8) & 0xFF);
+      cpuWriteBuffer[texaddr + 1] = VDP1COLOR(1, 0, 0, 0, 0, val & 0xFF);
       break;
     case 2:
       LOG("VIDOGLVdp1WriteFrameBuffer: Unimplement CPU write framebuffer %d\n", type);

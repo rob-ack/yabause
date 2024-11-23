@@ -31,7 +31,10 @@ class YWindow;
 
 class MenuScreen;
 
+class Timer;
+
 using std::string;
+
 
 struct MenuInput {
 	uint32_t select_button_ = -1;
@@ -46,6 +49,8 @@ class InputManager
 {
 private:
 	InputManager();
+
+  Timer * currentTimer = nullptr;
 
 	static InputManager* mInstance;
 
@@ -112,6 +117,7 @@ public:
 	std::vector<MenuInput> menu_inputs_;
 
 	AnalogType _analogType;
+
 
 public:
 	static void genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid );

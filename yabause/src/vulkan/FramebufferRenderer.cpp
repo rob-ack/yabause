@@ -69,6 +69,19 @@ extern "C" {
   extern const GLchar Yglprg_vdp2_drawfb_cram_msb_color_col_hblank_f[];
   extern const GLchar Yglprg_vdp2_drawfb_cram_destalpha_col_hblank_f[];
   extern const GLchar Yglprg_vdp2_drawfb_cram_eiploge_vulkan_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f[];
+
+  extern const GLchar Yglprg_vdp2_drawfb_cram_less_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_equal_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_more_color_add_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_cram_msb_color_add_f[];
+
+  extern const GLchar Yglprg_vdp2_drawfb_line_blend_f[];
+  extern const GLchar Yglprg_vdp2_drawfb_line_add_f[];
+
 }
 
 
@@ -149,13 +162,13 @@ void FramebufferRenderer::setupShaders() {
 FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
   this->vulkan = vulkan;
 
-  Vertex a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+  Vertex2v a(glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
   vertices.push_back(a);
-  Vertex b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
+  Vertex2v b(glm::vec4(1.0f, -1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
   vertices.push_back(b);
-  Vertex c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+  Vertex2v c(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
   vertices.push_back(c);
-  Vertex d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+  Vertex2v d(glm::vec4(-1.0f, 1.0f, 0.0f, 1.0f), glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
   vertices.push_back(d);
 
   indices.push_back(0);
@@ -185,9 +198,7 @@ FramebufferRenderer::FramebufferRenderer(VIDVulkan * vulkan) {
     } ubo;
 
     layout(location = 0) in vec4 a_position;
-    layout(location = 1) in vec4 inColor;
-    layout(location = 2) in vec4 a_texcoord;
-
+    layout(location = 1) in vec4 a_texcoord;
     layout (location = 0) out vec4 v_texcoord;
 
     void main() {
@@ -634,22 +645,33 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         else { // Line Color Insertion
           switch (SPCCCS)
           {
-          case 0:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_CCOL_LINE;
-            pgid = pipelines["less_color_col_line"];
-            break;
-          case 1:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_CCOL_LINE;
-            pgid = pipelines["equal_color_col_line"];
-            break;
-          case 2:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_CCOL_LINE;
-            pgid = pipelines["more_color_col_line"];
-            break;
-          case 3:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_CCOL_LINE;
-            pgid = pipelines["msb_color_col_line"];
-            break;
+          case 0:{
+            string a = Yglprg_vdp2_drawfb_cram_less_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("less_color_col_line", a.c_str(), NONE);
+          }
+          break;
+          
+          case 1: {
+            string a = Yglprg_vdp2_drawfb_cram_equal_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("equal_color_col_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 2: {
+            string a = Yglprg_vdp2_drawfb_cram_more_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("more_color_col_line", a.c_str(), NONE);
+          }
+          break;
+          
+          case 3: {
+            string a = Yglprg_vdp2_drawfb_cram_msb_color_col_f;
+            a += string(Yglprg_vdp2_drawfb_line_blend_f);
+            pgid = findShader("msb_color_col_line", a.c_str(), NONE);
+          }
+          break;
           }
         }
       }
@@ -667,23 +689,35 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         else {
           switch (SPCCCS)
           {
-          case 0:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_DESTALPHA_LINE;
-            pgid = pipelines["less_destalpha_line"];
-            break;
-          case 1:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_EQUAL_DESTALPHA_LINE;
-            pgid = pipelines["equal_destalpha_line"];
-            break;
-          case 2:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_DESTALPHA_LINE;
-            pgid = pipelines["more_destalpha_line"];
-            break;
-          case 3:
-            //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_DESTALPHA_LINE;
-            pgid = pipelines["msb_destalpha_line"];
-            break;
+          case 0: {
+            string a = Yglprg_vdp2_drawfb_cram_less_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("less_destalpha_line", a.c_str(), NONE);
           }
+          break;
+
+          case 1: {
+            string a = Yglprg_vdp2_drawfb_cram_equal_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("equal_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 2: {
+            string a = Yglprg_vdp2_drawfb_cram_more_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("more_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+
+          case 3: {
+            string a = Yglprg_vdp2_drawfb_cram_msb_line_dest_alpha_f;
+            a += string(Yglprg_vdp2_drawfb_cram_destalpha_col_f);
+            pgid = findShader("msb_destalpha_line", a.c_str(), NONE);
+          }
+          break;
+          }
+
         }
       }
     }
@@ -732,23 +766,53 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
         }
       }
       else {
+
+        switch (SPCCCS)
+        {
+        case 0: {
+          string a = Yglprg_vdp2_drawfb_cram_less_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("less_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 1: {
+          string a = Yglprg_vdp2_drawfb_cram_equal_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("equal_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 2: {
+          string a = Yglprg_vdp2_drawfb_cram_more_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("more_color_add_line", a.c_str(), ADD);
+        }
+                break;
+
+        case 3: {
+          string a = Yglprg_vdp2_drawfb_cram_msb_color_add_f;
+          a += string(Yglprg_vdp2_drawfb_line_add_f);
+          pgid = findShader("more_color_add_line", a.c_str(), ADD);
+        }
+                break;
+        }
+
+
+
         switch (SPCCCS)
         {
         case 0:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_LESS_ADD_LINE;
-          pgid = pipelines["less_color_add_line"];
+          pgid = findShader("less_color_add_line", Yglprg_vdp2_drawfb_cram_less_color_add_f, ADD);
           break;
         case 1:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_EUQAL_ADD_LINE;
-          pgid = pipelines["less_color_add_line"];
+          pgid = findShader("equal_color_add_line", Yglprg_vdp2_drawfb_cram_equal_color_add_f, ADD);
           break;
         case 2:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_MORE_ADD_LINE;
-          pgid = pipelines["more_color_add_line"];
+          pgid = findShader("more_color_add_line", Yglprg_vdp2_drawfb_cram_more_color_add_f, ADD);
           break;
         case 3:
-          //pgid = PG_VDP2_DRAWFRAMEBUFF_MSB_ADD_LINE;
-          pgid = pipelines["msb_color_add_line"];
+          pgid = findShader("more_color_add_line", Yglprg_vdp2_drawfb_cram_msb_color_add_f, ADD);
           break;
         }
       }
@@ -763,6 +827,10 @@ void FramebufferRenderer::draw(Vdp2 * fixVdp2Regs, VkCommandBuffer commandBuffer
     else {
       pgid = findShader("no_color_col", Yglprg_vdp2_drawfb_cram_no_color_col_f, NONE);
     }
+  }
+
+  if (pgid == 0) {
+    printf("Fail to find shader");
   }
 
 
@@ -844,7 +912,7 @@ void FramebufferRenderer::drawSpriteWindow(Vdp2 * fixVdp2Regs, VkCommandBuffer c
 		"  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
 		"  highp float depth = u_pri[ (additional&0x07) ];\n"
 		"  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
-		"    fragColor = vec4(4.0/255.0, 0.0, 0.0, 0.0);\n"
+		"    fragColor = vec4(0.015, 0.0, 0.0, 0.0);\n"
 		"  }else{ // direct color \n"
 		"    discard;\n"
 		"  } \n"
@@ -933,7 +1001,7 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
     "  int additional = int(fbColor.a * 255.0);\n"
     "  if( (additional & 0x80) == 0 ){ discard; } // show? \n"
     "  highp float depth = u_pri[ (additional&0x07) ];\n"
-    "  if( (additional & 0x40) != 0 && fbColor.b != 0.0 ){  // index color and shadow? \n"
+    "  if( (additional & 0x40) != 0 && fbColor.b >= 0.45 ){  // index color and shadow? \n"
     "    fragColor = vec4(0.0,0.0,0.0,0.5);\n"
     "  }else{ // direct color \n"
     "    discard;\n"
@@ -970,7 +1038,7 @@ void FramebufferRenderer::drawShadow(Vdp2 * fixVdp2Regs, VkCommandBuffer command
 //----------------------------------------------------------------------------------------
 // protected
 
-void FramebufferRenderer::createVertexBuffer(const std::vector<Vertex> & vertices) {
+void FramebufferRenderer::createVertexBuffer(const std::vector<Vertex2v> & vertices) {
   const VkDevice device = vulkan->getDevice();
 
   VkDeviceSize bufferSize = sizeof(vertices[0]) * vertices.size();
@@ -1082,7 +1150,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   std::vector<uint32_t> data;
   std::vector<char> buffer;
   SpvCompilationResult result;
-#if !defined(_WINDOWS)
+
   std::size_t hash_value = std::hash<std::string>()(target);
   
   // Serach from file
@@ -1100,20 +1168,13 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
     file.seekg(0, std::ios::beg);
 
     // ファイルの内容を読み込む
-    buffer.resize(file_size);
-    file.read(buffer.data(), file_size);
+    data.resize(file_size / sizeof(uint32_t));
+    file.read(reinterpret_cast<char*>(data.data()), file_size);
 
-    for( int i=0; i<file_size; i+= 4 ){
-      uint32_t value = static_cast<uint32_t>(buffer[i+0])
-                   | (static_cast<uint32_t>(buffer[i+1]) << 8)
-                   | (static_cast<uint32_t>(buffer[i+2]) << 16)
-                   | (static_cast<uint32_t>(buffer[i+3]) << 24);
-      data.push_back(value);
-    }
     file.close();
 
   }else{
-#endif
+
     Compiler compiler;
     CompileOptions options;
     options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -1131,7 +1192,7 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
       throw std::runtime_error("failed to create shader module!");
     }
     data = { result.cbegin(), result.cend() };
-#if !defined(_WINDOWS)
+
     std::ofstream file(file_path, std::ios::binary);
     if (!file) {
         std::cerr << "Error: Failed to open file." << std::endl;
@@ -1139,12 +1200,11 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
     }
 
     // データを書き込む
-    file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+    file.write(reinterpret_cast<char*>(data.data()), data.size()* sizeof(uint32_t));
 
     // ファイルを閉じる
     file.close();
   }
-#endif
 
   VkShaderModuleCreateInfo createInfo = {};
   createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -1185,8 +1245,8 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-  auto bindingDescription = Vertex::getBindingDescription();
-  auto attributeDescriptions = Vertex::getAttributeDescriptions();
+  auto bindingDescription = Vertex2v::getBindingDescription();
+  auto attributeDescriptions = Vertex2v::getAttributeDescriptions();
 
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -1334,6 +1394,10 @@ VkPipeline FramebufferRenderer::compileShader(const char * code, const char * na
   key += std::to_string(winflag);
 
   pipelines[key] = graphicsPipeline;
+
+  if (graphicsPipeline == 0) {
+    printf("failed to create graphics pipeline!");
+  }
 
   return graphicsPipeline;
 
@@ -1852,6 +1916,7 @@ void FramebufferRenderer::updateDescriptorSets(int index) {
 
   vkUpdateDescriptorSets(device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 }
+
 
 
 

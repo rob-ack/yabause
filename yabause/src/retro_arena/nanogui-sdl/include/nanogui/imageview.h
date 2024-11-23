@@ -15,10 +15,15 @@
 #pragma once
 
 #include <nanogui/widget.h>
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
 #include <nanogui/glutil.h>
+#else
+#endif
 #include <functional>
 
+
 NAMESPACE_BEGIN(nanogui)
+
 
 /**
  * \class ImageView imageview.h nanogui/imageview.h
@@ -27,12 +32,10 @@ NAMESPACE_BEGIN(nanogui)
  */
 class NANOGUI_EXPORT ImageView : public Widget {
 public:
-    ImageView(Widget* parent, const GLTexture &texture);
+    ImageView(Widget* parent);
     ~ImageView();
+    void bindImage(uint32_t imageId);
 
-    void bindImage(const GLTexture &texture);
-
-    GLShader& imageShader() { return mShader; }
 
     Vector2f positionF() const { return mPos.cast<float>(); }
     Vector2f sizeF() const { return mSize.cast<float>(); }
@@ -131,12 +134,13 @@ public:
     Vector2i preferredSize(NVGcontext* ctx) const override;
     void performLayout(NVGcontext* ctx) override;
     void draw(NVGcontext* ctx) override;
-
-    ImageView& withImage(const GLTexture &texture) { bindImage(texture); return *this; }
-
+#if !defined(NANOVG_VULKAN_IMPLEMENTATION)
+//    ImageView& withImage(const GLTexture &texture) { bindImage(texture); return *this; }
+#endif
 private:
     // Helper image methods.
     void updateImageParameters();
+    void _internalDraw(NVGcontext* ctx);
 
     // Helper drawing methods.
     void drawWidgetBorder(NVGcontext* ctx) const;
@@ -147,10 +151,7 @@ private:
     void drawPixelInfo(NVGcontext* ctx, const float stride) const;
     void writePixelInfo(NVGcontext* ctx, const Vector2f& cellPosition,
                         const Vector2i& pixel, const float stride) const;
-
-    GLTexture mTexture;
-    // Image parameters.
-    GLShader mShader;
+    uint32_t mImageID;
     Vector2i mImageSize;
 
     // Image display parameters.
@@ -165,6 +166,7 @@ private:
     // Image info parameters.
     float mGridThreshold = -1;
     float mPixelInfoThreshold = -1;
+    bool mNeedUpdate = false;
 
     // Image pixel data display members.
     std::function<std::pair<std::string, Color>(const Vector2i&)> mPixelInfoCallback;

@@ -71,6 +71,32 @@ std::string toLower(std::string str)
 
 InputConfig::InputConfig(int deviceId, const std::string& deviceName, const std::string& deviceGUID) : mDeviceId(deviceId), mDeviceName(deviceName), mDeviceGUID(deviceGUID)
 {
+
+  mapInput("up", Input(deviceId, TYPE_HAT, 0, 1, true));
+  mapInput("down", Input(deviceId, TYPE_HAT, 0, 4,  true));
+  mapInput("left", Input(deviceId, TYPE_HAT, 0, 8,  true));
+  mapInput("right", Input(deviceId, TYPE_HAT, 0, 2, true));
+
+  mapInput("a", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_A, 1, true));
+  mapInput("b", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_B, 1, true));
+  mapInput("rightshoulder", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_GUIDE, 1, true));
+  mapInput("x", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_X, 1, true));
+  mapInput("y", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_Y, 1, true));
+  mapInput("leftshoulder", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_BACK, 1, true));
+
+  // XBox controller returns 2 but SDL_CONTROLLER_AXIS_TRIGGERLEFT(4)
+  mapInput("l", Input(deviceId, TYPE_AXIS, 2 /*SDL_CONTROLLER_AXIS_TRIGGERLEFT*/, 1, true));
+  mapInput("r", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, 1, true));
+
+  mapInput("lefttrigger", Input(deviceId, TYPE_AXIS, 2 /*SDL_CONTROLLER_AXIS_TRIGGERLEFT*/ , 1, true));
+  mapInput("righttrigger", Input(deviceId, TYPE_AXIS, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, 1, true));
+
+  mapInput("start", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_LEFTSTICK, 1, true));
+  mapInput("select", Input(deviceId, TYPE_BUTTON, SDL_CONTROLLER_BUTTON_START, 1, true));
+
+  mapInput("down analog", Input(deviceId, TYPE_AXIS, 1, 1, true));
+  mapInput("up analog", Input(deviceId, TYPE_AXIS, 1, -1, true));
+
 }
 
 void InputConfig::clear()

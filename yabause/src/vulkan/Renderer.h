@@ -96,6 +96,9 @@ private:
   VkDebugReportCallbackEXT				_debug_report = VK_NULL_HANDLE;
   VkDebugReportCallbackCreateInfoEXT		_debug_callback_create_info = {};
 
+  VkDebugUtilsMessengerCreateInfoEXT dbg_messenger_create_info;
+  VkDebugUtilsMessengerEXT dbg_messenger;
+
   bool canUseTess = false;
 
 };

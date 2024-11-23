@@ -195,6 +195,13 @@ public:
   int finalWidth;  // final rendering width(not device width)
   int finalHeight; // final rendering height(not device height)
 
+  void renderExternal(const std::function<void(
+    VkDevice device,
+    VkPhysicalDevice gpu,
+    VkRenderPass renderPass,
+    VkCommandBuffer commandBuffer)
+  >& f);
+
 protected:
 
   Vdp1Renderer * vdp1;

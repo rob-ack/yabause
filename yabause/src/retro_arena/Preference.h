@@ -20,18 +20,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #include <string>
 using std::string;
 
+#include <vector>
+using std::vector;
+
+#if defined(_MSC_VER) 
+#undef snprintf
+#endif
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+class Preference;
 
 class Preference {
 public:
-    Preference( const string & filename );
+    Preference( const string & filename);
     ~Preference();
     int getInt( const string & key, int defaultv );
     bool getBool( const string & key, bool defaultv );
+    std::vector<string> Preference::getStringArray(const std::string & key);
     void setInt( const string & key, int value );
     void setBool( const string & key, bool value );
+    void setStringArray(const string & key, const std::vector<string> array);
+
+    string getString(const string & key, const string & defaultv);
+    void setString(const string & key, const string & value);
 
 protected:
   string filename;

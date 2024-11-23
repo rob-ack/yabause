@@ -75,7 +75,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
     std::vector<uint32_t> data;
     std::vector<char> buffer;
     SpvCompilationResult result;
-#if !defined(_WINDOWS)
+
     std::size_t hash_value = std::hash<std::string>()(target);
     
     // Serach from file
@@ -93,20 +93,13 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
       file.seekg(0, std::ios::beg);
 
       // ファイルの内容を読み込む
-      buffer.resize(file_size);
-      file.read(buffer.data(), file_size);
+      data.resize(file_size / sizeof(uint32_t));
+      file.read(reinterpret_cast<char*>(data.data()), file_size);
 
-      for( int i=0; i<file_size; i+= 4 ){
-        uint32_t value = static_cast<uint32_t>(buffer[i+0])
-                    | (static_cast<uint32_t>(buffer[i+1]) << 8)
-                    | (static_cast<uint32_t>(buffer[i+2]) << 16)
-                    | (static_cast<uint32_t>(buffer[i+3]) << 24);
-        data.push_back(value);
-      }
       file.close();
 
     }else{    
-#endif
+
       Compiler compiler;
       CompileOptions options;
       options.SetOptimizationLevel(shaderc_optimization_level_performance);
@@ -124,7 +117,7 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
         throw std::runtime_error("failed to create shader module!");
       }
       data = { result.cbegin(), result.cend() };
-#if !defined(_WINDOWS)
+
       std::ofstream file(file_path, std::ios::binary);
       if (!file) {
           std::cerr << "Error: Failed to open file." << std::endl;
@@ -132,13 +125,13 @@ VkShaderModule ShaderManager::compileShader(uint32_t id, const string & code, in
       }
 
       // データを書き込む
-      file.write((const char*)data.data(), data.size()* sizeof(uint32_t));
+      file.write(reinterpret_cast<char*>(data.data()), data.size() * sizeof(uint32_t));
 
       // ファイルを閉じる
       file.close();
 
     }
-#endif
+
     VkShaderModuleCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = data.size() * sizeof(uint32_t);

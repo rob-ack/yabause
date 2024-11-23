@@ -172,6 +172,7 @@ typedef struct VKNVGcontext {
   int npipelines;
 
   float view[2];
+  float devicePixelRatio;
 
   // Per frame buffers
   VKNVGcall *calls;
@@ -892,7 +893,7 @@ static void vknvg_setUniforms(VKNVGcontext *vk, VkDescriptorSet descSet, int uni
   writes[1].dstBinding = 1;
 
   VkDescriptorImageInfo image_info;
-  if (image != 0) {
+  if (image > 0) {
     VKNVGtexture *tex = vknvg_findTexture(vk, image);
 
     image_info.imageLayout = tex->imageLayout;
@@ -1313,6 +1314,10 @@ static void vknvg_renderViewport(void *uptr, float width, float height, float de
 */
   vk->view[0] = (float)width;
   vk->view[1] = (float)height;
+  vk->devicePixelRatio = devicePixelRatio;
+  if (vk->devicePixelRatio == 0.0f) {
+    vk->devicePixelRatio = 1.0f;
+  }
 }
 
 static void vknvg_renderCancel(void *uptr) {
@@ -1333,6 +1338,53 @@ void vknvg_TransformRotate(float* t, float a)
 	t[8] = 0.0f; t[9] = 0.0f; t[10] = 1.0f; t[11] = 0.0f;
 }
 
+void vknvg_Translate(float* t, float tx, float ty) {
+
+  t[0] = 1.0f; t[1] = 0.0f; t[2] = 0.0f; t[3] = 0.0f;
+  t[4] = 0.0f; t[5] = 1.0f; t[6] = 0.0f; t[7] = 0.0f;
+  t[8] = tx; t[9] = ty; t[10] = 1.0; t[11] = 0.0f;
+
+}
+
+
+void vknvg_Scale(float* t, float s) {
+
+  t[0] = s; t[1] = 0.0f; t[2] = 0.0f; t[3] = 0.0f;
+  t[4] = 0.0f; t[5] = s; t[6] = 0.0f; t[7] = 0.0f;
+  t[8] = 0.0f; t[9] = 0.0f; t[10] = 1.0; t[11] = 0.0f;
+
+}
+
+void vknvg_Multiply(float* t, const float* s)
+{
+  float t0 = t[0] * s[0] + t[1] * s[4] + t[2] * s[8];
+  float t1 = t[0] * s[1] + t[1] * s[5] + t[2] * s[9];
+  float t2 = t[0] * s[2] + t[1] * s[6] + t[2] * s[10];
+  float t3 = t[0] * s[3] + t[1] * s[7] + t[2] * s[11];
+  float t4 = t[4] * s[0] + t[5] * s[4] + t[6] * s[8];
+  float t5 = t[4] * s[1] + t[5] * s[5] + t[6] * s[9];
+  float t6 = t[4] * s[2] + t[5] * s[6] + t[6] * s[10];
+  float t7 = t[4] * s[3] + t[5] * s[7] + t[6] * s[11];
+  float t8 = t[8] * s[0] + t[9] * s[4] + t[10] * s[8];
+  float t9 = t[8] * s[1] + t[9] * s[5] + t[10] * s[9];
+  float t10 = t[8] * s[2] + t[9] * s[6] + t[10] * s[10];
+  float t11 = t[8] * s[3] + t[9] * s[7] + t[10] * s[11];
+
+  t[0] = t0;
+  t[1] = t1;
+  t[2] = t2;
+  t[3] = t3;
+  t[4] = t4;
+  t[5] = t5;
+  t[6] = t6;
+  t[7] = t7;
+  t[8] = t8;
+  t[9] = t9;
+  t[10] = t10;
+  t[11] = t11;
+
+}
+
 static void vknvg_renderFlush(void *uptr) {
   VKNVGcontext *vk = (VKNVGcontext *)uptr;
   VkDevice device = vk->createInfo.device;
@@ -1345,20 +1397,36 @@ static void vknvg_renderFlush(void *uptr) {
   if (vk->ncalls > 0) {
 
     VKNVGVertUniforms vm = {};
-    vm.v[0] = vk->view[0];
-    vm.v[1] = vk->view[1];
+    vm.v[0] = vk->view[0] / vk->devicePixelRatio;
+    vm.v[1] = vk->view[1] / vk->devicePixelRatio;
     
     vm.mvp[0] = 1.0;
     vm.mvp[1] = 0.0;
     vm.mvp[2] = 0.0;
+    vm.mvp[3] = 0.0;
     
     vm.mvp[4*1+0] = 0.0;
     vm.mvp[4*1+1] = 1.0;
     vm.mvp[4*1+2] = 0.0;
+    vm.mvp[4*1+3] = 0.0;
 
     vm.mvp[4*2+0] = 0.0;
     vm.mvp[4*2+1] = 0.0;
     vm.mvp[4*2+2] = 1.0;
+    vm.mvp[4*2+3] = 0.0;
+/*
+    float t[12];
+
+    vknvg_Translate(t, vk->view[0] / 2.0f, vk->view[1] / 2.0f);
+    vknvg_Multiply(vm.mvp, t);
+
+    vknvg_Scale(t, 1.5f);
+    vknvg_Multiply(vm.mvp, t);
+
+    vknvg_Translate(t, -vk->view[0] / 2.0f, -vk->view[1] / 2.0f);
+    vknvg_Multiply(vm.mvp, t);
+*/
+    
 
     switch(vk->createInfo.pretransformFlag){
       case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
@@ -1634,7 +1702,7 @@ NVGcontext *nvgCreateVk(VKNVGCreateInfo createInfo, int flags) {
   if (vk == nullptr)
     goto error;
   memset(vk, 0, sizeof(VKNVGcontext));
-
+  vk->devicePixelRatio = 1.0f;
   memset(&params, 0, sizeof(params));
   params.renderCreate = vknvg_renderCreate;
   params.renderCreateTexture = vknvg_renderCreateTexture;

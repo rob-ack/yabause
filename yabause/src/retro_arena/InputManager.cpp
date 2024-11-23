@@ -24,15 +24,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 //#include "Window.h"
 //#include "Log.h"
 #include "pugixml/pugixml.hpp"
-#include <boost/filesystem.hpp>
+//#include <boost/filesystem.hpp>
 //#include "platform.h"
 #include <iostream>
 
 #include <stdio.h>
-#include <execinfo.h>
 #include <signal.h>
 #include <stdlib.h>
+
+#if defined(ARCH_IS_LINUX)
+#include <execinfo.h>
 #include <unistd.h>
+#endif
 
 #include "MenuScreen.h"
 extern "C"{
@@ -47,8 +50,73 @@ using namespace::std;
 #include <sstream>
 #include <iomanip>
 
+#include "common.h"
+
+#if defined(_MSC_VER) && _MSC_VER < 1500 // VC++ 8.0 and below
+#define std::snprintf _snprintf
+#endif
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+
+
+#include <thread>
+#include <chrono>
+#include <functional>
+#include <cstdio>
+#include <atomic>
+#include <condition_variable>
+#include <mutex>
+
+class Timer {
+public:
+  ~Timer() {
+    if (mRunning) {
+      stop();
+    }
+  }
+  typedef std::chrono::milliseconds Interval;
+  typedef std::chrono::milliseconds Repeat;
+  typedef std::function<void(void)> Timeout;
+
+  void start(const Interval &interval, const Interval &repeat, const Timeout &timeout) {
+    mRunning = true;
+    count = 0;
+
+    mThread = std::thread([=]() {
+
+      std::unique_lock<std::mutex> lk(mtx_);
+
+      while (mRunning) {
+
+        if (count == 0) {
+          cond_.wait_for(lk, interval);
+        }
+        else {
+          cond_.wait_for(lk, repeat);
+        }
+
+        if (mRunning) {
+          timeout();
+        }
+        count++;
+      }
+    });
+  }
+  void stop() {
+    mRunning = false;
+    cond_.notify_all();
+    mThread.join();
+  }
+
+private:
+  int count = 0;
+  std::thread mThread;
+  std::mutex mtx_;
+  std::condition_variable cond_;
+  std::atomic_bool mRunning{};
+};
+
+//std::thread Timer::mThread = {};
 
 #define PADLOG 
 //#define PADLOG printf
@@ -78,13 +146,16 @@ static const unsigned int SDL_HAT_VALUES_NUM = sizeof(SDL_HAT_VALUES) / sizeof(S
 // 4. Joystick GUID - this is some squashed version of joystick vendor, version, and a bunch of other device-specific things.
 //    It should remain the same across runs of the program/system restarts/device reordering and is what I use to identify which joystick to load.
 
-namespace fs = boost::filesystem;
+//namespace fs = boost::filesystem;
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 InputManager* InputManager::mInstance = NULL;
 void genJoyString( string & out, SDL_JoystickID id, const string & name, const string & guid );
 
 InputManager::InputManager() : mKeyboardInputConfig(NULL)
 {
+  currentTimer = nullptr;
 }
 
 InputManager::~InputManager()
@@ -158,24 +229,25 @@ int setPlayerKeys( void * padbits, int user, int joyId, const json & player ){
     if( player.find("z") != player.end()) PerSetKey(genidjson(user,joyId,player["z"]),PERPAD_Z, padbits);
     if( player.find("l") != player.end()) PerSetKey(genidjson(user,joyId,player["l"]),PERPAD_LEFT_TRIGGER, padbits);
     if( player.find("r") != player.end())PerSetKey(genidjson(user,joyId,player["r"]),PERPAD_RIGHT_TRIGGER, padbits);    
-
-    if( player.find("analogx") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
-      InputManager::getInstance()->_analogType[joyId] = 0;
+    if( player.find("analogx") != player.end())  {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogx"]), PERANALOG_AXIS1, padbits);
+	      InputManager::getInstance()->_analogType[joyId] = 0;
     }
     if( player.find("analogy") != player.end()) {
         PerSetKey(genidAnalogjson(user,joyId,player["analogy"]), PERANALOG_AXIS2, padbits);
         InputManager::getInstance()->_analogType[joyId] = 0; 
     }
-    if( player.find("analogleft") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogleft"]), PERANALOG_AXIS4, padbits);
-      InputManager::getInstance()->_analogType[joyId] = 1;
+    if( player.find("analogl") != player.end()) {
+        PerSetKey(genidAnalogjson(user,joyId,player["analogl"]), PERANALOG_AXIS4, padbits);
+	      InputManager::getInstance()->_analogType[joyId] = 1;
     }
-    if( player.find("analogright") != player.end()) {
-      PerSetKey(genidAnalogjson(user,joyId,player["analogright"]), PERANALOG_AXIS3, padbits);  
-      InputManager::getInstance()->_analogType[joyId] = 1; 
+    if( player.find("analogr") != player.end()) {
+	      PerSetKey(genidAnalogjson(user,joyId,player["analogr"]), PERANALOG_AXIS3, padbits);  
+	      InputManager::getInstance()->_analogType[joyId] = 1; 
     }
+
     return 0;
+
 }
 
 SDL_JoystickID findJoyIdFromGuid(const string & deviceGuid) {
@@ -205,24 +277,24 @@ void InputManager::genJoyString( string & out, SDL_JoystickID id, const string &
 int setDefalutSettings( void * padbits ){
 
     // Set Defaults
-    PerSetKey(SDLK_UP,PERPAD_UP, padbits);
-    PerSetKey(SDLK_DOWN,PERPAD_DOWN, padbits);
-    PerSetKey(SDLK_LEFT,PERPAD_LEFT, padbits);
-    PerSetKey(SDLK_RIGHT,PERPAD_RIGHT, padbits);
-    PerSetKey(SDLK_RETURN, PERPAD_START, padbits);
-    PerSetKey(SDLK_z,PERPAD_A, padbits);
-    PerSetKey(SDLK_x,PERPAD_B, padbits);
-    PerSetKey(SDLK_c,PERPAD_C, padbits);
-    PerSetKey(SDLK_a,PERPAD_X, padbits);
-    PerSetKey(SDLK_s,PERPAD_Y, padbits);
-    PerSetKey(SDLK_d,PERPAD_Z, padbits);
-    PerSetKey(SDLK_q,PERPAD_LEFT_TRIGGER, padbits);
-    PerSetKey(SDLK_e,PERPAD_RIGHT_TRIGGER, padbits); 
+    PerSetKey(SDLK_UP | KEYBOARD_MASK,PERPAD_UP, padbits);
+    PerSetKey(SDLK_DOWN | KEYBOARD_MASK,PERPAD_DOWN, padbits);
+    PerSetKey(SDLK_LEFT | KEYBOARD_MASK,PERPAD_LEFT, padbits);
+    PerSetKey(SDLK_RIGHT | KEYBOARD_MASK,PERPAD_RIGHT, padbits);
+    PerSetKey(SDLK_RETURN | KEYBOARD_MASK, PERPAD_START, padbits);
+    PerSetKey(SDLK_z | KEYBOARD_MASK,PERPAD_A, padbits);
+    PerSetKey(SDLK_x | KEYBOARD_MASK,PERPAD_B, padbits);
+    PerSetKey(SDLK_c | KEYBOARD_MASK,PERPAD_C, padbits);
+    PerSetKey(SDLK_a | KEYBOARD_MASK,PERPAD_X, padbits);
+    PerSetKey(SDLK_s | KEYBOARD_MASK,PERPAD_Y, padbits);
+    PerSetKey(SDLK_d | KEYBOARD_MASK,PERPAD_Z, padbits);
+    PerSetKey(SDLK_q | KEYBOARD_MASK,PERPAD_LEFT_TRIGGER, padbits);
+    PerSetKey(SDLK_e | KEYBOARD_MASK,PERPAD_RIGHT_TRIGGER, padbits);
 
     return 0;
 }
 
-int mapKeys( const json & configs ){
+int mapKeys( const json & configs, std::string config_fname, std::vector<MenuInput> & menu_inputs_){
   void * padbits;
   int user = 0;
   PerPortReset();
@@ -231,17 +303,35 @@ int mapKeys( const json & configs ){
 
     PADLOG("No joy stic is found force to keyboard\n");
     padbits = PerPadAdd(&PORTDATA1);
+        
     if( configs.find("player1") == configs.end() ){
       return setDefalutSettings(padbits);
     }
     json p = configs["player1"];
     if( p["DeviceID"].get<int>() == -1 ){
       std::string guid = p["deviceGUID"];
+      InputManager::genJoyString(guid, p["DeviceID"], p["deviceName"], p["deviceGUID"]);
       if( configs.find(guid) != configs.end() ){
         json dev = configs[ guid ];
         setPlayerKeys( padbits, 0, -1, dev );
         return 0;
       }
+    }
+    else {
+
+      // Force to use keyboard
+      json j;
+      std::ifstream fin(config_fname);
+      fin >> j;
+      fin.close();
+      j["player1"]["deviceGUID"] = "-1";
+      j["player1"]["DeviceID"] = -1;
+      j["player1"]["deviceName"] = "Keyboard";
+      j["player1"]["padmode"] = 0;
+      std::ofstream out(config_fname);
+      out << j.dump(2);
+      out.close();
+
     }
 #if 0    
     if( configs.find("player2") == configs.end() ){
@@ -384,6 +474,14 @@ int mapKeys( const json & configs ){
         if( configs.find(name_guid) != configs.end()){
           json dev = configs[ name_guid ];
           setPlayerKeys( padbits, user, joyId, dev );
+          if (dev.find("select") != dev.end()) {
+            menu_inputs_.clear();
+            MenuInput tmp;
+            tmp.select_device_ = joyId;
+            tmp.select_button_ = dev["select"]["id"];
+            printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_);
+            menu_inputs_.push_back(tmp);
+          }
         }
       }
     }
@@ -396,6 +494,7 @@ int mapKeys( const json & configs ){
         size = backtrace(array, 10);
         backtrace_symbols_fd(array, size, STDERR_FILENO);
 */
+#if defined(ARCH_IS_LINUX)
         void *trace_elems[20];
         int trace_elem_count(backtrace(trace_elems, 20));
         char **stack_syms(backtrace_symbols(trace_elems, trace_elem_count));
@@ -404,7 +503,7 @@ int mapKeys( const json & configs ){
             cout << stack_syms[i] << "\n";
         }
         free(stack_syms);
-
+#endif
         return -1;
   }
 
@@ -478,7 +577,7 @@ void InputManager::updateConfig(){
   std::ifstream fin( config_fname_ );
   fin >> j;
   fin.close();
-  mapKeys(j);
+  mapKeys(j, config_fname_, menu_inputs_);
 }
 
 int InputManager::getCurrentPadMode( int user ){
@@ -502,7 +601,7 @@ void InputManager::setGamePadomode( int user, int mode ){
   if( user == 0 ){
     PADLOG("User mode %d\n", mode );
     j["player1"]["padmode"] = mode;
-    mapKeys(j);
+    mapKeys(j, config_fname_, menu_inputs_);
     std::ofstream out(config_fname_);
     out << j.dump(2);
     out.close();
@@ -589,16 +688,16 @@ int getPlayerJsonFromInputConfig( int joy, InputConfig * inputconfig, json & pla
   player[guid]["right"] = { { "type", input_types[result.type] },{ "id", result.id },{ "value", result.value } };
 
   //inputconfig->getInputByName("leftanalogup", &result);
-  player[guid]["analogx"] = { { "type", "axis" },{ "id", 0 },{ "value", 0 } };
+  player[guid]["analogx"] = { { "type", "axis" },{ "id", 0 },{ "value", 1 } };
 
   //inputconfig->getInputByName("leftanalogdown", &result);
-  player[guid]["analogy"] = { { "type", "axis" },{ "id", 1 },{ "value", 0 } };
+  player[guid]["analogy"] = { { "type", "axis" },{ "id", 1 },{ "value", 1 } };
 
   //inputconfig->getInputByName("leftanalogleft", &result);
-  player[guid]["analogleft"] = { { "type", "axis" },{ "id", 4 },{ "value", 0 } };
+  player[guid]["analogl"] = { { "type", "axis" },{ "id", 4 },{ "value", 0 } };
 
   //inputconfig->getInputByName("leftanalogright", &result);
-  player[guid]["analogright"] = { { "type", "axis" },{ "id", 5 },{ "value", 0 } };
+  player[guid]["analogr"] = { { "type", "axis" },{ "id", 5 },{ "value", 0 } };
 
   inputconfig->getInputByName("start", &result);
   player[guid]["start"] = { { "type", input_types[result.type] },{ "id", result.id },{ "value", result.value } };
@@ -641,20 +740,20 @@ int InputManager::convertFromEmustationFile( const std::string & fname ){
       joystics["player1"]["padmode"] = 0;
       joystics["player1"]["deviceGUID"] = "-1";
       joystics["player1"]["deviceName"] = "Keyboard";
-      joystics["-1"]["a"] ={ { "type", "key" },{ "id", 122 },{ "value", 0 } };
-      joystics["-1"]["b"] ={ { "type", "key" },{ "id", 120 },{ "value", 0 } };
-      joystics["-1"]["c"] ={ { "type", "key" },{ "id", 199 },{ "value", 0 } };
-      joystics["-1"]["x"] ={ { "type", "key" },{ "id", 97 },{ "value", 0 } };
-      joystics["-1"]["y"] ={ { "type", "key" },{ "id", 115 },{ "value", 0 } };
-      joystics["-1"]["z"] ={ { "type", "key" },{ "id", 133 },{ "value", 0 } };
-      joystics["-1"]["l"] ={ { "type", "key" },{ "id", 101 },{ "value", 0 } };
-      joystics["-1"]["r"] ={ { "type", "key" },{ "id", 114 },{ "value", 0 } };
-      joystics["-1"]["start"] ={ { "type", "key" },{ "id", 13 },{ "value", 0 } };
-      joystics["-1"]["select"] ={ { "type", "key" },{ "id", 93 },{ "value", 0 } };
-      joystics["-1"]["up"] ={ { "type", "key" },{ "id", 1073741906 },{ "value", 0 } };
-      joystics["-1"]["down"] ={ { "type", "key" },{ "id", 1073741905 },{ "value", 0 } };
-      joystics["-1"]["left"] ={ { "type", "key" },{ "id", 1073741904 },{ "value", 0 } };
-      joystics["-1"]["right"] ={ { "type", "key" },{ "id", 1073741903 },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["a"] ={ { "type", "key" },{ "id", SDLK_z },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["b"] ={ { "type", "key" },{ "id", SDLK_x },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["c"] ={ { "type", "key" },{ "id", SDLK_c },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["x"] ={ { "type", "key" },{ "id", SDLK_a },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["y"] ={ { "type", "key" },{ "id", SDLK_s },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["z"] ={ { "type", "key" },{ "id", SDLK_d },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["l"] ={ { "type", "key" },{ "id", SDLK_q },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["r"] ={ { "type", "key" },{ "id", SDLK_e },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["start"] ={ { "type", "key" },{ "id", SDLK_RETURN },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["select"] ={ { "type", "key" },{ "id", SDLK_ESCAPE },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["up"] ={ { "type", "key" },{ "id", SDLK_UP },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["down"] ={ { "type", "key" },{ "id", SDLK_DOWN },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["left"] ={ { "type", "key" },{ "id", SDLK_LEFT },{ "value", 0 } };
+      joystics["-1_Keyboard_-1"]["right"] ={ { "type", "key" },{ "id", SDLK_RIGHT },{ "value", 0 } };
     }
 
   }else{
@@ -710,22 +809,27 @@ void InputManager::init( const std::string & fname )
   fin >> j;
   std::cout << std::setw(2) << j << "\n\n";
 
-  mapKeys(j);
-
   menu_inputs_.clear();
-  std::map<SDL_JoystickID, InputConfig*>::iterator it;
+  mapKeys(j, config_fname_, menu_inputs_);
 
-  for ( it = mInputConfigs.begin(); it != mInputConfigs.end(); it++ ){
-    MenuInput tmp;
-    Input result;
-    it->second->getInputByName("select", &result);
-    if( result.id == -1 ){
-      it->second->getInputByName("hotkeyenable", &result);
+
+
+  
+  if( menu_inputs_.size() == 0 ) {
+    std::map<SDL_JoystickID, InputConfig*>::iterator it;
+
+    for (it = mInputConfigs.begin(); it != mInputConfigs.end(); it++) {
+      MenuInput tmp;
+      Input result;
+      it->second->getInputByName("select", &result);
+      if (result.id == -1) {
+        it->second->getInputByName("hotkeyenable", &result);
+      }
+      tmp.select_device_ = it->second->getDeviceId();
+      tmp.select_button_ = result.id;
+      printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_);
+      menu_inputs_.push_back(tmp);
     }
-    tmp.select_device_ = it->second->getDeviceId();    
-    tmp.select_button_ = result.id;
-    printf("select_device_ = %d, select_button_ = %d\n", tmp.select_device_, tmp.select_button_ );
-    menu_inputs_.push_back(tmp);
   }
 }
 
@@ -1086,6 +1190,12 @@ int InputManager::handleJoyEvents(void) {
 static const int DEADZONE = 23000;
 
 void InputManager::setMenuLayer( MenuScreen * menu_layer ){
+
+  if (currentTimer != nullptr) {
+    delete currentTimer;
+    currentTimer = nullptr;
+  }
+
   menu_layer_ = menu_layer;
   //if( menu_layer_ != nullptr ){
   //  menu_layer_->setCurrentInputDevices( mJoysticks );
@@ -1108,12 +1218,38 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
           normValue = 1;
         else
           normValue = -1;
+
       //window->input(getInputConfigByDevice(ev.jaxis.which), Input(ev.jaxis.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       InputConfig* cfg = getInputConfigByDevice(ev.jbutton.which);
       evstr = cfg->getMappedTo(Input(ev.jbutton.which, TYPE_AXIS, ev.jaxis.axis, normValue, false));
       if( evstr.size() > 0 ){
+
+        {
+          if (currentTimer != nullptr) {
+            delete currentTimer;
+            currentTimer = nullptr;
+          }
+
+          if (ev.jhat.value != 0) {
+            currentTimer = new Timer();
+            string evvv = evstr[0];
+            currentTimer->start(std::chrono::milliseconds(500), std::chrono::milliseconds(80), [this, ev, evvv, normValue] {
+              menu_layer_->sendRepeatEvent((const string)evvv, 0, normValue, 0);
+            });
+          }
+
+        }
+
         menu_layer_->keyboardEvent(evstr[0],0,normValue,0);
+      
       }
+      else {
+        if (currentTimer != nullptr) {
+          delete currentTimer;
+          currentTimer = nullptr;
+        }
+      }
+
       causedEvent = true;
     }
     mPrevAxisValues[ev.jaxis.which][ev.jaxis.axis] = ev.jaxis.value;
@@ -1163,14 +1299,38 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
       InputConfig* cfg = getInputConfigByDevice(ev.jhat.which);
       evstr = cfg->getMappedTo( Input(ev.jhat.which, TYPE_HAT, ev.jhat.hat, ev.jhat.value, false));
       if( evstr.size() != 0 ){
+
+        {
+          if (currentTimer != nullptr) {
+            delete currentTimer;
+            currentTimer = nullptr;
+          }
+
+          if (ev.jhat.value != 0) {
+            currentTimer = new Timer();
+            string evvv = evstr[0];
+            currentTimer->start(std::chrono::milliseconds(500), std::chrono::milliseconds(80), [this, ev, evvv] {
+              menu_layer_->sendRepeatEvent( (const string)evvv, 0, (ev.jhat.value != 0), 0);
+            });
+          }
+
+        }
+
         menu_layer_->keyboardEvent(evstr[0],0, (ev.jhat.value != 0) ,0);
+      }
+      else {
+        if (currentTimer != nullptr) {
+          delete currentTimer;
+          currentTimer = nullptr;
+        }
       }
       return true;
   }
   break;
   case SDL_KEYDOWN:
-    if(ev.key.repeat)
-      return false;  
+    if (ev.key.repeat) {
+      return false;
+    }
     
     if(ev.key.keysym.sym == SDLK_ESCAPE){
       //if( menu_layer_->onBackButtonPressed() == 0 ){
@@ -1183,7 +1343,7 @@ bool InputManager::parseEventMenu(const SDL_Event& ev ){
       //}
     }
 
-    menu_layer_->onRawInputEvent(*this,"Keyboard_-1", "key",ev.key.keysym.sym,1);
+    menu_layer_->onRawInputEvent(*this,"-1_Keyboard_-1", "key",ev.key.keysym.sym,1);
 
     if( mKeyboardInputConfig )  {
       evstr = mKeyboardInputConfig->getMappedTo(Input(DEVICE_KEYBOARD, TYPE_KEY, ev.key.keysym.sym, 1, false));
@@ -1358,7 +1518,8 @@ void InputManager::writeDeviceConfig(InputConfig* config)
 
 std::string InputManager::getConfigPath()
 {
-  std::string path = getenv("HOME");
+  std::string path;
+  getHomeDir(path);
   path += "/.emulationstation/es_temporaryinput.cfg";
   return path;
 }

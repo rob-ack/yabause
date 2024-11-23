@@ -1,9 +1,6 @@
 project(yabause-retro-arena)
 
-add_definitions( -D__RETORO_ARENA__ )
-
 yab_port_start()
-
 
 find_package(SDL2 COMPONENTS sdl)
 find_package(SDL2 REQUIRED)
@@ -12,9 +9,9 @@ find_package(PkgConfig REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system filesystem date_time locale)
 
-if (NOT OPENGLES2_FOUND)
-	return()
-endif (NOT OPENGLES2_FOUND)
+#if (NOT OPENGLES2_FOUND)
+#	return()
+#endif (NOT OPENGLES2_FOUND)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
@@ -24,6 +21,15 @@ add_subdirectory(nanogui-sdl)
 #include( ../glfw/external_zlib.cmake )
 include( ${CMAKE_SOURCE_DIR}/CMake/Packages/external_libpng.cmake )
 
+set( CD_INSTALL_DIR  ${CMAKE_CURRENT_BINARY_DIR})
+
+#ExternalProject_Add( libcharsetdetect
+#     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/libcharsetdetect#
+#	 CMAKE_ARGS     -DCMAKE_INSTALL_PREFIX=${CD_INSTALL_DIR
+#     GIT_REPOSITORY https://github.com/batterseapower/libcharsetdetect.git
+#)
+#ExternalProject_Get_Property(libcharsetdetect SOURCE_DIR)
+#set( libcharsetdetect_dir ${SOURCE_DIR} )
 
 set( sqlite3_source_path ${CMAKE_CURRENT_BINARY_DIR}/external/sqlite3/src/external_sqlite3/ )
 set( sqlite3_cmake_file_path ${sqlite3_source_path}/CMakeLists.txt )
@@ -79,6 +85,7 @@ set(PORT_LIBRARIES ${SDL2_LIBRARY} ${OPENGLES2_LIBRARIES} ${png_STATIC_LIBRARIES
 message("Nlohmann/json dir =" ${EXTERNAL_JSON_INCLUDE_DIR})
 
 set(yabause_ra_SOURCES
+  common.h
 	main.cpp
 	InputManager.h
 	InputManager.cpp
@@ -97,10 +104,26 @@ set(yabause_ra_SOURCES
   ../about.h
   ../about.c
 ) 
-link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} )
-include_directories( ${PORT_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${sqlite3_source_path} "nanogui-sdl/include" "nanogui-sdl/ext/eigen" "win/include" )
+
+if (YAB_WANT_VULKAN)
+set( yabause_ra_SOURCES ${yabause_ra_SOURCES} ../vulkan/Window_sdl.cpp )
+endif()
+
+
+link_directories( ${link_directories} ${LIBCHDR_LIB_DIR} ${CMAKE_CURRENT_BINARY_DIR}/lib )
+
+include_directories( 
+  ${PORT_INCLUDE_DIRS} 
+  #${libcharsetdetect_dir} 
+  ${Boost_INCLUDE_DIR} 
+  ${sqlite3_source_path} 
+  "nanogui-sdl/include" 
+  "nanogui-sdl/ext/eigen" 
+  "win/include" )
+
 set(APP_ICON_RESOURCE_WINDOWS application.rc)
-add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS})
+
+add_executable(yabause-retro-arena WIN32 ${yabause_ra_SOURCES} ${APP_ICON_RESOURCE_WINDOWS} ${CMAKE_CURRENT_SOURCE_DIR}/res/utf8.manifest )
 
 
 # OpenSSL for https
@@ -130,17 +153,46 @@ else()
 endif()
 
 
-target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} )
+target_link_libraries(yabause-retro-arena yabause  ${Boost_LIBRARIES} pugixml ${YABAUSE_LIBRARIES} ${PORT_LIBRARIES} nanogui ${LIBCHDR_LIBRARIES} Shcore )
 target_link_libraries( yabause-retro-arena ${LIBCHDR_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${zlib_STATIC_LIBRARIES} )
 target_link_libraries( yabause-retro-arena ${CMAKE_CURRENT_BINARY_DIR}/lib/sqlite3.lib )
+if (YAB_WANT_VULKAN)
+target_link_libraries( yabause-retro-arena ${GLFW_LIBRARIES} ${LIBVULKAN} ${SHADERC_LIBRARIES} )
+endif()
 add_dependencies(yabause-retro-arena Json png zlib libchd nanogui external_sqlite3)
+
+#add_dependencies(yabause-retro-arena libcharsetdetect)
+#target_include_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib)
+#target_link_directories(yabause-retro-arena PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/libcharsetdetect/lib/.libs)
+#target_link_libraries(yabause-retro-arena PRIVATE charsetdetect)
+
+
 yab_port_success(yabause-retro-arena)
+
+
 set_target_properties(yabause-retro-arena PROPERTIES OUTPUT_NAME yabasanshiro)
 
+set(YAB_TARGET "-HH"  CACHE STRING "package name" )
 
+if (WIN32)
+install(TARGETS yabause-retro-arena DESTINATION ".")
+set_property(INSTALL $<TARGET_FILE_NAME:yabause-retro-arena>
+  PROPERTY CPACK_START_MENU_SHORTCUTS "Yaba Sanshiro"
+)
+#install(FILES "default.config" DESTINATION "." )
+install(FILES "howtouse.md" DESTINATION "." )
+#install(FILES "place_games_here" DESTINATION "./games" )
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../COPYING.txt    DESTINATION "." RENAME COPYING.txt)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/boxart.txt    DESTINATION "." )
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../EULA.txt    DESTINATION "." RENAME EULA.txt)
+get_filename_component(SDL2_BINARY_DIR ${SDL2_LIBRARY} PATH)
+install(DIRECTORY ${SDL2_BINARY_DIR}/ DESTINATION "." FILES_MATCHING PATTERN "SDL2.dll")
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/fonts DESTINATION "." )
+else ()
 install(TARGETS yabause-retro-arena DESTINATION ".")
 install(FILES "README.md" DESTINATION "." )
+endif ()
 
-#install(TARGETS yabause-retoro-arena DESTINATION "bin")
-#install(FILES "README.md" DESTINATION "." )
+
+

@@ -1,6 +1,5 @@
 include(ExternalProject)
 #find_package(GLM QUIET)
-
 #if(GLM_FOUND)
 #    message(STATUS "Found GLM")
 #else()

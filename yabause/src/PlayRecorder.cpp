@@ -73,6 +73,161 @@ extern "C" {
   void YabauseReset(void);
 }
 
+#include <zlib.h>
+
+#define CHUNK_SIZE 16384
+
+int compress_file(const char* input_path, const char* output_path) {
+  FILE* input_file = fopen(input_path, "rb");
+  if (!input_file) {
+    perror("Failed to open input file");
+    return -1;
+  }
+
+  FILE* output_file = fopen(output_path, "wb");
+  if (!output_file) {
+    perror("Failed to open output file");
+    fclose(input_file);
+    return -1;
+  }
+
+  z_stream strm;
+  memset(&strm, 0, sizeof(z_stream));
+
+  if (deflateInit(&strm, Z_BEST_COMPRESSION) != Z_OK) {
+    perror("Failed to initialize zlib");
+    fclose(input_file);
+    fclose(output_file);
+    return -1;
+  }
+
+  unsigned char in_buffer[CHUNK_SIZE];
+  unsigned char out_buffer[CHUNK_SIZE];
+
+  strm.next_out = out_buffer;
+  strm.avail_out = CHUNK_SIZE;
+
+  int ret;
+
+  do {
+    strm.next_in = in_buffer;
+    strm.avail_in = fread(in_buffer, 1, CHUNK_SIZE, input_file);
+
+    if (ferror(input_file)) {
+      perror("Failed to read input file");
+      ret = -1;
+      break;
+    }
+
+    ret = deflate(&strm, feof(input_file) ? Z_FINISH : Z_NO_FLUSH);
+
+    if (ret == Z_STREAM_ERROR) {
+      perror("Failed to compress data");
+      break;
+    }
+
+    size_t have = CHUNK_SIZE - strm.avail_out;
+    if (fwrite(out_buffer, 1, have, output_file) != have || ferror(output_file)) {
+      perror("Failed to write compressed data");
+      ret = -1;
+      break;
+    }
+
+    strm.next_out = out_buffer;
+    strm.avail_out = CHUNK_SIZE;
+  } while (ret != Z_STREAM_END);
+
+  deflateEnd(&strm);
+
+  fclose(input_file);
+  fclose(output_file);
+
+  return ret == Z_STREAM_END ? 0 : -1;
+}
+
+int decompress_file(const char* input_path, const char* output_path) {
+  FILE* input_file = fopen(input_path, "rb");
+  if (!input_file) {
+    perror("Failed to open input file");
+    return -1;
+  }
+
+  FILE* output_file = fopen(output_path, "wb");
+  if (!output_file) {
+    perror("Failed to open output file");
+    fclose(input_file);
+    return -1;
+  }
+
+  z_stream strm;
+  memset(&strm, 0, sizeof(z_stream));
+
+  if (inflateInit(&strm) != Z_OK) {
+    perror("Failed to initialize zlib");
+    fclose(input_file);
+    fclose(output_file);
+    return -1;
+  }
+
+  unsigned char in_buffer[CHUNK_SIZE];
+  unsigned char out_buffer[CHUNK_SIZE];
+
+  strm.next_out = out_buffer;
+  strm.avail_out = CHUNK_SIZE;
+
+  int ret;
+
+  do {
+    strm.next_in = in_buffer;
+    strm.avail_in = fread(in_buffer, 1, CHUNK_SIZE, input_file);
+
+    if (ferror(input_file)) {
+      perror("Failed to read input file");
+      ret = -1;
+      break;
+    }
+
+    if (strm.avail_in == 0)
+      break;
+
+    ret = inflate(&strm, Z_NO_FLUSH);
+
+    if (ret == Z_STREAM_ERROR) {
+      perror("Failed to decompress data");
+      break;
+    }
+
+    size_t have = CHUNK_SIZE - strm.avail_out;
+    if (fwrite(out_buffer, 1, have, output_file) != have || ferror(output_file)) {
+      perror("Failed to write decompressed data");
+      ret = -1;
+      break;
+    }
+
+    strm.next_out = out_buffer;
+    strm.avail_out = CHUNK_SIZE;
+  } while (ret != Z_STREAM_END);
+
+  inflateEnd(&strm);
+
+  fclose(input_file);
+  fclose(output_file);
+
+  return ret == Z_STREAM_END ? 0 : -1;
+}
+
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
+std::pair<std::string, std::string> getParentAndLeaf(const std::string& path) {
+  fs::path fsPath(path);
+  std::string parentPath = fsPath.parent_path().string();
+  std::string leaf = fsPath.filename().string();
+  return std::make_pair(parentPath, leaf);
+}
+
+
+
 PlayRecorder::PlayRecorder() {
   mode_ = IDLE;
   scindex_ = 0;
@@ -119,14 +274,21 @@ namespace fs = std::filesystem;
     std::time_t t_c = std::chrono::system_clock::to_time_t(now);
     std::ostringstream ss;
     ss << Cs2GetCurrentGmaecode();
-    //ss << std::put_time(std::localtime(&t_c), "_%Y_%m_%d_%H_%M_%S");
+
+    if ( ss.str() == "" || ss.str().empty() ) {
+      ss << Cs2GetCurrentGameName();
+      if (ss.str() == "" || ss.str().empty() ) {
+        ss << std::put_time(std::localtime(&t_c), "_%Y_%m_%d_%H_%M_%S");
+      }
+    }
+
     std::string dirname = basedir + ss.str();
 
     try {
       YabMakeCleanDir(dirname.c_str());
       const char * backup = YabauseThread_getBackupPath();
-      std::string dst_path = dirname + "/backup.bin";
-      YabCopyFile(backup,dst_path.c_str());
+      std::string dst_path = dirname + "/backup.bin.gz";
+      compress_file(backup, dst_path.c_str());
     }
     catch (std::exception e) {
       return -1;
@@ -231,13 +393,15 @@ int PlayRecorder::startPlay( const char * recorddir, bool clodboot, yabauseinit_
   ymd.tm_sec = s;
   this->start_time = mktime(&ymd);
 
-  string fnameback = string(recorddir) + "/backup.bin";
+  string fnameback = string(recorddir) + "/backup.bin.gz";
   dirname_ = recorddir;
-  dirname_ = dirname_ + "out";
+  std::pair<std::string, std::string> dp = getParentAndLeaf(dirname_);
+  dirname_ = dp.first + "/out/" + dp.second;
   printf("Dir is %s\n", dirname_.c_str());
   YabMakeCleanDir(dirname_.c_str());
   fnameback_test = dirname_ + "/backup.bin.new";
-  YabCopyFile(fnameback.c_str(), fnameback_test.c_str());
+  //YabCopyFile(fnameback.c_str(), fnameback_test.c_str());
+  decompress_file(fnameback.c_str(), fnameback_test.c_str());
   YabauseThread_setBackupPath(fnameback_test.c_str());
   mode_ = PLAYING;
   if (clodboot) {

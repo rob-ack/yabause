@@ -258,7 +258,9 @@ class YabauseStorage private constructor() {
                     }
                 }
                 status.product_number = jsonObj.getString("product_number")
-                status.image_url = jsonObj.getString("image_url")
+                //status.image_url = jsonObj.getString("image_url")
+                val ctx = YabauseApplication.appContext
+                status.image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+status.product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&")
                 val dateStr = jsonObj.getString("updated_at")
                 val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'.000Z'")
                 status.update_at = sdf.parse(dateStr)
@@ -352,7 +354,8 @@ class YabauseStorage private constructor() {
 
                 try {
                     val obj = gamesJ.getJSONObject(g.product_number)
-                    g.image_url = obj.optString("image_url", "")
+                    //g.image_url = obj.optString("image_url", "")
+                    g.image_url = "https://d3edktb2n8l35b.cloudfront.net/BOXART/"+g.product_number+".PNG?" + ctx.getString(R.string.boxart_sigin).replace("%26","&");
                     g.rating = obj.optInt("rating", -1)
                 } catch (e: JSONException) {
                     e.localizedMessage?.let { Log.e("YabauseStorage", it) }

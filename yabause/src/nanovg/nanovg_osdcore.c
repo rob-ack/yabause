@@ -109,6 +109,7 @@ int OSDNanovgInit(void)
     return -1;
   }
 
+#if defined(ANDROID)
   fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
   if (fontNormal == -1) {
     printf("Could not add font italic.\n");
@@ -119,6 +120,26 @@ int OSDNanovgInit(void)
     printf("Could not add font bold.\n");
     return -1;
   }
+#else
+  fontNormal = nvgCreateFont(vg, "sans", "./fonts/NotoSansJP-Medium.ttf" );
+  if (fontNormal == -1) {
+    printf("Could not add font italic.\n");
+    fontNormal = nvgCreateFontMem(vg, "sans", Roboto_Regular_ttf, Roboto_Regular_ttf_len, 0);
+    if (fontNormal == -1) {
+      printf("Could not add font italic.\n");
+      return -1;
+    }
+  }
+  fontBold = nvgCreateFont(vg, "sans-bold", "./fonts/NotoSansJP-Bold.ttf");
+  if (fontBold == -1) {
+    printf("Could not add font bold.\n");
+    fontBold = nvgCreateFontMem(vg, "sans", Roboto_Bold_ttf, Roboto_Bold_ttf_len, 0);
+    if (fontBold == -1) {
+      printf("Could not add font bold.\n");
+      return -1;
+    }    
+  }
+#endif
 
   memset(frameinfo_histroy, 0, sizeof(FrameProfileInfo)*MAX_HISTORY);
   current_history_index = 0;

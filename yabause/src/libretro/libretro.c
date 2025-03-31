@@ -53,6 +53,7 @@ static int current_width;
 static int current_height;
 
 static bool renderer_running = false;
+static bool rendering_started = false;
 static bool hle_bios_force = false;
 static bool one_frame_rendered = false;
 
@@ -701,8 +702,8 @@ void retro_get_system_info(struct retro_system_info *info)
 #endif
    info->library_version  = "v" VERSION GIT_VERSION;
    info->need_fullpath    = true;
-   info->block_extract    = false;
-   info->valid_extensions = "cue|iso|mds|ccd";
+   info->block_extract    = true;
+   info->valid_extensions = "cue|iso|mds|ccd|zip";
 }
 
 void check_variables(void)
@@ -880,7 +881,8 @@ void retro_set_controller_port_device(unsigned port, unsigned device)
 size_t retro_serialize_size(void)
 {
    // Disabling savestates until they are safe
-   return 0;
+    if (!rendering_started)
+        return true;
    void *buffer;
    size_t size;
 
@@ -896,7 +898,8 @@ size_t retro_serialize_size(void)
 bool retro_serialize(void *data, size_t size)
 {
    // Disabling savestates until they are safe
-   return true;
+   if (!rendering_started)
+       return true;
    void *buffer;
    size_t out_size;
 
@@ -911,7 +914,8 @@ bool retro_serialize(void *data, size_t size)
 bool retro_unserialize(const void *data, size_t size)
 {
    // Disabling savestates until they are safe
-   return true;
+   if (!rendering_started)
+      return true;
    int error = YabLoadStateBuffer(data, size);
    retro_set_resolution();
 
@@ -1346,6 +1350,7 @@ void retro_run(void)
 {
    unsigned i;
    bool updated  = false;
+   rendering_started = true;
    one_frame_rendered = false;
 
    if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE_UPDATE, &updated) && updated)

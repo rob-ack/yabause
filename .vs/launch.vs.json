@@ -123,6 +123,24 @@
     },
     {
       "type": "cppgdb",
+      "name": "retropie retroarch devmiyax alien trilogy",
+      "project": "yabause\\CMakeLists.txt",
+      "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "debuggerConfiguration": "gdb",
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+      "args": [
+        "--config=/opt/retropie/configs/saturn/retroarch.cfg",
+        "--verbose",
+        "--libretro=${debugInfo.fullTargetPath}",
+        "/home/pi/RetroPie/roms/saturn/Alien Trilogy (Germany).zip"
+      ],
+      "env": {},
+      "showDisplayString": false,
+      "stopOnEntry": false
+    },
+    {
+      "type": "cppgdb",
       "name": "retropie retroarch devmiyax story of thor",
       "project": "yabause\\CMakeLists.txt",
       "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
@@ -134,6 +152,24 @@
         "--verbose",
         "--libretro=${debugInfo.fullTargetPath}",
         "/home/pi/RetroPie/roms/saturn/Story of Thor 2, The (Europe)/Story of Thor 2, The (Europe).cue"
+      ],
+      "env": {},
+      "showDisplayString": false,
+      "stopOnEntry": false
+    },
+    {
+      "type": "cppgdb",
+      "name": "retropie retroarch devmiyax Mystaria - The Realms Of Lore",
+      "project": "yabause\\CMakeLists.txt",
+      "projectTarget": "libyabause_libretro.so (src\\libretro\\libyabause_libretro.so)",
+      "comment": "Learn how to configure remote debugging. For more info, see http://aka.ms/vslinuxdebug",
+      "debuggerConfiguration": "gdb",
+      "program": "/opt/retropie/emulators/retroarch/bin/retroarch",
+      "args": [
+        "--config=/opt/retropie/configs/saturn/retroarch.cfg",
+        "--verbose",
+        "--libretro=${debugInfo.fullTargetPath}",
+        "/home/pi/RetroPie/roms/saturn/Mystaria - The Realms Of Lore/Mystaria.cue"
       ],
       "env": {},
       "showDisplayString": false,
